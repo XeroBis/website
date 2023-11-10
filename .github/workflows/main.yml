@@ -11,9 +11,9 @@ jobs:
     - name: 📂 Sync files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        server: ftp.cluster029.hosting.ovh.net
+        server: ${{ secrets.FTP_SECRET_SERVER }}
         server-dir: www/
-        username: ewoubdk
+        username: ${{ secrets.FTP_SECRET_USERNAME }}
         password: ${{ secrets.FTP_SECRET_PASSWORD }}
         exclude: |
           README.md
