@@ -1,1 +1,2 @@
-RedirectMatch ^/$ https://alanbignon.com/
+RewriteEngine On
+RewriteRule ^$ http://newsite.com.au/ [L,R]
