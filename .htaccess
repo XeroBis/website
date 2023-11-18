@@ -1,2 +1,2 @@
 RewriteEngine on 
-RewriteRule ^(.*)$ http://alanbignon.com/
+RewriteRule 404 http://alanbignon.com/
