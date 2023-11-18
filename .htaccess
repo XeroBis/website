@@ -1,2 +1,2 @@
 RewriteEngine On
-RewriteRule ^$ http://newsite.com.au/ [L,R]
+RewriteRule ^$ http://alanbignon.com/ [L,R]
