@@ -1,1 +1,1 @@
-Redirect permanent / http://alanbignon.com
+RedirectMatch 301 ^/$ http://alanbignon.com
