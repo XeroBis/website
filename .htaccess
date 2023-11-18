@@ -1,2 +1,2 @@
 RewriteEngine on 
-RewriteRule 404 http://alanbignon.com/
+RewriteRule 404 https://alanbignon.com/
