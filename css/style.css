@@ -14,7 +14,7 @@ body {
 a {
     all: unset;
 }
-@media (min-width:700px) {
+@media (min-width:1100px) {
     header {
         color: black;
         text-align: center;
@@ -45,7 +45,7 @@ a {
 
     
 }
-@media (max-width:700px) {
+@media (max-width:1100px) {
     header {
         color: black;
         text-align: center;
@@ -68,6 +68,9 @@ a {
         padding-top: 10%;
         grid-row: 2;
         grid-column: 1;
+    }
+    #span_point {
+        display: none;
     }
 }
 
