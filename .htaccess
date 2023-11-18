@@ -1,1 +1,1 @@
-RedirectMatch 301 ^/$ http://alanbignon.com
+RedirectMatch 301 ^/$ https://alanbignon.com/
