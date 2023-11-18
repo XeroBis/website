@@ -193,3 +193,12 @@ a {
 }
 
 
+
+#link_404 {
+    font-size: 20vw;
+    text-align: center;  
+    position: absolute;
+    top: 25%;
+    bottom: 25%;
+    width: 100%
+}
