@@ -1,2 +1,2 @@
 RewriteEngine on 
-RewriteRule ^(.*)$ http://alanbignon.com/ [R=404,L]
+RewriteRule ^(.*)$ http://alanbignon.com/
