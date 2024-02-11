@@ -187,6 +187,25 @@ a {
     margin-bottom: 10px;
   }
 
+.project_tags {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+  
+.tag {
+    display: inline-block;
+    background-color: rgb(126, 108, 105);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
 
 #link_404 {
     font-size: 20vw;
