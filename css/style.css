@@ -55,7 +55,7 @@ a {
         grid-template-columns: 1fr 1fr 1fr;
         padding-left: 12%;
         padding-right: 12%;
-        padding-bottom: 10%;
+        padding-bottom: 5%;
     }
 
     
@@ -102,7 +102,7 @@ a {
         grid-template-columns: 1fr;
         padding-left: 5%;
         padding-right: 5%;
-        padding-bottom: 5%;
+        padding-bottom: 8%;
     }
 }
 
@@ -206,6 +206,27 @@ a {
     text-transform: uppercase;
 }
 
+/* CV */
+#cv {
+
+    padding-bottom: 5%;
+    padding-right: 12%;
+    padding-left: 12%;
+    text-align: center;
+}
+#cv_title {
+    padding-top: 5%;
+    border-top: 2px solid black;;
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+
+
+
+
+
+/* 404 */
 #div_404 {
     align-items: center;
     text-align: center;
@@ -218,3 +239,4 @@ a {
 #link_404:hover {
     text-decoration: underline;
 }
+
