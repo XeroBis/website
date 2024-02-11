@@ -55,7 +55,7 @@ a {
         grid-template-columns: 1fr 1fr 1fr;
         padding-left: 12%;
         padding-right: 12%;
-        padding-bottom: 10%;
+        padding-bottom: 5%;
     }
 
     
@@ -102,7 +102,7 @@ a {
         grid-template-columns: 1fr;
         padding-left: 5%;
         padding-right: 5%;
-        padding-bottom: 5%;
+        padding-bottom: 8%;
     }
 }
 
@@ -206,12 +206,37 @@ a {
     text-transform: uppercase;
 }
 
+/* CV */
+#cv {
 
+    padding-bottom: 5%;
+    padding-right: 12%;
+    padding-left: 12%;
+    text-align: center;
+}
+#cv_title {
+    padding-top: 5%;
+    border-top: 2px solid black;;
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+
+
+
+
+
+/* 404 */
+#div_404 {
+    align-items: center;
+    text-align: center;
+    padding-top: 5%;
+}
 #link_404 {
     font-size: 20vw;
-    text-align: center;  
-    position: absolute;
-    top: 25%;
-    bottom: 25%;
-    width: 100%
+    transition: transform 0.3s ease;
 }
+#link_404:hover {
+    text-decoration: underline;
+}
+
