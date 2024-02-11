@@ -41,26 +41,57 @@
     </section>
 
     <section id="projects">
-        <!--
-            to add : 
-            - Game of Life
-            - data Viz JO
-            - Financial Sentiment Analysis
-        -->
+        <div class="project">
+            <div class="project_div">
+                <div class="project_title">This Website</div>
+                <div class="project_description">
+                    It was created using purerly HTML and CSS.
+                    This project exists to showcase that my skills can be used in any domain, not only datascience.
+                    It serves as a platform to display my abilities in Python developpement and what kind of project I have been doing.
+                    By sharing what I have done, I hope I can attract potential employers or collaborators.
+                </div>
+                <div class="project_tags">
+                    <span class="tag">HTML/CSS</span>
+                    <span class="tag">Github Workflow</span>
+                </div>
+                <a href="https://github.com/XeroBis/website" target=”_blank”>
+                    <img src="images/github_logo.png" class="logo">
+                </a>
+            </div>
+        </div>
         <div class="project">
             <div class="project_div">
                 <div class="project_title">IRC Chat</div>
                 <div class="project_description">
-                    This is a multi-threaded IRC chat application implemented in Python.
-                    The server-side code includes a robust chat server capable of handling multiple clients and servers, 
-                    managing channels, and supporting various commands such as /away, /join, /msg, and more. 
-                    The server logs relevant information (precious for debugging).
+                    This is a multi-threaded IRC chat application implemented in Python. Two implementations are available: <br/>
+                    - multi server <br/>
+                    - single server <br/>
+                    For each implementation there is a client-side code that allows users to connect to the server, 
+                    join channels, and send messages and there is a server-side code capable of handling multiple clients and servers.
+                    <br/> Each server logs relevant information (precious for debugging).
                 </div>
                 <div class="project_tags">
+                    <span class="tag">Multi-threading</span>
                     <span class="tag">Python</span>
-                    <span class="tag">multi-threading</span>
                 </div>
                 <a href="https://github.com/XeroBis/irc_chat" target=”_blank”>
+                    <img src="images/github_logo.png" class="logo">
+                </a>
+            </div>
+        </div>
+        <div class="project">
+            <div class="project_div">
+                <div class="project_title">Financial Sentiment Analysis</div>
+                <div class="project_description">
+                    Project utilizing NLP, Machine Learning and LLM to predict sentiment of financial news.
+                </div>
+                <div class="project_tags">
+                    <span class="tag">LLM</span>
+                    <span class="tag">Machine Learning</span>
+                    <span class="tag">NLP</span>
+                    <span class="tag">Python</span>
+                </div>
+                <a href="https://github.com/XeroBis/financial_sentiment_analysis" target=”_blank”>
                     <img src="images/github_logo.png" class="logo">
                 </a>
             </div>
@@ -70,13 +101,13 @@
                 <div class="project_title">Blockchain Experiment</div>
                 <div class="project_description">
                     Basic implementation of a blockchain in Python with miner and wallet functionalities.
-                    This project showcases my skills in Python, data structures.
-                    Smart contracts in Tezos are programmed.
+                    This project was created to understand how blockchain works and how it can be and has been implemented.
+                    Smart contracts in Tezos are also programmed.
                 </div>
                 <div class="project_tags">
-                    <span class="tag">Python</span>
                     <span class="tag">Blockchain</span>
-                    <span class="tag">multi-threading</span>
+                    <span class="tag">Multi-threading</span>
+                    <span class="tag">Python</span>
                 </div>
                 <a href="https://github.com/XeroBis/Blockchain" target=”_blank”>
                     <img src="images/github_logo.png" class="logo">
@@ -85,22 +116,63 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">This Website</div>
+                <div class="project_title">Language Detection</div>
                 <div class="project_description">
-                    It was created using purerly HTML and CSS.
-                    This project exists to showcase my skills and projects. 
-                    It serves as a platform to display my abilities in Python developpement and others programming language.
-                    By sharing what I have done, I hope I can attract potential employers or collaborators.
+                    This project is a language detection tool. It is able to detect the language of a given text.
+                    The project was coded in Python and uses NLP and Machine Learning algorithm.
                 </div>
                 <div class="project_tags">
-                    <span class="tag">Github Workflow</span>
-                    <span class="tag">HTML/CSS</span>
+                    <span class="tag">In progress</span>
+                    <span class="tag">Machine Learning</span>
+                    <span class="tag">NLP</span>
+                    <span class="tag">Python</span>
                 </div>
-                <a href="https://github.com/XeroBis/website" target=”_blank”>
+                <a href="https://github.com/XeroBis/lang_detection" target=”_blank”>
                     <img src="images/github_logo.png" class="logo">
                 </a>
             </div>
         </div>
+        <div class="project">
+            <div class="project_div">
+                <div class="project_title">Game Of Life</div>
+                <div class="project_description">
+                    This project is an implementation of Conway's Game of Life, a cellular automaton devised by the British mathematician John Horton Conway. 
+                    The game is a zero-player game, meaning that its evolution is determined by its initial state, requiring no further input. 
+                    The project was coded in OCaml and Python.
+                    Both version are very different and have different features.
+                </div>
+                <div class="project_tags">
+                    <span class="tag">OCaml</span>
+                    <span class="tag">Multi-threading</span>
+                    <span class="tag">Python</span>
+                </div>
+                <a href="https://github.com/XeroBis/Game-Of-Life" target=”_blank”>
+                    <img src="images/github_logo.png" class="logo">
+                </a>
+            </div>
+        </div>
+        
+        <div class="project">
+            <div class="project_div">
+                <div class="project_title">Android Notes Taking App</div>
+                <div class="project_description">
+                    This project is a simple notes app for Android. It was created to learn Kotlin and how to create an Android app.
+                    We decided to try to only use chatgpt to generate the code as a challenge. In the end we stil had to write some code (~15%) but it was a fun experience.
+                    As a result of this experience we can say that chatgpt is not yet ready to replace human developpers. 
+                    The ~15% of code we had to write was mostly to fix the code generated by chatgpt, which was not always correct. 
+                    The big problem was that chatgpt was not able to understand the context of the code.
+                </div>
+                <div class="project_tags">
+                    <span class="tag">Android</span>
+                    <span class="tag">ChatGPT</span>
+                    <span class="tag">Kotlin</span>
+                </div>
+                <a href="https://github.com/XeroBis/note_keep" target=”_blank”>
+                    <img src="images/github_logo.png" class="logo">
+                </a>
+            </div>
+        </div>
+
     </section>
 </body>
 </html>
