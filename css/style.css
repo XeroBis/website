@@ -51,6 +51,12 @@ a {
         width: 80%;
         border-top: 2px solid black;
     }
+    #projects {
+        grid-template-columns: 1fr 1fr 1fr;
+        padding-left: 12%;
+        padding-right: 12%;
+        padding-bottom: 10%;
+    }
 
     
 }
@@ -82,6 +88,7 @@ a {
     #about_me {
         padding: 2%;
         display: grid;
+        text-align: center;
     }
     #about_me_txt {
         padding-top: 0;
@@ -90,6 +97,12 @@ a {
     }
     #span_point {
         display: none;
+    }
+    #projects {
+        grid-template-columns: 1fr;
+        padding-left: 5%;
+        padding-right: 5%;
+        padding-bottom: 5%;
     }
 }
 
@@ -147,51 +160,32 @@ a {
 
 /* PROJECT */
 #projects {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    padding: 20px;
-}
+    display: grid;
+    grid-gap: 20px;
 
+}
+.project_div {
+    margin-right: 5%;
+    margin-left: 5%;
+    margin-top: 5%;
+}
 .project {
-    width: 300px;
-    margin: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
+    background-color: #fff;
     border-radius: 5px;
-    text-align: center;
-}
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
 
-.project img {
-    max-width: 100%;
-    height: auto;
 }
+.project:hover {
+    transform: translateY(-5px);
+  }
 
-.project h2 {
-    margin: 10px 0;
-    font-size: 20px;
-}
-
-.project p {
-    font-size: 14px;
-}
-
-.project a {
-    display: block;
-    margin-top: 10px;
-    text-decoration: none;
-    color: #333;
-    background-color: #f1f1f1;
-    padding: 5px 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
-
-.project a:hover {
-    background-color: #333;
-    color: #fff;
-}
-
+.project_title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
 
 
 #link_404 {
