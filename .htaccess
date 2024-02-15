@@ -1,1 +1,4 @@
 ErrorDocument 404 /404.html
+RedirectMatch 403 ^/files/.*?$
+RedirectMatch 403 ^/css/.*$
+RedirectMatch 403 ^/images/.*$
