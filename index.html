@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="./css/style.css" rel="stylesheet"  type="text/css">
+    <script type="text/javascript" src="js/main.js"></script>
     <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -15,13 +16,14 @@
 </head>
 <body>
     <header id="contenu_header">
-        <p>
-            <a href="" id="name_href">Alan Bignon</a>
-        </p>
+        <a href="" id="name_href">Alan Bignon</a>
         <div id="links">
             <a href="mailto:contact@alanbignon.com" id="send_mail">Contact me !</a>
             <span id="span_point">•</span>
             <a href="#projects" id="my_projects">My projects</a>
+            <span id="span_point">•</span>
+            <a onclick="setLanguage('fr')" class="flag" id="french_flag">🇫🇷</a>
+            <a onclick="setLanguage('en')" class="flag" id="english_flag">🇬🇧</a>
         </div>
     
     </header>
@@ -51,7 +53,7 @@
             <div class="project_div">
                 <div class="project_title">This Website</div>
                 <div class="project_description">
-                    It was created using purerly HTML and CSS.
+                    It was created using purerly HTML, CSS and javascript.
                     This project exists to showcase that my skills can be used in any domain, not only datascience.
                     It serves as a platform to display my abilities in Python developpement and what kind of project I have been doing.
                     By sharing what I have done, I hope I can attract potential employers or collaborators.
@@ -59,6 +61,7 @@
                 <div class="project_tags">
                     <span class="tag">Github Workflow</span>
                     <span class="tag">HTML/CSS</span>
+                    <span class="tag">javascript</span>
                     <span class="tag">In progress</span>
                 </div>
                 <a href="https://github.com/XeroBis/website" target=”_blank”>
@@ -201,7 +204,7 @@
 
     <section id="cv">
         <div id="cv_title">My Resume</div>
-        <a href="files/bignon_alan_cv.pdf" download="bignon_alan_cv">click here to download pdf</a>
+        <a href="files/bignon_alan_cv_en.pdf" download="bignon_alan_cv" id="a_cv">click here to download pdf</a>
     </section>
 </body>
 </html>
