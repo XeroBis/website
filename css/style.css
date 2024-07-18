@@ -127,11 +127,11 @@ a {
     font-size: 2rem;
     line-height: 2rem;
 }
-#send_mail, #my_projects {
+#send_mail, #my_projects, .flag {
     display: inline-block;
     position: relative;
 }
-#send_mail::after, #my_projects::after{
+#send_mail::after, #my_projects::after, .flag::after{
     content: '';
     position: absolute;
     width: 100%;
@@ -143,9 +143,12 @@ a {
     transform-origin: bottom right;
     transition: transform 0.25s ease-out;
 }
-#send_mail:hover::after, #my_projects:hover::after{
+#send_mail:hover::after, #my_projects:hover::after, .flag:hover::after{
     transform: scaleX(1);
     transform-origin: bottom left;
+}
+.flag {
+    padding: 0.5rem;
 }
 
 /* Images + texte */
