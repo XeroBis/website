@@ -157,9 +157,7 @@ a {
         grid-row: 3;
         grid-column: 1;
     }
-    #span_point {
-        display: none;
-    }
+    
     #projects {
         grid-template-columns: 1fr;
         padding-left: 5%;
