@@ -237,7 +237,10 @@ a {
     margin-top: 10px;
     margin-bottom: 10px;
 }
-  
+
+.project_description {
+    white-space: pre-line;
+}
 .tag {
     display: inline-block;
     background-color: rgb(126, 108, 105);
