@@ -23,5 +23,4 @@ function setLanguage(language) {
     document.getElementById('cv_title').textContent = translations[language].cv_title;
     document.getElementById('a_cv').textContent = translations[language].download_cv;
     document.getElementById('a_cv').href = 'files/bignon_alan_cv_'+language+'.pdf';
-
 }
