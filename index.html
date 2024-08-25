@@ -18,6 +18,7 @@
     <title>Alan Bignon</title>
 </head>
 <body>
+    
     <header id="contenu_header">
         <a href="" id="name_href">Alan Bignon</a>
         <div id="links">
@@ -57,10 +58,9 @@
     <section id="projects">
         <div class="project">
             <div class="project_div">
-                <div class="project_title">This Website</div>
-                <div class="project_description">
+                <div class="project_title" id="project_website_title">This Website</div>
+                <div class="project_description" id="project_website_content">
                     It was created using purerly HTML, CSS and javascript.
-                    This project exists to showcase that my skills can be used in any domain, not only datascience.
                     It serves as a platform to display my abilities in Python developpement and what kind of project I have been doing.
                     By sharing what I have done, I hope I can attract potential employers or collaborators.
                 </div>
@@ -77,11 +77,11 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">IRC Chat</div>
-                <div class="project_description">
-                    This is a multi-threaded IRC chat application implemented in Python. Two implementations are available: <br/>
-                    - multi server <br/>
-                    - single server <br/>
+                <div class="project_title" id="project_irc_chat_title">IRC Chat</div>
+                <div class="project_description" id="project_irc_chat_content">
+                    This is a multi-threaded IRC chat application implemented in Python. Two implementations are available:
+                    - multi server
+                    - single server 
                     For each implementation there is a client-side code that allows users to connect to the server, 
                     join channels, and send messages and there is a server-side code capable of handling multiple clients and servers.
                     <br/> Each server logs relevant information (precious for debugging).
@@ -97,8 +97,8 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">Financial Sentiment Analysis</div>
-                <div class="project_description">
+                <div class="project_title" id="project_finance_title" >Financial Sentiment Analysis</div>
+                <div class="project_description" id="project_finance_content">
                     This project offers a comprehensive toolkit for analyzing sentiments within financial text data. 
                     Leveraging state-of-the-art natural language processing (NLP) techniques, machine learning algorithms and LMs fine tuning, our project provides insights into the sentiment dynamics of financial phrases.
                 </div>
@@ -115,15 +115,14 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">Blockchain Experiment</div>
-                <div class="project_description">
+                <div class="project_title" id="project_blockchain_title">Blockchain Experiment</div>
+                <div class="project_description" id="project_blockchain_content">
                     Basic implementation of a blockchain in Python with miner and wallet functionalities.
                     This project was created to understand how blockchain works and how it can be and has been implemented.
                     Smart contracts in Tezos are also programmed.
                 </div>
                 <div class="project_tags">
                     <span class="tag">Blockchain</span>
-                    <span class="tag">In progress</span>
                     <span class="tag">Multi-threading</span>
                     <span class="tag">Python</span>
                 </div>
@@ -134,13 +133,12 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">Language Detection</div>
-                <div class="project_description">
-                    This project is a language detection tool. It is able to detect the language of a given text.
+                <div class="project_title" id="project_language_title">Native Language Detection</div>
+                <div class="project_description" id="project_language_content">
+                    This project is a native language detection tool. It is able to detect the native language of person that wrote a given text in english.
                     The project was coded in Python and uses NLP and Machine Learning algorithm.
                 </div>
                 <div class="project_tags">
-                    <span class="tag">In progress</span>
                     <span class="tag">Machine Learning</span>
                     <span class="tag">NLP</span>
                     <span class="tag">Python</span>
@@ -152,8 +150,8 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">Game Of Life</div>
-                <div class="project_description">
+                <div class="project_title" id="project_life_title">Game Of Life</div>
+                <div class="project_description" id="project_life_content">
                     This project is an implementation of Conway's Game of Life, a cellular automaton devised by the British mathematician John Horton Conway. 
                     The game is a zero-player game, meaning that its evolution is determined by its initial state, requiring no further input. 
                     The project was coded in OCaml and Python.
@@ -171,8 +169,8 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">Android Notes Taking App</div>
-                <div class="project_description">
+                <div class="project_title" id="project_note_title">Android Notes Taking App</div>
+                <div class="project_description" id="project_note_content">
                     This project is a simple notes app for Android. It was created to learn Kotlin and how to create an Android app.
                     We decided to try to only use chatgpt to generate the code as a challenge. In the end we stil had to write some code (~15%) but it was a fun experience.
                     As a result of this experience we can say that chatgpt is not yet ready to replace human developpers. 
@@ -191,8 +189,8 @@
         </div>
         <div class="project">
             <div class="project_div">
-                <div class="project_title">Basic Autograd implementation</div>
-                <div class="project_description">
+                <div class="project_title" id="project_autograd_title">Basic Autograd implementation</div>
+                <div class="project_description" id="project_autograd_content">
                     Basic implementation of autograd in Python. This project was created to understand how autograd and neural network basic functionnality works. I followed the tutorial of Andrej Karpathy.
                     His implementation : <a href="https://github.com/karpathy/micrograd" target=”_blank”><b>micrograd</b></a>
                 </div>
@@ -210,7 +208,13 @@
 
     <section id="cv">
         <div id="cv_title">My Resume</div>
-        <a href="files/bignon_alan_cv_en.pdf" download="bignon_alan_cv" id="a_cv">click here to download pdf</a>
+        <a href="files/bignon_alan_cv_en.pdf" download="bignon_alan_cv" id="download_cv">click here to download pdf</a>
     </section>
+    <script type="text/javascript">
+        var userLang = navigator.language || navigator.userLanguage; 
+        if (['fr', 'en'].includes(userLang)){
+            setLanguage(userLang);
+        }
+    </script>
 </body>
 </html>
