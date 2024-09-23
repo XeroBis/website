@@ -1,8 +1,8 @@
 
 const translations = {
     en: {
-        about_me_accroche: "The only data scientist you'll ever need.",
-        about_me_phrase: "I'm Alan, a passionate developer with a strong interest in Data Science. I enjoy working on challenging projects and constantly improving my skills.",
+        about_me_accroche: "The only expert you'll ever need.",
+        about_me_phrase: "I'm Alan, a passionate developer with a strong interest in technology and data. I enjoy working on challenging projects and constantly improving my skills across multiple domains.",
         my_projects: "My projects",
         cv_title: "My Resume",
         download_cv: "click here to download pdf",
@@ -43,8 +43,8 @@ const translations = {
             "His implementation : <a href='https://github.com/karpathy/micrograd' target=”_blank”><b>micrograd</b></a>",
     },
     fr: {
-        about_me_accroche: "Le seul data scientist dont vous aurez besoin.",
-        about_me_phrase: "Je suis Alan, un développeur passionné avec un fort intérêt pour la Data Science. J'aime travailler sur des projets stimulants et améliorer constamment mes compétences.",
+        about_me_accroche: "Le seul expert dont vous aurez besoin.",
+        about_me_phrase: "Je suis Alan, un développeur passionné avec un grand intérêt pour la technologie et les données. J'aime travailler sur des projets stimulants et améliorer constamment mes compétences dans divers domaines.",
         my_projects: "Mes projets",
         cv_title: "Mon CV",
         download_cv: "cliquez ici pour télécharger le pdf",
