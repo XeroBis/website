@@ -19,14 +19,10 @@
 
 #testimonials_list {
     display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    align-items: center;
-}
-
-#testimonials_list {
     flex-direction: row;
     flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
     justify-content: center;
 }
 

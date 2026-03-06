@@ -317,6 +317,99 @@ function handleToggleClickFromName(e) {
     }
 }
 
+function groupExercisesByType(exercises) {
+    var groups = [];
+    var currentGroup = [];
+    var currentType = null;
+
+    exercises.forEach(function (exercise) {
+        if (currentType !== exercise.exercise_type) {
+            if (currentGroup.length > 0) {
+                groups.push({ type: currentType, exercises: currentGroup });
+            }
+            currentGroup = [exercise];
+            currentType = exercise.exercise_type;
+        } else {
+            currentGroup.push(exercise);
+        }
+    });
+
+    if (currentGroup.length > 0) {
+        groups.push({ type: currentType, exercises: currentGroup });
+    }
+
+    return groups;
+}
+
+function buildWorkoutHTML(workoutDataArray, translations) {
+    var html = '';
+
+    workoutDataArray.forEach(function (data) {
+        html += '<div class="workout-item">';
+        html += '<div class="workout-header">';
+        html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
+
+        if (data.workout.duration > 0) {
+            var hours = Math.floor(data.workout.duration / 60);
+            var minutes = data.workout.duration % 60;
+            var timeStr = hours > 0 ? hours + 'h ' + (minutes > 0 ? minutes + 'min' : '') : minutes + 'min';
+            html += ' - ' + timeStr.trim();
+        }
+        html += '</h2>';
+
+        if (isUserAuthenticated) {
+            html += '<div class="workout-actions" style="display: flex; gap: 10px;">';
+            html += '<a href="/workout/edit_workout/' + data.workout.id + '/">';
+            html += '<button class="cliquable button_workout">' + (translations.edit || 'Edit') + '</button>';
+            html += '</a>';
+            html += '<button class="cliquable button_workout" onclick="showTemplateModal(' + data.workout.id + ')">Template</button>';
+            html += '</div>';
+        }
+        html += '</div>';
+
+        if (data.exercises && data.exercises.length > 0) {
+            var groups = groupExercisesByType(data.exercises);
+            groups.forEach(function (group) {
+                group.exercises.forEach(function (exercise) {
+                    var muscleGroups = exercise.muscle_groups ? exercise.muscle_groups.join(', ') : '';
+                    var exerciseId = 'exercise-' + globalExerciseCounter;
+                    var positionLabel = exercise.position ? exercise.position + '. ' : '';
+                    html += '<div class="exercise-name-section"><strong>' + positionLabel + exercise.name + '</strong><button class="toggle-series-btn" data-exercise-id="' + exerciseId + '">▶</button></div>';
+                    html += '<table class="series-table series-collapsed" id="' + exerciseId + '"><tbody>';
+
+                    if (exercise.series && exercise.series.length > 0) {
+                        exercise.series.forEach(function (series) {
+                            html += '<tr class="exercise-row" data-muscle-groups="' + muscleGroups + '">';
+                            if (exercise.exercise_type === 'strength') {
+                                html += '<td>' + series.reps + ' x ' + series.weight + 'kg</td>';
+                            } else if (exercise.exercise_type === 'cardio') {
+                                var displayText = '';
+                                if (series.duration_seconds && series.duration_seconds > 0) {
+                                    if (series.distance_m && series.distance_m > 0) {
+                                        displayText = series.duration_seconds + 's / ' + series.distance_m + 'm';
+                                    } else {
+                                        displayText = series.duration_seconds + 's';
+                                    }
+                                } else if (series.distance_m && series.distance_m > 0) {
+                                    displayText = series.distance_m + 'm';
+                                }
+                                html += '<td>' + displayText + '</td>';
+                            }
+                            html += '</tr>';
+                        });
+                    }
+
+                    html += '</tbody></table>';
+                    globalExerciseCounter++;
+                });
+            });
+        }
+        html += '</div>';
+    });
+
+    return html;
+}
+
 function loadMore() {
     if (isLoading || !hasMoreContent) return;
 
@@ -345,120 +438,10 @@ function loadMore() {
         },
         success: function (response) {
             if (response.workout_data.length > 0) {
-                // Get translations once for all workouts
                 const translations = JSON.parse(document.getElementById('workout-translations').textContent);
-
-                var html = '';
-                response.workout_data.forEach(function (data) {
-                    html += '<div class="workout-item">';
-                    html += '<div class="workout-header">';
-                    html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
-
-                    if (data.workout.duration > 0) {
-                        var hours = Math.floor(data.workout.duration / 60);
-                        var minutes = data.workout.duration % 60;
-                        var timeStr = hours > 0 ? hours + 'h ' + (minutes > 0 ? minutes + 'min' : '') : minutes + 'min';
-                        html += ' - ' + timeStr.trim();
-                    }
-                    html += '</h2>';
-                    if (isUserAuthenticated) {
-                        html += '<div class="workout-actions" style="display: flex; gap: 10px;">';
-                        html += '<a href="/workout/edit_workout/' + data.workout.id + '/">';
-                        html += '<button class="cliquable button_workout">' + (translations.edit || 'Edit') + '</button>';
-                        html += '</a>';
-                        html += '<button class="cliquable button_workout" onclick="showTemplateModal(' + data.workout.id + ')">Template</button>';
-                        html += '</div>';
-                    }
-                    html += '</div>';
-
-                    if (data.exercises && data.exercises.length > 0) {
-                        // Group consecutive exercises by type
-                        var groups = [];
-                        var currentGroup = [];
-                        var currentType = null;
-
-                        data.exercises.forEach(function (exercise) {
-                            if (currentType !== exercise.exercise_type) {
-                                if (currentGroup.length > 0) {
-                                    groups.push({
-                                        type: currentType,
-                                        exercises: currentGroup
-                                    });
-                                }
-                                currentGroup = [exercise];
-                                currentType = exercise.exercise_type;
-                            } else {
-                                currentGroup.push(exercise);
-                            }
-                        });
-
-                        // Add the last group
-                        if (currentGroup.length > 0) {
-                            groups.push({
-                                type: currentType,
-                                exercises: currentGroup
-                            });
-                        }
-                        groups.forEach(function (group) {
-                            if (group.type === 'strength') {
-                                group.exercises.forEach(function (exercise) {
-                                    var muscleGroups = exercise.muscle_groups ? exercise.muscle_groups.join(', ') : '';
-                                    var exerciseId = 'exercise-' + globalExerciseCounter;
-                                    var positionLabel = exercise.position ? exercise.position + '. ' : '';
-                                    html += '<div class="exercise-name-section"><strong>' + positionLabel + exercise.name + '</strong><button class="toggle-series-btn" data-exercise-id="' + exerciseId + '">▶</button></div>';
-                                    html += '<table class="series-table series-collapsed" id="' + exerciseId + '"><tbody>';
-
-                                    if (exercise.series && exercise.series.length > 0) {
-                                        exercise.series.forEach(function (series) {
-                                            html += '<tr class="exercise-row" data-muscle-groups="' + muscleGroups + '">';
-                                            html += '<td>' + series.reps + ' x ' + series.weight + 'kg</td>';
-                                            html += '</tr>';
-                                        });
-                                    }
-
-                                    html += '</tbody></table>';
-                                    globalExerciseCounter++;
-                                });
-                            } else if (group.type === 'cardio') {
-                                group.exercises.forEach(function (exercise) {
-                                    var muscleGroups = exercise.muscle_groups ? exercise.muscle_groups.join(', ') : '';
-                                    var exerciseId = 'exercise-' + globalExerciseCounter;
-                                    var positionLabel = exercise.position ? exercise.position + '. ' : '';
-                                    html += '<div class="exercise-name-section"><strong>' + positionLabel + exercise.name + '</strong><button class="toggle-series-btn" data-exercise-id="' + exerciseId + '">▶</button></div>';
-                                    html += '<table class="series-table series-collapsed" id="' + exerciseId + '"><tbody>';
-
-                                    if (exercise.series && exercise.series.length > 0) {
-                                        exercise.series.forEach(function (series) {
-                                            html += '<tr class="exercise-row" data-muscle-groups="' + muscleGroups + '">';
-                                            var displayText = '';
-                                            if (series.duration_seconds && series.duration_seconds > 0) {
-                                                if (series.distance_m && series.distance_m > 0) {
-                                                    displayText = series.duration_seconds + 's / ' + series.distance_m + 'm';
-                                                } else {
-                                                    displayText = series.duration_seconds + 's';
-                                                }
-                                            } else if (series.distance_m && series.distance_m > 0) {
-                                                displayText = series.distance_m + 'm';
-                                            }
-                                            html += '<td>' + displayText + '</td>';
-                                            html += '</tr>';
-                                        });
-                                    }
-
-                                    html += '</tbody></table>';
-                                    globalExerciseCounter++;
-                                });
-                            }
-                        });
-                    }
-                    html += '</div>';
-                });
+                var html = buildWorkoutHTML(response.workout_data, translations);
                 $('#workout-list').append(html);
-
-                // Attach hover listeners to newly added exercises
                 attachHoverListeners();
-
-                // Attach toggle listeners to newly added series
                 attachToggleListeners();
             }
 
@@ -515,127 +498,15 @@ function applyFilters(e) {
             'X-Requested-With': 'XMLHttpRequest'
         },
         success: function (response) {
-            // Clear the workout list
             $('#workout-list').empty();
 
             if (response.workout_data.length > 0) {
-                // Get translations once for all workouts
                 const translations = JSON.parse(document.getElementById('workout-translations').textContent);
-
-                var html = '';
-                response.workout_data.forEach(function (data) {
-                    html += '<div class="workout-item">';
-                    html += '<div class="workout-header">';
-                    html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
-
-                    if (data.workout.duration > 0) {
-                        var hours = Math.floor(data.workout.duration / 60);
-                        var minutes = data.workout.duration % 60;
-                        var timeStr = hours > 0 ? hours + 'h ' + (minutes > 0 ? minutes + 'min' : '') : minutes + 'min';
-                        html += ' - ' + timeStr.trim();
-                    }
-                    html += '</h2>';
-                    if (isUserAuthenticated) {
-                        html += '<div class="workout-actions" style="display: flex; gap: 10px;">';
-                        html += '<a href="/workout/edit_workout/' + data.workout.id + '/">';
-                        html += '<button class="cliquable button_workout">' + (translations.edit || 'Edit') + '</button>';
-                        html += '</a>';
-                        html += '<button class="cliquable button_workout" onclick="showTemplateModal(' + data.workout.id + ')">Template</button>';
-                        html += '</div>';
-                    }
-                    html += '</div>';
-
-                    if (data.exercises && data.exercises.length > 0) {
-                        // Group consecutive exercises by type
-                        var groups = [];
-                        var currentGroup = [];
-                        var currentType = null;
-
-                        data.exercises.forEach(function (exercise) {
-                            if (currentType !== exercise.exercise_type) {
-                                if (currentGroup.length > 0) {
-                                    groups.push({
-                                        type: currentType,
-                                        exercises: currentGroup
-                                    });
-                                }
-                                currentGroup = [exercise];
-                                currentType = exercise.exercise_type;
-                            } else {
-                                currentGroup.push(exercise);
-                            }
-                        });
-
-                        // Add the last group
-                        if (currentGroup.length > 0) {
-                            groups.push({
-                                type: currentType,
-                                exercises: currentGroup
-                            });
-                        }
-                        groups.forEach(function (group) {
-                            if (group.type === 'strength') {
-                                group.exercises.forEach(function (exercise) {
-                                    var muscleGroups = exercise.muscle_groups ? exercise.muscle_groups.join(', ') : '';
-                                    var exerciseId = 'exercise-' + globalExerciseCounter;
-                                    var positionLabel = exercise.position ? exercise.position + '. ' : '';
-                                    html += '<div class="exercise-name-section"><strong>' + positionLabel + exercise.name + '</strong><button class="toggle-series-btn" data-exercise-id="' + exerciseId + '">▶</button></div>';
-                                    html += '<table class="series-table series-collapsed" id="' + exerciseId + '"><tbody>';
-
-                                    if (exercise.series && exercise.series.length > 0) {
-                                        exercise.series.forEach(function (series) {
-                                            html += '<tr class="exercise-row" data-muscle-groups="' + muscleGroups + '">';
-                                            html += '<td>' + series.reps + ' x ' + series.weight + 'kg</td>';
-                                            html += '</tr>';
-                                        });
-                                    }
-
-                                    html += '</tbody></table>';
-                                    globalExerciseCounter++;
-                                });
-                            } else if (group.type === 'cardio') {
-                                group.exercises.forEach(function (exercise) {
-                                    var muscleGroups = exercise.muscle_groups ? exercise.muscle_groups.join(', ') : '';
-                                    var exerciseId = 'exercise-' + globalExerciseCounter;
-                                    var positionLabel = exercise.position ? exercise.position + '. ' : '';
-                                    html += '<div class="exercise-name-section"><strong>' + positionLabel + exercise.name + '</strong><button class="toggle-series-btn" data-exercise-id="' + exerciseId + '">▶</button></div>';
-                                    html += '<table class="series-table series-collapsed" id="' + exerciseId + '"><tbody>';
-
-                                    if (exercise.series && exercise.series.length > 0) {
-                                        exercise.series.forEach(function (series) {
-                                            html += '<tr class="exercise-row" data-muscle-groups="' + muscleGroups + '">';
-                                            var displayText = '';
-                                            if (series.duration_seconds && series.duration_seconds > 0) {
-                                                if (series.distance_m && series.distance_m > 0) {
-                                                    displayText = series.duration_seconds + 's / ' + series.distance_m + 'm';
-                                                } else {
-                                                    displayText = series.duration_seconds + 's';
-                                                }
-                                            } else if (series.distance_m && series.distance_m > 0) {
-                                                displayText = series.distance_m + 'm';
-                                            }
-                                            html += '<td>' + displayText + '</td>';
-                                            html += '</tr>';
-                                        });
-                                    }
-
-                                    html += '</tbody></table>';
-                                    globalExerciseCounter++;
-                                });
-                            }
-                        });
-                    }
-                    html += '</div>';
-                });
+                var html = buildWorkoutHTML(response.workout_data, translations);
                 $('#workout-list').html(html);
-
-                // Attach hover listeners to newly added exercises
                 attachHoverListeners();
-
-                // Attach toggle listeners to newly added series
                 attachToggleListeners();
             } else {
-                // Show no workouts message
                 $('#workout-list').html('<p>No workouts recorded.</p>');
             }
 
@@ -796,14 +667,12 @@ $(document).ready(function() {
     // Re-index all tables and buttons with unique global IDs
     tables.forEach(function(table, index) {
         var newId = 'exercise-' + globalIndex;
-        var oldId = table.id;
         table.id = newId;
         globalIndex++;
     });
 
     // Update all button data-exercise-id attributes to match
     buttons.forEach(function(btn, index) {
-        var newId = 'exercise-' + index;
         btn.setAttribute('data-exercise-id', 'exercise-' + index);
     });
 

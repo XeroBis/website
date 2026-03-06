@@ -160,12 +160,6 @@ table {
     margin-bottom: 10px;
 }
 
-.series-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 10px;
-}
-
 .series-table.series-collapsed {
     display: none;
 }
@@ -319,6 +313,8 @@ margin: 20px auto;
     justify-content: space-around;
     padding: 12px;
     border-bottom: 1px solid var(--color-border-primary);
+    background-color: var(--color-bg-secondary);
+    font-weight: bold;
 }
 .exercise {
     display: flex;
@@ -329,11 +325,6 @@ margin: 20px auto;
     border: 1px solid var(--color-border-secondary);
     border-radius: 6px;
     background-color: var(--color-bg-tertiary);
-}
-
-.exercise-header {
-    background-color: var(--color-bg-secondary);
-    font-weight: bold;
 }
 
 
@@ -495,12 +486,7 @@ margin: 20px auto;
     background-color: var(--color-accent-hover);
 }
 
-#exercise_0_series_list,
-#exercise_1_series_list,
-#exercise_2_series_list,
-#exercise_3_series_list,
-#exercise_4_series_list,
-#exercise_5_series_list {
+.series-list {
     display: flex;
     flex-direction: column;
     gap: 10px;

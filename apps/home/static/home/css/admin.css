@@ -8,8 +8,8 @@
 }
 
 #exportFom button, #importForm button, #resetForm button {
-    background-color: rgb(143, 123, 120);
-    color: white;
+    background-color: var(--color-accent-primary);
+    color: var(--color-white);
     padding: 12px 24px;
     border: none;
     border-radius: 5px;
@@ -20,14 +20,14 @@
 }
 
 #exportFom button:hover, #importForm button:hover, #resetForm button:hover {
-    background-color: rgb(126, 108, 105);
+    background-color: var(--color-accent-hover);
     transform: translateY(-2px);
 }
 
 #importForm input[type="file"] {
     padding: 8px;
     margin: 10px;
-    border: 2px solid rgb(143, 123, 120);
+    border: 2px solid var(--color-accent-border);
     border-radius: 5px;
-    background-color: white;
+    background-color: var(--color-white);
 }

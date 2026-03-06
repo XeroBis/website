@@ -21,26 +21,3 @@ a {
 .cliquable {
     cursor: pointer;
 }
-
-/* Workout containers shared styles */
-.container_workout, .container_add_workout {
-    max-width: 800px;
-}
-
-@media (min-width:1100px) {
-    .container_workout, .container_add_workout{
-        margin: 0 auto;
-    }
-
-    .exercise-header span {
-        flex: 1;
-        text-align: left;
-    }
-}
-
-@media (max-width:1100px) {
-    .container_workout, .container_add_workout {
-        margin-left: 3%;
-        margin-right: 3%;
-    }
-}
