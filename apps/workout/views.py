@@ -158,6 +158,37 @@ def redirect_workout(request):
             for mg in exercise["muscle_groups"]:
                 muscle_counts[mg] = muscle_counts.get(mg, 0) + series_count
 
+        # Compute summary stats
+        strength_exercises = [e for e in exercises if e["exercise_type"] == "strength"]
+        cardio_exercises = [e for e in exercises if e["exercise_type"] == "cardio"]
+        strength_sets = sum(len(e["series"]) for e in strength_exercises)
+        strength_volume = sum(
+            (s["reps"] or 0) * (s["weight"] or 0)
+            for e in strength_exercises
+            for s in e["series"]
+        )
+        cardio_duration_s = sum(
+            s.get("duration_seconds") or 0
+            for e in cardio_exercises
+            for s in e["series"]
+        )
+        cardio_distance_m = sum(
+            s.get("distance_m") or 0 for e in cardio_exercises for s in e["series"]
+        )
+        stats = {
+            "exercise_count": len(exercises),
+            "has_strength": bool(strength_exercises),
+            "has_cardio": bool(cardio_exercises),
+            "strength_sets": strength_sets,
+            "strength_volume": round(float(strength_volume), 1),
+            "cardio_duration_min": (
+                round(cardio_duration_s / 60, 1) if cardio_duration_s else 0
+            ),
+            "cardio_distance_km": (
+                round(float(cardio_distance_m) / 1000, 2) if cardio_distance_m else 0
+            ),
+        }
+
         workout_data.append(
             {
                 "workout": {
@@ -168,6 +199,7 @@ def redirect_workout(request):
                     "type_workout": type_workout,
                     "duration": workout.duration,
                     "muscle_counts_json": json.dumps(muscle_counts),
+                    "stats": stats,
                 },
                 "exercises": exercises,
             }

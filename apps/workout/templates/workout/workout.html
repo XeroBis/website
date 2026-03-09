@@ -70,6 +70,17 @@
                 <div class="workout-body">
                     <div class="muscle-heatmap-container"></div>
                     <div class="exercise-list">
+                    <div class="workout-stats-row">
+                        {% with s=data.workout.stats %}
+                        {% if s.has_strength and not s.has_cardio %}
+                            <span class="stat-value">{{ s.exercise_count }}</span> exercise{{ s.exercise_count|pluralize }} <span class="stat-sep">·</span> <span class="stat-value">{{ s.strength_sets }}</span> sets <span class="stat-sep">·</span> <span class="stat-value">{{ s.strength_volume }}</span>kg
+                        {% elif s.has_cardio and not s.has_strength %}
+                            <span class="stat-value">{{ s.exercise_count }}</span> exercise{{ s.exercise_count|pluralize }} <span class="stat-sep">·</span> <span class="stat-value">{{ s.cardio_duration_min }}</span>min <span class="stat-sep">·</span> <span class="stat-value">{{ s.cardio_distance_km }}</span>km
+                        {% elif s.has_strength and s.has_cardio %}
+                            <span class="stat-value">{{ s.strength_sets }}</span> sets <span class="stat-sep">·</span> <span class="stat-value">{{ s.strength_volume }}</span>kg<br><span class="stat-value">{{ s.cardio_duration_min }}</span>min <span class="stat-sep">·</span> <span class="stat-value">{{ s.cardio_distance_km }}</span>km
+                        {% endif %}
+                        {% endwith %}
+                    </div>
                     {% if data.exercises %}
                         {% regroup data.exercises by exercise_type as exercises_by_type %}
                         {% for type_group in exercises_by_type %}

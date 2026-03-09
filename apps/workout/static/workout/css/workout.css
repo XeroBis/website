@@ -57,6 +57,26 @@
     min-width: 0;
 }
 
+.workout-stats-row {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border-light);
+    line-height: 1.6;
+}
+
+.workout-stats-row .stat-value {
+    font-weight: 600;
+    color: var(--color-accent-primary);
+}
+
+.workout-stats-row .stat-sep {
+    color: var(--color-border-primary);
+    margin: 0 2px;
+}
+
 .muscle-heatmap-container {
     display: flex;
     flex-direction: column;
