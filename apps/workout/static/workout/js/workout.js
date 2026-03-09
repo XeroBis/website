@@ -387,7 +387,7 @@ function buildWorkoutHTML(workoutDataArray, translations) {
             html += '<div class="month-separator" data-month-key="' + monthYear + '" data-month-year="' + label + '">' + label + '</div>';
             lastRenderedMonthYear = monthYear;
         }
-        var muscleCountsJson = JSON.stringify(data.workout.muscle_counts || {});
+        var muscleCountsJson = data.workout.muscle_counts_json || '{}';
         html += '<div class="workout-item" data-muscle-counts="' + muscleCountsJson.replace(/"/g, '&quot;') + '">';
         html += '<div class="workout-header">';
         html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
@@ -409,7 +409,9 @@ function buildWorkoutHTML(workoutDataArray, translations) {
             html += '</div>';
         }
         html += '</div>';
+        html += '<div class="workout-body">';
         html += '<div class="muscle-heatmap-container"></div>';
+        html += '<div class="exercise-list">';
 
         if (data.exercises && data.exercises.length > 0) {
             var groups = groupExercisesByType(data.exercises);
@@ -445,6 +447,7 @@ function buildWorkoutHTML(workoutDataArray, translations) {
                 });
             });
         }
+        html += '</div></div>';
         html += '</div>';
     });
 

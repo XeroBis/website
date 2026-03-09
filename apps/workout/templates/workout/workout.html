@@ -67,67 +67,71 @@
                     </div>
                     {% endif %}
                 </div>
-                <div class="muscle-heatmap-container"></div>
-                {% if data.exercises %}
-                    {% regroup data.exercises by exercise_type as exercises_by_type %}
-                    {% for type_group in exercises_by_type %}
-                        {% if type_group.grouper == "strength" %}
-                        {% for exercise in type_group.list %}
-                            {% with forloop.parentloop.counter|add:forloop.counter as unique_index %}
-                            <div class="exercise-name-section">
-                                <strong>{% if exercise.position %}{{ exercise.position }}. {% endif %}{{ exercise.name }}</strong>
-                                <button class="toggle-series-btn" data-exercise-id="exercise-{{ unique_index }}">▶</button>
-                            </div>
-                            <table class="series-table series-collapsed" id="exercise-{{ unique_index }}">
-                                <thead>
-                                    <tr>
-                                        <th>{% trans "Series" %}</th>
-                                        <th>{% trans "Reps" %}</th>
-                                        <th>{% trans "Weight (kg)" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for series in exercise.series %}
-                                    <tr class="exercise-row" data-muscle-groups="{{ exercise.muscle_groups|join:', ' }}">
-                                        <td>{{ series.series_number }}</td>
-                                        <td>{{ series.reps }}</td>
-                                        <td>{{ series.weight }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% endwith %}
+                <div class="workout-body">
+                    <div class="muscle-heatmap-container"></div>
+                    <div class="exercise-list">
+                    {% if data.exercises %}
+                        {% regroup data.exercises by exercise_type as exercises_by_type %}
+                        {% for type_group in exercises_by_type %}
+                            {% if type_group.grouper == "strength" %}
+                            {% for exercise in type_group.list %}
+                                {% with forloop.parentloop.counter|add:forloop.counter as unique_index %}
+                                <div class="exercise-name-section">
+                                    <strong>{% if exercise.position %}{{ exercise.position }}. {% endif %}{{ exercise.name }}</strong>
+                                    <button class="toggle-series-btn" data-exercise-id="exercise-{{ unique_index }}">▶</button>
+                                </div>
+                                <table class="series-table series-collapsed" id="exercise-{{ unique_index }}">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Series" %}</th>
+                                            <th>{% trans "Reps" %}</th>
+                                            <th>{% trans "Weight (kg)" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for series in exercise.series %}
+                                        <tr class="exercise-row" data-muscle-groups="{{ exercise.muscle_groups|join:', ' }}">
+                                            <td>{{ series.series_number }}</td>
+                                            <td>{{ series.reps }}</td>
+                                            <td>{{ series.weight }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% endwith %}
+                            {% endfor %}
+                            {% elif type_group.grouper == "cardio" %}
+                            {% for exercise in type_group.list %}
+                                {% with forloop.parentloop.counter|add:forloop.counter as unique_index %}
+                                <div class="exercise-name-section">
+                                    <strong>{% if exercise.position %}{{ exercise.position }}. {% endif %}{{ exercise.name }}</strong>
+                                    <button class="toggle-series-btn" data-exercise-id="exercise-{{ unique_index }}">▶</button>
+                                </div>
+                                <table class="series-table series-collapsed" id="exercise-{{ unique_index }}">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Series" %}</th>
+                                            <th>{% trans "Duration (s)" %}</th>
+                                            <th>{% trans "Distance (m)" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for series in exercise.series %}
+                                        <tr class="exercise-row" data-muscle-groups="{{ exercise.muscle_groups|join:', ' }}">
+                                            <td>{{ series.series_number }}</td>
+                                            <td>{% if series.duration_seconds %}{{ series.duration_seconds }}{% else %}-{% endif %}</td>
+                                            <td>{% if series.distance_m %}{{ series.distance_m }}{% else %}-{% endif %}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% endwith %}
+                            {% endfor %}
+                            {% endif %}
                         {% endfor %}
-                        {% elif type_group.grouper == "cardio" %}
-                        {% for exercise in type_group.list %}
-                            {% with forloop.parentloop.counter|add:forloop.counter as unique_index %}
-                            <div class="exercise-name-section">
-                                <strong>{% if exercise.position %}{{ exercise.position }}. {% endif %}{{ exercise.name }}</strong>
-                                <button class="toggle-series-btn" data-exercise-id="exercise-{{ unique_index }}">▶</button>
-                            </div>
-                            <table class="series-table series-collapsed" id="exercise-{{ unique_index }}">
-                                <thead>
-                                    <tr>
-                                        <th>{% trans "Series" %}</th>
-                                        <th>{% trans "Duration (s)" %}</th>
-                                        <th>{% trans "Distance (m)" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for series in exercise.series %}
-                                    <tr class="exercise-row" data-muscle-groups="{{ exercise.muscle_groups|join:', ' }}">
-                                        <td>{{ series.series_number }}</td>
-                                        <td>{% if series.duration_seconds %}{{ series.duration_seconds }}{% else %}-{% endif %}</td>
-                                        <td>{% if series.distance_m %}{{ series.distance_m }}{% else %}-{% endif %}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% endwith %}
-                        {% endfor %}
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+                    {% endif %}
+                    </div>
+                </div>
             </div>
             {% empty %}
             <p>
