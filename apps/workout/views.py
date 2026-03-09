@@ -12,6 +12,7 @@ from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import translation
+from django.utils.formats import date_format
 from django.utils.translation import gettext
 
 from .models import (
@@ -155,6 +156,8 @@ def redirect_workout(request):
                 "workout": {
                     "id": workout.id,
                     "date": workout.date.strftime("%-d/%m/%Y"),
+                    "month_year": workout.date.strftime("%Y-%m"),
+                    "month_year_label": date_format(workout.date, "F Y"),
                     "type_workout": type_workout,
                     "duration": workout.duration,
                 },

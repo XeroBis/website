@@ -2,6 +2,47 @@
 @import url('colors.css');
 @import url('analytics.css');
 /* ===============================================
+   STICKY MONTH BANNER
+   =============================================== */
+
+#month-sticky-banner {
+    position: sticky;
+    top: 100px;
+    z-index: 1001;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 10px 20px;
+    background: var(--color-background);
+    border-bottom: 2px solid var(--color-accent-primary);
+    color: var(--color-accent-primary);
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 6px var(--color-shadow-light);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+#month-sticky-banner.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.month-separator {
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--color-accent-primary);
+    padding: 8px 0 12px;
+    margin-top: 16px;
+    letter-spacing: 0.05em;
+}
+
+.month-separator:first-child {
+    margin-top: 0;
+}
+
+/* ===============================================
    CONTAINER STYLES
    =============================================== */
 

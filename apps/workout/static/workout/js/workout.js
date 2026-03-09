@@ -13,6 +13,9 @@ const FILTER_DEBOUNCE_DELAY = 500; // milliseconds
 // Global exercise index counter to ensure unique IDs across all workouts
 let globalExerciseCounter = 0;
 
+// Track last rendered month/year for dynamic load-more separators
+let lastRenderedMonthYear = null;
+
 function muscleNameToSvgId(muscleName) {
     let svgId = muscleName.toLowerCase().trim();
 
@@ -378,6 +381,12 @@ function buildWorkoutHTML(workoutDataArray, translations) {
     var html = '';
 
     workoutDataArray.forEach(function (data) {
+        var monthYear = data.workout.month_year || '';
+        if (monthYear && monthYear !== lastRenderedMonthYear) {
+            var label = data.workout.month_year_label || monthYear;
+            html += '<div class="month-separator" data-month-key="' + monthYear + '" data-month-year="' + label + '">' + label + '</div>';
+            lastRenderedMonthYear = monthYear;
+        }
         html += '<div class="workout-item">';
         html += '<div class="workout-header">';
         html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
@@ -475,6 +484,7 @@ function loadMore() {
                 $newItems.filter('.workout-item').each(function () { applyExerciseLimits(this); });
                 attachHoverListeners();
                 attachToggleListeners();
+                updateStickyBanner();
             }
 
             if (response.has_next) {
@@ -531,6 +541,7 @@ function applyFilters(e) {
         },
         success: function (response) {
             $('#workout-list').empty();
+            lastRenderedMonthYear = null;
 
             if (response.workout_data.length > 0) {
                 const translations = JSON.parse(document.getElementById('workout-translations').textContent);
@@ -561,6 +572,7 @@ function applyFilters(e) {
                 $('#load-more').hide();
             }
 
+            updateStickyBanner();
             $('#loading-indicator').hide();
         },
         error: function() {
@@ -643,6 +655,38 @@ function getCookie(name) {
     return cookieValue;
 }
 
+function getHeaderHeight() {
+    var header = document.getElementById('contenu_header');
+    return header ? header.getBoundingClientRect().height : 100;
+}
+
+function updateStickyBanner() {
+    var banner = document.getElementById('month-sticky-banner');
+    if (!banner) return;
+
+    var headerHeight = getHeaderHeight();
+    banner.style.top = headerHeight + 'px';
+
+    var seps = document.querySelectorAll('.month-separator');
+    if (seps.length === 0) {
+        banner.classList.remove('visible');
+        return;
+    }
+    var scrollTop = window.scrollY + headerHeight + 1;
+    var currentMonth = null;
+    seps.forEach(function(sep) {
+        if (sep.getBoundingClientRect().top + window.scrollY <= scrollTop) {
+            currentMonth = sep.getAttribute('data-month-year');
+        }
+    });
+    if (currentMonth) {
+        banner.textContent = currentMonth;
+        banner.classList.add('visible');
+    } else {
+        banner.classList.remove('visible');
+    }
+}
+
 $(document).ready(function() {
     // Pre-load SVG content for faster display
     loadSvgContent();
@@ -714,4 +758,13 @@ $(document).ready(function() {
 
     // Apply exercise limits to initial workout items
     document.querySelectorAll('.workout-item').forEach(applyExerciseLimits);
+
+    // Initialize lastRenderedMonthYear from existing separators (for load-more continuity)
+    var separators = document.querySelectorAll('.month-separator');
+    if (separators.length > 0) {
+        lastRenderedMonthYear = separators[separators.length - 1].getAttribute('data-month-key');
+    }
+
+    window.addEventListener('scroll', updateStickyBanner);
+    updateStickyBanner();
 });
