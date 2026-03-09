@@ -165,6 +165,27 @@
     display: none;
 }
 
+.exercise-hidden {
+    display: none !important;
+}
+
+.show-more-exercises-btn {
+    background: none;
+    border: none;
+    color: var(--color-accent-primary);
+    font-size: 18px;
+    font-weight: bold;
+    padding: 12px 8px;
+    margin: 0;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.show-more-exercises-btn:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+}
+
 .exercise-name-section {
     font-size: 18px;
     font-weight: bold;
