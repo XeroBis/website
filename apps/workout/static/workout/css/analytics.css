@@ -339,13 +339,9 @@
     text-align: center;
     color: var(--color-white);
     box-shadow: 0 4px 12px var(--color-shadow-medium);
-    transition: transform 0.3s ease;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px var(--color-shadow-strong);
-}
+
 
 
 .stat-value {

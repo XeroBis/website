@@ -16,6 +16,15 @@ let globalExerciseCounter = 0;
 // Track last rendered month/year for dynamic load-more separators
 let lastRenderedMonthYear = null;
 
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function muscleNameToSvgId(muscleName) {
     let svgId = muscleName.toLowerCase().trim();
 
@@ -89,7 +98,7 @@ async function showMuscleModal(exerciseRow, muscleGroups) {
             <div class="muscle-modal-layout">
                 <div class="muscle-list-section">
                     <h3>Muscle Groups</h3>
-                    <ul>${muscleList.map(muscle => '<li>' + muscle + '</li>').join('')}</ul>
+                    <ul class="muscle-name-list"></ul>
                 </div>
                 <div class="muscle-svg-section">
                     <div class="svg-container">
@@ -103,6 +112,12 @@ async function showMuscleModal(exerciseRow, muscleGroups) {
                 </div>
             </div>
         `;
+        const ul = modalContent.querySelector('.muscle-name-list');
+        muscleList.forEach(muscle => {
+            const li = document.createElement('li');
+            li.textContent = muscle;
+            ul.appendChild(li);
+        });
 
         // Highlight muscles in both SVGs
         svgIdsToHighlight.forEach(id => {
@@ -406,13 +421,13 @@ function buildWorkoutHTML(workoutDataArray, translations) {
         var monthYear = data.workout.month_year || '';
         if (monthYear && monthYear !== lastRenderedMonthYear) {
             var label = data.workout.month_year_label || monthYear;
-            html += '<div class="month-separator" data-month-key="' + monthYear + '" data-month-year="' + label + '">' + label + '</div>';
+            html += '<div class="month-separator" data-month-key="' + escapeHtml(monthYear) + '" data-month-year="' + escapeHtml(label) + '">' + escapeHtml(label) + '</div>';
             lastRenderedMonthYear = monthYear;
         }
         var muscleCountsJson = data.workout.muscle_counts_json || '{}';
-        html += '<div class="workout-item" data-muscle-counts="' + muscleCountsJson.replace(/"/g, '&quot;') + '">';
+        html += '<div class="workout-item" data-muscle-counts="' + escapeHtml(muscleCountsJson) + '">';
         html += '<div class="workout-header">';
-        html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
+        html += '<h2 class="workout_date_type">' + escapeHtml(data.workout.date) + ' - ' + escapeHtml(data.workout.type_workout);
 
         if (data.workout.duration > 0) {
             var hours = Math.floor(data.workout.duration / 60);
@@ -443,8 +458,8 @@ function buildWorkoutHTML(workoutDataArray, translations) {
                     var muscleGroups = exercise.muscle_groups ? exercise.muscle_groups.join(', ') : '';
                     var exerciseId = 'exercise-' + globalExerciseCounter;
                     var positionLabel = exercise.position ? exercise.position + '. ' : '';
-                    html += '<div class="exercise-name-section"><strong>' + positionLabel + exercise.name + '</strong><button class="toggle-series-btn" data-exercise-id="' + exerciseId + '">▶</button></div>';
-                    html += '<table class="series-table series-collapsed" id="' + exerciseId + '">';
+                    html += '<div class="exercise-name-section"><strong>' + escapeHtml(positionLabel) + escapeHtml(exercise.name) + '</strong><button class="toggle-series-btn" data-exercise-id="' + escapeHtml(exerciseId) + '">▶</button></div>';
+                    html += '<table class="series-table series-collapsed" id="' + escapeHtml(exerciseId) + '">';
 
                     if (exercise.exercise_type === 'strength') {
                         html += '<thead><tr><th>' + (translations.series || 'Series') + '</th><th>' + (translations.reps || 'Reps') + '</th><th>' + (translations.weight_kg || 'Weight (kg)') + '</th></tr></thead>';
@@ -455,7 +470,7 @@ function buildWorkoutHTML(workoutDataArray, translations) {
 
                     if (exercise.series && exercise.series.length > 0) {
                         exercise.series.forEach(function (series) {
-                            html += '<tr class="exercise-row" data-muscle-groups="' + muscleGroups + '">';
+                            html += '<tr class="exercise-row" data-muscle-groups="' + escapeHtml(muscleGroups) + '">';
                             if (exercise.exercise_type === 'strength') {
                                 html += '<td>' + series.series_number + '</td><td>' + series.reps + '</td><td>' + series.weight + '</td>';
                             } else {
