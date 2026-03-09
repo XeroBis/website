@@ -179,6 +179,8 @@ def redirect_workout(request):
             "exercise_count": len(exercises),
             "has_strength": bool(strength_exercises),
             "has_cardio": bool(cardio_exercises),
+            "strength_exercise_count": len(strength_exercises),
+            "cardio_exercise_count": len(cardio_exercises),
             "strength_sets": strength_sets,
             "strength_volume": round(float(strength_volume), 1),
             "cardio_duration_min": (

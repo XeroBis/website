@@ -359,16 +359,20 @@ function sep() { return ' <span class="stat-sep">·</span> '; }
 function formatStats(workout) {
     var s = workout.stats;
     if (!s) return '';
-    var n = s.exercise_count;
-    var exLabel = v(n) + (n === 1 ? ' exercise' : ' exercises');
-    if (s.has_strength && !s.has_cardio) {
-        return exLabel + sep() + v(s.strength_sets) + ' sets' + sep() + v(s.strength_volume) + 'kg';
-    } else if (s.has_cardio && !s.has_strength) {
-        return exLabel + sep() + v(s.cardio_duration_min) + 'min' + sep() + v(s.cardio_distance_km) + 'km';
-    } else if (s.has_strength && s.has_cardio) {
-        return v(s.strength_sets) + ' sets' + sep() + v(s.strength_volume) + 'kg<br>' + v(s.cardio_duration_min) + 'min' + sep() + v(s.cardio_distance_km) + 'km';
+    var html = '';
+    if (s.has_strength) {
+        html += '<div class="stat-card">';
+        html += '<div class="stat-card-title">Strength</div>';
+        html += '<div class="stat-card-body">' + v(s.strength_exercise_count) + ' ex' + sep() + v(s.strength_sets) + ' sets' + sep() + v(s.strength_volume) + 'kg</div>';
+        html += '</div>';
     }
-    return '';
+    if (s.has_cardio) {
+        html += '<div class="stat-card">';
+        html += '<div class="stat-card-title">Cardio</div>';
+        html += '<div class="stat-card-body">' + v(s.cardio_exercise_count) + ' ex' + sep() + v(s.cardio_duration_min) + 'min' + sep() + v(s.cardio_distance_km) + 'km</div>';
+        html += '</div>';
+    }
+    return html;
 }
 
 function groupExercisesByType(exercises) {
