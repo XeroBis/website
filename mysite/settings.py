@@ -28,8 +28,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", default=False)
+
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1")
 
 ALLOWED_HOSTS = ast.literal_eval(os.getenv("ALLOWED_HOSTS", "[]"))
 
