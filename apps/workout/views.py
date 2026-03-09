@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import tempfile
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -41,7 +42,7 @@ def redirect_workout(request):
     exercise_filter = request.GET.get("exercise", "")
 
     # Base queryset
-    workouts = Workout.objects.all().order_by("-date")
+    workouts = Workout.objects.select_related("type_workout").order_by("-date")
 
     # Apply workout type filter (exact match)
     if workout_type_filter:
@@ -60,26 +61,51 @@ def redirect_workout(request):
     page_obj = paginator.get_page(page_number)
 
     workout_data = []
+
+    # Bulk-fetch all data for the current page to avoid N+1 queries
+    workout_ids = [w.id for w in page_obj]
+
+    oe_by_workout: dict[int, list[OneExercice]] = defaultdict(list)
+    for oe in (
+        OneExercice.objects.filter(seance_id__in=workout_ids)
+        .select_related("name")
+        .order_by("position")
+    ):
+        oe_by_workout[oe.seance_id].append(oe)
+
+    strength_by_workout: dict[int, list[StrengthSeriesLog]] = defaultdict(list)
+    for s in (
+        StrengthSeriesLog.objects.filter(workout_id__in=workout_ids)
+        .select_related("exercise")
+        .prefetch_related("exercise__muscle_groups")
+        .order_by("exercise", "series_number")
+    ):
+        strength_by_workout[s.workout_id].append(s)
+
+    cardio_by_workout: dict[int, list[CardioSeriesLog]] = defaultdict(list)
+    for c in (
+        CardioSeriesLog.objects.filter(workout_id__in=workout_ids)
+        .select_related("exercise")
+        .prefetch_related("exercise__muscle_groups")
+        .order_by("exercise", "series_number")
+    ):
+        cardio_by_workout[c.workout_id].append(c)
+
     for workout in page_obj:
         type_workout = (
             workout.type_workout.name_workout if workout.type_workout else "No Type"
         )
         exercises: list[dict[str, Any]] = []
 
-        # Get exercises ordered by position from OneExercice
-        one_exercices = OneExercice.objects.filter(seance=workout).order_by("position")
         exercise_positions: dict[int, int] = {
-            oe.name.id: oe.position for oe in one_exercices
+            oe.name.id: oe.position for oe in oe_by_workout[workout.id]
         }
 
-        # Get strength exercises with series
-        strength_series = StrengthSeriesLog.objects.filter(workout=workout).order_by(
-            "exercise", "series_number"
-        )
+        # Build strength exercises from pre-fetched series
         current_exercise: int | None = None
         current_exercise_data: dict[str, Any] | None = None
 
-        for series in strength_series:
+        for series in strength_by_workout[workout.id]:
             if current_exercise != series.exercise.id:
                 if current_exercise_data:
                     exercises.append(current_exercise_data)
@@ -91,9 +117,7 @@ def redirect_workout(request):
                     "position": exercise_positions.get(series.exercise.id, 0),
                     "series": [],
                     "muscle_groups": list(
-                        series.exercise.muscle_groups.all().values_list(
-                            "name", flat=True
-                        )
+                        series.exercise.muscle_groups.values_list("name", flat=True)
                     ),
                 }
 
@@ -109,14 +133,11 @@ def redirect_workout(request):
         if current_exercise_data:
             exercises.append(current_exercise_data)
 
-        # Get cardio exercises with series
-        cardio_series = CardioSeriesLog.objects.filter(workout=workout).order_by(
-            "exercise", "series_number"
-        )
+        # Build cardio exercises from pre-fetched series
         current_cardio_exercise: int | None = None
         current_cardio_data: dict[str, Any] | None = None
 
-        for cardio_series_item in cardio_series:
+        for cardio_series_item in cardio_by_workout[workout.id]:
             if current_cardio_exercise != cardio_series_item.exercise.id:
                 if current_cardio_data:
                     exercises.append(current_cardio_data)
@@ -130,7 +151,7 @@ def redirect_workout(request):
                     ),
                     "series": [],
                     "muscle_groups": list(
-                        cardio_series_item.exercise.muscle_groups.all().values_list(
+                        cardio_series_item.exercise.muscle_groups.values_list(
                             "name", flat=True
                         )
                     ),
