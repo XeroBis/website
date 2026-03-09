@@ -154,10 +154,11 @@
 }
 
 
-table {
+.series-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 10px;
+    margin: 0 0 16px 0;
+    font-size: 14px;
 }
 
 .series-table.series-collapsed {
@@ -201,24 +202,35 @@ table {
     }
 }
 
-table th, table td {
-    padding: 12px;
+.series-table th,
+.series-table td {
+    padding: 8px 16px;
     text-align: left;
-    border-bottom: 1px solid var(--color-border-primary);
-    line-height: 1.2;
+    line-height: 1.4;
 }
 
-table th {
-    background-color: var(--color-bg-secondary);
+.series-table th {
+    color: var(--color-accent-primary);
     font-weight: bold;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--color-accent-primary);
+    padding-bottom: 8px;
 }
 
-table tr:hover {
-    background-color: var(--color-bg-hover);
-}
-
-table tr td {
+.series-table td {
     color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border-lighter);
+}
+
+.series-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.series-table tbody tr:hover td {
+    color: var(--color-text-primary);
+    background-color: var(--color-accent-primary-light);
 }
 .button_workout{
     display: block;
@@ -1337,14 +1349,6 @@ margin: 20px auto;
     cursor: pointer;
     transition: background-color 0.2s ease;
     -webkit-tap-highlight-color: var(--color-hover-light);
-}
-
-.exercise-row:hover {
-    background-color: var(--color-bg-secondary) !important;
-}
-
-.exercise-row:active {
-    background-color: var(--color-hover-medium) !important;
 }
 
 /* Responsive adjustments for muscle modal */
