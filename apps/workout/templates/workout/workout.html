@@ -50,7 +50,7 @@
             {% ifchanged data.workout.month_year %}
             <div class="month-separator" data-month-key="{{ data.workout.month_year }}" data-month-year="{{ data.workout.month_year_label }}">{{ data.workout.month_year_label }}</div>
             {% endifchanged %}
-            <div class="workout-item" data-muscle-groups="{{ data.muscle_groups|join:',' }}">
+            <div class="workout-item" data-muscle-groups="{{ data.muscle_groups|join:',' }}" data-muscle-counts="{{ data.workout.muscle_counts_json }}">
                 <div class="workout-header">
                     <h2 class="workout_date_type">
                         {{ data.workout.date }} - {{ data.workout.type_workout }}
@@ -67,6 +67,7 @@
                     </div>
                     {% endif %}
                 </div>
+                <div class="muscle-heatmap-container"></div>
                 {% if data.exercises %}
                     {% regroup data.exercises by exercise_type as exercises_by_type %}
                     {% for type_group in exercises_by_type %}

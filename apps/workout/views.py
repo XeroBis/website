@@ -151,6 +151,13 @@ def redirect_workout(request):
         # Sort exercises by position
         exercises.sort(key=lambda x: x.get("position", 0))
 
+        # Compute muscle usage counts (series count per muscle group)
+        muscle_counts: dict[str, int] = {}
+        for exercise in exercises:
+            series_count = len(exercise["series"])
+            for mg in exercise["muscle_groups"]:
+                muscle_counts[mg] = muscle_counts.get(mg, 0) + series_count
+
         workout_data.append(
             {
                 "workout": {
@@ -160,6 +167,7 @@ def redirect_workout(request):
                     "month_year_label": date_format(workout.date, "F Y"),
                     "type_workout": type_workout,
                     "duration": workout.duration,
+                    "muscle_counts_json": json.dumps(muscle_counts),
                 },
                 "exercises": exercises,
             }

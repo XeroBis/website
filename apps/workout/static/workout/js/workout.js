@@ -387,7 +387,8 @@ function buildWorkoutHTML(workoutDataArray, translations) {
             html += '<div class="month-separator" data-month-key="' + monthYear + '" data-month-year="' + label + '">' + label + '</div>';
             lastRenderedMonthYear = monthYear;
         }
-        html += '<div class="workout-item">';
+        var muscleCountsJson = JSON.stringify(data.workout.muscle_counts || {});
+        html += '<div class="workout-item" data-muscle-counts="' + muscleCountsJson.replace(/"/g, '&quot;') + '">';
         html += '<div class="workout-header">';
         html += '<h2 class="workout_date_type">' + data.workout.date + ' - ' + data.workout.type_workout;
 
@@ -408,6 +409,7 @@ function buildWorkoutHTML(workoutDataArray, translations) {
             html += '</div>';
         }
         html += '</div>';
+        html += '<div class="muscle-heatmap-container"></div>';
 
         if (data.exercises && data.exercises.length > 0) {
             var groups = groupExercisesByType(data.exercises);
@@ -449,6 +451,58 @@ function buildWorkoutHTML(workoutDataArray, translations) {
     return html;
 }
 
+async function applyMuscleHeatmaps(scope) {
+    var containers = (scope || document).querySelectorAll('.muscle-heatmap-container:not(.heatmap-rendered)');
+    if (containers.length === 0) return;
+
+    await loadSvgContent();
+
+    containers.forEach(function(container) {
+        var workoutItem = container.closest('.workout-item');
+        if (!workoutItem) return;
+
+        var raw = workoutItem.getAttribute('data-muscle-counts');
+        if (!raw) return;
+        var muscleCounts;
+        try { muscleCounts = JSON.parse(raw); } catch(e) { return; }
+
+        var entries = Object.entries(muscleCounts).filter(function(e) { return e[1] > 0; });
+        if (entries.length === 0) return;
+
+        var maxCount = Math.max.apply(null, entries.map(function(e) { return e[1]; }));
+
+        var frontDiv = document.createElement('div');
+        frontDiv.className = 'heatmap-svg';
+        frontDiv.innerHTML = frontSvgContent;
+
+        var backDiv = document.createElement('div');
+        backDiv.className = 'heatmap-svg';
+        backDiv.innerHTML = backSvgContent;
+
+        entries.forEach(function(entry) {
+            var muscle = entry[0], count = entry[1];
+            var svgId = muscleNameToSvgId(muscle);
+            var intensity = count / maxCount;
+            var opacity = 0.25 + 0.75 * intensity;
+            var color = 'rgba(210, 30, 30, ' + opacity + ')';
+
+            [frontDiv, backDiv].forEach(function(div) {
+                var el = div.querySelector('#' + CSS.escape(svgId));
+                if (el) {
+                    el.querySelectorAll('path').forEach(function(path) {
+                        path.style.fill = color;
+                    });
+                }
+            });
+        });
+
+        container.innerHTML = '';
+        container.appendChild(frontDiv);
+        container.appendChild(backDiv);
+        container.classList.add('heatmap-rendered');
+    });
+}
+
 function loadMore() {
     if (isLoading || !hasMoreContent) return;
 
@@ -485,6 +539,7 @@ function loadMore() {
                 attachHoverListeners();
                 attachToggleListeners();
                 updateStickyBanner();
+                applyMuscleHeatmaps();
             }
 
             if (response.has_next) {
@@ -550,6 +605,7 @@ function applyFilters(e) {
                 document.querySelectorAll('#workout-list .workout-item').forEach(applyExerciseLimits);
                 attachHoverListeners();
                 attachToggleListeners();
+                applyMuscleHeatmaps();
             } else {
                 $('#workout-list').html('<p>No workouts recorded.</p>');
             }
@@ -758,6 +814,8 @@ $(document).ready(function() {
 
     // Apply exercise limits to initial workout items
     document.querySelectorAll('.workout-item').forEach(applyExerciseLimits);
+
+    applyMuscleHeatmaps();
 
     // Initialize lastRenderedMonthYear from existing separators (for load-more continuity)
     var separators = document.querySelectorAll('.month-separator');

@@ -43,6 +43,29 @@
 }
 
 /* ===============================================
+   MUSCLE HEATMAP
+   =============================================== */
+
+.muscle-heatmap-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 10px 0 14px;
+}
+
+.heatmap-svg {
+    width: 90px;
+    flex-shrink: 0;
+    color: var(--color-white);
+}
+
+.heatmap-svg svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ===============================================
    CONTAINER STYLES
    =============================================== */
 
