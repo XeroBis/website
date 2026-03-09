@@ -6,7 +6,7 @@
 cd /home/ubuntu/portfolio
 
 # Stop nginx container to free port 80 for Certbot
-docker compose -f docker-compose.prod.yml stop nginx-docker
+docker compose -f docker-compose.prod.yml stop nginx
 
 # Renew certificates
 certbot renew --quiet
