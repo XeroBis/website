@@ -39,7 +39,7 @@
     border-radius: 5px;
     margin-top: 0.5rem;
     padding: 0.5rem 0;
-    z-index: 1000;
+    z-index: 1100;
 }
 
 .dropdown-item {
@@ -61,7 +61,7 @@
         height: 100px;
         top: 0;
         left: 0;
-        z-index: 1000; /* Ensures the header stays above other content */
+        z-index: 1200; /* Ensures the header stays above other content */
         background-color: var(--color-background);
         padding-top: 1rem;
         padding-bottom: 1rem;
@@ -118,7 +118,7 @@
         height: 100px;
         top: 0;
         left: 0;
-        z-index: 1000; /* Ensures the header stays above other content */
+        z-index: 1200; /* Ensures the header stays above other content */
         background-color: var(--color-background);
         padding-top: 1rem;
         padding-bottom: 1rem;
