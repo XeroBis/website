@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "nested_admin",
     "apps.home.apps.HomeConfig",
     "apps.workout.apps.WorkoutConfig",
 ]

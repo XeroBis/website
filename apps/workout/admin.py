@@ -1,3 +1,4 @@
+import nested_admin
 from django.contrib import admin
 from django.db.models import OuterRef, Subquery
 
@@ -115,31 +116,60 @@ class WorkoutAdmin(admin.ModelAdmin):
         return f"{total} ({strength_count}S, {cardio_count}C)"
 
 
-class TemplateExerciseInline(admin.TabularInline):
+class TemplateStrengthSeriesInline(nested_admin.NestedTabularInline):
+    model = TemplateStrengthSeries
+    extra = 1
+    fields = ["series_number", "reps", "weight"]
+    ordering = ["series_number"]
+
+
+class TemplateCardioSeriesInline(nested_admin.NestedTabularInline):
+    model = TemplateCardioSeries
+    extra = 1
+    fields = ["series_number", "duration_seconds", "distance_m"]
+    ordering = ["series_number"]
+
+
+class TemplateStrengthExerciseInline(nested_admin.NestedTabularInline):
     model = TemplateExercise
+    verbose_name = "Strength Exercise"
+    verbose_name_plural = "Strength Exercises"
     extra = 1
     fields = ["position", "exercise"]
     ordering = ["position"]
+    inlines = [TemplateStrengthSeriesInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(exercise__exercise_type="strength")
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "exercise":
+            kwargs["queryset"] = Exercice.objects.filter(exercise_type="strength")
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class TemplateStrengthSeriesInline(admin.TabularInline):
-    model = TemplateStrengthSeries
+class TemplateCardioExerciseInline(nested_admin.NestedTabularInline):
+    model = TemplateExercise
+    verbose_name = "Cardio Exercise"
+    verbose_name_plural = "Cardio Exercises"
     extra = 1
-    fields = ["template_exercise", "series_number", "reps", "weight"]
-    ordering = ["template_exercise__position", "series_number"]
+    fields = ["position", "exercise"]
+    ordering = ["position"]
+    inlines = [TemplateCardioSeriesInline]
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(exercise__exercise_type="cardio")
 
-class TemplateCardioSeriesInline(admin.TabularInline):
-    model = TemplateCardioSeries
-    extra = 1
-    fields = ["template_exercise", "series_number", "duration_seconds", "distance_m"]
-    ordering = ["template_exercise__position", "series_number"]
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "exercise":
+            kwargs["queryset"] = Exercice.objects.filter(exercise_type="cardio")
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(WorkoutTemplate)
-class WorkoutTemplateAdmin(admin.ModelAdmin):
+class WorkoutTemplateAdmin(nested_admin.NestedModelAdmin):
     list_display = ["name", "type_workout", "duration", "is_active", "created_at"]
     search_fields = ["name", "type_workout__name_workout"]
     list_filter = ["type_workout", "is_active", "created_at"]
     fieldsets = ((None, {"fields": ("name", "type_workout", "duration", "is_active")}),)
-    inlines = [TemplateExerciseInline]
+    inlines = [TemplateStrengthExerciseInline, TemplateCardioExerciseInline]
