@@ -264,11 +264,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let startDate;
 
         switch(range) {
-            case '7days':
-                const sevenDaysAgo = new Date(today);
-                sevenDaysAgo.setDate(today.getDate() - 7);
-                startDate = formatDate(sevenDaysAgo);
-                break;
             case '1month':
                 const oneMonthAgo = new Date(today);
                 oneMonthAgo.setMonth(today.getMonth() - 1);
