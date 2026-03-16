@@ -360,7 +360,7 @@ function applyExerciseLimits(workoutItem) {
     const translations = JSON.parse(document.getElementById('workout-translations').textContent);
     const btn = document.createElement('button');
     btn.className = 'show-more-exercises-btn cliquable';
-    btn.textContent = '+ ' + hiddenCount + ' ' + (translations.more_exercises || 'more exercises');
+    btn.textContent = '+ ' + hiddenCount + ' ' + (translations.more_exercises);
     btn.addEventListener('click', function () {
         toHide.forEach(el => el.classList.remove('exercise-hidden'));
         btn.remove();

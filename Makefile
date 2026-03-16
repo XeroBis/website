@@ -64,4 +64,4 @@ mess:
 	uv run python manage.py makemessages -l fr
 
 comp:
-	uv run python manage.py compilemessages --exclude .venv
+	uv run python manage.py compilemessages -l en -l fr --ignore=.venv

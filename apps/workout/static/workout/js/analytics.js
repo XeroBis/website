@@ -42,11 +42,30 @@ async function renderMuscleHeatmap(muscleData) {
 
     const maxCount = Math.max(...muscleData.map(m => m.count));
 
+    // 5-stop color gradient: very low → low → mid → high → very high
+    function intensityToColor(t) {
+        // stops: #fef9c3 → #fde68a → #f97316 → #dc2626 → #7f1d1d
+        const stops = [
+            [255, 255, 204],  // 0.00 — #FFFFCC
+            [255, 237, 160],  // 0.25 — #FFEDA0
+            [254, 178,  76],  // 0.50 — #FEB24C
+            [240,  59,  32],  // 0.75 — #F03B20
+            [189,   0,  38],  // 1.00 — #BD0026
+        ];
+        const scaled = t * (stops.length - 1);
+        const lo = Math.floor(scaled);
+        const hi = Math.min(lo + 1, stops.length - 1);
+        const s = scaled - lo;
+        const r = Math.round(stops[lo][0] + s * (stops[hi][0] - stops[lo][0]));
+        const g = Math.round(stops[lo][1] + s * (stops[hi][1] - stops[lo][1]));
+        const b = Math.round(stops[lo][2] + s * (stops[hi][2] - stops[lo][2]));
+        return `rgb(${r},${g},${b})`;
+    }
+
     muscleData.forEach(function(item) {
         const svgId = muscleNameToSvgId(item.muscle);
         const intensity = item.count / maxCount;
-        const opacity = 0.25 + 0.75 * intensity;
-        const color = 'rgba(210, 30, 30, ' + opacity + ')';
+        const color = intensityToColor(Math.max(0.15, intensity));
 
         [frontDiv, backDiv].forEach(function(div) {
             const el = div.querySelector('#' + CSS.escape(svgId));

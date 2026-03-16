@@ -275,7 +275,7 @@ def redirect_workout(request):
             "duration_min": gettext("Duration (min)"),
             "distance_m": gettext("Distance (m)"),
             "edit": gettext("Edit"),
-            "more_exercises": gettext("more exercises"),
+            "more_exercises": gettext("exercises"),
         },
     }
     return render(request, "workout.html", context)
