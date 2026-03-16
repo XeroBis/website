@@ -443,6 +443,10 @@ function initializeCharts() {
             options: {
                 ...commonOptions,
                 maintainAspectRatio: false,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false },
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -607,6 +611,10 @@ function initializeCharts() {
             options: {
                 ...commonOptions,
                 maintainAspectRatio: false,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false },
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
