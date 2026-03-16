@@ -1159,6 +1159,7 @@ def clear_data(request):
 def get_dashboard_data(request):
     """Get dashboard statistics filtered by date range (AJAX endpoint)"""
     from django.db.models import Count, F, Sum
+    from django.db.models.functions import ExtractWeekDay
 
     # Get date filter parameters
     start_date = request.GET.get("start_date", "")
@@ -1179,6 +1180,15 @@ def get_dashboard_data(request):
     )
 
     total_workouts = filtered_workouts.count()
+
+    # Workouts by weekday (Mon=0 … Sun=6)
+    raw_weekday = list(
+        filtered_workouts.annotate(wd=ExtractWeekDay("date"))
+        .values("wd")
+        .annotate(count=Count("id"))
+    )
+    weekday_map = {((r["wd"] - 2) % 7): r["count"] for r in raw_weekday}
+    workouts_by_weekday = [{"day": d, "count": weekday_map.get(d, 0)} for d in range(7)]
 
     # Get exercise IDs from filtered workouts
     if workout_filter:
@@ -1209,6 +1219,18 @@ def get_dashboard_data(request):
             .annotate(count=Count("id"))
             .order_by("-count")[:5]
         )
+
+        # Muscle group distribution with date filter
+        muscle_group_distribution = [
+            {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
+            for r in StrengthSeriesLog.objects.filter(
+                workout_id__in=filtered_workout_ids
+            )
+            .values("exercise__muscle_groups__name")
+            .annotate(count=Count("id"))
+            .exclude(exercise__muscle_groups__name=None)
+            .order_by("-count")
+        ]
     else:
         total_exercises = OneExercice.objects.count()
 
@@ -1234,6 +1256,15 @@ def get_dashboard_data(request):
             .order_by("-count")[:5]
         )
 
+        # Muscle group distribution (all data)
+        muscle_group_distribution = [
+            {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
+            for r in StrengthSeriesLog.objects.values("exercise__muscle_groups__name")
+            .annotate(count=Count("id"))
+            .exclude(exercise__muscle_groups__name=None)
+            .order_by("-count")
+        ]
+
     # Weekly workouts trend - use date filter for the range if provided
     if start_date and end_date:
         # Calculate weeks between start and end date
@@ -1252,6 +1283,7 @@ def get_dashboard_data(request):
         )  # Show all weeks including partial current week
 
         weekly_workouts = []
+        volume_per_week = []
         for week in range(num_weeks):
             week_start = start_dt + timedelta(weeks=week)
             week_end = min(week_start + timedelta(days=6), end_dt)
@@ -1262,6 +1294,19 @@ def get_dashboard_data(request):
                 {
                     "week": week + 1,
                     "count": count,
+                    "start": week_start.strftime("%d/%m/%Y"),
+                }
+            )
+            vol = (
+                StrengthSeriesLog.objects.filter(
+                    workout__date__gte=week_start, workout__date__lte=week_end
+                ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
+                or 0
+            )
+            volume_per_week.append(
+                {
+                    "week": week + 1,
+                    "volume": int(vol),
                     "start": week_start.strftime("%d/%m/%Y"),
                 }
             )
@@ -1280,6 +1325,7 @@ def get_dashboard_data(request):
             num_weeks = max(total_days // 7 + 1, 1)
 
             weekly_workouts = []
+            volume_per_week = []
             for week in range(num_weeks):
                 week_start = start_dt + timedelta(weeks=week)
                 week_end = min(week_start + timedelta(days=6), end_dt)
@@ -1293,9 +1339,23 @@ def get_dashboard_data(request):
                         "start": week_start.strftime("%d/%m/%Y"),
                     }
                 )
+                vol = (
+                    StrengthSeriesLog.objects.filter(
+                        workout__date__gte=week_start, workout__date__lte=week_end
+                    ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
+                    or 0
+                )
+                volume_per_week.append(
+                    {
+                        "week": week + 1,
+                        "volume": int(vol),
+                        "start": week_start.strftime("%d/%m/%Y"),
+                    }
+                )
         else:
             # No workouts yet
             weekly_workouts = []
+            volume_per_week = []
 
     return JsonResponse(
         {
@@ -1305,6 +1365,9 @@ def get_dashboard_data(request):
             "workouts_by_type": workouts_by_type,
             "weekly_workouts": weekly_workouts,
             "top_exercises": top_exercises,
+            "workouts_by_weekday": workouts_by_weekday,
+            "volume_per_week": volume_per_week,
+            "muscle_group_distribution": muscle_group_distribution,
         }
     )
 
@@ -1464,6 +1527,7 @@ def analytics(request):
     from collections import defaultdict
 
     from django.db.models import Count, F, Sum
+    from django.db.models.functions import ExtractWeekDay
 
     lang = translation.get_language()
 
@@ -1529,6 +1593,24 @@ def analytics(request):
     # Total workouts for initial load
     total_workouts = Workout.objects.count()
 
+    # Workouts by weekday (Mon=0 … Sun=6)
+    raw_weekday = list(
+        Workout.objects.annotate(wd=ExtractWeekDay("date"))
+        .values("wd")
+        .annotate(count=Count("id"))
+    )
+    weekday_map = {((r["wd"] - 2) % 7): r["count"] for r in raw_weekday}
+    workouts_by_weekday = [{"day": d, "count": weekday_map.get(d, 0)} for d in range(7)]
+
+    # Muscle group distribution (all-time)
+    muscle_group_distribution = [
+        {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
+        for r in StrengthSeriesLog.objects.values("exercise__muscle_groups__name")
+        .annotate(count=Count("id"))
+        .exclude(exercise__muscle_groups__name=None)
+        .order_by("-count")
+    ]
+
     # Weekly workouts trend - calculate from earliest workout to now
     earliest_workout = Workout.objects.order_by("date").first()
     if earliest_workout:
@@ -1538,6 +1620,7 @@ def analytics(request):
         num_weeks = max(total_days // 7, 1)
 
         weekly_workouts = []
+        volume_per_week = []
         for week in range(num_weeks):
             week_start = start_dt + timedelta(weeks=week)
             week_end = min(week_start + timedelta(days=6), end_dt)
@@ -1551,9 +1634,23 @@ def analytics(request):
                     "start": week_start.strftime("%d/%m/%Y"),
                 }
             )
+            vol = (
+                StrengthSeriesLog.objects.filter(
+                    workout__date__gte=week_start, workout__date__lte=week_end
+                ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
+                or 0
+            )
+            volume_per_week.append(
+                {
+                    "week": week + 1,
+                    "volume": int(vol),
+                    "start": week_start.strftime("%d/%m/%Y"),
+                }
+            )
     else:
         # No workouts yet
         weekly_workouts = []
+        volume_per_week = []
 
     # Personal Records (calculated at runtime)
     personal_records = calculate_personal_records()
@@ -1615,6 +1712,9 @@ def analytics(request):
         "weekly_workouts": json.dumps(weekly_workouts),
         "personal_records": personal_records,
         "top_exercises": json.dumps(top_exercises),
+        "workouts_by_weekday": json.dumps(workouts_by_weekday),
+        "volume_per_week": json.dumps(volume_per_week),
+        "muscle_group_distribution": json.dumps(muscle_group_distribution),
         "translations": {
             "analytics": gettext("Analytics"),
             "calendar": gettext("Calendar"),

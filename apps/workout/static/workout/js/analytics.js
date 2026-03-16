@@ -1,5 +1,64 @@
 // Analytics Page JavaScript
 
+// Muscle heatmap helpers
+let analyticsFrontSvg = null;
+let analyticsBackSvg = null;
+
+function muscleNameToSvgId(muscleName) {
+    const id = muscleName.toLowerCase().trim();
+    if (id === 'lower back') return 'lowerback';
+    if (id === 'traps middle') return 'traps-middle';
+    if (id === 'rear shoulder' || id === 'rear shoulders') return 'rear-shoulders';
+    if (id === 'front shoulders') return 'front-shoulders';
+    if (id === 'hamstring') return 'hamstrings';
+    return id;
+}
+
+async function loadAnalyticsSvgs() {
+    if (analyticsFrontSvg && analyticsBackSvg) return;
+    const [frontRes, backRes] = await Promise.all([
+        fetch(svgUrls.front),
+        fetch(svgUrls.back)
+    ]);
+    analyticsFrontSvg = await frontRes.text();
+    analyticsBackSvg = await backRes.text();
+}
+
+async function renderMuscleHeatmap(muscleData) {
+    const container = document.getElementById('muscleGroupHeatmap');
+    if (!container) return;
+
+    if (!muscleData || muscleData.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:var(--color-text-muted);padding:40px 0">No strength data</p>';
+        return;
+    }
+
+    await loadAnalyticsSvgs();
+
+    const frontDiv = document.getElementById('analytics-heatmap-front');
+    const backDiv = document.getElementById('analytics-heatmap-back');
+    frontDiv.innerHTML = analyticsFrontSvg;
+    backDiv.innerHTML = analyticsBackSvg;
+
+    const maxCount = Math.max(...muscleData.map(m => m.count));
+
+    muscleData.forEach(function(item) {
+        const svgId = muscleNameToSvgId(item.muscle);
+        const intensity = item.count / maxCount;
+        const opacity = 0.25 + 0.75 * intensity;
+        const color = 'rgba(210, 30, 30, ' + opacity + ')';
+
+        [frontDiv, backDiv].forEach(function(div) {
+            const el = div.querySelector('#' + CSS.escape(svgId));
+            if (el) {
+                el.querySelectorAll('path').forEach(function(path) {
+                    path.style.fill = color;
+                });
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Tab switching functionality
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -261,11 +320,17 @@ document.addEventListener('DOMContentLoaded', function() {
             window.weeklyWorkouts = data.weekly_workouts;
             window.workoutsByType = data.workouts_by_type;
             window.topExercises = data.top_exercises;
+            window.workoutsByWeekday = data.workouts_by_weekday;
+            window.volumePerWeek = data.volume_per_week;
+            window.muscleGroupDistribution = data.muscle_group_distribution;
 
             // Destroy existing charts
             if (window.weeklyChart) window.weeklyChart.destroy();
             if (window.typeChart) window.typeChart.destroy();
             if (window.exercisesChart) window.exercisesChart.destroy();
+            if (window.weekdayChart) window.weekdayChart.destroy();
+            if (window.volumeChart) window.volumeChart.destroy();
+            renderMuscleHeatmap(data.muscle_group_distribution);
 
             // Reinitialize charts with new data
             window.chartsInitialized = false;
@@ -492,6 +557,73 @@ function initializeCharts() {
             }
         });
     }
+
+    // Weekday Heatmap Chart
+    const weekdayData = window.workoutsByWeekday || workoutsByWeekday;
+    const weekdayCtx = document.getElementById('weekdayHeatmapChart');
+    if (weekdayCtx) {
+        window.weekdayChart = new Chart(weekdayCtx, {
+            type: 'bar',
+            data: {
+                labels: chartTranslations.dayNames,
+                datasets: [{
+                    label: chartTranslations.workoutsByDay,
+                    data: weekdayData.map(d => d.count),
+                    backgroundColor: weekdayData.map(d => `rgba(102, 126, 234, ${d.count > 0 ? Math.max(0.3, Math.min(1, d.count / Math.max(...weekdayData.map(x => x.count), 1))) : 0.1})`),
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                ...commonOptions,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Volume Per Week Chart
+    const volumeData = window.volumePerWeek || volumePerWeek;
+    const volumeCtx = document.getElementById('volumePerWeekChart');
+    if (volumeCtx) {
+        window.volumeChart = new Chart(volumeCtx, {
+            type: 'line',
+            data: {
+                labels: volumeData.map(v => v.start),
+                datasets: [{
+                    label: chartTranslations.volumePerWeek,
+                    data: volumeData.map(v => v.volume),
+                    borderColor: 'rgb(72, 201, 176)',
+                    backgroundColor: 'rgba(72, 201, 176, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                }]
+            },
+            options: {
+                ...commonOptions,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    }
+                }
+            }
+        });
+    }
+
+    // Muscle Group Distribution — SVG body heatmap
+    const muscleData = window.muscleGroupDistribution || muscleGroupDistribution;
+    renderMuscleHeatmap(muscleData);
 }
 
 // Export function for external use
