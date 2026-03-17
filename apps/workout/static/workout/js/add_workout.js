@@ -190,7 +190,7 @@ function renumberExercises() {
                             const inputs = seriesItem.querySelectorAll('input[type="number"]');
                             inputs.forEach(input => {
                                 const nameParts = input.name.split('_');
-                                const fieldName = nameParts.slice(3).join('_');
+                                const fieldName = nameParts.slice(4).join('_');
                                 input.name = `exercise_${newIndex}_series_${seriesNumber}_${fieldName}`;
                             });
 
