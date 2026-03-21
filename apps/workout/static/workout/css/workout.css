@@ -266,7 +266,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 10px;
+    padding-bottom: 20px;
     border-bottom: 3px solid var(--color-accent-primary);
 }
 
@@ -299,8 +299,9 @@
     color: var(--color-accent-primary);
     font-size: 18px;
     font-weight: bold;
-    padding: 12px 8px;
-    margin: 0;
+    padding-bottom: 12px;
+    padding-left: 20px;
+    margin-bottom: 8px;
     cursor: pointer;
     transition: color 0.2s ease;
 }
@@ -1275,7 +1276,9 @@ margin: 20px auto;
     margin-bottom: 30px;
     border: 2px solid var(--color-accent-primary);
     border-radius: 8px;
-    padding: 20px;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
     background: var(--color-bg-primary);
 }
 

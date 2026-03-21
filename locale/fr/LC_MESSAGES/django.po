@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Portfolio 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 19:21+0100\n"
+"POT-Creation-Date: 2026-03-21 12:32+0100\n"
 "PO-Revision-Date: 2025-10-17 23:30+0200\n"
 "Last-Translator: Claude Code\n"
 "Language-Team: French\n"
@@ -35,7 +35,7 @@ msgstr "+ Séance"
 
 #: apps/home/templates/home/header.html:22
 msgid "Exercises"
-msgstr "Exercices"
+msgstr ""
 
 #: apps/home/templates/home/header.html:23 apps/workout/views.py:1719
 msgid "Analytics"
@@ -131,7 +131,7 @@ msgstr "Ajouter un exercice"
 
 #: apps/workout/templates/workout/add_workout.html:61
 #: apps/workout/templates/workout/edit_workout.html:40
-#: apps/workout/templates/workout/workout.html:178
+#: apps/workout/templates/workout/workout.html:163
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -232,7 +232,7 @@ msgstr "Total des Séances"
 
 #: apps/workout/templates/workout/analytics.html:103 apps/workout/views.py:1724
 msgid "Total Exercises"
-msgstr "Total des Exercices"
+msgstr "Total des Exercises"
 
 #: apps/workout/templates/workout/analytics.html:107 apps/workout/views.py:1725
 msgid "Total Volume"
@@ -248,7 +248,7 @@ msgstr "Séances par Type"
 
 #: apps/workout/templates/workout/analytics.html:127
 msgid "Top 5 Exercises"
-msgstr "Top 5 des Exercices"
+msgstr "Top 5 des Exercises"
 
 #: apps/workout/templates/workout/analytics.html:133
 msgid "Workouts by Day of Week"
@@ -323,7 +323,7 @@ msgstr ""
 #: apps/workout/templates/workout/exercise_library.html:9
 #: apps/workout/views.py:1058
 msgid "Exercise Library"
-msgstr "Exercices"
+msgstr "Exercises"
 
 #: apps/workout/templates/workout/exercise_library.html:11
 msgid "Go to Workout"
@@ -423,7 +423,7 @@ msgstr "Exercice :"
 
 #: apps/workout/templates/workout/workout.html:33
 msgid "All Exercises"
-msgstr "Tous les exercices"
+msgstr "Tous les exercises"
 
 #: apps/workout/templates/workout/workout.html:42
 msgid "Clear Filters"
@@ -437,60 +437,52 @@ msgstr "Modifier"
 msgid "Template"
 msgstr "Template"
 
-#: apps/workout/templates/workout/workout.html:77
-msgid "Strength"
-msgstr ""
-
-#: apps/workout/templates/workout/workout.html:85
-msgid "Cardio"
-msgstr ""
-
-#: apps/workout/templates/workout/workout.html:106
-#: apps/workout/templates/workout/workout.html:133 apps/workout/views.py:272
+#: apps/workout/templates/workout/workout.html:86
+#: apps/workout/templates/workout/workout.html:116 apps/workout/views.py:272
 #: apps/workout/views.py:450 apps/workout/views.py:805
 msgid "Series"
 msgstr "Séries"
 
-#: apps/workout/templates/workout/workout.html:107 apps/workout/views.py:273
+#: apps/workout/templates/workout/workout.html:87 apps/workout/views.py:273
 #: apps/workout/views.py:451 apps/workout/views.py:806
 msgid "Reps"
 msgstr "Reps"
 
-#: apps/workout/templates/workout/workout.html:108 apps/workout/views.py:274
+#: apps/workout/templates/workout/workout.html:88 apps/workout/views.py:274
 #: apps/workout/views.py:453 apps/workout/views.py:808
 msgid "Weight (kg)"
 msgstr "Poids (kg)"
 
-#: apps/workout/templates/workout/workout.html:134
+#: apps/workout/templates/workout/workout.html:117
 msgid "Duration (s)"
 msgstr "Durée (sec)"
 
-#: apps/workout/templates/workout/workout.html:135 apps/workout/views.py:276
+#: apps/workout/templates/workout/workout.html:118 apps/workout/views.py:276
 #: apps/workout/views.py:455 apps/workout/views.py:810
 msgid "Distance (m)"
 msgstr "Distance (m)"
 
-#: apps/workout/templates/workout/workout.html:158
+#: apps/workout/templates/workout/workout.html:143
 msgid "No workouts recorded."
 msgstr "Aucun workout enregistré."
 
-#: apps/workout/templates/workout/workout.html:165
+#: apps/workout/templates/workout/workout.html:150
 msgid "Load More"
 msgstr "Charger plus"
 
-#: apps/workout/templates/workout/workout.html:168
+#: apps/workout/templates/workout/workout.html:153
 msgid "Loading..."
 msgstr "Chargement..."
 
-#: apps/workout/templates/workout/workout.html:175
+#: apps/workout/templates/workout/workout.html:160
 msgid "Save as Template"
 msgstr "Enregistrer comme Template"
 
-#: apps/workout/templates/workout/workout.html:176
+#: apps/workout/templates/workout/workout.html:161
 msgid "Enter template name..."
 msgstr "Entrer le nom du modèle..."
 
-#: apps/workout/templates/workout/workout.html:179
+#: apps/workout/templates/workout/workout.html:164
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -504,7 +496,7 @@ msgstr "Durée (min)"
 
 #: apps/workout/views.py:278
 msgid "exercises"
-msgstr "exercices"
+msgstr ""
 
 #: apps/workout/views.py:452 apps/workout/views.py:807
 msgid "Repetitions"
@@ -576,25 +568,4 @@ msgstr "Tendance Hebdomadaire"
 
 #: apps/workout/views.py:1730
 msgid "Top Exercises"
-msgstr "Meilleurs Exercices"
-
-#~ msgid "Body Part Coverage"
-#~ msgstr "Répartition musculaire"
-
-#~ msgid "Muscle Group Distribution"
-#~ msgstr "Groupe de muscle"
-
-#~ msgid "more exercises"
-#~ msgstr "exercices"
-
-#~ msgid "My Resume"
-#~ msgstr "Mon CV"
-
-#~ msgid "click here to download pdf"
-#~ msgstr "cliquer ici pour le télécharger"
-
-#~ msgid "Last 7 Days"
-#~ msgstr "7 derniers jours"
-
-#~ msgid "Copy as Template"
-#~ msgstr "Copier comme template"
+msgstr "Meilleurs Exercises"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Portfolio 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 19:21+0100\n"
+"POT-Creation-Date: 2026-03-21 12:32+0100\n"
 "PO-Revision-Date: 2026-01-17 18:45+0100\n"
 "Last-Translator: Claude Code\n"
 "Language-Team: English\n"
@@ -129,7 +129,7 @@ msgstr "Add exercise"
 
 #: apps/workout/templates/workout/add_workout.html:61
 #: apps/workout/templates/workout/edit_workout.html:40
-#: apps/workout/templates/workout/workout.html:178
+#: apps/workout/templates/workout/workout.html:163
 msgid "Save"
 msgstr "Save"
 
@@ -449,62 +449,54 @@ msgstr "Edit"
 msgid "Template"
 msgstr "Template"
 
-#: apps/workout/templates/workout/workout.html:77
-msgid "Strength"
-msgstr ""
-
-#: apps/workout/templates/workout/workout.html:85
-msgid "Cardio"
-msgstr ""
-
-#: apps/workout/templates/workout/workout.html:106
-#: apps/workout/templates/workout/workout.html:133 apps/workout/views.py:272
+#: apps/workout/templates/workout/workout.html:86
+#: apps/workout/templates/workout/workout.html:116 apps/workout/views.py:272
 #: apps/workout/views.py:450 apps/workout/views.py:805
 msgid "Series"
 msgstr "Series"
 
-#: apps/workout/templates/workout/workout.html:107 apps/workout/views.py:273
+#: apps/workout/templates/workout/workout.html:87 apps/workout/views.py:273
 #: apps/workout/views.py:451 apps/workout/views.py:806
 msgid "Reps"
 msgstr "Reps"
 
-#: apps/workout/templates/workout/workout.html:108 apps/workout/views.py:274
+#: apps/workout/templates/workout/workout.html:88 apps/workout/views.py:274
 #: apps/workout/views.py:453 apps/workout/views.py:808
 msgid "Weight (kg)"
 msgstr "Weight (kg)"
 
-#: apps/workout/templates/workout/workout.html:134
+#: apps/workout/templates/workout/workout.html:117
 #, fuzzy
 #| msgid "Duration (sec)"
 msgid "Duration (s)"
 msgstr "Duration (sec)"
 
-#: apps/workout/templates/workout/workout.html:135 apps/workout/views.py:276
+#: apps/workout/templates/workout/workout.html:118 apps/workout/views.py:276
 #: apps/workout/views.py:455 apps/workout/views.py:810
 msgid "Distance (m)"
 msgstr "Distance (m)"
 
-#: apps/workout/templates/workout/workout.html:158
+#: apps/workout/templates/workout/workout.html:143
 msgid "No workouts recorded."
 msgstr "No workouts recorded."
 
-#: apps/workout/templates/workout/workout.html:165
+#: apps/workout/templates/workout/workout.html:150
 msgid "Load More"
 msgstr "Load More"
 
-#: apps/workout/templates/workout/workout.html:168
+#: apps/workout/templates/workout/workout.html:153
 msgid "Loading..."
 msgstr "Loading..."
 
-#: apps/workout/templates/workout/workout.html:175
+#: apps/workout/templates/workout/workout.html:160
 msgid "Save as Template"
 msgstr "Save as Template"
 
-#: apps/workout/templates/workout/workout.html:176
+#: apps/workout/templates/workout/workout.html:161
 msgid "Enter template name..."
 msgstr "Enter template name..."
 
-#: apps/workout/templates/workout/workout.html:179
+#: apps/workout/templates/workout/workout.html:164
 msgid "Cancel"
 msgstr "Cancel"
 
