@@ -75,17 +75,8 @@
         flex-direction: column;
     }
 
-    .exercise-body {
-        flex-direction: column;
-    }
-
-    .exercise-heatmap-inline {
-        flex-direction: row;
-        justify-content: center;
-    }
-
     .heatmap-svg {
-        width: 90px;
+        width: 70px;
     }
 
     .exercise-list {
@@ -107,6 +98,8 @@
 .exercise-body .series-table {
     flex: 1;
     min-width: 0;
+    width: 1%;
+    table-layout: fixed;
     margin-bottom: 16px;
 }
 
@@ -119,7 +112,7 @@
 }
 
 .exercise-heatmap-inline .heatmap-svg {
-    width: 90px;
+    width: 70px;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-secondary);
     border-radius: 4px;
@@ -355,7 +348,7 @@
 
 .series-table th,
 .series-table td {
-    padding: 8px 16px;
+    padding: 8px;
     text-align: left;
     line-height: 1.4;
 }
