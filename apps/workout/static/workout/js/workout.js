@@ -368,27 +368,6 @@ function applyExerciseLimits(workoutItem) {
     anchor.after(btn);
 }
 
-function v(n) { return '<span class="stat-value">' + n + '</span>'; }
-function sep() { return ' <span class="stat-sep">·</span> '; }
-
-function formatStats(workout) {
-    var s = workout.stats;
-    if (!s) return '';
-    var html = '';
-    if (s.has_strength) {
-        html += '<div class="stat-card">';
-        html += '<div class="stat-card-title">Strength</div>';
-        html += '<div class="stat-card-body">' + v(s.strength_exercise_count) + ' ex' + sep() + v(s.strength_sets) + ' sets' + sep() + v(s.strength_volume) + 'kg</div>';
-        html += '</div>';
-    }
-    if (s.has_cardio) {
-        html += '<div class="stat-card">';
-        html += '<div class="stat-card-title">Cardio</div>';
-        html += '<div class="stat-card-body">' + v(s.cardio_exercise_count) + ' ex' + sep() + v(s.cardio_duration_min) + 'min' + sep() + v(s.cardio_distance_km) + 'km</div>';
-        html += '</div>';
-    }
-    return html;
-}
 
 function groupExercisesByType(exercises) {
     var groups = [];
@@ -449,7 +428,6 @@ function buildWorkoutHTML(workoutDataArray, translations) {
         html += '<div class="workout-body">';
         html += '<div class="muscle-heatmap-container"></div>';
         html += '<div class="exercise-list">';
-        html += '<div class="workout-stats-row">' + formatStats(data.workout) + '</div>';
 
         if (data.exercises && data.exercises.length > 0) {
             var groups = groupExercisesByType(data.exercises);
