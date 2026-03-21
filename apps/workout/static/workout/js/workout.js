@@ -95,29 +95,17 @@ async function showMuscleModal(exerciseRow, muscleGroups) {
         });
 
         modalContent.innerHTML = `
-            <div class="muscle-modal-layout">
-                <div class="muscle-list-section">
-                    <h3>Muscle Groups</h3>
-                    <ul class="muscle-name-list"></ul>
+            <div class="muscle-svg-section">
+                <div class="svg-container">
+                    <h4>Front</h4>
+                    <div class="body-svg">${frontSvgContent}</div>
                 </div>
-                <div class="muscle-svg-section">
-                    <div class="svg-container">
-                        <h4>Front</h4>
-                        <div class="body-svg">${frontSvgContent}</div>
-                    </div>
-                    <div class="svg-container">
-                        <h4>Back</h4>
-                        <div class="body-svg">${backSvgContent}</div>
-                    </div>
+                <div class="svg-container">
+                    <h4>Back</h4>
+                    <div class="body-svg">${backSvgContent}</div>
                 </div>
             </div>
         `;
-        const ul = modalContent.querySelector('.muscle-name-list');
-        muscleList.forEach(muscle => {
-            const li = document.createElement('li');
-            li.textContent = muscle;
-            ul.appendChild(li);
-        });
 
         // Highlight muscles in both SVGs
         svgIdsToHighlight.forEach(id => {
@@ -212,11 +200,25 @@ function attachHoverListeners() {
     }
 
     if (isMobile) {
-        // On mobile: click on the section shows SVG modal
+        // On mobile: click on workout header shows workout-level heatmap modal
         workoutList.addEventListener('click', function(e) {
+            const header = e.target.closest('.workout-header');
+            if (header) {
+                const modal = document.getElementById('muscle-modal');
+                if (modal && modal.style.display === 'block') {
+                    hideMuscleModal();
+                } else {
+                    const workoutItem = header.closest('.workout-item');
+                    const muscleCountsJson = workoutItem ? workoutItem.getAttribute('data-muscle-counts') : null;
+                    if (muscleCountsJson) {
+                        showWorkoutHeatmapModal(header, muscleCountsJson);
+                    }
+                }
+                return;
+            }
             const section = e.target.closest('.exercise-name-section');
             if (section) {
-                handleNameClick.call(section, e);
+                handleToggleClickFromName.call(section, e);
             }
         });
     } else {
@@ -431,7 +433,6 @@ function buildWorkoutHTML(workoutDataArray, translations) {
         }
         html += '</div>';
         html += '<div class="workout-body">';
-        html += '<div class="muscle-heatmap-container"></div>';
         html += '<div class="exercise-list">';
 
         if (data.exercises && data.exercises.length > 0) {
@@ -494,30 +495,17 @@ async function showWorkoutHeatmapModal(headerEl, muscleCountsJson) {
     const maxCount = entries[0][1];
 
     modalContent.innerHTML = `
-        <div class="muscle-modal-layout">
-            <div class="muscle-list-section">
-                <h3>Muscle Groups</h3>
-                <ul class="muscle-name-list"></ul>
+        <div class="muscle-svg-section">
+            <div class="svg-container">
+                <h4>Front</h4>
+                <div class="body-svg">${frontSvgContent}</div>
             </div>
-            <div class="muscle-svg-section">
-                <div class="svg-container">
-                    <h4>Front</h4>
-                    <div class="body-svg">${frontSvgContent}</div>
-                </div>
-                <div class="svg-container">
-                    <h4>Back</h4>
-                    <div class="body-svg">${backSvgContent}</div>
-                </div>
+            <div class="svg-container">
+                <h4>Back</h4>
+                <div class="body-svg">${backSvgContent}</div>
             </div>
         </div>
     `;
-
-    const ul = modalContent.querySelector('.muscle-name-list');
-    entries.forEach(function(entry) {
-        const li = document.createElement('li');
-        li.textContent = entry[0] + ' (' + entry[1] + ')';
-        ul.appendChild(li);
-    });
 
     entries.forEach(function(entry) {
         var muscle = entry[0], count = entry[1];
@@ -536,22 +524,27 @@ async function showWorkoutHeatmapModal(headerEl, muscleCountsJson) {
 
     modal.style.display = 'block';
 
-    const rect = headerEl.getBoundingClientRect();
-    modal.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-    modal.style.left = rect.left + 'px';
-    modal.style.transform = 'none';
+    const backdrop = document.getElementById('muscle-modal-backdrop');
+    if (backdrop) {
+        backdrop.style.display = 'block';
+    }
 
-    requestAnimationFrame(function() {
-        const modalActualWidth = modal.offsetWidth;
-        if (rect.left + modalActualWidth > window.innerWidth - 20) {
-            modal.style.left = Math.max(10, window.innerWidth - modalActualWidth - 20) + 'px';
-        }
-    });
+    if (!isMobileDevice()) {
+        const rect = headerEl.getBoundingClientRect();
+        modal.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+        modal.style.left = rect.left + 'px';
+        modal.style.transform = 'none';
+
+        requestAnimationFrame(function() {
+            const modalActualWidth = modal.offsetWidth;
+            if (rect.left + modalActualWidth > window.innerWidth - 20) {
+                modal.style.left = Math.max(10, window.innerWidth - modalActualWidth - 20) + 'px';
+            }
+        });
+    }
 }
 
 async function applyExerciseHeatmaps(scope) {
-    if (isMobileDevice()) return;
-
     var containers = (scope || document).querySelectorAll('.exercise-heatmap-inline:not(.heatmap-rendered)');
     if (containers.length === 0) return;
 
@@ -593,57 +586,6 @@ async function applyExerciseHeatmaps(scope) {
     });
 }
 
-async function applyMuscleHeatmaps(scope) {
-    var containers = (scope || document).querySelectorAll('.muscle-heatmap-container:not(.heatmap-rendered)');
-    if (containers.length === 0) return;
-
-    await loadSvgContent();
-
-    containers.forEach(function(container) {
-        var workoutItem = container.closest('.workout-item');
-        if (!workoutItem) return;
-
-        var raw = workoutItem.getAttribute('data-muscle-counts');
-        if (!raw) return;
-        var muscleCounts;
-        try { muscleCounts = JSON.parse(raw); } catch(e) { return; }
-
-        var entries = Object.entries(muscleCounts).filter(function(e) { return e[1] > 0; });
-        if (entries.length === 0) return;
-
-        var maxCount = Math.max.apply(null, entries.map(function(e) { return e[1]; }));
-
-        var frontDiv = document.createElement('div');
-        frontDiv.className = 'heatmap-svg';
-        frontDiv.innerHTML = frontSvgContent;
-
-        var backDiv = document.createElement('div');
-        backDiv.className = 'heatmap-svg';
-        backDiv.innerHTML = backSvgContent;
-
-        entries.forEach(function(entry) {
-            var muscle = entry[0], count = entry[1];
-            var svgId = muscleNameToSvgId(muscle);
-            var intensity = count / maxCount;
-            var opacity = 0.25 + 0.75 * intensity;
-            var color = 'rgba(210, 30, 30, ' + opacity + ')';
-
-            [frontDiv, backDiv].forEach(function(div) {
-                var el = div.querySelector('#' + CSS.escape(svgId));
-                if (el) {
-                    el.querySelectorAll('path').forEach(function(path) {
-                        path.style.fill = color;
-                    });
-                }
-            });
-        });
-
-        container.innerHTML = '';
-        container.appendChild(frontDiv);
-        container.appendChild(backDiv);
-        container.classList.add('heatmap-rendered');
-    });
-}
 
 function loadMore() {
     if (isLoading || !hasMoreContent) return;
@@ -681,7 +623,6 @@ function loadMore() {
                 attachHoverListeners();
                 attachToggleListeners();
                 updateStickyBanner();
-                applyMuscleHeatmaps();
                 applyExerciseHeatmaps();
             }
 
@@ -748,7 +689,6 @@ function applyFilters(e) {
                 document.querySelectorAll('#workout-list .workout-item').forEach(applyExerciseLimits);
                 attachHoverListeners();
                 attachToggleListeners();
-                applyMuscleHeatmaps();
                 applyExerciseHeatmaps();
             } else {
                 $('#workout-list').html('<p>No workouts recorded.</p>');
@@ -959,7 +899,6 @@ $(document).ready(function() {
     // Apply exercise limits to initial workout items
     document.querySelectorAll('.workout-item').forEach(applyExerciseLimits);
 
-    applyMuscleHeatmaps();
     applyExerciseHeatmaps();
 
     // Initialize lastRenderedMonthYear from existing separators (for load-more continuity)
