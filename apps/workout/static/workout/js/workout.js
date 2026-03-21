@@ -200,18 +200,18 @@ function attachHoverListeners() {
     }
 
     if (isMobile) {
-        // On mobile: click on workout header shows workout-level heatmap modal
+        // On mobile: click on workout_date_type shows workout-level heatmap modal
         workoutList.addEventListener('click', function(e) {
-            const header = e.target.closest('.workout-header');
-            if (header) {
+            const dateType = e.target.closest('.workout_date_type');
+            if (dateType) {
                 const modal = document.getElementById('muscle-modal');
                 if (modal && modal.style.display === 'block') {
                     hideMuscleModal();
                 } else {
-                    const workoutItem = header.closest('.workout-item');
+                    const workoutItem = dateType.closest('.workout-item');
                     const muscleCountsJson = workoutItem ? workoutItem.getAttribute('data-muscle-counts') : null;
                     if (muscleCountsJson) {
-                        showWorkoutHeatmapModal(header, muscleCountsJson);
+                        showWorkoutHeatmapModal(dateType, muscleCountsJson);
                     }
                 }
                 return;
@@ -222,21 +222,21 @@ function attachHoverListeners() {
             }
         });
     } else {
-        // On desktop: hover on workout header shows workout-level heatmap modal
+        // On desktop: hover on workout_date_type shows workout-level heatmap modal
         workoutList.addEventListener('mouseenter', function(e) {
-            const header = e.target.closest('.workout-header');
-            if (header) {
-                const workoutItem = header.closest('.workout-item');
+            const dateType = e.target.closest('.workout_date_type');
+            if (dateType) {
+                const workoutItem = dateType.closest('.workout-item');
                 const muscleCountsJson = workoutItem ? workoutItem.getAttribute('data-muscle-counts') : null;
                 if (muscleCountsJson) {
-                    showWorkoutHeatmapModal(header, muscleCountsJson);
+                    showWorkoutHeatmapModal(dateType, muscleCountsJson);
                 }
             }
         }, true);
 
         workoutList.addEventListener('mouseleave', function(e) {
-            const header = e.target.closest('.workout-header');
-            if (header) {
+            const dateType = e.target.closest('.workout_date_type');
+            if (dateType) {
                 hideMuscleModal();
             }
         }, true);
