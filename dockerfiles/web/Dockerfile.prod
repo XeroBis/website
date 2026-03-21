@@ -39,4 +39,4 @@ RUN apt-get update && apt-get install -y gettext
 
 USER appuser
 
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py compilemessages -l en -l fr --ignore=.venv && python manage.py migrate && python manage.py ensure_superuser && gunicorn --bind 0.0.0.0:8000 --workers 3 mysite.wsgi:application"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput --clear && python manage.py compilemessages -l en -l fr --ignore=.venv && python manage.py migrate && python manage.py ensure_superuser && gunicorn --bind 0.0.0.0:8000 --workers 3 mysite.wsgi:application"]
