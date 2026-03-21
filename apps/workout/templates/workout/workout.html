@@ -70,26 +70,6 @@
                 <div class="workout-body">
                     <div class="muscle-heatmap-container"></div>
                     <div class="exercise-list">
-                    <div class="workout-stats-row">
-                        {% with s=data.workout.stats %}
-                        {% if s.has_strength %}
-                        <div class="stat-card">
-                            <div class="stat-card-title">{% trans "Strength" %}</div>
-                            <div class="stat-card-body">
-                                <span class="stat-value">{{ s.strength_exercise_count }}</span> ex <span class="stat-sep">·</span> <span class="stat-value">{{ s.strength_sets }}</span> sets <span class="stat-sep">·</span> <span class="stat-value">{{ s.strength_volume }}</span>kg
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if s.has_cardio %}
-                        <div class="stat-card">
-                            <div class="stat-card-title">{% trans "Cardio" %}</div>
-                            <div class="stat-card-body">
-                                <span class="stat-value">{{ s.cardio_exercise_count }}</span> ex <span class="stat-sep">·</span> <span class="stat-value">{{ s.cardio_duration_min }}</span>min <span class="stat-sep">·</span> <span class="stat-value">{{ s.cardio_distance_km }}</span>km
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% endwith %}
-                    </div>
                     {% if data.exercises %}
                         {% regroup data.exercises by exercise_type as exercises_by_type %}
                         {% for type_group in exercises_by_type %}
