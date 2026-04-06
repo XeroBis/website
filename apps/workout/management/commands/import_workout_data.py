@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 
 from apps.workout.models import (
     CardioSeriesLog,
@@ -64,34 +65,37 @@ class Command(BaseCommand):
                 data["cardio_exercise_logs"]
             )
 
-        # Build ID→object maps as we import each layer so subsequent
-        # layers can resolve cross-references without relying on DB IDs.
-        type_workout_map = self.import_type_workouts(data.get("type_workouts", []))
-        muscle_group_map = self.import_muscle_groups(data.get("muscle_groups", []))
-        equipment_map = self.import_equipment(data.get("equipment", []))
-        exercise_map = self.import_exercises(
-            data.get("exercises", []), muscle_group_map, equipment_map
-        )
-        workout_map = self.import_workouts(data.get("workouts", []), type_workout_map)
-        self.import_strength_series_logs(strength_series, exercise_map, workout_map)
-        self.import_cardio_series_logs(cardio_series, exercise_map, workout_map)
-        self.import_one_exercices(
-            data.get("one_exercices", []),
-            exercise_map,
-            workout_map,
-        )
-        template_map = self.import_workout_templates(
-            data.get("workout_templates", []), type_workout_map
-        )
-        template_exercise_map = self.import_template_exercises(
-            data.get("template_exercises", []), template_map, exercise_map
-        )
-        self.import_template_strength_series(
-            data.get("template_strength_series", []), template_exercise_map
-        )
-        self.import_template_cardio_series(
-            data.get("template_cardio_series", []), template_exercise_map
-        )
+        with transaction.atomic():
+            # Build ID→object maps as we import each layer so subsequent
+            # layers can resolve cross-references without relying on DB IDs.
+            type_workout_map = self.import_type_workouts(data.get("type_workouts", []))
+            muscle_group_map = self.import_muscle_groups(data.get("muscle_groups", []))
+            equipment_map = self.import_equipment(data.get("equipment", []))
+            exercise_map = self.import_exercises(
+                data.get("exercises", []), muscle_group_map, equipment_map
+            )
+            workout_map = self.import_workouts(
+                data.get("workouts", []), type_workout_map
+            )
+            self.import_strength_series_logs(strength_series, exercise_map, workout_map)
+            self.import_cardio_series_logs(cardio_series, exercise_map, workout_map)
+            self.import_one_exercices(
+                data.get("one_exercices", []),
+                exercise_map,
+                workout_map,
+            )
+            template_map = self.import_workout_templates(
+                data.get("workout_templates", []), type_workout_map
+            )
+            template_exercise_map = self.import_template_exercises(
+                data.get("template_exercises", []), template_map, exercise_map
+            )
+            self.import_template_strength_series(
+                data.get("template_strength_series", []), template_exercise_map
+            )
+            self.import_template_cardio_series(
+                data.get("template_cardio_series", []), template_exercise_map
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
