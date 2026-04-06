@@ -8,15 +8,26 @@
     {% include "home/header.html" %}
     <div id="month-sticky-banner"></div>
     <div class="container_workout">
-        <h1 id="l_workout">
-            {% trans "Workout Sessions" %}
-        </h1>
+        <h1 id="l_workout">{% trans "Workout Sessions" %}</h1>
         {% if user.is_authenticated %}
+        {% if is_own_workouts %}
         <button class="cliquable button_workout new_workout" onclick="window.location.href='/workout/add_workout/';">{% trans "+ Session" %}</button>
+        {% endif %}
 
         <div id="filter-section" class="filter-container">
             <h3>{% trans "Filter Workouts" %}</h3>
             <form id="filter-form" method="GET" action="">
+                {% if all_users|length > 1 %}
+                <div class="filter-group">
+                    <label for="user-switcher-select">{% trans "User:" %}</label>
+                    <select id="user-switcher-select" name="view_user">
+                        {% for uname in all_users %}
+                        <option value="{{ uname }}" {% if uname == view_username %}selected{% endif %}>{{ uname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
                 <div class="filter-group">
                     <label for="workout-type-filter">{% trans "Workout Type:" %}</label>
                     <select id="workout-type-filter" name="workout_type">
@@ -58,7 +69,7 @@
                         - {{ data.workout.duration|hours_minutes }}
                         {% endif %}
                     </h2>
-                    {% if user.is_authenticated %}
+                    {% if is_own_workouts %}
                     <div class="workout-actions" style="display: flex; gap: 10px;">
                         <a href="/workout/edit_workout/{{ data.workout.id }}/">
                             <button class="cliquable button_workout">{% trans "Edit" %}</button>

@@ -579,10 +579,15 @@ function loadMore() {
     $('#load-more').hide();
 
     // Get current filter parameters from the URL
-    var workoutType = new URLSearchParams(window.location.search).get('workout_type') || '';
-    var exercise = new URLSearchParams(window.location.search).get('exercise') || '';
+    var params = new URLSearchParams(window.location.search);
+    var workoutType = params.get('workout_type') || '';
+    var exercise = params.get('exercise') || '';
+    var viewUser = params.get('view_user') || '';
 
     var url = "/workout/?page=" + currentPage;
+    if (viewUser) {
+        url += "&view_user=" + encodeURIComponent(viewUser);
+    }
     if (workoutType) {
         url += "&workout_type=" + encodeURIComponent(workoutType);
     }
@@ -637,6 +642,7 @@ function applyFilters(e) {
     // Get filter values
     var workoutType = $('#workout-type-filter').val();
     var exercise = $('#exercise-filter').val();
+    var viewUser = $('#user-switcher-select').val();
 
     // Reset pagination
     currentPage = 2;
@@ -644,12 +650,18 @@ function applyFilters(e) {
 
     // Build URL with filters
     var url = "/workout/?page=1";
+    if (viewUser) {
+        url += "&view_user=" + encodeURIComponent(viewUser);
+    }
     if (workoutType) {
         url += "&workout_type=" + encodeURIComponent(workoutType);
     }
     if (exercise) {
         url += "&exercise=" + encodeURIComponent(exercise);
     }
+
+    // Update browser URL so loadMore stays in sync
+    history.replaceState(null, '', url.replace('page=1', 'page=1'));
 
     // Show loading indicator
     $('#loading-indicator').show();
@@ -834,12 +846,16 @@ $(document).ready(function() {
     // Handle filter changes - apply filters after delay
     $('#workout-type-filter').on('change', scheduleFilterApplication);
     $('#exercise-filter').on('change', scheduleFilterApplication);
+    $('#user-switcher-select').on('change', function() {
+        if (filterDebounceTimer) clearTimeout(filterDebounceTimer);
+        applyFilters();
+    });
 
     // Handle clear filters button
     $('#clear-filters').on('click', function(e) {
         e.preventDefault();
 
-        // Reset filter inputs
+        // Reset filter inputs (keep user switcher as-is)
         $('#workout-type-filter').val('');
         $('#exercise-filter').val('');
 

@@ -191,17 +191,28 @@ def redirect_workout(request):
     from django.contrib.auth import get_user_model
 
     lang = translation.get_language()
+    User = get_user_model()
 
     # Get filter parameters
     workout_type_filter = request.GET.get("workout_type", "")
     exercise_filter = request.GET.get("exercise", "")
 
-    # Authenticated users see their own workouts; anonymous visitors see the superuser's
+    # Authenticated users can switch whose workouts they view via ?view_user=username.
+    # Anonymous visitors always see the superuser's workouts.
     if request.user.is_authenticated:
-        display_user = request.user
+        view_username = request.GET.get("view_user", "")
+        if view_username:
+            display_user = (
+                User.objects.filter(username=view_username).first() or request.user
+            )
+        else:
+            display_user = request.user
+        all_users = User.objects.order_by("username").values_list("username", flat=True)
     else:
-        User = get_user_model()
         display_user = User.objects.filter(is_superuser=True).first()
+        all_users = User.objects.values_list("username", flat=True).none()
+
+    is_own_workouts = request.user.is_authenticated and display_user == request.user
 
     # Base queryset
     workouts = (
@@ -366,6 +377,10 @@ def redirect_workout(request):
         "exercise_filter": exercise_filter,
         "all_workout_types": all_workout_types,
         "all_exercises": all_exercises,
+        "display_user": display_user,
+        "all_users": list(all_users),
+        "is_own_workouts": is_own_workouts,
+        "view_username": display_user.username if display_user else "",
         "translations": {
             "exercise": gettext("Exercise"),
             "exercice": gettext("Exercise"),
