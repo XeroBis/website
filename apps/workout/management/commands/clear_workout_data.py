@@ -5,9 +5,14 @@ from apps.workout.models import (
     Equipment,
     Exercice,
     MuscleGroup,
+    OneExercice,
     StrengthSeriesLog,
+    TemplateCardioSeries,
+    TemplateExercise,
+    TemplateStrengthSeries,
     TypeWorkout,
     Workout,
+    WorkoutTemplate,
 )
 
 
@@ -26,8 +31,13 @@ class Command(BaseCommand):
 
         # Count records before deletion
         counts = {
+            "TemplateStrengthSeries": TemplateStrengthSeries.objects.count(),
+            "TemplateCardioSeries": TemplateCardioSeries.objects.count(),
+            "TemplateExercise": TemplateExercise.objects.count(),
+            "WorkoutTemplate": WorkoutTemplate.objects.count(),
             "StrengthSeriesLog": StrengthSeriesLog.objects.count(),
             "CardioSeriesLog": CardioSeriesLog.objects.count(),
+            "OneExercice": OneExercice.objects.count(),
             "Workout": Workout.objects.count(),
             "Exercice": Exercice.objects.count(),
             "Equipment": Equipment.objects.count(),
@@ -54,8 +64,13 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING("Operation cancelled."))
                 return
 
+        TemplateStrengthSeries.objects.all().delete()
+        TemplateCardioSeries.objects.all().delete()
+        TemplateExercise.objects.all().delete()
+        WorkoutTemplate.objects.all().delete()
         StrengthSeriesLog.objects.all().delete()
         CardioSeriesLog.objects.all().delete()
+        OneExercice.objects.all().delete()
         Workout.objects.all().delete()
         Exercice.objects.all().delete()
         Equipment.objects.all().delete()
