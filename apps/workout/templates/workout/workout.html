@@ -171,5 +171,5 @@
         const isUserAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{% static 'js/workout.js' %}"></script>
+    <script type="module" src="{% static 'js/workout.js' %}"></script>
 </body>

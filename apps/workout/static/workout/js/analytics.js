@@ -1,18 +1,9 @@
 // Analytics Page JavaScript
+import { muscleNameToSvgId } from './muscle-utils.js';
 
 // Muscle heatmap helpers
 let analyticsFrontSvg = null;
 let analyticsBackSvg = null;
-
-function muscleNameToSvgId(muscleName) {
-    const id = muscleName.toLowerCase().trim();
-    if (id === 'lower back') return 'lowerback';
-    if (id === 'traps middle') return 'traps-middle';
-    if (id === 'rear shoulder' || id === 'rear shoulders') return 'rear-shoulders';
-    if (id === 'front shoulders') return 'front-shoulders';
-    if (id === 'hamstring') return 'hamstrings';
-    return id;
-}
 
 async function loadAnalyticsSvgs() {
     if (analyticsFrontSvg && analyticsBackSvg) return;
