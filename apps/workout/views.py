@@ -400,7 +400,7 @@ def add_workout(request):
             logger.error(f"Error creating workout: {str(e)}", exc_info=True)
             return redirect("/workout/add_workout/")
 
-        return redirect("/workout/")
+        return redirect("workout")
 
     context = {
         "page": "add_workout",
@@ -491,7 +491,7 @@ def edit_workout(request, workout_id):
     try:
         workout = Workout.objects.get(id=workout_id)
     except Workout.DoesNotExist:
-        return redirect("/workout/")
+        return redirect("workout")
 
     if request.method == "POST":
         try:
@@ -520,7 +520,7 @@ def edit_workout(request, workout_id):
             logger.error(f"Error updating workout: {str(e)}", exc_info=True)
             return redirect(f"/workout/edit_workout/{workout_id}/")
 
-        return redirect("/workout/")
+        return redirect("workout")
 
     # GET request - render edit form with existing data
     one_exercices = OneExercice.objects.filter(seance=workout).order_by("position")

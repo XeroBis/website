@@ -63,11 +63,9 @@ function loadTemplate() {
         .catch(error => console.error('Error loading template:', error));
 }
 
-// Expose functions used by inline HTML handlers
-window.changeWorkoutType = changeWorkoutType;
-window.loadTemplate = loadTemplate;
-
 document.addEventListener('DOMContentLoaded', function() {
     loadWorkoutTypes();
     loadTemplateList();
+    document.getElementById('add_workout_type_workout').addEventListener('change', changeWorkoutType);
+    document.getElementById('add_workout_template_select').addEventListener('change', loadTemplate);
 });
