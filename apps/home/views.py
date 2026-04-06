@@ -16,7 +16,7 @@ def home(request):
     """
     lang = translation.get_language()
 
-    projets = Projet.objects.all()
+    projets = Projet.objects.prefetch_related("tags").all()
     testimonial = Testimonial.objects.all()
     context = {
         "page": "home",
