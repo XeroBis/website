@@ -34,6 +34,84 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
+def _parse_exercise_form_data(post_data: Any) -> dict[str, Any]:
+    """Parse exercise/series fields from POST data into a nested dict."""
+    exercise_data: dict[str, Any] = {}
+    for key, value in post_data.items():
+        if key.startswith("exercise_") and key.endswith("_name"):
+            exercise_id = key.split("_")[1]
+            if exercise_id not in exercise_data:
+                exercise_data[exercise_id] = {"name": value, "series": {}}
+        elif key.startswith("exercise_") and "_series_" in key:
+            parts = key.split("_")
+            exercise_id = parts[1]
+            series_num = parts[3]
+            field_name = "_".join(parts[4:])
+            if exercise_id not in exercise_data:
+                exercise_data[exercise_id] = {"name": "", "series": {}}
+            if series_num not in exercise_data[exercise_id]["series"]:
+                exercise_data[exercise_id]["series"][series_num] = {}
+            exercise_data[exercise_id]["series"][series_num][field_name] = value
+    return exercise_data
+
+
+def _save_workout_exercises(workout: Any, exercise_data: dict[str, Any]) -> None:
+    """Create OneExercice and series log records for a workout from parsed form data."""
+    sorted_exercises = sorted(exercise_data.items(), key=lambda x: int(x[0]))
+
+    for position, (exercise_id, data) in enumerate(sorted_exercises, start=1):
+        if "name" not in data or not data["name"]:
+            logger.warning(f"Exercise {exercise_id} missing name, skipping")
+            continue
+
+        try:
+            exercise_obj = Exercice.objects.get(name=data["name"])
+        except Exercice.DoesNotExist:
+            logger.warning(f"Exercise '{data['name']}' not found in database, skipping")
+            continue
+
+        OneExercice.objects.create(name=exercise_obj, seance=workout, position=position)
+        logger.info(f"Created OneExercice: {exercise_obj.name} at position {position}")
+
+        if exercise_obj.exercise_type == "strength":
+            for series_num_str, series_data in data["series"].items():
+                series_num = int(series_num_str)
+                reps = series_data.get("reps", 1)
+                reps = 1 if reps == "" or reps is None else int(reps)
+                weight = series_data.get("weight", 0)
+                weight = 0 if weight == "" or weight is None else int(weight)
+                StrengthSeriesLog.objects.create(
+                    exercise=exercise_obj,
+                    workout=workout,
+                    series_number=series_num,
+                    reps=reps,
+                    weight=weight,
+                )
+                logger.info(
+                    f"Created StrengthSeriesLog: {exercise_obj.name} series {series_num}"
+                )
+
+        elif exercise_obj.exercise_type == "cardio":
+            for series_num_str, series_data in data["series"].items():
+                series_num = int(series_num_str)
+                duration = series_data.get("duration_seconds")
+                duration = None if duration == "" or duration is None else int(duration)
+                distance = series_data.get("distance_m")
+                distance = (
+                    None if distance == "" or distance is None else float(distance)
+                )
+                CardioSeriesLog.objects.create(
+                    exercise=exercise_obj,
+                    workout=workout,
+                    series_number=series_num,
+                    duration_seconds=duration,
+                    distance_m=distance,
+                )
+                logger.info(
+                    f"Created CardioSeriesLog: {exercise_obj.name} interval {series_num}"
+                )
+
+
 def _build_exercises_from_series(
     strength_series: Any,
     cardio_series: Any,
@@ -310,139 +388,12 @@ def add_workout(request):
                 )
 
                 # Process exercises and series from form data
-                # Form structure: exercise_<id>_name, exercise_<id>_series_<series_num>_reps, etc.
-                exercise_data = {}
-                for key, value in request.POST.items():
-                    if key.startswith("exercise_") and key.endswith("_name"):
-                        # Extract exercise ID: exercise_0_name -> 0
-                        exercise_id = key.split("_")[1]
-                        if exercise_id not in exercise_data:
-                            exercise_data[exercise_id] = {"name": value, "series": {}}
-                    elif key.startswith("exercise_") and "_series_" in key:
-                        # Extract exercise ID and series number
-                        # Format: exercise_<id>_series_<num>_<field>
-                        parts = key.split("_")
-                        exercise_id = parts[1]
-                        series_num = parts[3]
-                        field_name = "_".join(parts[4:])
-
-                        if exercise_id not in exercise_data:
-                            exercise_data[exercise_id] = {"name": "", "series": {}}
-                        if series_num not in exercise_data[exercise_id]["series"]:
-                            exercise_data[exercise_id]["series"][series_num] = {}
-
-                        exercise_data[exercise_id]["series"][series_num][
-                            field_name
-                        ] = value
-
+                exercise_data = _parse_exercise_form_data(request.POST)
                 logger.info(
                     f"Processing {len(exercise_data)} exercises "
                     f"for workout {workout.id}"
                 )
-
-                # Sort exercises by their ID to maintain order
-                sorted_exercises = sorted(
-                    exercise_data.items(), key=lambda x: int(x[0])
-                )
-
-                for position, (exercise_id, data) in enumerate(
-                    sorted_exercises, start=1
-                ):
-                    logger.info(
-                        f"Processing exercise_id: {exercise_id}, "
-                        f"data: {data}, position: {position}"
-                    )
-
-                    if "name" not in data or not data["name"]:
-                        logger.warning(f"Exercise {exercise_id} missing name, skipping")
-                        continue
-
-                    try:
-                        exercise_obj = Exercice.objects.get(name=data["name"])
-                        logger.info(
-                            f"Found exercise: {exercise_obj.name} "
-                            f"(type: {exercise_obj.exercise_type})"
-                        )
-                    except Exercice.DoesNotExist:
-                        logger.warning(
-                            f"Exercise '{data['name']}' not found in database, "
-                            f"skipping"
-                        )
-                        continue
-
-                    # Create OneExercice record for position tracking
-                    _ = OneExercice.objects.create(
-                        name=exercise_obj, seance=workout, position=position
-                    )
-                    logger.info(
-                        f"Created OneExercice: {exercise_obj.name} "
-                        f"at position {position}"
-                    )
-
-                    # Process series for this exercise
-                    if exercise_obj.exercise_type == "strength":
-                        logger.info(
-                            f"Creating StrengthSeriesLog entries for "
-                            f"exercise: {exercise_obj.name}, workout: {workout.id}"
-                        )
-
-                        for series_num_str, series_data in data["series"].items():
-                            series_num = int(series_num_str)
-                            reps = series_data.get("reps", 1)
-                            if reps == "" or reps is None:
-                                reps = 1
-                            else:
-                                reps = int(reps)
-
-                            weight = series_data.get("weight", 0)
-                            if weight == "" or weight is None:
-                                weight = 0
-                            else:
-                                weight = int(weight)
-
-                            StrengthSeriesLog.objects.create(
-                                exercise=exercise_obj,
-                                workout=workout,
-                                series_number=series_num,
-                                reps=reps,
-                                weight=weight,
-                            )
-                            logger.info(
-                                f"Created StrengthSeriesLog: "
-                                f"{exercise_obj.name} series {series_num}"
-                            )
-
-                    elif exercise_obj.exercise_type == "cardio":
-                        logger.info(
-                            f"Creating CardioSeriesLog entries for "
-                            f"exercise: {exercise_obj.name}, workout: {workout.id}"
-                        )
-
-                        for series_num_str, series_data in data["series"].items():
-                            series_num = int(series_num_str)
-                            duration = series_data.get("duration_seconds")
-                            if duration == "" or duration is None:
-                                duration = None
-                            else:
-                                duration = int(duration)
-
-                            distance = series_data.get("distance_m")
-                            if distance == "" or distance is None:
-                                distance = None
-                            else:
-                                distance = float(distance)
-
-                            CardioSeriesLog.objects.create(
-                                exercise=exercise_obj,
-                                workout=workout,
-                                series_number=series_num,
-                                duration_seconds=duration,
-                                distance_m=distance,
-                            )
-                            logger.info(
-                                f"Created CardioSeriesLog: "
-                                f"{exercise_obj.name} interval {series_num}"
-                            )
+                _save_workout_exercises(workout, exercise_data)
 
         except Exception as e:
             # If there's any error, redirect back to form with error handling
@@ -562,95 +513,8 @@ def edit_workout(request, workout_id):
                 CardioSeriesLog.objects.filter(workout=workout).delete()
 
                 # Process exercises and series from form data
-                # (same logic as add_workout)
-                exercise_data = {}
-                for key, value in request.POST.items():
-                    if key.startswith("exercise_") and key.endswith("_name"):
-                        exercise_id = key.split("_")[1]
-                        if exercise_id not in exercise_data:
-                            exercise_data[exercise_id] = {"name": value, "series": {}}
-                    elif key.startswith("exercise_") and "_series_" in key:
-                        parts = key.split("_")
-                        exercise_id = parts[1]
-                        series_num = parts[3]
-                        field_name = "_".join(parts[4:])
-
-                        if exercise_id not in exercise_data:
-                            exercise_data[exercise_id] = {"name": "", "series": {}}
-                        if series_num not in exercise_data[exercise_id]["series"]:
-                            exercise_data[exercise_id]["series"][series_num] = {}
-
-                        exercise_data[exercise_id]["series"][series_num][
-                            field_name
-                        ] = value
-
-                # Sort exercises by their ID to maintain order
-                sorted_exercises = sorted(
-                    exercise_data.items(), key=lambda x: int(x[0])
-                )
-
-                for position, (_exercise_id, data) in enumerate(
-                    sorted_exercises, start=1
-                ):
-                    if "name" not in data or not data["name"]:
-                        continue
-
-                    try:
-                        exercise_obj = Exercice.objects.get(name=data["name"])
-                    except Exercice.DoesNotExist:
-                        continue
-
-                    # Create OneExercice record for position tracking
-                    _ = OneExercice.objects.create(
-                        name=exercise_obj, seance=workout, position=position
-                    )
-
-                    # Process series for this exercise
-                    if exercise_obj.exercise_type == "strength":
-                        for series_num_str, series_data in data["series"].items():
-                            series_num = int(series_num_str)
-                            reps = series_data.get("reps", 1)
-                            if reps == "" or reps is None:
-                                reps = 1
-                            else:
-                                reps = int(reps)
-
-                            weight = series_data.get("weight", 0)
-                            if weight == "" or weight is None:
-                                weight = 0
-                            else:
-                                weight = int(weight)
-
-                            StrengthSeriesLog.objects.create(
-                                exercise=exercise_obj,
-                                workout=workout,
-                                series_number=series_num,
-                                reps=reps,
-                                weight=weight,
-                            )
-
-                    elif exercise_obj.exercise_type == "cardio":
-                        for series_num_str, series_data in data["series"].items():
-                            series_num = int(series_num_str)
-                            duration = series_data.get("duration_seconds")
-                            if duration == "" or duration is None:
-                                duration = None
-                            else:
-                                duration = int(duration)
-
-                            distance = series_data.get("distance_m")
-                            if distance == "" or distance is None:
-                                distance = None
-                            else:
-                                distance = float(distance)
-
-                            CardioSeriesLog.objects.create(
-                                exercise=exercise_obj,
-                                workout=workout,
-                                series_number=series_num,
-                                duration_seconds=duration,
-                                distance_m=distance,
-                            )
+                exercise_data = _parse_exercise_form_data(request.POST)
+                _save_workout_exercises(workout, exercise_data)
 
         except Exception as e:
             logger.error(f"Error updating workout: {str(e)}", exc_info=True)
@@ -1332,7 +1196,11 @@ def get_calendar_data(request):
     current_month = datetime.now().month
 
     # Get all workouts for calendar view
-    workouts = Workout.objects.filter(date__year=current_year).order_by("date")
+    workouts = (
+        Workout.objects.select_related("type_workout")
+        .filter(date__year=current_year)
+        .order_by("date")
+    )
 
     # Determine which years have workout data
     years_with_data = (
@@ -1432,7 +1300,11 @@ def analytics(request):
     current_month = datetime.now().month
 
     # Get all workouts for calendar view
-    workouts = Workout.objects.filter(date__year=current_year).order_by("date")
+    workouts = (
+        Workout.objects.select_related("type_workout")
+        .filter(date__year=current_year)
+        .order_by("date")
+    )
 
     # Determine which years have workout data
     years_with_data = (
