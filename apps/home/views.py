@@ -29,6 +29,7 @@ def home(request):
 
 @login_required
 def download_data_json(request):
+    temp_file_path = None
     try:
         # Create a temporary file to store the exported data
         with tempfile.NamedTemporaryFile(
@@ -43,15 +44,15 @@ def download_data_json(request):
         with open(temp_file_path, "r", encoding="utf-8") as f:
             data_content = f.read()
 
-        # Clean up the temporary file
-        os.unlink(temp_file_path)
-
         response = HttpResponse(data_content, content_type="application/json")
         response["Content-Disposition"] = "attachment; filename=data.json"
         return response
 
     except Exception as e:
         return JsonResponse({"error": f"Export failed: {str(e)}"}, status=500)
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.unlink(temp_file_path)
 
 
 @login_required

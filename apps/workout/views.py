@@ -1080,6 +1080,7 @@ def exercise_library(request):
 @login_required
 def export_data(_request):
     """Export all workout data to JSON file"""
+    tmp_path = None
     try:
         # Create temporary file
         with tempfile.NamedTemporaryFile(
@@ -1098,13 +1099,13 @@ def export_data(_request):
                 f'attachment; filename="workout_data_{today_date}.json"'
             )
 
-        # Clean up temp file
-        os.unlink(tmp_path)
-
         return response
     except Exception as e:
         logger.error(f"Error exporting data: {str(e)}", exc_info=True)
         return JsonResponse({"error": str(e)}, status=500)
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 @login_required
