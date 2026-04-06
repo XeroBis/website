@@ -70,7 +70,7 @@
         </div>
     </section>
 
-    {% if user.is_authenticated %}
+    {% if user.is_superuser %}
     <form id="exportFom" action="export_data/">
         {% csrf_token %}
         <button type="submit" class="cliquable">{% trans "Download data" %}</button>

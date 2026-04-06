@@ -10,7 +10,7 @@
         <a href="/workout/">
             <button class="cliquable button_workout">{% trans "Go to Workout" %}</button>
         </a>
-        {% if user.is_authenticated %}
+        {% if user.is_superuser %}
         <!-- Data Management Section -->
         <div class="data-management-section">
             <h2>{% trans "Data Management" %}</h2>
