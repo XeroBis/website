@@ -34,6 +34,81 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
+def _build_exercises_from_series(
+    strength_series: Any,
+    cardio_series: Any,
+    exercise_positions: dict[int, int],
+    *,
+    include_id_and_muscles: bool = False,
+) -> list[dict[str, Any]]:
+    exercises: list[dict[str, Any]] = []
+
+    current_exercise: int | None = None
+    current_exercise_data: dict[str, Any] | None = None
+
+    for series in strength_series:
+        if current_exercise != series.exercise.id:
+            if current_exercise_data:
+                exercises.append(current_exercise_data)
+            current_exercise = series.exercise.id
+            current_exercise_data = {
+                "name": series.exercise.name,
+                "exercise_type": "strength",
+                "position": exercise_positions.get(series.exercise.id, 0),
+                "series": [],
+            }
+            if include_id_and_muscles:
+                current_exercise_data["id"] = series.exercise.id
+                current_exercise_data["muscle_groups"] = list(
+                    series.exercise.muscle_groups.values_list("name", flat=True)
+                )
+        if current_exercise_data is not None:
+            current_exercise_data["series"].append(
+                {
+                    "series_number": series.series_number,
+                    "reps": series.reps,
+                    "weight": series.weight,
+                }
+            )
+
+    if current_exercise_data:
+        exercises.append(current_exercise_data)
+
+    current_cardio: int | None = None
+    current_cardio_data: dict[str, Any] | None = None
+
+    for item in cardio_series:
+        if current_cardio != item.exercise.id:
+            if current_cardio_data:
+                exercises.append(current_cardio_data)
+            current_cardio = item.exercise.id
+            current_cardio_data = {
+                "name": item.exercise.name,
+                "exercise_type": "cardio",
+                "position": exercise_positions.get(item.exercise.id, 0),
+                "series": [],
+            }
+            if include_id_and_muscles:
+                current_cardio_data["id"] = item.exercise.id
+                current_cardio_data["muscle_groups"] = list(
+                    item.exercise.muscle_groups.values_list("name", flat=True)
+                )
+        if current_cardio_data is not None:
+            current_cardio_data["series"].append(
+                {
+                    "series_number": item.series_number,
+                    "duration_seconds": item.duration_seconds,
+                    "distance_m": item.distance_m,
+                }
+            )
+
+    if current_cardio_data:
+        exercises.append(current_cardio_data)
+
+    exercises.sort(key=lambda x: x.get("position", 0))
+    return exercises
+
+
 def redirect_workout(request):
     lang = translation.get_language()
 
@@ -95,82 +170,16 @@ def redirect_workout(request):
         type_workout = (
             workout.type_workout.name_workout if workout.type_workout else "No Type"
         )
-        exercises: list[dict[str, Any]] = []
-
         exercise_positions: dict[int, int] = {
             oe.name.id: oe.position for oe in oe_by_workout[workout.id]
         }
 
-        # Build strength exercises from pre-fetched series
-        current_exercise: int | None = None
-        current_exercise_data: dict[str, Any] | None = None
-
-        for series in strength_by_workout[workout.id]:
-            if current_exercise != series.exercise.id:
-                if current_exercise_data:
-                    exercises.append(current_exercise_data)
-                current_exercise = series.exercise.id
-                current_exercise_data = {
-                    "id": series.exercise.id,
-                    "name": series.exercise.name,
-                    "exercise_type": "strength",
-                    "position": exercise_positions.get(series.exercise.id, 0),
-                    "series": [],
-                    "muscle_groups": list(
-                        series.exercise.muscle_groups.values_list("name", flat=True)
-                    ),
-                }
-
-            if current_exercise_data is not None:
-                current_exercise_data["series"].append(
-                    {
-                        "series_number": series.series_number,
-                        "reps": series.reps,
-                        "weight": series.weight,
-                    }
-                )
-
-        if current_exercise_data:
-            exercises.append(current_exercise_data)
-
-        # Build cardio exercises from pre-fetched series
-        current_cardio_exercise: int | None = None
-        current_cardio_data: dict[str, Any] | None = None
-
-        for cardio_series_item in cardio_by_workout[workout.id]:
-            if current_cardio_exercise != cardio_series_item.exercise.id:
-                if current_cardio_data:
-                    exercises.append(current_cardio_data)
-                current_cardio_exercise = cardio_series_item.exercise.id
-                current_cardio_data = {
-                    "id": cardio_series_item.exercise.id,
-                    "name": cardio_series_item.exercise.name,
-                    "exercise_type": "cardio",
-                    "position": exercise_positions.get(
-                        cardio_series_item.exercise.id, 0
-                    ),
-                    "series": [],
-                    "muscle_groups": list(
-                        cardio_series_item.exercise.muscle_groups.values_list(
-                            "name", flat=True
-                        )
-                    ),
-                }
-
-            if current_cardio_data is not None:
-                current_cardio_data["series"].append(
-                    {
-                        "series_number": cardio_series_item.series_number,
-                        "duration_seconds": cardio_series_item.duration_seconds,
-                        "distance_m": cardio_series_item.distance_m,
-                    }
-                )
-
-        if current_cardio_data:
-            exercises.append(current_cardio_data)
-
-        # Sort exercises by position
-        exercises.sort(key=lambda x: x.get("position", 0))
+        exercises = _build_exercises_from_series(
+            strength_by_workout[workout.id],
+            cardio_by_workout[workout.id],
+            exercise_positions,
+            include_id_and_muscles=True,
+        )
 
         # Compute muscle usage counts (series count per muscle group)
         muscle_counts: dict[str, int] = {}
@@ -472,8 +481,6 @@ def get_last_workout(request):
     )
 
     if last_workout:
-        exercises_data: list[dict[str, Any]] = []
-
         # Get exercises ordered by position from OneExercice
         one_exercices = OneExercice.objects.filter(seance=last_workout).order_by(
             "position"
@@ -482,72 +489,15 @@ def get_last_workout(request):
             oe.name.id: oe.position for oe in one_exercices
         }
 
-        # Get all strength exercises from the last workout
         strength_series = StrengthSeriesLog.objects.filter(
             workout=last_workout
         ).order_by("exercise", "series_number")
-        current_exercise: int | None = None
-        current_exercise_data: dict[str, Any] | None = None
-
-        for series in strength_series:
-            if current_exercise != series.exercise.id:
-                if current_exercise_data:
-                    exercises_data.append(current_exercise_data)
-                current_exercise = series.exercise.id
-                current_exercise_data = {
-                    "name": series.exercise.name,
-                    "exercise_type": "strength",
-                    "position": exercise_positions.get(series.exercise.id, 0),
-                    "series": [],
-                }
-
-            if current_exercise_data is not None:
-                current_exercise_data["series"].append(
-                    {
-                        "series_number": series.series_number,
-                        "reps": series.reps,
-                        "weight": series.weight,
-                    }
-                )
-
-        if current_exercise_data:
-            exercises_data.append(current_exercise_data)
-
-        # Get all cardio exercises from the last workout
         cardio_series = CardioSeriesLog.objects.filter(workout=last_workout).order_by(
             "exercise", "series_number"
         )
-        current_cardio_exercise: int | None = None
-        current_cardio_data: dict[str, Any] | None = None
-
-        for cardio_series_item in cardio_series:
-            if current_cardio_exercise != cardio_series_item.exercise.id:
-                if current_cardio_data:
-                    exercises_data.append(current_cardio_data)
-                current_cardio_exercise = cardio_series_item.exercise.id
-                current_cardio_data = {
-                    "name": cardio_series_item.exercise.name,
-                    "exercise_type": "cardio",
-                    "position": exercise_positions.get(
-                        cardio_series_item.exercise.id, 0
-                    ),
-                    "series": [],
-                }
-
-            if current_cardio_data is not None:
-                current_cardio_data["series"].append(
-                    {
-                        "series_number": cardio_series_item.series_number,
-                        "duration_seconds": cardio_series_item.duration_seconds,
-                        "distance_m": cardio_series_item.distance_m,
-                    }
-                )
-
-        if current_cardio_data:
-            exercises_data.append(current_cardio_data)
-
-        # Sort exercises by position
-        exercises_data.sort(key=lambda x: x.get("position", 0))
+        exercises_data = _build_exercises_from_series(
+            strength_series, cardio_series, exercise_positions
+        )
 
         data = {
             "date": last_workout.date.strftime("%Y-%m-%d"),
@@ -709,78 +659,20 @@ def edit_workout(request, workout_id):
         return redirect("/workout/")
 
     # GET request - render edit form with existing data
-    exercises_data: list[dict[str, Any]] = []
-
-    # Get exercises ordered by position from OneExercice
     one_exercices = OneExercice.objects.filter(seance=workout).order_by("position")
     exercise_positions: dict[int, int] = {
         oe.name.id: oe.position for oe in one_exercices
     }
 
-    # Get all strength exercises from the workout
     strength_series = StrengthSeriesLog.objects.filter(workout=workout).order_by(
         "exercise", "series_number"
     )
-    current_exercise: int | None = None
-    current_exercise_data: dict[str, Any] | None = None
-
-    for series in strength_series:
-        if current_exercise != series.exercise.id:
-            if current_exercise_data:
-                exercises_data.append(current_exercise_data)
-            current_exercise = series.exercise.id
-            current_exercise_data = {
-                "name": series.exercise.name,
-                "exercise_type": "strength",
-                "position": exercise_positions.get(series.exercise.id, 0),
-                "series": [],
-            }
-
-        if current_exercise_data is not None:
-            current_exercise_data["series"].append(
-                {
-                    "series_number": series.series_number,
-                    "reps": series.reps,
-                    "weight": series.weight,
-                }
-            )
-
-    if current_exercise_data:
-        exercises_data.append(current_exercise_data)
-
-    # Get all cardio exercises from the workout
     cardio_series = CardioSeriesLog.objects.filter(workout=workout).order_by(
         "exercise", "series_number"
     )
-    current_cardio_exercise: int | None = None
-    current_cardio_data: dict[str, Any] | None = None
-
-    for cardio_series_item in cardio_series:
-        if current_cardio_exercise != cardio_series_item.exercise.id:
-            if current_cardio_data:
-                exercises_data.append(current_cardio_data)
-            current_cardio_exercise = cardio_series_item.exercise.id
-            current_cardio_data = {
-                "name": cardio_series_item.exercise.name,
-                "exercise_type": "cardio",
-                "position": exercise_positions.get(cardio_series_item.exercise.id, 0),
-                "series": [],
-            }
-
-        if current_cardio_data is not None:
-            current_cardio_data["series"].append(
-                {
-                    "series_number": cardio_series_item.series_number,
-                    "duration_seconds": cardio_series_item.duration_seconds,
-                    "distance_m": cardio_series_item.distance_m,
-                }
-            )
-
-    if current_cardio_data:
-        exercises_data.append(current_cardio_data)
-
-    # Sort exercises by position
-    exercises_data.sort(key=lambda x: x.get("position", 0))
+    exercises_data = _build_exercises_from_series(
+        strength_series, cardio_series, exercise_positions
+    )
 
     # Get all exercises for dropdown
     all_exercises = (
