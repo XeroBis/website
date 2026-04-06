@@ -2,15 +2,17 @@
 {% load static %}
 <header id="contenu_header">
     <a href="{% url 'home' %}" id="name_href" class="cliquable">Alan Bignon</a>
+
+    <!-- Desktop navigation -->
     <div id="links">
         <a href="mailto:bignon.alan.pro@gmail.com" class="cliquable nav-item" id="send_mail">
             <i class="fas fa-envelope"></i>
         </a>
-        <span id="span_point" class="nav-separator">•</span>
+        <span class="nav-separator">•</span>
 
         <a href="{% url 'home' %}" class="cliquable nav-item" id="home_link">{% trans "Home" %}</a>
 
-        <span id="span_point" class="nav-separator">•</span>
+        <span class="nav-separator">•</span>
 
         <div class="dropdown nav-item">
             <a href="{% url 'workout' %}" class="cliquable dropdown-toggle" id="workout_link">{% trans "Workout" %}</a>
@@ -24,7 +26,7 @@
             </div>
         </div>
 
-        <span id="span_point" class="nav-separator">•</span>
+        <span class="nav-separator">•</span>
 
         <div class="flag cliquable nav-item">
             <form method="post" action="{% url 'set_language' %}" style="display: inline;">
@@ -36,7 +38,7 @@
             </form>
         </div>
 
-        <span id="span_point" class="nav-separator">•</span>
+        <span class="nav-separator">•</span>
 
         <div class="flag cliquable nav-item">
             <form method="post" action="{% url 'set_language' %}" style="display: inline;">
@@ -48,7 +50,7 @@
             </form>
         </div>
 
-        <span id="span_point" class="nav-separator">•</span>
+        <span class="nav-separator">•</span>
 
         {% if user.is_authenticated %}
         <form method="post" action="{% url 'logout' %}" style="display: inline;">
@@ -59,31 +61,94 @@
         <a href="{% url 'login' %}" class="cliquable nav-item">{% trans "Login" %}</a>
         {% endif %}
     </div>
+
+    <!-- Hamburger button (mobile only) -->
+    <button id="hamburger" aria-label="Menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Mobile navigation menu -->
+    <nav id="mobile-menu" aria-hidden="true">
+        <a href="mailto:bignon.alan.pro@gmail.com" class="mobile-nav-item">
+            <i class="fas fa-envelope"></i> {% trans "Contact" %}
+        </a>
+        <a href="{% url 'home' %}" class="mobile-nav-item">{% trans "Home" %}</a>
+        <a href="{% url 'workout' %}" class="mobile-nav-item">{% trans "Sessions" %}</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'add_workout' %}" class="mobile-nav-item mobile-nav-sub">{% trans "+ Session" %}</a>
+        {% endif %}
+        <a href="{% url 'exercise_library' %}" class="mobile-nav-item mobile-nav-sub">{% trans "Exercises" %}</a>
+        <a href="{% url 'analytics' %}" class="mobile-nav-item mobile-nav-sub">{% trans "Analytics" %}</a>
+        <div class="mobile-nav-item mobile-nav-flags">
+            <form method="post" action="{% url 'set_language' %}">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                <button type="submit" name="language" value="fr"
+                    style="background: url('{% static 'images/flag-fr.svg' %}') no-repeat center; background-size: contain; width: 24px; height: 16px; border: none; cursor: pointer;"
+                    title="Français"></button>
+            </form>
+            <form method="post" action="{% url 'set_language' %}">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                <button type="submit" name="language" value="en"
+                    style="background: url('{% static 'images/flag-gb.svg' %}') no-repeat center; background-size: contain; width: 24px; height: 16px; border: none; cursor: pointer;"
+                    title="English"></button>
+            </form>
+        </div>
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="mobile-nav-item" style="width: 100%; text-align: left; background: none; border: none; font: inherit; cursor: pointer;">{% trans "Logout" %}</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}" class="mobile-nav-item">{% trans "Login" %}</a>
+        {% endif %}
+    </nav>
 </header>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const dropdowns = document.querySelectorAll('.dropdown');
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobile-menu');
 
+    // Toggle mobile menu
+    hamburger.addEventListener('click', function() {
+        const isOpen = mobileMenu.classList.toggle('active');
+        hamburger.classList.toggle('active', isOpen);
+        hamburger.setAttribute('aria-expanded', isOpen);
+        mobileMenu.setAttribute('aria-hidden', !isOpen);
+    });
+
+    // Close mobile menu when clicking a link
+    mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function() {
+            mobileMenu.classList.remove('active');
+            hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            mobileMenu.setAttribute('aria-hidden', 'true');
+        });
+    });
+
+    // Desktop dropdown (hover handled by CSS, click fallback for touch)
+    const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
         const toggle = dropdown.querySelector('.dropdown-toggle');
         const menu = dropdown.querySelector('.dropdown-menu');
 
-        if (window.innerWidth <= 1100) {
-            toggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Close other dropdowns
-                dropdowns.forEach(other => {
-                    if (other !== dropdown) {
-                        other.querySelector('.dropdown-menu').classList.remove('active');
-                    }
-                });
-
-                menu.classList.toggle('active');
+        toggle.addEventListener('click', function(e) {
+            if (window.innerWidth > 1100) {
+                // On desktop let hover handle it; only intercept if needed
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            dropdowns.forEach(other => {
+                if (other !== dropdown) other.querySelector('.dropdown-menu').classList.remove('active');
             });
-        }
+            menu.classList.toggle('active');
+        });
     });
 
     document.addEventListener('click', function(event) {
@@ -92,13 +157,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 dropdown.querySelector('.dropdown-menu').classList.remove('active');
             });
         }
-    });
-
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 1100) {
-            dropdowns.forEach(dropdown => {
-                dropdown.querySelector('.dropdown-menu').classList.remove('active');
-            });
+        if (!event.target.closest('#mobile-menu') && !event.target.closest('#hamburger')) {
+            mobileMenu.classList.remove('active');
+            hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            mobileMenu.setAttribute('aria-hidden', 'true');
         }
     });
 });

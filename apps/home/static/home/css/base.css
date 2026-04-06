@@ -4,6 +4,10 @@ body, h1, h2, p {
     padding: 0;
 }
 
+.cliquable {
+    color: var(--color-accent-primary);
+}
+
 /* Login page */
 .login-container {
     max-width: 400px;
