@@ -1,10 +1,4 @@
-// Load existing workout data when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadWorkoutTypes();
-    setTimeout(function() {
-        populateWorkoutData();
-    }, 500);
-});
+import { buildAndAppendExercises, loadWorkoutTypes } from './workout-exercise-shared.js';
 
 function populateWorkoutData() {
     const workout = JSON.parse(document.getElementById('workout-data').textContent);
@@ -32,3 +26,8 @@ function populateWorkoutData() {
         buildAndAppendExercises(exercisesContainer, exercises, all_exercises);
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadWorkoutTypes();
+    populateWorkoutData();
+});

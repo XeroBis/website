@@ -45,6 +45,5 @@
     {{ exercises|json_script:"exercises-data" }}
     {{ all_exercises|json_script:"all-exercises-data" }}
     {{ translations|json_script:"add-workout-translations" }}
-    <script src="{% static 'js/add_workout.js' %}"></script>
-    <script src="{% static 'js/edit_workout.js' %}"></script>
+    <script type="module" src="{% static 'js/edit_workout.js' %}"></script>
 </body>
