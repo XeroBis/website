@@ -33,7 +33,7 @@ function muscleNameToSvgId(muscleName) {
     } else if (svgId === 'traps middle') {
         return 'traps-middle';
     } else if (svgId === 'rear shoulder') {
-        return 'rear-shoulder';
+        return 'rear-shoulders';
     } else if (svgId === 'front shoulders') {
         return 'front-shoulders';
     } else if (svgId === 'hamstring') {
