@@ -1012,6 +1012,9 @@ def import_data(request):
     try:
         uploaded_file = request.FILES["file"]
 
+        if uploaded_file.size > 10 * 1024 * 1024:
+            return JsonResponse({"error": "File too large (max 10 MB)"}, status=400)
+
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(
             mode="wb", delete=False, suffix=".json"
