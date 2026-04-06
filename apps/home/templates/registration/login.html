@@ -1,0 +1,46 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{% static 'css/home.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/workout.css' %}" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.ico' %}">
+    <title>Alan Bignon - Login</title>
+</head>
+
+<body>
+    {% include "header.html" %}
+
+    <main id="contenu_main">
+        <div class="login-container">
+            <h1>{% trans "Login" %}</h1>
+
+            {% if form.errors %}
+            <p class="login-error">{% trans "Invalid username or password." %}</p>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <div class="login-field">
+                    <label for="id_username">{% trans "Username" %}</label>
+                    <input type="text" name="username" id="id_username" autofocus required>
+                </div>
+
+                <div class="login-field">
+                    <label for="id_password">{% trans "Password" %}</label>
+                    <input type="password" name="password" id="id_password" required>
+                </div>
+
+                <button type="submit" class="login-btn">{% trans "Login" %}</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

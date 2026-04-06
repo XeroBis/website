@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -30,9 +31,25 @@ class Command(BaseCommand):
             required=True,
             help="Input JSON file path",
         )
+        parser.add_argument(
+            "--user",
+            type=str,
+            default=None,
+            help="Username to assign imported workouts and templates to",
+        )
 
     def handle(self, *args, **kwargs):
         input_path = kwargs["file"]
+        username: str | None = kwargs.get("user")
+
+        user = None
+        if username:
+            User = get_user_model()
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                self.stdout.write(self.style.ERROR(f"User '{username}' not found"))
+                return
 
         try:
             with open(input_path, "r", encoding="utf-8") as f:
@@ -75,7 +92,7 @@ class Command(BaseCommand):
                 data.get("exercises", []), muscle_group_map, equipment_map
             )
             workout_map = self.import_workouts(
-                data.get("workouts", []), type_workout_map
+                data.get("workouts", []), type_workout_map, user
             )
             self.import_strength_series_logs(strength_series, exercise_map, workout_map)
             self.import_cardio_series_logs(cardio_series, exercise_map, workout_map)
@@ -85,7 +102,7 @@ class Command(BaseCommand):
                 workout_map,
             )
             template_map = self.import_workout_templates(
-                data.get("workout_templates", []), type_workout_map
+                data.get("workout_templates", []), type_workout_map, user
             )
             template_exercise_map = self.import_template_exercises(
                 data.get("template_exercises", []), template_map, exercise_map
@@ -173,15 +190,17 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"  Imported {len(exercises)} exercises"))
         return id_map
 
-    def import_workouts(self, workouts, type_workout_map):
+    def import_workouts(self, workouts, type_workout_map, user=None):
         """Return {json_id: Workout} map."""
         id_map = {}
         for w_data in workouts:
             type_workout = type_workout_map.get(w_data.get("type_workout_id"))
             date = datetime.strptime(w_data["date"], "%Y-%m-%d").date()
+            lookup = {"date": date, "type_workout": type_workout}
+            if user is not None:
+                lookup["user"] = user
             obj, _ = Workout.objects.update_or_create(
-                date=date,
-                type_workout=type_workout,
+                **lookup,
                 defaults={"duration": w_data.get("duration", 0)},
             )
             id_map[w_data["id"]] = obj
@@ -282,13 +301,16 @@ class Command(BaseCommand):
             imported += 1
         self.stdout.write(self.style.SUCCESS(f"  Imported {imported} one exercices"))
 
-    def import_workout_templates(self, workout_templates, type_workout_map):
+    def import_workout_templates(self, workout_templates, type_workout_map, user=None):
         """Return {json_id: WorkoutTemplate} map."""
         id_map = {}
         for wt_data in workout_templates:
             type_workout = type_workout_map.get(wt_data.get("type_workout_id"))
+            lookup: dict = {"name": wt_data["name"]}
+            if user is not None:
+                lookup["user"] = user
             obj, _ = WorkoutTemplate.objects.update_or_create(
-                name=wt_data["name"],
+                **lookup,
                 defaults={
                     "type_workout": type_workout,
                     "duration": wt_data.get("duration", 0),

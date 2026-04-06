@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
 from apps.workout.models import (
@@ -29,11 +30,27 @@ class Command(BaseCommand):
             default="workout_data.json",
             help="Output file path (default: workout_data.json)",
         )
+        parser.add_argument(
+            "--user",
+            type=str,
+            default=None,
+            help="Username to filter export by (exports all if omitted)",
+        )
 
     def handle(self, *args, **kwargs):
         today_date = datetime.today().strftime("%Y-%m-%d")
 
         output_path: str = kwargs.get("output", "workout_data.json")
+        username: str | None = kwargs.get("user")
+
+        user = None
+        if username:
+            User = get_user_model()
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                self.stdout.write(self.style.ERROR(f"User '{username}' not found"))
+                return
 
         data = {
             "export_date": today_date,
@@ -41,14 +58,14 @@ class Command(BaseCommand):
             "muscle_groups": self.export_muscle_groups(),
             "equipment": self.export_equipment(),
             "exercises": self.export_exercises(),
-            "workouts": self.export_workouts(),
-            "strength_series_logs": self.export_strength_series_logs(),
-            "cardio_series_logs": self.export_cardio_series_logs(),
-            "one_exercices": self.export_one_exercices(),
-            "workout_templates": self.export_workout_templates(),
-            "template_exercises": self.export_template_exercises(),
-            "template_strength_series": self.export_template_strength_series(),
-            "template_cardio_series": self.export_template_cardio_series(),
+            "workouts": self.export_workouts(user),
+            "strength_series_logs": self.export_strength_series_logs(user),
+            "cardio_series_logs": self.export_cardio_series_logs(user),
+            "one_exercices": self.export_one_exercices(user),
+            "workout_templates": self.export_workout_templates(user),
+            "template_exercises": self.export_template_exercises(user),
+            "template_strength_series": self.export_template_strength_series(user),
+            "template_cardio_series": self.export_template_cardio_series(user),
         }
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -102,7 +119,8 @@ class Command(BaseCommand):
             for ex in Exercice.objects.all()
         ]
 
-    def export_workouts(self):
+    def export_workouts(self, user=None):
+        qs = Workout.objects.filter(user=user) if user else Workout.objects.all()
         return [
             {
                 "id": w.id,
@@ -113,10 +131,15 @@ class Command(BaseCommand):
                 ),
                 "duration": w.duration,
             }
-            for w in Workout.objects.all()
+            for w in qs
         ]
 
-    def export_strength_series_logs(self):
+    def export_strength_series_logs(self, user=None):
+        qs = (
+            StrengthSeriesLog.objects.filter(workout__user=user)
+            if user
+            else StrengthSeriesLog.objects.all()
+        )
         return [
             {
                 "id": ssl.id,
@@ -127,10 +150,15 @@ class Command(BaseCommand):
                 "reps": ssl.reps,
                 "weight": ssl.weight,
             }
-            for ssl in StrengthSeriesLog.objects.all()
+            for ssl in qs
         ]
 
-    def export_cardio_series_logs(self):
+    def export_cardio_series_logs(self, user=None):
+        qs = (
+            CardioSeriesLog.objects.filter(workout__user=user)
+            if user
+            else CardioSeriesLog.objects.all()
+        )
         return [
             {
                 "id": csl.id,
@@ -141,10 +169,15 @@ class Command(BaseCommand):
                 "duration_seconds": csl.duration_seconds,
                 "distance_m": csl.distance_m,
             }
-            for csl in CardioSeriesLog.objects.all()
+            for csl in qs
         ]
 
-    def export_one_exercices(self):
+    def export_one_exercices(self, user=None):
+        qs = (
+            OneExercice.objects.filter(seance__user=user)
+            if user
+            else OneExercice.objects.all()
+        )
         return [
             {
                 "id": oe.id,
@@ -152,10 +185,15 @@ class Command(BaseCommand):
                 "workout_id": oe.seance.id,
                 "position": oe.position,
             }
-            for oe in OneExercice.objects.select_related("name", "seance").all()
+            for oe in qs.select_related("name", "seance")
         ]
 
-    def export_workout_templates(self):
+    def export_workout_templates(self, user=None):
+        qs = (
+            WorkoutTemplate.objects.filter(user=user)
+            if user
+            else WorkoutTemplate.objects.all()
+        )
         return [
             {
                 "id": wt.id,
@@ -164,10 +202,15 @@ class Command(BaseCommand):
                 "duration": wt.duration,
                 "is_active": wt.is_active,
             }
-            for wt in WorkoutTemplate.objects.all()
+            for wt in qs
         ]
 
-    def export_template_exercises(self):
+    def export_template_exercises(self, user=None):
+        qs = (
+            TemplateExercise.objects.filter(template__user=user)
+            if user
+            else TemplateExercise.objects.all()
+        )
         return [
             {
                 "id": te.id,
@@ -175,12 +218,17 @@ class Command(BaseCommand):
                 "exercise_id": te.exercise.id,
                 "position": te.position,
             }
-            for te in TemplateExercise.objects.select_related(
-                "template", "exercise"
-            ).all()
+            for te in qs.select_related("template", "exercise")
         ]
 
-    def export_template_strength_series(self):
+    def export_template_strength_series(self, user=None):
+        qs = (
+            TemplateStrengthSeries.objects.filter(
+                template_exercise__template__user=user
+            )
+            if user
+            else TemplateStrengthSeries.objects.all()
+        )
         return [
             {
                 "id": tss.id,
@@ -189,10 +237,15 @@ class Command(BaseCommand):
                 "reps": tss.reps,
                 "weight": tss.weight,
             }
-            for tss in TemplateStrengthSeries.objects.all()
+            for tss in qs
         ]
 
-    def export_template_cardio_series(self):
+    def export_template_cardio_series(self, user=None):
+        qs = (
+            TemplateCardioSeries.objects.filter(template_exercise__template__user=user)
+            if user
+            else TemplateCardioSeries.objects.all()
+        )
         return [
             {
                 "id": tcs.id,
@@ -201,5 +254,5 @@ class Command(BaseCommand):
                 "duration_seconds": tcs.duration_seconds,
                 "distance_m": tcs.distance_m,
             }
-            for tcs in TemplateCardioSeries.objects.all()
+            for tcs in qs
         ]

@@ -102,10 +102,10 @@ class OneExerciceInline(admin.TabularInline):
 
 @admin.register(Workout)
 class WorkoutAdmin(admin.ModelAdmin):
-    list_display = ["date", "type_workout", "duration", "get_exercise_count"]
-    search_fields = ["date", "type_workout__name_workout"]
-    list_filter = ["date", "type_workout", "duration"]
-    fieldsets = ((None, {"fields": ("date", "type_workout", "duration")}),)
+    list_display = ["date", "user", "type_workout", "duration", "get_exercise_count"]
+    search_fields = ["date", "type_workout__name_workout", "user__username"]
+    list_filter = ["date", "type_workout", "duration", "user"]
+    fieldsets = ((None, {"fields": ("user", "date", "type_workout", "duration")}),)
     inlines = [OneExerciceInline, StrengthSeriesLogInline, CardioSeriesLogInline]
 
     @admin.display(description="Exercises")
@@ -168,8 +168,17 @@ class TemplateCardioExerciseInline(nested_admin.NestedTabularInline):
 
 @admin.register(WorkoutTemplate)
 class WorkoutTemplateAdmin(nested_admin.NestedModelAdmin):
-    list_display = ["name", "type_workout", "duration", "is_active", "created_at"]
-    search_fields = ["name", "type_workout__name_workout"]
-    list_filter = ["type_workout", "is_active", "created_at"]
-    fieldsets = ((None, {"fields": ("name", "type_workout", "duration", "is_active")}),)
+    list_display = [
+        "name",
+        "user",
+        "type_workout",
+        "duration",
+        "is_active",
+        "created_at",
+    ]
+    search_fields = ["name", "type_workout__name_workout", "user__username"]
+    list_filter = ["type_workout", "is_active", "created_at", "user"]
+    fieldsets = (
+        (None, {"fields": ("user", "name", "type_workout", "duration", "is_active")}),
+    )
     inlines = [TemplateStrengthExerciseInline, TemplateCardioExerciseInline]

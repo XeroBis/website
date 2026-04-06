@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -35,6 +36,9 @@ class Equipment(models.Model):
 
 
 class Workout(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True
+    )
     date = models.DateField()
     type_workout = models.ForeignKey(TypeWorkout, null=True, on_delete=models.SET_NULL)
     duration = models.IntegerField(default=0)
@@ -163,9 +167,12 @@ class OneExercice(models.Model):
 
 class WorkoutTemplate(models.Model):
     """
-    Template for workout structures - global templates shared by all users
+    Template for workout structures - private templates per user
     """
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True
+    )
     name = models.CharField(max_length=100)
     type_workout = models.ForeignKey(TypeWorkout, null=True, on_delete=models.SET_NULL)
     duration = models.IntegerField(default=0)

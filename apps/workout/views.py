@@ -187,6 +187,7 @@ def _build_exercises_from_series(
     return exercises
 
 
+@login_required
 def redirect_workout(request):
     lang = translation.get_language()
 
@@ -194,8 +195,12 @@ def redirect_workout(request):
     workout_type_filter = request.GET.get("workout_type", "")
     exercise_filter = request.GET.get("exercise", "")
 
-    # Base queryset
-    workouts = Workout.objects.select_related("type_workout").order_by("-date")
+    # Base queryset - scoped to current user
+    workouts = (
+        Workout.objects.filter(user=request.user)
+        .select_related("type_workout")
+        .order_by("-date")
+    )
 
     # Apply workout type filter (exact match)
     if workout_type_filter:
@@ -384,7 +389,10 @@ def add_workout(request):
                 )
 
                 workout = Workout.objects.create(
-                    date=date, type_workout=type_obj, duration=duration
+                    date=date,
+                    type_workout=type_obj,
+                    duration=duration,
+                    user=request.user,
                 )
 
                 # Process exercises and series from form data
@@ -424,7 +432,9 @@ def get_last_workout(request):
     workout_type = request.GET.get("type")
     workout_type_id = TypeWorkout.objects.filter(name_workout=workout_type).first()
     last_workout = (
-        Workout.objects.filter(type_workout=workout_type_id).order_by("-date").first()
+        Workout.objects.filter(type_workout=workout_type_id, user=request.user)
+        .order_by("-date")
+        .first()
     )
 
     all_exercises = (
@@ -489,7 +499,7 @@ def edit_workout(request, workout_id):
     lang = translation.get_language()
 
     try:
-        workout = Workout.objects.get(id=workout_id)
+        workout = Workout.objects.get(id=workout_id, user=request.user)
     except Workout.DoesNotExist:
         return redirect("workout")
 
@@ -586,8 +596,8 @@ def create_template_from_workout(request, workout_id):
                 {"success": False, "error": "Template name is required"}, status=400
             )
 
-        # Load workout with related data
-        workout = Workout.objects.get(id=workout_id)
+        # Load workout with related data - enforce ownership
+        workout = Workout.objects.get(id=workout_id, user=request.user)
 
         # Create template in atomic transaction
         with transaction.atomic():
@@ -596,6 +606,7 @@ def create_template_from_workout(request, workout_id):
                 name=template_name,
                 type_workout=workout.type_workout,
                 duration=workout.duration,
+                user=request.user,
             )
 
             # Get exercises ordered by position
@@ -655,8 +666,10 @@ def create_template_from_workout(request, workout_id):
 
 
 @login_required
-def get_template_list(_request):
-    templates = WorkoutTemplate.objects.filter(is_active=True).order_by("name")
+def get_template_list(request):
+    templates = WorkoutTemplate.objects.filter(
+        is_active=True, user=request.user
+    ).order_by("name")
 
     templates_data = []
     for template in templates:
@@ -682,7 +695,9 @@ def get_template_details(request):
         return JsonResponse({"error": "template_id is required"}, status=400)
 
     try:
-        template = WorkoutTemplate.objects.get(id=template_id, is_active=True)
+        template = WorkoutTemplate.objects.get(
+            id=template_id, is_active=True, user=request.user
+        )
 
         # Get all exercises for dropdown
         all_exercises = (
@@ -765,6 +780,7 @@ def get_template_details(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@login_required
 def exercise_library(request):
     lang = translation.get_language()
 
@@ -834,8 +850,8 @@ def exercise_library(request):
 
 
 @login_required
-def export_data(_request):
-    """Export all workout data to JSON file"""
+def export_data(request):
+    """Export current user's workout data to JSON file"""
     tmp_path = None
     try:
         # Create temporary file
@@ -844,8 +860,8 @@ def export_data(_request):
         ) as tmp_file:
             tmp_path = tmp_file.name
 
-        # Call the export command
-        call_command("export_workout_data", output=tmp_path)
+        # Call the export command scoped to the current user
+        call_command("export_workout_data", output=tmp_path, user=request.user.username)
 
         # Read the file and return as download
         with open(tmp_path, "r", encoding="utf-8") as f:
@@ -887,8 +903,8 @@ def import_data(request):
                 tmp_file.write(chunk)
             tmp_path = tmp_file.name
 
-        # Call the import command
-        call_command("import_workout_data", file=tmp_path)
+        # Call the import command scoped to the current user
+        call_command("import_workout_data", file=tmp_path, user=request.user.username)
 
         # Clean up temp file
         os.unlink(tmp_path)
@@ -906,8 +922,8 @@ def clear_data(request):
         return JsonResponse({"error": "POST request required"}, status=400)
 
     try:
-        # Call the clear command with no-input flag
-        call_command("clear_workout_data", no_input=True)
+        Workout.objects.filter(user=request.user).delete()
+        WorkoutTemplate.objects.filter(user=request.user).delete()
         return JsonResponse(
             {"success": True, "message": "All data cleared successfully"}
         )
@@ -916,6 +932,7 @@ def clear_data(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@login_required
 def get_dashboard_data(request):
     """Get dashboard statistics filtered by date range (AJAX endpoint)"""
     from django.db.models import Count, F, Sum
@@ -925,19 +942,15 @@ def get_dashboard_data(request):
     start_date = request.GET.get("start_date", "")
     end_date = request.GET.get("end_date", "")
 
-    # Build filter
-    workout_filter = {}
+    # Build filter - always scoped to current user
+    workout_filter: dict = {"user": request.user}
     if start_date:
         workout_filter["date__gte"] = start_date
     if end_date:
         workout_filter["date__lte"] = end_date
 
     # Build the filtered workout queryset
-    filtered_workouts = (
-        Workout.objects.filter(**workout_filter)
-        if workout_filter
-        else Workout.objects.all()
-    )
+    filtered_workouts = Workout.objects.filter(**workout_filter)
 
     total_workouts = filtered_workouts.count()
 
@@ -951,79 +964,43 @@ def get_dashboard_data(request):
     workouts_by_weekday = [{"day": d, "count": weekday_map.get(d, 0)} for d in range(7)]
 
     # Get exercise IDs from filtered workouts
-    if workout_filter:
-        filtered_workout_ids = filtered_workouts.values_list("id", flat=True)
-        total_exercises = OneExercice.objects.filter(
-            seance_id__in=filtered_workout_ids
-        ).count()
+    filtered_workout_ids = filtered_workouts.values_list("id", flat=True)
+    total_exercises = OneExercice.objects.filter(
+        seance_id__in=filtered_workout_ids
+    ).count()
 
-        # Calculate total volume (for strength exercises) with date filter
-        total_volume = (
-            StrengthSeriesLog.objects.filter(
-                workout_id__in=filtered_workout_ids
-            ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
-            or 0
-        )
+    # Calculate total volume (for strength exercises)
+    total_volume = (
+        StrengthSeriesLog.objects.filter(workout_id__in=filtered_workout_ids).aggregate(
+            total=Sum(F("reps") * F("weight"))
+        )["total"]
+        or 0
+    )
 
-        # Workouts by type with date filter
-        workouts_by_type = list(
-            filtered_workouts.values("type_workout__name_workout")
-            .annotate(count=Count("id"))
-            .order_by("-count")
-        )
+    # Workouts by type
+    workouts_by_type = list(
+        filtered_workouts.values("type_workout__name_workout")
+        .annotate(count=Count("id"))
+        .order_by("-count")
+    )
 
-        # Top exercises by frequency with date filter
-        top_exercises = list(
-            OneExercice.objects.filter(seance_id__in=filtered_workout_ids)
-            .values("name__name")
-            .annotate(count=Count("id"))
-            .order_by("-count")[:5]
-        )
+    # Top exercises by frequency
+    top_exercises = list(
+        OneExercice.objects.filter(seance_id__in=filtered_workout_ids)
+        .values("name__name")
+        .annotate(count=Count("id"))
+        .order_by("-count")[:5]
+    )
 
-        # Muscle group distribution with date filter
-        muscle_group_distribution = [
-            {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
-            for r in StrengthSeriesLog.objects.filter(
-                workout_id__in=filtered_workout_ids
-            )
-            .values("exercise__muscle_groups__name")
-            .annotate(count=Count("id"))
-            .exclude(exercise__muscle_groups__name=None)
-            .order_by("-count")
-        ]
-    else:
-        total_exercises = OneExercice.objects.count()
-
-        # Calculate total volume (for strength exercises)
-        total_volume = (
-            StrengthSeriesLog.objects.aggregate(total=Sum(F("reps") * F("weight")))[
-                "total"
-            ]
-            or 0
-        )
-
-        # Workouts by type
-        workouts_by_type = list(
-            Workout.objects.values("type_workout__name_workout")
-            .annotate(count=Count("id"))
-            .order_by("-count")
-        )
-
-        # Top exercises by frequency
-        top_exercises = list(
-            OneExercice.objects.values("name__name")
-            .annotate(count=Count("id"))
-            .order_by("-count")[:5]
-        )
-
-        # Muscle group distribution (all data)
-        muscle_group_distribution = [
-            {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
-            for r in StrengthSeriesLog.objects.values("exercise__muscle_groups__name")
-            .annotate(count=Count("id"))
-            .exclude(exercise__muscle_groups__name=None)
-            .order_by("-count")
-        ]
+    # Muscle group distribution
+    muscle_group_distribution = [
+        {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
+        for r in StrengthSeriesLog.objects.filter(workout_id__in=filtered_workout_ids)
+        .values("exercise__muscle_groups__name")
+        .annotate(count=Count("id"))
+        .exclude(exercise__muscle_groups__name=None)
+        .order_by("-count")
+    ]
 
     # Weekly workouts trend - use date filter for the range if provided
     if start_date and end_date:
@@ -1048,7 +1025,7 @@ def get_dashboard_data(request):
             week_start = start_dt + timedelta(weeks=week)
             week_end = min(week_start + timedelta(days=6), end_dt)
             count = Workout.objects.filter(
-                date__gte=week_start, date__lte=week_end
+                user=request.user, date__gte=week_start, date__lte=week_end
             ).count()
             weekly_workouts.append(
                 {
@@ -1059,7 +1036,9 @@ def get_dashboard_data(request):
             )
             vol = (
                 StrengthSeriesLog.objects.filter(
-                    workout__date__gte=week_start, workout__date__lte=week_end
+                    workout__user=request.user,
+                    workout__date__gte=week_start,
+                    workout__date__lte=week_end,
                 ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
                 or 0
             )
@@ -1072,7 +1051,9 @@ def get_dashboard_data(request):
             )
     else:
         # Show all available data - calculate from earliest workout to now
-        earliest_workout = Workout.objects.order_by("date").first()
+        earliest_workout = (
+            Workout.objects.filter(user=request.user).order_by("date").first()
+        )
         if earliest_workout:
             start_dt = earliest_workout.date
             end_dt = datetime.now().date()
@@ -1090,7 +1071,7 @@ def get_dashboard_data(request):
                 week_start = start_dt + timedelta(weeks=week)
                 week_end = min(week_start + timedelta(days=6), end_dt)
                 count = Workout.objects.filter(
-                    date__gte=week_start, date__lte=week_end
+                    user=request.user, date__gte=week_start, date__lte=week_end
                 ).count()
                 weekly_workouts.append(
                     {
@@ -1101,7 +1082,9 @@ def get_dashboard_data(request):
                 )
                 vol = (
                     StrengthSeriesLog.objects.filter(
-                        workout__date__gte=week_start, workout__date__lte=week_end
+                        workout__user=request.user,
+                        workout__date__gte=week_start,
+                        workout__date__lte=week_end,
                     ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
                     or 0
                 )
@@ -1132,16 +1115,16 @@ def get_dashboard_data(request):
     )
 
 
-def calculate_personal_records():
+def calculate_personal_records(user):
     """
     Calculate personal records at runtime from StrengthSeriesLog data.
 
     Returns a list of personal records sorted by date achieved (most recent first).
     """
-    # Get all strength series logs (only exercises with weight)
+    # Get all strength series logs for the user (only exercises with weight)
     logs = (
         StrengthSeriesLog.objects.select_related("exercise", "workout")
-        .filter(weight__gt=0)  # Only include exercises with weight > 0
+        .filter(weight__gt=0, workout__user=user)
         .order_by("-workout__date")
     )
 
@@ -1184,6 +1167,7 @@ def calculate_personal_records():
     return all_records
 
 
+@login_required
 def get_calendar_data(request):
     """AJAX endpoint to get calendar data for a specific year"""
     import calendar as cal
@@ -1195,16 +1179,17 @@ def get_calendar_data(request):
     current_year = int(request.GET.get("year", datetime.now().year))
     current_month = datetime.now().month
 
-    # Get all workouts for calendar view
+    # Get all workouts for calendar view - scoped to current user
     workouts = (
         Workout.objects.select_related("type_workout")
-        .filter(date__year=current_year)
+        .filter(user=request.user, date__year=current_year)
         .order_by("date")
     )
 
-    # Determine which years have workout data
+    # Determine which years have workout data for the current user
     years_with_data = (
-        Workout.objects.dates("date", "year")
+        Workout.objects.filter(user=request.user)
+        .dates("date", "year")
         .values_list("date__year", flat=True)
         .distinct()
     )
@@ -1284,6 +1269,7 @@ def get_calendar_data(request):
     )
 
 
+@login_required
 def analytics(request):
     """Analytics page with calendar view, progress dashboard, and PR tracking"""
     import calendar as cal
@@ -1299,16 +1285,17 @@ def analytics(request):
     current_year = datetime.now().year
     current_month = datetime.now().month
 
-    # Get all workouts for calendar view
+    # Get all workouts for calendar view - scoped to current user
     workouts = (
         Workout.objects.select_related("type_workout")
-        .filter(date__year=current_year)
+        .filter(user=request.user, date__year=current_year)
         .order_by("date")
     )
 
-    # Determine which years have workout data
+    # Determine which years have workout data for the current user
     years_with_data = (
-        Workout.objects.dates("date", "year")
+        Workout.objects.filter(user=request.user)
+        .dates("date", "year")
         .values_list("date__year", flat=True)
         .distinct()
     )
@@ -1335,35 +1322,40 @@ def analytics(request):
             }
         )
 
-    # Dashboard statistics - start with all workouts for initial load
-    total_exercises = OneExercice.objects.count()
+    # Dashboard statistics - scoped to current user
+    total_exercises = OneExercice.objects.filter(seance__user=request.user).count()
 
     # Calculate total volume (for strength exercises)
     total_volume = (
-        StrengthSeriesLog.objects.aggregate(total=Sum(F("reps") * F("weight")))["total"]
+        StrengthSeriesLog.objects.filter(workout__user=request.user).aggregate(
+            total=Sum(F("reps") * F("weight"))
+        )["total"]
         or 0
     )
 
     # Workouts by type
     workouts_by_type = list(
-        Workout.objects.values("type_workout__name_workout")
+        Workout.objects.filter(user=request.user)
+        .values("type_workout__name_workout")
         .annotate(count=Count("id"))
         .order_by("-count")
     )
 
     # Top exercises by frequency
     top_exercises = list(
-        OneExercice.objects.values("name__name")
+        OneExercice.objects.filter(seance__user=request.user)
+        .values("name__name")
         .annotate(count=Count("id"))
         .order_by("-count")[:5]
     )
 
     # Total workouts for initial load
-    total_workouts = Workout.objects.count()
+    total_workouts = Workout.objects.filter(user=request.user).count()
 
     # Workouts by weekday (Mon=0 … Sun=6)
     raw_weekday = list(
-        Workout.objects.annotate(wd=ExtractWeekDay("date"))
+        Workout.objects.filter(user=request.user)
+        .annotate(wd=ExtractWeekDay("date"))
         .values("wd")
         .annotate(count=Count("id"))
     )
@@ -1373,14 +1365,17 @@ def analytics(request):
     # Muscle group distribution (all-time)
     muscle_group_distribution = [
         {"muscle": r["exercise__muscle_groups__name"], "count": r["count"]}
-        for r in StrengthSeriesLog.objects.values("exercise__muscle_groups__name")
+        for r in StrengthSeriesLog.objects.filter(workout__user=request.user)
+        .values("exercise__muscle_groups__name")
         .annotate(count=Count("id"))
         .exclude(exercise__muscle_groups__name=None)
         .order_by("-count")
     ]
 
     # Weekly workouts trend - calculate from earliest workout to now
-    earliest_workout = Workout.objects.order_by("date").first()
+    earliest_workout = (
+        Workout.objects.filter(user=request.user).order_by("date").first()
+    )
     if earliest_workout:
         start_dt = earliest_workout.date
         end_dt = datetime.now().date()
@@ -1393,7 +1388,7 @@ def analytics(request):
             week_start = start_dt + timedelta(weeks=week)
             week_end = min(week_start + timedelta(days=6), end_dt)
             count = Workout.objects.filter(
-                date__gte=week_start, date__lte=week_end
+                user=request.user, date__gte=week_start, date__lte=week_end
             ).count()
             weekly_workouts.append(
                 {
@@ -1404,7 +1399,9 @@ def analytics(request):
             )
             vol = (
                 StrengthSeriesLog.objects.filter(
-                    workout__date__gte=week_start, workout__date__lte=week_end
+                    workout__user=request.user,
+                    workout__date__gte=week_start,
+                    workout__date__lte=week_end,
                 ).aggregate(total=Sum(F("reps") * F("weight")))["total"]
                 or 0
             )
@@ -1421,7 +1418,7 @@ def analytics(request):
         volume_per_week = []
 
     # Personal Records (calculated at runtime)
-    personal_records = calculate_personal_records()
+    personal_records = calculate_personal_records(request.user)
 
     # Generate calendar months for the year
     # Define translatable month names
