@@ -187,17 +187,25 @@ def _build_exercises_from_series(
     return exercises
 
 
-@login_required
 def redirect_workout(request):
+    from django.contrib.auth import get_user_model
+
     lang = translation.get_language()
 
     # Get filter parameters
     workout_type_filter = request.GET.get("workout_type", "")
     exercise_filter = request.GET.get("exercise", "")
 
-    # Base queryset - scoped to current user
+    # Authenticated users see their own workouts; anonymous visitors see the superuser's
+    if request.user.is_authenticated:
+        display_user = request.user
+    else:
+        User = get_user_model()
+        display_user = User.objects.filter(is_superuser=True).first()
+
+    # Base queryset
     workouts = (
-        Workout.objects.filter(user=request.user)
+        Workout.objects.filter(user=display_user)
         .select_related("type_workout")
         .order_by("-date")
     )
