@@ -1,0 +1,84 @@
+<div class="toolbar">
+  <ab-viewing-select />
+  <div class="segmented" role="group" [attr.aria-label]="'workouts.groupBy' | translate">
+    @for (level of levelList; track level) {
+      <button type="button" [class.active]="levels().has(level)" (click)="toggleLevel(level)">
+        {{ 'workouts.group.' + level | translate }}
+      </button>
+    }
+  </div>
+  @if (viewing.isOwn()) {
+    <span class="push"></span>
+    <a class="btn accent" routerLink="/session"><ab-icon name="timer" /> {{ 'workouts.live' | translate }}</a>
+    <a class="btn primary" routerLink="/workouts/new"><ab-icon name="plus" /> {{ 'workouts.new' | translate }}</a>
+  }
+</div>
+
+@if (error(); as e) {
+  <p class="error">{{ e | translate }}</p>
+}
+
+@for (row of rows(); track row.kind === 'group' ? 'g' + row.key : 'w' + row.workout.id) {
+  @if (row.kind === 'group') {
+    <button
+      type="button"
+      class="group-head"
+      [attr.data-depth]="row.depth"
+      [attr.aria-expanded]="!row.collapsed"
+      (click)="toggleGroup(row.key)"
+    >
+      <ab-icon [name]="row.collapsed ? 'chevron-right' : 'chevron-down'" />
+      <span>{{ row.label }}</span>
+      <span class="count">{{ row.count }}</span>
+    </button>
+  } @else {
+    @let w = row.workout;
+    <article class="card workout-card" [id]="'workout-' + w.id" data-testid="workout">
+      <header class="workout-head">
+        <span class="workout-date">{{ w.date | date: 'EEE d MMM y' : undefined : lang() }}</span>
+        <span class="workout-duration">{{ 'workouts.minutes' | translate: { n: w.duration_minutes } }}</span>
+        <span class="push"></span>
+        <button type="button" class="btn ghost sm" (click)="details.set(w)">
+          <ab-icon name="info" /> {{ 'common.details' | translate }}
+        </button>
+        @if (viewing.isOwn()) {
+          <button type="button" class="btn ghost sm" (click)="saveAsTemplate.set(w)">
+            <ab-icon name="layers" /> {{ 'workouts.saveAsTemplate' | translate }}
+          </button>
+          <a class="btn ghost sm" [routerLink]="['/workouts', w.id, 'edit']"
+            ><ab-icon name="pencil" /> {{ 'common.edit' | translate }}</a
+          >
+          <ab-confirm-button label="common.delete" (confirmed)="remove(w)" />
+        }
+      </header>
+      <ab-entry-list [entries]="w.exercises" (exerciseClicked)="history.set($event)" />
+    </article>
+  }
+} @empty {
+  @if (!loading() && !error()) {
+    <p class="empty">
+      {{ 'workouts.empty' | translate }}
+      @if (viewing.isOwn()) {
+        <a routerLink="/workouts/new">{{ 'workouts.addFirst' | translate }}</a>
+      }
+    </p>
+  }
+}
+@if (loading()) {
+  <p class="muted">{{ 'common.loading' | translate }}</p>
+}
+<div #sentinel class="sentinel"></div>
+
+@if (details(); as w) {
+  <ab-details-modal
+    [heading]="(w.date | date: 'mediumDate' : undefined : lang()) ?? ''"
+    [entries]="w.exercises"
+    (closed)="details.set(null)"
+  />
+}
+@if (history(); as ex) {
+  <ab-history-modal [exercise]="ex" [userId]="viewing.queryUserId()" (closed)="history.set(null)" />
+}
+@if (saveAsTemplate(); as w) {
+  <ab-save-template-modal [workout]="w" (closed)="saveAsTemplate.set(null)" (saved)="saveAsTemplate.set(null)" />
+}

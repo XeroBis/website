@@ -91,7 +91,86 @@ The projects shown on `alanbignon.com`, written by hand by its editors. No user 
 
 ## `workout`
 
-No tables yet.
+Workout tracker (ported from `../workout`). One shared catalog of exercises and equipments; everything else belongs to a user (`core.users.id`): logged workouts, templates and saved circuits. Workouts, templates and saved circuits share one shape: an ordered list of **entries**, each either one exercise with its sets, or a circuit (name, duration, rounds) holding exercises with their sets. Models in `backend/domains/workout/models.py`.
+
+### Catalog
+
+#### `workout.exercises`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `name` | text, not null | 1–100 chars, trimmed. Unique case-insensitively (`uq_exercises_name_lower`). Matched case-insensitively by imports. |
+| `type` | text, not null | `strength` or `cardio` (`ck_exercises_type`). Only a label/filter: any set field can be used with either. |
+
+#### `workout.exercise_muscles`
+
+| Column | Type | Notes |
+|---|---|---|
+| `exercise_id` | integer, PK, FK → `workout.exercises.id` `ON DELETE CASCADE` | |
+| `muscle` | text, PK | One of the 16 muscles of the body map (`ck_exercise_muscles_muscle`): Abdominals, Biceps, Calves, Chest, Forearms, Front shoulders, Glutes, Hamstrings, Lats, Lower back, Obliques, Quads, Rear shoulders, Traps, Traps middle, Triceps. |
+| `intensity` | smallint, not null | 1–3 (`ck_exercise_muscles_intensity`). |
+
+The muscle list is fixed in code (`domains/workout/muscles.py`), so there is no `muscles` table (workout had one, always holding exactly that list).
+
+#### `workout.equipments` / `workout.exercise_equipments`
+
+`equipments`: `id`, `name` (1–100 chars, trimmed, unique case-insensitively, `uq_equipments_name_lower`). `exercise_equipments`: `(exercise_id, equipment_id)` PK, both FKs `ON DELETE CASCADE` (deleting an equipment unlinks it from its exercises).
+
+### Workouts
+
+#### `workout.workouts`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `user_id` | integer, FK → `core.users.id` `ON DELETE CASCADE`, not null | |
+| `status` | text, not null, default `completed` | `in_progress` (a live session) or `completed` (`ck_workouts_status`). |
+| `date` | date, null | Null only while `in_progress`. |
+| `duration_minutes` | integer, null | ≥ 1. Null only while `in_progress`. |
+| `started_at` / `ended_at` | timestamptz, null | Set by live sessions only. |
+
+Index `ix_workouts_user_id_date` on `(user_id, date)`. Partial unique index `uq_workouts_one_in_progress` on `user_id` where `status = 'in_progress'`: one live session per user.
+
+#### `workout.workout_circuits`
+
+`id`, `workout_id` (FK `ON DELETE CASCADE`), `name` (≤ 100, null), `duration_minutes` (1–1440, null), `rounds` (1–1000, null), `position` (integer, not null).
+
+#### `workout.workout_exercises`
+
+`id`, `workout_id` (FK `ON DELETE CASCADE`), `exercise_id` (FK → `workout.exercises.id`, **no cascade**: an exercise in use can't be deleted), `circuit_id` (FK → `workout_circuits.id` `ON DELETE CASCADE`, null = a top-level entry), `position` (integer: the entry's place among the workout's top-level entries, or the exercise's place inside its circuit).
+
+#### `workout.workout_sets`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | Sets are ordered by `id`. |
+| `workout_exercise_id` | integer, FK `ON DELETE CASCADE`, indexed | |
+| `reps` | integer, null | 1–10000 |
+| `weight_kg` | double, null | −1500–1500 (negative = assisted) |
+| `duration_s` | integer, null | 1–86400 |
+| `distance_m` | double, null | 0–100000 |
+| `speed_kmh` | double, null | 0–500 |
+| `difficulty` | double, null | 0–100 |
+
+Every field is optional, so one set shape covers strength (reps × weight), cardio (duration, distance, speed) and anything in between.
+
+### Templates and saved circuits
+
+Same shape as workouts, per user:
+- `workout.templates` (`id`, `user_id` FK `ON DELETE CASCADE`, `name`), `template_circuits`, `template_exercises`, `template_sets`: the same columns as their `workout_*` counterparts, with `template_id`.
+- `workout.saved_circuits` (`id`, `user_id`, `name`, `duration_minutes`, `rounds`): one reusable circuit; `saved_circuit_exercises` (`circuit_id`, `exercise_id`, `position`) and `saved_circuit_sets`.
+
+`name` is 1–100 chars, trimmed, unique per user case-insensitively (`uq_templates_user_id_name_lower`, `uq_saved_circuits_user_id_name_lower`).
+
+### Rules
+
+- **Scoping**: every route needs the `workout` app (grant or admin). Writes only ever touch the current user's rows; anyone else's workout, template, circuit or set is a 404.
+- **Read-only sharing**: any workout user can read another workout user's completed workouts, stats and templates (not their saved circuits or live session), by passing `user_id`. A `user_id` who can't use workout is a 404.
+- **Catalog**: shared by every workout user. Any workout user can add an exercise or equipment; only admins edit or delete them. An exercise used by a workout, template or saved circuit can't be deleted (409).
+- **Live session**: starting one creates an `in_progress` workout (409 if one exists). From a template: the template's top-level exercises are copied with their planned sets; circuits are copied with their exercises but no sets (the round counter starts at round 1). **Finish** keeps only the sets the user checked, then removes exercises left without sets and circuits left without exercises, and sets `ended_at`, `date` (the browser's local date, else `started_at`'s UTC date), `duration_minutes` (elapsed, rounded, at least 1) and `status = completed`. **Discard** deletes it.
+- **Volume** = Σ reps × weight over sets with both and weight > 0. **Estimated 1RM** = weight × (1 + reps / 30) (Epley).
+- **Import** matches exercises by name case-insensitively. A workout identical to one the user already has (same date, duration and entries, including within the same file) is skipped, as is a template or saved circuit whose name the user already uses. An item naming an unknown exercise is skipped and reported.
 
 ## `cards`
 

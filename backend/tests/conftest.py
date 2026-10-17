@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from core import database, models  # noqa: E402, F401
 from domains.media import models as media_models  # noqa: E402, F401
 from domains.portfolio import models as portfolio_models  # noqa: E402, F401
+from domains.workout import models as workout_models  # noqa: E402, F401
 
 
 def _create_test_database() -> None:

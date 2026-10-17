@@ -10,6 +10,7 @@ from domains.auth import router as auth
 from domains.health import router as health
 from domains.media import router as media
 from domains.portfolio import router as portfolio
+from domains.workout import router as workout
 
 logging.basicConfig(
     level=settings.log_level, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -31,3 +32,4 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(portfolio.router)
 app.include_router(media.router)
+app.include_router(workout.router)

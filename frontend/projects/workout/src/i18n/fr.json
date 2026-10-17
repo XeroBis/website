@@ -1,0 +1,269 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "workouts": "Séances",
+    "templates": "Modèles",
+    "circuits": "Circuits",
+    "exercises": "Exercices",
+    "equipments": "Matériel",
+    "data": "Données",
+    "admin": "Admin"
+  },
+  "pageTitle": {
+    "newWorkout": "Nouvelle séance",
+    "editWorkout": "Modifier la séance",
+    "session": "Séance en direct"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue, réessayez.",
+    "unreachable": "Le serveur est injoignable."
+  },
+  "common": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "details": "Détails",
+    "yes": "Oui",
+    "no": "Non",
+    "sure": "Sûr ?",
+    "loading": "Chargement…",
+    "close": "Fermer",
+    "none": "Aucun"
+  },
+  "viewing": {
+    "label": "Voir"
+  },
+  "type": {
+    "strength": "Force",
+    "cardio": "Cardio",
+    "circuit": "Circuit"
+  },
+  "muscle": {
+    "Abdominals": "Abdominaux",
+    "Biceps": "Biceps",
+    "Calves": "Mollets",
+    "Chest": "Pectoraux",
+    "Forearms": "Avant-bras",
+    "Front shoulders": "Deltoïdes antérieurs",
+    "Glutes": "Fessiers",
+    "Hamstrings": "Ischio-jambiers",
+    "Lats": "Dorsaux",
+    "Lower back": "Lombaires",
+    "Obliques": "Obliques",
+    "Quads": "Quadriceps",
+    "Rear shoulders": "Deltoïdes postérieurs",
+    "Traps": "Trapèzes",
+    "Traps middle": "Trapèzes moyens",
+    "Triceps": "Triceps"
+  },
+  "muscleMap": {
+    "hint": "Cliquez sur un muscle : 1 → 2 → 3 → rien."
+  },
+  "set": {
+    "n": "Série {{n}}",
+    "reps": "rép.",
+    "difficulty": "difficulté"
+  },
+  "field": {
+    "reps": "Répétitions",
+    "weight_kg": "Poids (kg)",
+    "duration_s": "Durée (s)",
+    "distance_m": "Distance (m)",
+    "speed_kmh": "Vitesse (km/h)",
+    "difficulty": "Difficulté"
+  },
+  "details": {
+    "muscles": "Muscles travaillés",
+    "equipments": "Matériel"
+  },
+  "history": {
+    "empty": "Jamais fait pour l'instant."
+  },
+  "editor": {
+    "exercises": "Exercices",
+    "exercise": "Exercice",
+    "search": "Chercher un exercice ou un muscle…",
+    "sets": "Séries",
+    "addSet": "Série",
+    "removeSet": "Supprimer la série",
+    "addExercise": "Exercice",
+    "addCircuit": "Circuit",
+    "insertCircuit": "Insérer un circuit enregistré",
+    "remove": "Retirer",
+    "removeCircuit": "Retirer le circuit",
+    "moreFields": "Plus de champs",
+    "fewerFields": "Moins de champs",
+    "circuitName": "Nom du circuit",
+    "circuitDuration": "Durée (min)",
+    "circuitRounds": "Tours",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "errPick": "Exercice {{n}} : choisissez un exercice.",
+    "errSets": "Exercice {{n}} : ajoutez au moins une série.",
+    "errEmpty": "Ajoutez au moins un exercice.",
+    "errEmptyCircuit": "Un circuit doit contenir au moins un exercice."
+  },
+  "dashboard": {
+    "range": "Période",
+    "preset": {
+      "1m": "1 mois",
+      "3m": "3 mois",
+      "6m": "6 mois",
+      "1y": "1 an",
+      "all": "Tout"
+    },
+    "from": "Du",
+    "to": "Au",
+    "tiles": {
+      "workouts": "Séances",
+      "exercises": "Exercices",
+      "volume": "Volume soulevé"
+    },
+    "empty": "Aucune séance sur cette période.",
+    "calendar": "Activité",
+    "perWeek": "Séances par semaine",
+    "volumeWeek": "Volume par semaine",
+    "volumeMax": "Échelle du volume : jusqu'à {{max}} par semaine.",
+    "progression": "Progression en force",
+    "progressionExercise": "Exercice",
+    "progressionEmpty": "Il faut au moins deux dates avec une série lestée.",
+    "maxWeight": "Poids max",
+    "est1rm": "1RM estimé",
+    "top": "Exercices les plus faits",
+    "weekdays": "Séances par jour de la semaine",
+    "muscles": "Muscles travaillés"
+  },
+  "days": {
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mer",
+    "thu": "Jeu",
+    "fri": "Ven",
+    "sat": "Sam",
+    "sun": "Dim"
+  },
+  "workouts": {
+    "groupBy": "Grouper par",
+    "group": {
+      "year": "Année",
+      "month": "Mois",
+      "week": "Semaine"
+    },
+    "live": "Séance en direct",
+    "new": "Nouvelle séance",
+    "empty": "Aucune séance pour l'instant.",
+    "addFirst": "Enregistrer la première",
+    "saveAsTemplate": "Enregistrer comme modèle",
+    "minutes": "{{n}} min",
+    "rounds": "{{n}} tours"
+  },
+  "saveTemplate": {
+    "title": "Enregistrer comme modèle",
+    "create": "Nouveau modèle",
+    "replace": "En remplacer un",
+    "pick": "Modèle à remplacer"
+  },
+  "workoutForm": {
+    "titleNew": "Nouvelle séance",
+    "titleEdit": "Modifier la séance",
+    "date": "Date",
+    "duration": "Durée (min)",
+    "fromTemplate": "Partir d'un modèle",
+    "notFound": "Séance introuvable.",
+    "errDate": "Choisissez une date.",
+    "errDuration": "La durée doit être entre 1 et 1440 minutes."
+  },
+  "session": {
+    "startHeading": "Démarrer une séance",
+    "noTemplates": "Aucun modèle pour l'instant.",
+    "createTemplate": "En créer un",
+    "start": "Démarrer",
+    "startBlank": "Démarrer à vide",
+    "finish": "Terminer",
+    "finishConfirm": "Terminer la séance ?",
+    "discard": "Abandonner",
+    "discardConfirm": "Abandonner la séance ?",
+    "rest": "Repos",
+    "skip": "Passer",
+    "allDone": "Tous les exercices sont faits !",
+    "round": "Tour {{n}}",
+    "roundDone": "Tour fait → suivant",
+    "roundsLogged": "Tours enregistrés",
+    "addExercise": "Exercice",
+    "pickExercise": "Ajouter un exercice",
+    "set": "Série",
+    "check": "Fait",
+    "removeExercise": "Retirer l'exercice"
+  },
+  "templates": {
+    "new": "Nouveau modèle",
+    "empty": "Aucun modèle.",
+    "entries": "{{n}} entrées",
+    "start": "Démarrer la séance",
+    "copy": "Copier dans mes modèles",
+    "copied": "Copié sous le nom « {{name}} ».",
+    "titleNew": "Nouveau modèle",
+    "titleEdit": "Modifier le modèle",
+    "name": "Nom",
+    "notFound": "Modèle introuvable.",
+    "errName": "Donnez un nom au modèle."
+  },
+  "circuits": {
+    "new": "Nouveau circuit",
+    "empty": "Aucun circuit enregistré.",
+    "titleNew": "Nouveau circuit",
+    "titleEdit": "Modifier le circuit",
+    "name": "Nom",
+    "notFound": "Circuit introuvable.",
+    "errName": "Donnez un nom au circuit."
+  },
+  "exercises": {
+    "search": "Rechercher",
+    "type": "Type",
+    "allTypes": "Tous les types",
+    "muscleFilter": "Muscles",
+    "new": "Nouvel exercice",
+    "empty": "Aucun exercice pour l'instant.",
+    "emptyFilter": "Aucun exercice ne correspond.",
+    "titleNew": "Nouvel exercice",
+    "titleEdit": "Modifier l'exercice",
+    "name": "Nom",
+    "muscles": "Muscles",
+    "equipments": "Matériel",
+    "notFound": "Exercice introuvable.",
+    "errName": "Donnez un nom à l'exercice."
+  },
+  "equipments": {
+    "search": "Rechercher",
+    "new": "Ajouter",
+    "name": "Nom du matériel",
+    "empty": "Aucun matériel."
+  },
+  "transfer": {
+    "export": "Exporter",
+    "import": "Importer",
+    "importing": "Import…",
+    "deleteAll": "Tout supprimer",
+    "result": "{{created}} importé(s), {{updated}} mis à jour, {{skipped}} ignoré(s).",
+    "skippedLabel": "Ignorés :",
+    "invalid": "Ce fichier n'est pas du JSON valide.",
+    "invalidAt": "Fichier invalide : {{error}}"
+  },
+  "data": {
+    "intro": "Exportez vos séances, modèles et circuits enregistrés en fichiers JSON, ou importez de tels fichiers (y compris les exports de l'ancienne app). Ce qui est déjà là est ignoré.",
+    "workouts": "Séances",
+    "templates": "Modèles",
+    "circuits": "Circuits enregistrés"
+  },
+  "admin": {
+    "users": "Utilisateurs (pour les séances et modèles)",
+    "allUsers": "Tous",
+    "workouts": "Séances",
+    "templates": "Modèles",
+    "exercises": "Exercices",
+    "equipments": "Matériel",
+    "deleted": "Supprimé : {{what}}."
+  }
+}

@@ -1,0 +1,212 @@
+<div class="dashboard">
+  <div class="toolbar">
+    <ab-viewing-select />
+    <div class="segmented" role="group" [attr.aria-label]="'dashboard.range' | translate">
+      @for (p of presets; track p) {
+        <button type="button" [class.active]="preset() === p" (click)="applyPreset(p)">
+          {{ 'dashboard.preset.' + p | translate }}
+        </button>
+      }
+    </div>
+    <label class="toolbar-field">
+      <span>{{ 'dashboard.from' | translate }}</span>
+      <input type="date" [value]="from()" (change)="setDate('from', $any($event.target).value)" />
+    </label>
+    <label class="toolbar-field">
+      <span>{{ 'dashboard.to' | translate }}</span>
+      <input type="date" [value]="to()" (change)="setDate('to', $any($event.target).value)" />
+    </label>
+  </div>
+
+  @if (error(); as e) {
+    <p class="error">{{ e | translate }}</p>
+  } @else if (stats.value(); as s) {
+    <div class="tiles">
+      <div class="tile" data-testid="tile-workouts">
+        <span class="tile-value">{{ s.workouts }}</span>
+        <span class="tile-label">{{ 'dashboard.tiles.workouts' | translate }}</span>
+      </div>
+      <div class="tile">
+        <span class="tile-value">{{ s.exercises }}</span>
+        <span class="tile-label">{{ 'dashboard.tiles.exercises' | translate }}</span>
+      </div>
+      <div class="tile" data-testid="tile-volume">
+        <span class="tile-value">{{ formatVolume(s.volume_kg) }}</span>
+        <span class="tile-label">{{ 'dashboard.tiles.volume' | translate }}</span>
+      </div>
+    </div>
+
+    @if (!s.workouts) {
+      <p class="empty">{{ 'dashboard.empty' | translate }}</p>
+    } @else {
+      <section class="card">
+        <h2>{{ 'dashboard.calendar' | translate }}</h2>
+        <div class="calendar scroll-x">
+          @for (m of months(); track m.year * 12 + m.month) {
+            <div class="month">
+              <div class="month-name">{{ monthDate(m.year, m.month) | date: 'MMMM y' : undefined : lang() }}</div>
+              <div class="month-grid">
+                @for (d of weekdays; track d) {
+                  <span class="dow">{{ 'days.' + d | translate }}</span>
+                }
+                @for (week of m.weeks; track $index) {
+                  @for (day of week; track day.date) {
+                    <button
+                      type="button"
+                      class="day"
+                      [class.other]="!day.inMonth"
+                      [class.out]="!day.inRange"
+                      [class.on]="day.inMonth && day.workoutIds.length"
+                      [disabled]="!day.inMonth || !day.workoutIds.length"
+                      [title]="day.date"
+                      (click)="openDay(day.workoutIds)"
+                    >
+                      {{ day.day }}
+                    </button>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>{{ 'dashboard.perWeek' | translate }}</h2>
+        <div class="week-charts scroll-x">
+          <div class="bars" role="img" [attr.aria-label]="'dashboard.perWeek' | translate">
+            @for (w of weeks().bars; track w.week_start) {
+              <div
+                class="bar-col"
+                [title]="(weekDate(w.week_start) | date: 'd MMM y' : undefined : lang()) + ' · ' + w.workouts"
+              >
+                @if (w.year) {
+                  <span class="year-mark">{{ w.year }}</span>
+                }
+                <span class="bar-value">{{ w.workouts || '' }}</span>
+                <div class="bar" data-series="1" [style.height.%]="w.countPct"></div>
+              </div>
+            }
+          </div>
+          <h3>{{ 'dashboard.volumeWeek' | translate }}</h3>
+          <div class="bars" role="img" [attr.aria-label]="'dashboard.volumeWeek' | translate">
+            @for (w of weeks().bars; track w.week_start) {
+              <div
+                class="bar-col"
+                [title]="(weekDate(w.week_start) | date: 'd MMM y' : undefined : lang()) + ' · ' + formatVolume(w.volume_kg)"
+              >
+                <div class="bar" data-series="1" [style.height.%]="w.volumePct"></div>
+                <span class="bar-label">{{ weekDate(w.week_start) | date: 'd MMM' : undefined : lang() }}</span>
+              </div>
+            }
+          </div>
+        </div>
+        <p class="axis-note">{{ 'dashboard.volumeMax' | translate: { max: formatVolume(weeks().maxVolume) } }}</p>
+      </section>
+
+      @if (s.progression.length) {
+        <section class="card">
+          <div class="card-head">
+            <h2>{{ 'dashboard.progression' | translate }}</h2>
+            <select
+              data-testid="progression-select"
+              [attr.aria-label]="'dashboard.progressionExercise' | translate"
+              (change)="progressionId.set(+$any($event.target).value)"
+            >
+              @for (p of s.progression; track p.exercise_id) {
+                <option [value]="p.exercise_id" [selected]="p.exercise_id === progressionId()">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+          @if (chart().points.length < 2) {
+            <p class="muted">{{ 'dashboard.progressionEmpty' | translate }}</p>
+          } @else {
+            <div class="legend">
+              <span><i class="swatch" data-series="1"></i>{{ 'dashboard.maxWeight' | translate }}</span>
+              <span><i class="swatch dashed" data-series="2"></i>{{ 'dashboard.est1rm' | translate }}</span>
+            </div>
+            <div class="scroll-x progression">
+              <svg
+                #svg
+                [attr.width]="chart().width"
+                [attr.height]="chart().height"
+                [attr.viewBox]="'0 0 ' + chart().width + ' ' + chart().height"
+                role="img"
+                [attr.aria-label]="'dashboard.progression' | translate"
+                (mousemove)="hover($event, svg)"
+                (mouseleave)="hovered.set(null)"
+              >
+                @for (t of chart().ticks; track t.value) {
+                  <line class="grid" x1="44" [attr.x2]="chart().width" [attr.y1]="t.y" [attr.y2]="t.y" />
+                  <text class="tick" x="38" [attr.y]="t.y + 4">{{ t.value | number: '1.0-0' : lang() }}</text>
+                }
+                <path class="line" data-series="1" [attr.d]="chart().weightPath" />
+                <path class="line dashed" data-series="2" [attr.d]="chart().oneRmPath" />
+                @if (hovered() !== null) {
+                  <line
+                    class="crosshair"
+                    [attr.x1]="chart().points[hovered()!].x"
+                    [attr.x2]="chart().points[hovered()!].x"
+                    y1="12"
+                    [attr.y2]="chart().baseline"
+                  />
+                }
+                @for (p of chart().points; track p.date) {
+                  <circle class="dot" data-series="1" [attr.cx]="p.x" [attr.cy]="p.yWeight" r="4" />
+                  <circle class="dot" data-series="2" [attr.cx]="p.x" [attr.cy]="p.y1rm" r="4" />
+                  @if (p.label) {
+                    <text class="tick x" [attr.x]="p.x" [attr.y]="chart().baseline + 18">
+                      {{ weekDate(p.date) | date: 'd MMM' : undefined : lang() }}
+                    </text>
+                  }
+                }
+              </svg>
+            </div>
+            @if (hovered() !== null) {
+              @let p = chart().points[hovered()!];
+              <p class="chart-tip" data-testid="progression-tip">
+                <strong>{{ weekDate(p.date) | date: 'mediumDate' : undefined : lang() }}</strong>
+                · {{ 'dashboard.maxWeight' | translate }} {{ p.max_weight_kg | number: '1.0-1' : lang() }} kg
+                · {{ 'dashboard.est1rm' | translate }} {{ p.est_1rm_kg | number: '1.0-1' : lang() }} kg
+              </p>
+            }
+          }
+        </section>
+      }
+
+      <div class="two-cols">
+        <section class="card">
+          <h2>{{ 'dashboard.top' | translate }}</h2>
+          <ol class="top-list">
+            @for (t of top(); track t.name) {
+              <li>
+                <span class="top-name">{{ t.name }}</span>
+                <span class="top-count">× {{ t.count }}</span>
+                <span class="top-bar" data-series="1" [style.width.%]="t.pct"></span>
+              </li>
+            }
+          </ol>
+        </section>
+        <section class="card">
+          <h2>{{ 'dashboard.weekdays' | translate }}</h2>
+          <div class="bars weekdays">
+            @for (d of weekdayBars(); track d.key) {
+              <div class="bar-col" [title]="('days.' + d.key | translate) + ' · ' + d.count">
+                <span class="bar-value">{{ d.count || '' }}</span>
+                <div class="bar" data-series="1" [style.height.%]="d.pct"></div>
+                <span class="bar-label">{{ 'days.' + d.key | translate }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>{{ 'dashboard.muscles' | translate }}</h2>
+        <ab-muscle-map [muscles]="shades().muscles" [exercises]="shades().exercises" />
+      </section>
+    }
+  } @else {
+    <p class="muted">{{ 'common.loading' | translate }}</p>
+  }
+</div>

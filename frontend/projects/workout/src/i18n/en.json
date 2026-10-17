@@ -1,0 +1,269 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "workouts": "Workouts",
+    "templates": "Templates",
+    "circuits": "Circuits",
+    "exercises": "Exercises",
+    "equipments": "Equipment",
+    "data": "Data",
+    "admin": "Admin"
+  },
+  "pageTitle": {
+    "newWorkout": "New workout",
+    "editWorkout": "Edit workout",
+    "session": "Live session"
+  },
+  "errors": {
+    "generic": "Something went wrong, please try again.",
+    "unreachable": "The server can't be reached."
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "details": "Details",
+    "yes": "Yes",
+    "no": "No",
+    "sure": "Sure?",
+    "loading": "Loading…",
+    "close": "Close",
+    "none": "None"
+  },
+  "viewing": {
+    "label": "Viewing"
+  },
+  "type": {
+    "strength": "Strength",
+    "cardio": "Cardio",
+    "circuit": "Circuit"
+  },
+  "muscle": {
+    "Abdominals": "Abdominals",
+    "Biceps": "Biceps",
+    "Calves": "Calves",
+    "Chest": "Chest",
+    "Forearms": "Forearms",
+    "Front shoulders": "Front shoulders",
+    "Glutes": "Glutes",
+    "Hamstrings": "Hamstrings",
+    "Lats": "Lats",
+    "Lower back": "Lower back",
+    "Obliques": "Obliques",
+    "Quads": "Quads",
+    "Rear shoulders": "Rear shoulders",
+    "Traps": "Traps",
+    "Traps middle": "Traps middle",
+    "Triceps": "Triceps"
+  },
+  "muscleMap": {
+    "hint": "Click a muscle: 1 → 2 → 3 → off."
+  },
+  "set": {
+    "n": "Set {{n}}",
+    "reps": "reps",
+    "difficulty": "difficulty"
+  },
+  "field": {
+    "reps": "Reps",
+    "weight_kg": "Weight (kg)",
+    "duration_s": "Duration (s)",
+    "distance_m": "Distance (m)",
+    "speed_kmh": "Speed (km/h)",
+    "difficulty": "Difficulty"
+  },
+  "details": {
+    "muscles": "Muscles worked",
+    "equipments": "Equipment"
+  },
+  "history": {
+    "empty": "Never done yet."
+  },
+  "editor": {
+    "exercises": "Exercises",
+    "exercise": "Exercise",
+    "search": "Search an exercise or a muscle…",
+    "sets": "Sets",
+    "addSet": "Set",
+    "removeSet": "Remove the set",
+    "addExercise": "Exercise",
+    "addCircuit": "Circuit",
+    "insertCircuit": "Insert a saved circuit",
+    "remove": "Remove",
+    "removeCircuit": "Remove the circuit",
+    "moreFields": "More fields",
+    "fewerFields": "Fewer fields",
+    "circuitName": "Circuit name",
+    "circuitDuration": "Duration (min)",
+    "circuitRounds": "Rounds",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "errPick": "Exercise {{n}}: pick an exercise.",
+    "errSets": "Exercise {{n}}: add at least one set.",
+    "errEmpty": "Add at least one exercise.",
+    "errEmptyCircuit": "A circuit needs at least one exercise."
+  },
+  "dashboard": {
+    "range": "Period",
+    "preset": {
+      "1m": "1 month",
+      "3m": "3 months",
+      "6m": "6 months",
+      "1y": "1 year",
+      "all": "All"
+    },
+    "from": "From",
+    "to": "To",
+    "tiles": {
+      "workouts": "Workouts",
+      "exercises": "Exercises",
+      "volume": "Volume lifted"
+    },
+    "empty": "No workout in this period.",
+    "calendar": "Activity",
+    "perWeek": "Workouts per week",
+    "volumeWeek": "Volume per week",
+    "volumeMax": "Volume scale: up to {{max}} a week.",
+    "progression": "Strength progression",
+    "progressionExercise": "Exercise",
+    "progressionEmpty": "Needs at least two dates with a weighted set.",
+    "maxWeight": "Max weight",
+    "est1rm": "Estimated 1RM",
+    "top": "Most done exercises",
+    "weekdays": "Workouts per weekday",
+    "muscles": "Muscles worked"
+  },
+  "days": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  },
+  "workouts": {
+    "groupBy": "Group by",
+    "group": {
+      "year": "Year",
+      "month": "Month",
+      "week": "Week"
+    },
+    "live": "Live session",
+    "new": "New workout",
+    "empty": "No workout yet.",
+    "addFirst": "Log the first one",
+    "saveAsTemplate": "Save as template",
+    "minutes": "{{n}} min",
+    "rounds": "{{n}} rounds"
+  },
+  "saveTemplate": {
+    "title": "Save as template",
+    "create": "New template",
+    "replace": "Replace one",
+    "pick": "Template to replace"
+  },
+  "workoutForm": {
+    "titleNew": "New workout",
+    "titleEdit": "Edit workout",
+    "date": "Date",
+    "duration": "Duration (min)",
+    "fromTemplate": "Start from a template",
+    "notFound": "Workout not found.",
+    "errDate": "Pick a date.",
+    "errDuration": "The duration must be between 1 and 1440 minutes."
+  },
+  "session": {
+    "startHeading": "Start a session",
+    "noTemplates": "No template yet.",
+    "createTemplate": "Create one",
+    "start": "Start",
+    "startBlank": "Start blank",
+    "finish": "Finish",
+    "finishConfirm": "Finish the session?",
+    "discard": "Discard",
+    "discardConfirm": "Discard the session?",
+    "rest": "Rest",
+    "skip": "Skip",
+    "allDone": "All exercises done!",
+    "round": "Round {{n}}",
+    "roundDone": "Round done → next",
+    "roundsLogged": "Rounds logged",
+    "addExercise": "Exercise",
+    "pickExercise": "Add an exercise",
+    "set": "Set",
+    "check": "Done",
+    "removeExercise": "Remove the exercise"
+  },
+  "templates": {
+    "new": "New template",
+    "empty": "No template.",
+    "entries": "{{n}} entries",
+    "start": "Start session",
+    "copy": "Copy to my templates",
+    "copied": "Copied as \"{{name}}\".",
+    "titleNew": "New template",
+    "titleEdit": "Edit template",
+    "name": "Name",
+    "notFound": "Template not found.",
+    "errName": "Give the template a name."
+  },
+  "circuits": {
+    "new": "New circuit",
+    "empty": "No saved circuit.",
+    "titleNew": "New circuit",
+    "titleEdit": "Edit circuit",
+    "name": "Name",
+    "notFound": "Circuit not found.",
+    "errName": "Give the circuit a name."
+  },
+  "exercises": {
+    "search": "Search",
+    "type": "Type",
+    "allTypes": "All types",
+    "muscleFilter": "Muscles",
+    "new": "New exercise",
+    "empty": "No exercise yet.",
+    "emptyFilter": "No exercise matches.",
+    "titleNew": "New exercise",
+    "titleEdit": "Edit exercise",
+    "name": "Name",
+    "muscles": "Muscles",
+    "equipments": "Equipment",
+    "notFound": "Exercise not found.",
+    "errName": "Give the exercise a name."
+  },
+  "equipments": {
+    "search": "Search",
+    "new": "Add",
+    "name": "Equipment name",
+    "empty": "No equipment."
+  },
+  "transfer": {
+    "export": "Export",
+    "import": "Import",
+    "importing": "Importing…",
+    "deleteAll": "Delete all",
+    "result": "{{created}} imported, {{updated}} updated, {{skipped}} skipped.",
+    "skippedLabel": "Skipped:",
+    "invalid": "This file isn't valid JSON.",
+    "invalidAt": "Invalid file: {{error}}"
+  },
+  "data": {
+    "intro": "Export your workouts, templates and saved circuits as JSON files, or import such files (including the old app's exports). Already-imported items are skipped.",
+    "workouts": "Workouts",
+    "templates": "Templates",
+    "circuits": "Saved circuits"
+  },
+  "admin": {
+    "users": "Users (for workouts and templates)",
+    "allUsers": "All",
+    "workouts": "Workouts",
+    "templates": "Templates",
+    "exercises": "Exercises",
+    "equipments": "Equipment",
+    "deleted": "Deleted: {{what}}."
+  }
+}

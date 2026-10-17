@@ -11,7 +11,7 @@ placeholder page (its name and whether `/api/health` answers) — see
 - **App access**: a new account can use no app. An admin grants apps per user (auth app, `/admin/users`). Admins can use every app. Workout, cards and media are entirely behind their grant (pages and API). The portfolio is public; its grant only allows editing projects.
 - **Language**: the logged-in user's saved language (FR/EN). Logged out: the last language used on that site, then the browser's language if it's French or English, then French.
 - Placeholder pages show who is logged in (pseudo and email) or a "Log in" link.
-- **Header** (`ab-header`, used by portfolio and media): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page).
+- **Header** (`ab-header`, used by portfolio, media and workout): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page).
 
 ## Auth — `auth.alanbignon.com`
 
@@ -85,7 +85,99 @@ A project is `{id, name, description_fr, description_en, repo_url, featured, pos
 
 ## Workout — `workout.alanbignon.com`
 
-Placeholder, behind `appGuard`.
+A workout log: workouts made of exercises with their sets (and circuits), a shared exercise catalog, templates, saved circuits, a live session mode for the gym, a stats dashboard, and import/export. Ported from `../workout` (see decisions.md for what changed). Every page is behind `appGuard('workout')` (logged out → login; no workout access → the auth app's account page). FR/EN. Tables and rules: data-model.md `workout`.
+
+### Look
+
+"Scoreboard": deep navy background, slightly lighter panels, signal-orange accent, Barlow Condensed (uppercase) for headings and numbers, Inter for the UI, JetBrains Mono for set values and timers (tabular digits). Strength is orange, cardio cyan, circuits violet, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker.
+
+### Shared parts
+
+- **Header**: the shared header (title "Workout", links Dashboard, Workouts, Templates, Circuits, Exercises, Equipments, Data, and Admin for admins). The FR/EN switch saves the language on the account (the old app only showed it logged out).
+- **Viewing someone else**: the Dashboard, Workouts and Templates pages have a "Viewing" select listing every workout user (pseudo), the current user first. Picking someone else shows their data read-only: no edit, delete, new or session buttons. Templates offer "Copy to my templates" instead. The choice is in the URL (`?user=<id>`); the exercises page's history shows your own sets.
+- **Set display**: `12 reps @ 40 kg · 1min 30s · 9 km/h · difficulty 6 · 1.5km`, showing only the fields set. Durations as `1h 2min 3s`, distances in m under 1000, else km.
+- **Muscle map**: front and back body SVGs, muscles shaded by intensity (1–3). Muscle names are translated. In forms, clicking a muscle cycles 1 → 2 → 3 → off; as a filter it toggles; read-only on details and the dashboard, where hovering (tapping on mobile) a muscle lists the exercises that worked it.
+- **Exercise picker**: type-ahead over exercise names and muscles (every word must match).
+
+### Pages
+
+- `/` → `/dashboard`. Any other path → `/dashboard`.
+- `/dashboard`: range presets 1 month / 3 months (default) / 6 months / 1 year (whole calendar months ending this month) / all, or custom from–to dates. Then: totals (workouts, exercises, volume as kg / t / Mt), an activity calendar (one month per card, days with a workout highlighted; clicking one opens `/workouts` scrolled to it), workouts per week and volume per week bar charts (scrolled together, year separators), strength progression for a picked exercise (max weight and estimated 1RM lines, needs two dates), top exercises (by times done), workouts per weekday, and the muscle map of the period. "No workout in this period" when empty.
+- `/workouts`: completed workouts newest first, 20 at a time with infinite scroll, grouped by year / month (default) / week (toggles, combinable, collapsible groups with counts). Each card: date, duration, entries (circuits with their name, duration and rounds), sets. Buttons: **Details** (muscle map + equipment of the selected exercises), and for your own: **Save as template** (new, or replace one of yours), **Edit**, **Delete** (with confirmation). Clicking an exercise name opens its history (every set of that exercise, newest first, for the viewed user). Toolbar: **Live session** and **New workout**.
+- `/workouts/new`, `/workouts/:id/edit`: date, duration (minutes), optionally start from one of your templates, then the entries editor. Errors are shown per row ("Exercise 2: pick an exercise"). Someone else's or an unknown id: "Workout not found".
+- **Entries editor** (workout, template and circuit forms): rows of exercise (picker + sets) or circuit (name, duration, rounds, its own exercise rows), reorderable with ▲▼, removable; sets show reps + weight (strength) or duration + distance (cardio) with **More fields** for the rest; **+ Set** copies the last one; **Insert saved circuit**.
+- `/session` (live session): with none running, pick one of your templates (or **Start blank**). Running: the elapsed time, **Finish** and **Discard** (each confirmed). The focused entry is shown large, the others as compact rows below (tap to focus; done ones get a ✓):
+  - an exercise: a table of its sets with editable values and a ✓ button each; checking a set saves its edited values and starts a 90 s rest timer (with a bar and **Skip**); a checked set stays editable (saved on change); **+ Set**, remove a set, remove the exercise;
+  - a circuit: "Round N / rounds", the member exercise currently up with its inputs and **Round done → next** (logs a checked set and moves to the next member), member pips to jump, the rounds logged so far, **+ Exercise** into the circuit; no rest timer;
+  - **+ Exercise**, **+ Circuit** (blank, or a saved circuit);
+  - when every standalone exercise is done, an "All done" banner with **Finish**.
+  - Finish keeps only checked sets (see data-model.md) and opens `/workouts`. Checked sets are remembered in the browser, so reloading the page during a session keeps them.
+- `/templates`: the viewed user's templates by name, with their entries, **Details**, and for your own **Start session**, **Edit**, **Delete**; for someone else's, **Copy to my templates** (named like the original, with " (2)", " (3)"… if you already use that name). **New template** → `/templates/new`. `/templates/new`, `/templates/:id`: name + entries editor.
+- `/circuits`: your saved circuits (name, duration, rounds, exercises with planned sets), **Edit**, **Delete**. `/circuits/new`, `/circuits/:id`: name (required), duration, rounds, exercise rows.
+- `/exercises`: the catalog, filtered in the browser by name, type and muscles (map in toggle mode). Each row: name (opens its history), type badge, **Details** (muscle map and equipment). **New exercise** (any workout user, `/exercises/new`): name, type, muscles with intensity, equipment checkboxes. Admins also get **Edit** (`/exercises/:id`, same form) and **Delete** (refused with a message while the exercise is used).
+- `/equipments`: the equipment list with a name filter; **New equipment** for everyone, inline **Edit** and **Delete** (confirmed) for admins.
+- `/data`: your own import/export, one section each for workouts, templates and saved circuits: **Export** downloads `workouts.json` / `templates.json` / `circuits.json`; **Import** reads such a file (checked in the browser first, with the path of the first problem), then shows "N imported, M skipped" and the list of skipped items with the reason.
+- `/admin` (admins; others → `/`): catalog import/export (`exercises.json`, `equipments.json`); workouts and templates import/export for the users ticked in a checklist (old multi-user files, `[{user_email, workouts}]` / `[{user_email, templates}]`); **Delete all** workouts / templates of the ticked users, all exercises, all equipments (each confirmed).
+
+### File formats
+
+Same as the old app, so its exports import as-is:
+- `workouts.json`: `[{date, duration_minutes, exercises: [entry]}]`; an entry is `{type: "exercise", exercise_name, sets: [set]}` or `{type: "circuit", name, duration_minutes, rounds, exercises: [{exercise_name, sets}]}`. Older exports' `"strength"` / `"cardio"` entries (and very old cardio entries with `intervals` / `duration_s` / `distance_m` instead of `sets`) are read too. A set has any of `reps, weight_kg, duration_s, distance_m, speed_kmh, difficulty`.
+- `templates.json`: `[{name, exercises: [entry]}]`. `circuits.json` (new): `[{name, duration_minutes, rounds, exercises: [{exercise_name, sets}]}]`.
+- Admin files: the same lists wrapped as `[{user_email, workouts}]` / `[{user_email, templates}]`; `exercises.json`: `[{name, type, muscles: [{name, intensity}], equipments: [name]}]`; `equipments.json`: `[name]`.
+- The catalog is loaded from the admin page (the old repo's `data/exercises.json` and `data/equipments.json`, or a prod export); nothing seeds it automatically.
+
+### API (`/api/workout`)
+
+Every route needs a session (401) and the `workout` app (403); unsafe ones also need CSRF (403). `user_id` on read routes = another workout user (404 if they can't use workout). Writes to anything not yours: 404.
+
+| Endpoint | Body / query → result | Errors |
+|---|---|---|
+| `GET /users` | → workout users `{id, pseudo}`, current user first, then by pseudo | |
+| `GET /muscles` | → the 16 muscle names | |
+| `GET /exercises` | → every exercise `{id, name, type, muscles: [{name, intensity}], equipments: [{id, name}]}` by name | |
+| `GET /exercises/{id}` | → exercise | 404 |
+| `POST /exercises` | `{name, type, muscles, equipments: [name]}` (unknown equipment names are created) → 201 exercise | 409 name taken, 422 |
+| `PUT /exercises/{id}` | admin; same body → exercise | 403, 404, 409, 422 |
+| `DELETE /exercises/{id}` | admin → 204 | 403, 404, 409 in use |
+| `GET /equipments` · `POST /equipments` | → `[{id, name}]` · `{name}` → 201 | 409, 422 |
+| `PUT /equipments/{id}` · `DELETE /equipments/{id}` | admin; `{name}` → equipment · → 204 (unlinked from exercises) | 403, 404, 409, 422 |
+| `GET /workouts?user_id&date_from&date_to&exercise_id&limit&offset` | → completed workouts, newest first (`limit` 1–100, default 20) | 404, 422 |
+| `GET /workouts/{id}?user_id` | → workout | 404 |
+| `POST /workouts` | `{date, duration_minutes, exercises: [entry]}` → 201 workout | 404 unknown exercise, 422 |
+| `PUT /workouts/{id}` · `DELETE /workouts/{id}` | full replace → workout · → 204 | 404, 422 |
+| `GET /stats?user_id&date_from&date_to` | → dashboard aggregates (below) | 404, 422 |
+| `GET /templates?user_id` · `GET /templates/{id}?user_id` | → templates by name · template | 404 |
+| `POST /templates` · `PUT /templates/{id}` · `DELETE /templates/{id}` | `{name, exercises}` → 201 / template / 204 | 404, 409 name taken, 422 |
+| `POST /templates/{id}/copy?user_id` | → 201 your copy | 404 |
+| `GET /circuits` · `GET /circuits/{id}` · `POST` · `PUT /{id}` · `DELETE /{id}` | your saved circuits; `{name, duration_minutes, rounds, exercises: [{exercise_id, sets}]}` | 404, 409, 422 |
+| `GET /session` | → your live session, or `null` | |
+| `POST /session` | `{template_id?}` → 201 session | 404 template, 409 one running |
+| `DELETE /session` | discard → 204 | 404 none |
+| `POST /session/finish` | `{checked_set_ids, date?}` → completed workout | 404 |
+| `POST /session/exercises` · `DELETE /session/exercises/{id}` | `{exercise_id, circuit_id?}` → 201 entry · → 204 | 404 |
+| `POST /session/circuits` · `DELETE /session/circuits/{id}` | `{name?, duration_minutes?, rounds?, exercise_ids}` → 201 circuit · → 204 | 404 |
+| `POST /session/exercises/{id}/sets` · `PUT /session/sets/{id}` · `DELETE /session/sets/{id}` | set → 201 set · set → set · → 204 | 404, 422 |
+| `GET /workouts/export` · `POST /workouts/import` | your workouts file · file → `{created, skipped, ignored: [reason]}` | 422 |
+| `GET /templates/export` · `POST /templates/import` | same for templates | 422 |
+| `GET /circuits/export` · `POST /circuits/import` | same for saved circuits | 422 |
+| `GET /admin/workouts/export?user_ids` · `POST /admin/workouts/import` | admin; multi-user files (unknown email → listed) | 403, 422 |
+| `GET /admin/templates/export?user_ids` · `POST /admin/templates/import` | admin; same | 403, 422 |
+| `GET /admin/exercises/export` · `POST /admin/exercises/import` | admin; creates or updates by name → `{created, updated, skipped, ignored}` | 403, 422 |
+| `GET /admin/equipments/export` · `POST /admin/equipments/import` | admin; existing names skipped | 403, 422 |
+| `DELETE /admin/workouts?user_ids` · `DELETE /admin/templates?user_ids` | admin → 204 | 403 |
+| `DELETE /admin/exercises` · `DELETE /admin/equipments` | admin → 204 | 403, 409 an exercise is used |
+
+A workout is `{id, user_id, status, date, duration_minutes, started_at, ended_at, exercises: [entry]}`; an entry is `{id, type: "exercise", exercise_id, exercise, sets: [{id, …set}]}` or `{id, type: "circuit", name, duration_minutes, rounds, exercises: [exercise entry]}`. Templates are `{id, user_id, name, exercises}`, saved circuits `{id, name, duration_minutes, rounds, exercises}`.
+
+Stats: `{date_from, date_to` (the range used: the query's, else first and last workout), `workouts, exercises, volume_kg, days: [{date, workout_ids}], weeks: [{week_start, workouts, volume_kg}]` (every week of the range, Monday first, zeros included), `weekdays: [7 counts, Monday first], top_exercises: [{name, count}], muscles: [{name, total, exercises: [{name, count}]}], progression: [{exercise_id, name, points: [{date, max_weight_kg, est_1rm_kg}]}]}` (exercises with at least one weighted set, by name).
+
+### Validation
+
+- Exercise / equipment / template / circuit name: trimmed, 1–100 chars; exercise and equipment names unique case-insensitively, template and saved-circuit names per user (409).
+- Exercise: type `strength` or `cardio`; muscles from the list, intensity 1–3, no repeats; at most 30 muscles and 20 equipments.
+- Workout: date required, duration ≥ 1 minute; 1–100 entries; an exercise entry has 1–100 sets; a circuit 1–50 exercises, duration 1–1440 minutes, rounds 1–1000, name ≤ 100. Templates the same without date/duration. Sets: see the ranges in data-model.md. The forms check the same before sending.
+- Import: a file must be a JSON list of the expected shape (422 otherwise); items failing per-item checks (unknown exercise, duplicate, unknown email, unknown muscle) are skipped and listed rather than failing the whole file.
 
 ## Cards — `cards.alanbignon.com`
 

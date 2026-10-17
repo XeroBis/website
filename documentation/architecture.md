@@ -29,8 +29,11 @@ website/
 │   ├── domains/<name>/         # one package per app (+ health): router.py, models.py, schemas.py, service code
 │   │   ├── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`)
 │   │   ├── portfolio/          #   /api/portfolio routes, `portfolio` schema models
-│   │   └── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
-│   │                           #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)
+│   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
+│   │   │                       #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)
+│   │   └── workout/            #   /api/workout routes (routers/: catalog, workouts, templates, circuits, session,
+│   │                           #   stats, transfer = import/export, admin), `workout` schema models, muscles.py,
+│   │                           #   entries.py (shared build/serialize of workout/template/circuit entries), stats.py, transfer.py
 │   ├── alembic/                # ONE migration history for every schema
 │   └── tests/
 ├── frontend/                   # Angular 22 CLI workspace (no Nx)
@@ -62,14 +65,14 @@ website/
 
 ### Frontend: projects, library, bundles
 
-- Each application has its own `main.ts`, `index.html`, routes, `public/` assets and (later) PWA manifest / service worker, and builds to `frontend/dist/<app>/browser/`.
-- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; all but workout also have a `favicon.svg`, which browsers that support it use instead. Workout keeps the old repo's "AB" monogram, cards the Poké Ball. Portfolio, media and auth have new ones matching their look: portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG.
+- Each application has its own `main.ts`, `index.html`, routes, `public/` assets (and optionally a web manifest), and builds to `frontend/dist/<app>/browser/`.
+- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; all but workout also have a `favicon.svg`, which browsers that support it use instead. Workout keeps the old repo's "AB" monogram, cards the Poké Ball. Portfolio, media and auth have new ones matching their look: portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, the old repo's) so it can be installed to a phone's home screen; no app has a service worker. Its body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
 - `shared` holds what more than one app needs (HTTP services, auth, i18n, layout pieces). Apps import it as `@shared`, which `tsconfig.json` maps to `projects/shared/src/public-api.ts`: the library's source is compiled into each app's bundle at build time, and tree-shaking keeps only the parts that app uses. Nothing is shared at runtime.
 - One `package.json`, so the Angular version is the same for every app.
 - **Environment**: `projects/shared/src/lib/environment/environment.ts` is the prod build's (`production: true`, the `https://*.alanbignon.com` app URLs). Each app's `development` build configuration (`ng serve`) swaps in `environment.development.ts` (the `http://localhost:460x` URLs) through `fileReplacements` in `angular.json`. Code reads it through the `ENVIRONMENT` injection token, which tests override.
-- **Auth wiring**: every app registers `provideHttpClient(withInterceptors([authInterceptor]))`. Apps with translated UI add `provideI18n({ en, fr })` with their own `src/i18n/*.json` (`auth`, `portfolio` and `media` for now). `provideI18n` merges in the `SHARED` strings used by `@shared` components (`lib/i18n/shared-translations.ts`), so an app's JSON only holds its own keys.
+- **Auth wiring**: every app registers `provideHttpClient(withInterceptors([authInterceptor]))`. Apps with translated UI add `provideI18n({ en, fr })` with their own `src/i18n/*.json` (`auth`, `portfolio`, `media` and `workout` for now). `provideI18n` merges in the `SHARED` strings used by `@shared` components (`lib/i18n/shared-translations.ts`), so an app's JSON only holds its own keys.
 - **Icons**: `ab-icon` (`@shared`) draws inline-SVG icons (Lucide paths, ISC license) at 1em in `currentColor`, by name. No icon font or package.
-- **Layout**: `ab-header` (`@shared`) is the top bar: app title linking to `/`, the app's own links as projected content, FR/EN switch, pseudo + an apps-grid icon linking to the auth app's account page (as on the old workout navbar) (no logout button: logging out happens there) or a log in link. It needs `provideI18n`. Used by `portfolio` and `media`; `auth` keeps its centred-card layout, and workout/cards adopt it when ported. It reads the `--ab-border`/`--ab-surface`/`--ab-accent`/`--ab-text`/`--ab-muted` CSS custom properties, with fallbacks, so each app can theme it.
+- **Layout**: `ab-header` (`@shared`) is the top bar: app title linking to `/`, the app's own links as projected content, FR/EN switch, pseudo + an apps-grid icon linking to the auth app's account page (as on the old workout navbar) (no logout button: logging out happens there) or a log in link. It needs `provideI18n`. Used by `portfolio`, `media` and `workout`; `auth` keeps its centred-card layout, and cards adopts it when ported. It reads the `--ab-border`/`--ab-surface`/`--ab-accent`/`--ab-text`/`--ab-muted` CSS custom properties, with fallbacks, so each app can theme it.
 
 ## Request flow
 

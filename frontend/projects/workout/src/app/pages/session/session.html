@@ -1,0 +1,265 @@
+@if (loading()) {
+  <p class="muted">{{ 'common.loading' | translate }}</p>
+} @else if (session(); as s) {
+  <div class="session-bar">
+    <span class="clock" data-testid="elapsed"><ab-icon name="timer" /> {{ formatClock(elapsed()) }}</span>
+    <span class="push"></span>
+    <ab-confirm-button label="session.discard" question="session.discardConfirm" tone="ghost" (confirmed)="discard()" />
+    <ab-confirm-button label="session.finish" question="session.finishConfirm" tone="primary" (confirmed)="finish()" />
+  </div>
+
+  @if (rest() > 0) {
+    <div class="rest" data-testid="rest">
+      <span>{{ 'session.rest' | translate }}</span>
+      <strong class="mono">{{ rest() }}s</strong>
+      <span class="rest-track"><span class="rest-fill" [style.width.%]="(rest() / restTotal) * 100"></span></span>
+      <button type="button" class="btn ghost sm" (click)="skipRest()">{{ 'session.skip' | translate }}</button>
+    </div>
+  }
+  @if (error(); as e) {
+    <p class="error">{{ e | translate }}</p>
+  }
+  @if (allDone()) {
+    <div class="all-done" data-testid="all-done">
+      {{ 'session.allDone' | translate }}
+      <button type="button" class="btn primary" [disabled]="busy()" (click)="finish()">
+        {{ 'session.finish' | translate }}
+      </button>
+    </div>
+  }
+
+  @if (activeEntry(); as entry) {
+    <section class="card active-entry" data-testid="active-entry">
+      @if (entry.type === 'circuit') {
+        <div class="row-head">
+          <span class="badge" data-type="circuit">{{ 'type.circuit' | translate }}</span>
+          @if (entry.name) {
+            <h2>{{ entry.name }}</h2>
+          }
+          <span class="round mono" data-testid="round">
+            {{ 'session.round' | translate: { n: roundsDone(entry) + 1 } }}{{ entry.rounds ? ' / ' + entry.rounds : '' }}
+          </span>
+          <button type="button" class="icon-btn push" [attr.aria-label]="'editor.removeCircuit' | translate" (click)="removeCircuit(entry)">
+            <ab-icon name="trash" />
+          </button>
+        </div>
+        @if (member(entry); as m) {
+          <div class="member">
+            <h3>{{ m.exercise.name }}</h3>
+            <div class="fields">
+              @for (field of fields(m); track field) {
+                <label
+                  >{{ 'field.' + field | translate }}
+                  <input type="number" inputmode="decimal" [value]="roundValue(m, field)" (change)="editRound(m, field, $any($event.target).value)" />
+                </label>
+              }
+            </div>
+            <button type="button" class="btn ghost sm" (click)="toggleFields(m.id)">
+              {{ (expanded().has(m.id) ? 'editor.fewerFields' : 'editor.moreFields') | translate }}
+            </button>
+            <button type="button" class="btn primary big" [disabled]="busy()" (click)="logRound(entry, m)">
+              {{ 'session.roundDone' | translate }}
+            </button>
+            @if (m.sets.length) {
+              <p class="muted">
+                {{ 'session.roundsLogged' | translate }}:
+                @for (set of m.sets; track set.id; let last = $last) {
+                  {{ set.reps ?? (set.duration_s ? set.duration_s + 's' : '—') }}{{ last ? '' : ', ' }}
+                }
+              </p>
+            }
+          </div>
+          <div class="pips">
+            @for (ex of entry.exercises; track ex.id; let i = $index) {
+              <button type="button" class="pip" [class.active]="ex.id === m.id" (click)="jump(entry, i)">
+                {{ ex.exercise.name }} <span class="mono">{{ ex.sets.length }}</span>
+              </button>
+            }
+          </div>
+        }
+        <button type="button" class="btn ghost sm" (click)="picker.set(entry.id)">
+          <ab-icon name="plus" /> {{ 'session.addExercise' | translate }}
+        </button>
+      } @else {
+        <div class="row-head">
+          <h2>{{ entry.exercise.name }}</h2>
+          <span class="badge" [attr.data-type]="entry.exercise.type">{{ 'type.' + entry.exercise.type | translate }}</span>
+          <button type="button" class="btn ghost sm push" (click)="toggleFields(entry.id)">
+            {{ (expanded().has(entry.id) ? 'editor.fewerFields' : 'editor.moreFields') | translate }}
+          </button>
+          <button type="button" class="icon-btn" [attr.aria-label]="'session.removeExercise' | translate" (click)="removeExercise(entry, null)">
+            <ab-icon name="trash" />
+          </button>
+        </div>
+        <table class="sets-table">
+          <thead>
+            <tr>
+              <th>{{ 'session.set' | translate }}</th>
+              @for (field of fields(entry); track field) {
+                <th>{{ 'field.' + field | translate }}</th>
+              }
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (set of entry.sets; track set.id; let i = $index) {
+              <tr [class.done]="checked().has(set.id)" data-testid="set-row">
+                <td class="mono">{{ i + 1 }}</td>
+                @for (field of fields(entry); track field) {
+                  <td>
+                    <input
+                      type="number"
+                      inputmode="decimal"
+                      [attr.aria-label]="'field.' + field | translate"
+                      [value]="value(set, field)"
+                      (change)="edit(set, field, $any($event.target).value)"
+                    />
+                  </td>
+                }
+                <td>
+                  <button
+                    type="button"
+                    class="check"
+                    data-testid="check"
+                    [class.on]="checked().has(set.id)"
+                    [disabled]="saving().has(set.id)"
+                    [attr.aria-pressed]="checked().has(set.id)"
+                    [attr.aria-label]="'session.check' | translate"
+                    (click)="check(entry, set)"
+                  >
+                    <ab-icon name="check" />
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="icon-btn" [attr.aria-label]="'editor.removeSet' | translate" (click)="removeSet(entry, set)">
+                    <ab-icon name="x" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <button type="button" class="btn ghost sm" (click)="addSet(entry)">
+          <ab-icon name="plus" /> {{ 'editor.addSet' | translate }}
+        </button>
+      }
+    </section>
+  }
+
+  <div class="mini-list">
+    @for (e of otherEntries(); track e.id) {
+      <button type="button" class="mini" [class.done]="entryDone(e)" data-testid="mini" (click)="focus(e)">
+        @if (entryDone(e)) {
+          <ab-icon name="check" />
+        }
+        @if (e.type === 'circuit') {
+          <span class="badge" data-type="circuit">{{ 'type.circuit' | translate }}</span>
+          <span>{{ e.name || ('type.circuit' | translate) }}</span>
+          <span class="mono push">{{ 'session.round' | translate: { n: roundsDone(e) + 1 } }}</span>
+        } @else {
+          <span>{{ e.exercise.name }}</span>
+          <span class="mono push">{{ doneCount(e) }}/{{ e.sets.length }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (picker() !== null) {
+    <section class="card stack">
+      <div class="row-head">
+        <h3>{{ 'session.pickExercise' | translate }}</h3>
+        <button type="button" class="icon-btn push" [attr.aria-label]="'common.close' | translate" (click)="picker.set(null)">
+          <ab-icon name="x" />
+        </button>
+      </div>
+      <ab-exercise-picker [exercises]="exercises.value() ?? []" (picked)="addExercise($event)" />
+    </section>
+  } @else if (circuitForm()) {
+    <section class="card stack">
+      <div class="row-head">
+        <h3>{{ 'editor.addCircuit' | translate }}</h3>
+        <button type="button" class="icon-btn push" [attr.aria-label]="'common.close' | translate" (click)="circuitForm.set(false)">
+          <ab-icon name="x" />
+        </button>
+      </div>
+      @if (savedCircuits.value()?.length) {
+        <label
+          >{{ 'editor.insertCircuit' | translate }}
+          <select #pick (change)="insertSaved(+pick.value)">
+            <option value="">—</option>
+            @for (c of savedCircuits.value(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </label>
+      }
+      <div class="fields">
+        <label
+          >{{ 'editor.circuitName' | translate }}
+          <input type="text" maxlength="100" [(ngModel)]="newCircuit.name" />
+        </label>
+        <label
+          >{{ 'editor.circuitDuration' | translate }}
+          <input type="number" min="1" [(ngModel)]="newCircuit.duration_minutes" />
+        </label>
+        <label
+          >{{ 'editor.circuitRounds' | translate }}
+          <input type="number" min="1" [(ngModel)]="newCircuit.rounds" />
+        </label>
+      </div>
+      <button type="button" class="btn primary" (click)="createCircuit()">{{ 'editor.addCircuit' | translate }}</button>
+    </section>
+  } @else {
+    <div class="editor-actions">
+      <button type="button" class="btn ghost big" (click)="picker.set(0)">
+        <ab-icon name="plus" /> {{ 'session.addExercise' | translate }}
+      </button>
+      <button type="button" class="btn ghost big" (click)="circuitForm.set(true)">
+        <ab-icon name="repeat" /> {{ 'editor.addCircuit' | translate }}
+      </button>
+    </div>
+  }
+} @else {
+  <div class="session-start">
+    <h1>{{ 'session.startHeading' | translate }}</h1>
+    @if (templates.value()?.length) {
+      <div class="template-grid">
+        @for (t of templates.value(); track t.id) {
+          <button
+            type="button"
+            class="template-card"
+            data-testid="start-template"
+            [class.selected]="startTemplate() === t.id"
+            (click)="startTemplate.set(t.id)"
+          >
+            <strong>{{ t.name }}</strong>
+            <span class="muted">{{ 'templates.entries' | translate: { n: t.exercises.length } }}</span>
+          </button>
+        }
+      </div>
+    } @else if (templates.hasValue()) {
+      <p class="muted">
+        {{ 'session.noTemplates' | translate }}
+        <a routerLink="/templates/new">{{ 'session.createTemplate' | translate }}</a>
+      </p>
+    }
+    @if (error(); as e) {
+      <p class="error">{{ e | translate }}</p>
+    }
+    <div class="editor-actions">
+      <button
+        type="button"
+        class="btn primary big"
+        data-testid="start"
+        [disabled]="busy() || !startTemplate()"
+        (click)="start(startTemplate())"
+      >
+        <ab-icon name="play" /> {{ 'session.start' | translate }}
+      </button>
+      <button type="button" class="btn ghost" [disabled]="busy()" (click)="start(null)">
+        {{ 'session.startBlank' | translate }}
+      </button>
+    </div>
+  </div>
+}
