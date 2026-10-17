@@ -8,6 +8,7 @@ from core.config import settings
 from core.rate_limit import limiter
 from domains.auth import router as auth
 from domains.health import router as health
+from domains.portfolio import router as portfolio
 
 logging.basicConfig(
     level=settings.log_level, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -27,3 +28,4 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(portfolio.router)

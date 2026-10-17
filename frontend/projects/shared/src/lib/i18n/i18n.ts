@@ -20,17 +20,22 @@ import { Observable, of } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { DEFAULT_LANGUAGE, Language, resolveLanguage } from './language';
+import { SHARED_TRANSLATIONS } from './shared-translations';
 
 export type Translations = Record<Language, TranslationObject>;
 
 const STORAGE_KEY = 'language';
 
-/** Translations bundled into the app (no HTTP fetch for them). */
+/**
+ * Translations bundled into the app (no HTTP fetch for them), plus the
+ * `SHARED` strings of `@shared` components.
+ */
 class StaticLoader implements TranslateLoader {
   constructor(private readonly translations: Translations) {}
 
   getTranslation(lang: string): Observable<TranslationObject> {
-    return of(this.translations[lang as Language] ?? this.translations[DEFAULT_LANGUAGE]);
+    const language = lang in this.translations ? (lang as Language) : DEFAULT_LANGUAGE;
+    return of({ ...SHARED_TRANSLATIONS[language], ...this.translations[language] });
   }
 }
 
@@ -70,6 +75,17 @@ export class LanguageService {
   /** For logged-out visitors; a logged-in user's saved language wins. */
   set(lang: Language): void {
     this.stored.set(lang);
+  }
+
+  /**
+   * The language picked in a UI switch: remembered on this site, and saved
+   * on the account when logged in (a failed save is passed on).
+   */
+  async change(lang: Language): Promise<void> {
+    this.set(lang);
+    if (this.auth.user() && this.auth.user()?.language !== lang) {
+      await this.auth.updateLanguage(lang);
+    }
   }
 }
 

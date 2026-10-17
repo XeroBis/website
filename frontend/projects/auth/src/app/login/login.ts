@@ -3,9 +3,8 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { AuthService, BrowserLocation, ENVIRONMENT } from '@shared';
+import { AuthService, BrowserLocation, ENVIRONMENT, httpStatus } from '@shared';
 
-import { httpStatus } from '../http-error';
 import { redirectTarget } from '../redirect';
 
 @Component({

@@ -44,7 +44,41 @@ Models in `backend/core/models.py`.
 
 ## `portfolio`
 
-No tables yet.
+The projects shown on `alanbignon.com`, written by hand by an admin. No user FK: there is only one portfolio, and only admins write to it (`require_admin`). Models in `backend/domains/portfolio/models.py`.
+
+### `portfolio.projects`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `name` | text, not null | 1–100 chars, trimmed. Unique case-insensitively (`uq_projects_name_lower`, unique index on `lower(name)`). Not translated (a proper noun). |
+| `description_fr` | text, not null | 1–1000 chars, trimmed. |
+| `description_en` | text, not null | 1–1000 chars, trimmed. |
+| `repo_url` | text, null | Source code link, any `https://` URL (GitHub, GitLab…), ≤ 300 chars. Empty → null. |
+| `featured` | boolean, not null, default `false` | Visual highlight only, doesn't change the order. |
+| `position` | integer, not null, default `0` | Manual order, lowest first, 0–10000 (`ck_projects_position` checks ≥ 0). |
+| `created_at` | timestamptz, not null, default `now()` | |
+| `updated_at` | timestamptz, not null, default `now()` | Set to `now()` on every update. |
+
+### `portfolio.tags`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `name` | text, not null | 1–30 chars, trimmed. Unique case-insensitively (`uq_tags_name_lower`). Keeps the casing it was first typed with. |
+
+### `portfolio.project_tags`
+
+| Column | Type | Notes |
+|---|---|---|
+| `project_id` | integer, PK, FK → `portfolio.projects.id` `ON DELETE CASCADE` | |
+| `tag_id` | integer, PK, FK → `portfolio.tags.id` `ON DELETE CASCADE` | |
+
+### Rules
+
+- Tags are free text, attached by name: a name matching an existing tag case-insensitively reuses it, any other creates a tag. Repeats within one project are dropped. At most 10 tags per project.
+- A tag with no project left (after an update or a delete) is deleted in the same transaction, so `tags` only holds tags in use.
+- Public order: `position` ascending, then newest (`id` descending) on ties. A project's tags are sorted case-insensitively.
 
 ## `workout`
 

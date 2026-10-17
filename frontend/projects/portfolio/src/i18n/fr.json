@@ -1,0 +1,49 @@
+{
+  "HOME": {
+    "SUBTITLE": "Ingénieur Logiciel",
+    "BIO": "Je construis des outils qui m'intéressent — des pipelines de machine learning aux applications web full-stack. Focalisé sur un code propre, un bon design et des choses qui fonctionnent.",
+    "PROJECTS": "Projets",
+    "PROJECTS_SUB": "Ce que j'ai construit",
+    "ALL_TAGS": "Tous",
+    "LOADING": "Chargement…",
+    "EMPTY": "Pas encore de projets.",
+    "EMPTY_TAG": "Aucun projet avec ce tag.",
+    "LOAD_ERROR": "Échec du chargement des projets.",
+    "FEATURED": "À la une",
+    "SOURCE": "Code source",
+    "EDIT": "Modifier",
+    "DELETE": "Supprimer",
+    "DELETE_CONFIRM": "Supprimer « {{name}} » ?",
+    "DELETE_ERROR": "Échec de la suppression."
+  },
+  "NAV": {
+    "NEW_PROJECT": "+ Projet"
+  },
+  "FORM": {
+    "NEW_TITLE": "Nouveau projet",
+    "EDIT_TITLE": "Modifier le projet",
+    "NAME": "Nom",
+    "DESCRIPTION_FR": "Description (français)",
+    "DESCRIPTION_EN": "Description (anglais)",
+    "REPO_URL": "Lien du code source",
+    "REPO_URL_HINT": "Optionnel, https:// (GitHub, GitLab…)",
+    "TAGS": "Tags",
+    "TAGS_HINT": "Séparés par des virgules, 10 maximum, 30 caractères chacun",
+    "TAGS_SUGGESTIONS": "Tags existants :",
+    "POSITION": "Position",
+    "POSITION_HINT": "Les plus petites d'abord",
+    "FEATURED": "À la une",
+    "SAVE": "Enregistrer",
+    "CANCEL": "Annuler",
+    "LOADING": "Chargement…",
+    "LOAD_ERROR": "Projet introuvable.",
+    "ERROR_NAME_TAKEN": "Un projet porte déjà ce nom.",
+    "ERROR_INVALID": "Vérifiez les champs.",
+    "ERROR_SESSION": "Session expirée ou accès refusé, reconnectez-vous.",
+    "ERROR_GENERIC": "Échec de l'enregistrement."
+  },
+  "FOOTER": {
+    "GITHUB": "GitHub",
+    "LINKEDIN": "LinkedIn"
+  }
+}

@@ -15,8 +15,10 @@ import psycopg  # noqa: E402
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-# `models` registers the core tables on Base.metadata for create_all below.
+# Importing the models registers their tables on Base.metadata for
+# create_all below.
 from core import database, models  # noqa: E402, F401
+from domains.portfolio import models as portfolio_models  # noqa: E402, F401
 
 
 def _create_test_database() -> None:

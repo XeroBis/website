@@ -85,3 +85,18 @@ App URLs (the login page for guards, the portfolio as the default post-login tar
 ## i18n: ngx-translate in `@shared`, translations bundled (2026-10-17)
 
 Same library as auth-service. `provideI18n({ en, fr })` from `@shared` sets it up with the app's own JSON files imported into the bundle (a static loader, no HTTP fetch for translations). `LanguageService` follows the logged-in user's `language`; logged out, it uses the last language used on that site (localStorage), then the browser's, then French.
+
+## Portfolio: hand-written projects, bilingual descriptions, free-text tags (2026-10-17)
+
+Projects are created and edited by an admin only, through `require_admin` routes. There is no GitHub sync, and nothing is imported from workout's `projects` table. Changes from workout's version:
+- **No `user_id`**: workout scoped projects per user and picked the "portfolio user" from an env var. There is now one portfolio, and access is decided by `is_admin`.
+- **Bilingual descriptions**: `description_fr` and `description_en` columns, both required, shown by the UI language. Chosen over one free-language column because the site is FR/EN everywhere else. The name isn't translated, since it's a proper noun.
+- **`repo_url` over `github_link`**: any `https://` URL, not only `github.com`, so a project hosted on another forge can be linked.
+- **`featured` + `position`**: the order is `position` only (manual). `featured` only highlights a card. Chosen over "featured first" so there is one ordering rule.
+- **Tags**: free text, created on the fly, reused case-insensitively (workout matched case-sensitively), and deleted once unused. There is no tag admin page and no colours, so the form needs nothing more than a comma-separated field.
+- **Public routes take no auth dependency**: the list doesn't change with the viewer (admin buttons are a frontend concern), so there is no `get_optional_user`, and a stale session cookie can't turn a public read into a 401.
+- **Cards only**: no detail page or slug. `GET /projects/{id}` exists for the admin form.
+
+## Shared header in `@shared`, with its strings shipped by `provideI18n` (2026-10-17)
+
+The top bar (title, app links slot, FR/EN switch, login or account link) is an `@shared` component, `ab-header`, because every app except auth needs the same one. Its few strings live in `@shared` under a `SHARED` key that `provideI18n` merges into each app's translations. Chosen over asking every app to copy the header keys into its own JSON. Only `portfolio` uses it in this step; the other apps adopt it when they are ported. The header links logged-in users to the auth app's account page rather than offering a logout button, so account actions (pseudo, language, logout) stay in one place. `httpStatus` (error → HTTP status) also moved from the auth app to `@shared`, since portfolio needs it too.

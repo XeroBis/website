@@ -1,8 +1,13 @@
 import { Routes } from '@angular/router';
 
-import { Placeholder } from '@shared';
+import { adminGuard } from '@shared';
+
+import { ProjectForm } from './project-form/project-form';
+import { ProjectList } from './project-list/project-list';
 
 export const routes: Routes = [
-  { path: '', component: Placeholder, data: { appName: 'Alan Bignon' } },
+  { path: '', component: ProjectList },
+  { path: 'admin/projects/new', component: ProjectForm, canActivate: [adminGuard] },
+  { path: 'admin/projects/:id', component: ProjectForm, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' },
 ];

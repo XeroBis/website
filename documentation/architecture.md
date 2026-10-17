@@ -27,7 +27,8 @@ website/
 │   │   ├── deps.py             #   get_current_user / get_optional_user / require_admin
 │   │   └── rate_limit.py       #   shared slowapi limiter
 │   ├── domains/<name>/         # one package per app (+ health): router.py, models.py, schemas.py, service code
-│   │   └── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`)
+│   │   ├── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`)
+│   │   └── portfolio/          #   /api/portfolio routes, `portfolio` schema models
 │   ├── alembic/                # ONE migration history for every schema
 │   └── tests/
 ├── frontend/                   # Angular 22 CLI workspace (no Nx)
@@ -36,7 +37,8 @@ website/
 │   ├── serve-all.sh            # dev: one `ng serve` per app, in parallel
 │   └── projects/
 │       ├── shared/             # library, imported as `@shared` (from source, never built on its own):
-│       │                       #   auth (AuthService, guards, interceptor), i18n, environment, placeholder
+│       │                       #   auth (AuthService, guards, interceptor), i18n, environment, http (httpStatus),
+│       │                       #   layout (`ab-header`), placeholder
 │       └── portfolio/ workout/ cards/ media/ auth/   # one application per site
 ├── infra/
 │   ├── nginx/                  # the edge: nginx.conf, snippets/, Dockerfile (builds the frontend into the image)
@@ -62,7 +64,8 @@ website/
 - `shared` holds what more than one app needs (HTTP services, auth, i18n, layout pieces). Apps import it as `@shared`, which `tsconfig.json` maps to `projects/shared/src/public-api.ts`: the library's source is compiled into each app's bundle at build time, and tree-shaking keeps only the parts that app uses. Nothing is shared at runtime.
 - One `package.json`, so the Angular version is the same for every app.
 - **Environment**: `projects/shared/src/lib/environment/environment.ts` is the prod build's (`production: true`, the `https://*.alanbignon.com` app URLs). Each app's `development` build configuration (`ng serve`) swaps in `environment.development.ts` (the `http://localhost:460x` URLs) through `fileReplacements` in `angular.json`. Code reads it through the `ENVIRONMENT` injection token, which tests override.
-- **Auth wiring**: every app registers `provideHttpClient(withInterceptors([authInterceptor]))`. Apps with translated UI add `provideI18n({ en, fr })` with their own `src/i18n/*.json`, which is only `auth` for now.
+- **Auth wiring**: every app registers `provideHttpClient(withInterceptors([authInterceptor]))`. Apps with translated UI add `provideI18n({ en, fr })` with their own `src/i18n/*.json` (`auth` and `portfolio` for now). `provideI18n` merges in the `SHARED` strings used by `@shared` components (`lib/i18n/shared-translations.ts`), so an app's JSON only holds its own keys.
+- **Layout**: `ab-header` (`@shared`) is the top bar: app title linking to `/`, the app's own links as projected content, FR/EN switch, pseudo + an apps-grid icon linking to the auth app's account page (as on the old workout navbar) (no logout button: logging out happens there) or a log in link. It needs `provideI18n`. Used by `portfolio`; `auth` keeps its centred-card layout, and workout/cards/media adopt it when ported. It reads the `--ab-border`/`--ab-surface`/`--ab-accent`/`--ab-text`/`--ab-muted` CSS custom properties, with fallbacks, so each app can theme it.
 
 ## Request flow
 

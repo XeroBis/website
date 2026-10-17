@@ -12,6 +12,8 @@ export * from './lib/auth/user';
 export * from './lib/environment/environment.model';
 export * from './lib/environment/environment.token';
 export * from './lib/health/health.service';
+export * from './lib/http/http-error';
 export * from './lib/i18n/i18n';
 export * from './lib/i18n/language';
+export * from './lib/layout/header';
 export * from './lib/placeholder/placeholder';

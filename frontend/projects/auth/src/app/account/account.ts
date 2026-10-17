@@ -3,9 +3,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { AppName, AuthService, ENVIRONMENT, Language } from '@shared';
-
-import { httpStatus } from '../http-error';
+import { AppName, AuthService, ENVIRONMENT, httpStatus, Language } from '@shared';
 
 const LINKED_APPS: AppName[] = ['portfolio', 'workout', 'cards', 'media'];
 

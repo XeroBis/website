@@ -1,0 +1,49 @@
+{
+  "HOME": {
+    "SUBTITLE": "Software Engineer",
+    "BIO": "I build tools I find interesting — from machine learning pipelines to full-stack web apps. Focused on clean code, good design, and shipping things that work.",
+    "PROJECTS": "Projects",
+    "PROJECTS_SUB": "Things I've built",
+    "ALL_TAGS": "All",
+    "LOADING": "Loading…",
+    "EMPTY": "No projects yet.",
+    "EMPTY_TAG": "No project with this tag.",
+    "LOAD_ERROR": "Failed to load projects.",
+    "FEATURED": "Featured",
+    "SOURCE": "Source code",
+    "EDIT": "Edit",
+    "DELETE": "Delete",
+    "DELETE_CONFIRM": "Delete “{{name}}”?",
+    "DELETE_ERROR": "Delete failed."
+  },
+  "NAV": {
+    "NEW_PROJECT": "+ Project"
+  },
+  "FORM": {
+    "NEW_TITLE": "New project",
+    "EDIT_TITLE": "Edit project",
+    "NAME": "Name",
+    "DESCRIPTION_FR": "Description (French)",
+    "DESCRIPTION_EN": "Description (English)",
+    "REPO_URL": "Source code link",
+    "REPO_URL_HINT": "Optional, https:// (GitHub, GitLab…)",
+    "TAGS": "Tags",
+    "TAGS_HINT": "Comma-separated, at most 10, 30 characters each",
+    "TAGS_SUGGESTIONS": "Existing tags:",
+    "POSITION": "Position",
+    "POSITION_HINT": "Lowest first",
+    "FEATURED": "Featured",
+    "SAVE": "Save",
+    "CANCEL": "Cancel",
+    "LOADING": "Loading…",
+    "LOAD_ERROR": "Project not found.",
+    "ERROR_NAME_TAKEN": "A project with this name already exists.",
+    "ERROR_INVALID": "Check the fields.",
+    "ERROR_SESSION": "Session expired or access denied, please log in again.",
+    "ERROR_GENERIC": "Save failed."
+  },
+  "FOOTER": {
+    "GITHUB": "GitHub",
+    "LINKEDIN": "LinkedIn"
+  }
+}
