@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Auto-fixes and lints staged backend Python files before allowing a commit.
+# Enabled via `make hooks` (git config core.hooksPath .githooks).
+set -e
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACM -- 'backend/*.py')
+
+if [ -z "$staged_files" ]; then
+    exit 0
+fi
+
+relative_files=$(echo "$staged_files" | sed 's|^backend/||')
+
+cd backend
+uv run ruff check --fix $relative_files
+uv run black $relative_files
+cd ..
+
+git add $staged_files

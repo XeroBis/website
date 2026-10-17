@@ -1,0 +1,23 @@
+# Secrets — copy .env.template to .env and fill in real values
+.env
+
+# Python
+__pycache__/
+*.py[oc]
+.venv
+.pytest_cache/
+.ruff_cache/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Real certs live only on the VPS — commit the folder layout, never the keys.
+infra/ssl/*/*.pem
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store

@@ -1,0 +1,46 @@
+# Production stack: Postgres + the one backend + the edge nginx (TLS, static
+# bundles, /api proxy). Only `edge` publishes host ports. Secrets come from
+# the gitignored root .env (see .env.template).
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: website
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: website
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U website -d website"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    command: /bin/sh -c "/opt/venv/bin/alembic upgrade head && /opt/venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
+    environment:
+      DATABASE_URL: postgresql+psycopg://website:${POSTGRES_PASSWORD}@db:5432/website
+      LOG_LEVEL: INFO
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  edge:
+    build:
+      context: .
+      dockerfile: infra/nginx/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/ssl:/etc/nginx/ssl:ro
+      - ./infra/certbot-webroot:/var/www/certbot:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:

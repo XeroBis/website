@@ -1,0 +1,59 @@
+# Local dev stack. Host ports are offset from the old per-app repos' dev
+# stacks (5432-5435 / 8000-8300 / 4200-4500) so both can run during the
+# migration — see documentation/architecture.md "Local dev ports".
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: website
+      POSTGRES_PASSWORD: website
+      POSTGRES_DB: website
+    ports:
+      - "5440:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U website -d website"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://website:website@db:5432/website
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8400:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Every app's `ng serve` in one container (one per port), each proxying
+  # /api to the backend — see frontend/proxy.conf.mjs.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      API_TARGET: http://backend:8000
+      # Each `ng serve` takes ~1 GB of RAM; run only the apps you work on, e.g.
+      # `make up APPS="cards auth"`.
+      APPS: ${APPS:-portfolio workout cards media auth}
+    ports:
+      - "4600:4600" # portfolio
+      - "4601:4601" # workout
+      - "4602:4602" # cards
+      - "4603:4603" # media
+      - "4604:4604" # auth
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.angular
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

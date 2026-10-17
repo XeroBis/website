@@ -1,0 +1,64 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "paths": {
+      "@shared": ["./projects/shared/src/public-api.ts"]
+    },
+    "target": "ES2022",
+    "module": "preserve"
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/shared/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/shared/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/portfolio/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/portfolio/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/workout/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/workout/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/cards/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/cards/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/media/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/media/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/auth/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/auth/tsconfig.spec.json"
+    }
+  ]
+}

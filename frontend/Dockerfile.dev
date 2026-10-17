@@ -1,0 +1,12 @@
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+EXPOSE 4600 4601 4602 4603 4604
+
+CMD ["./serve-all.sh"]
