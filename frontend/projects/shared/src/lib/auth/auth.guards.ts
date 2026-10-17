@@ -4,6 +4,7 @@ import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { ENVIRONMENT } from '../environment/environment.token';
 import { AuthService } from './auth.service';
 import { BrowserLocation } from './browser-location';
+import { GrantableApp } from './user';
 
 /**
  * Returns a function sending a logged-out user to the auth app's login page,
@@ -42,3 +43,21 @@ export const adminGuard: CanActivateFn = async (_route, state) => {
   if (!user) return loginRedirect(state.url);
   return user.is_admin ? true : router.parseUrl('/');
 };
+
+/**
+ * Logged out → login page; logged in without access to `app` → the auth
+ * app's account page, which lists the apps the user can open.
+ */
+export function appGuard(app: GrantableApp): CanActivateFn {
+  return async (_route, state) => {
+    const auth = inject(AuthService);
+    const location = inject(BrowserLocation);
+    const authOrigin = inject(ENVIRONMENT).appUrls.auth;
+    const loginRedirect = injectLoginRedirect();
+    const user = await auth.load();
+    if (!user) return loginRedirect(state.url);
+    if (user.apps.includes(app)) return true;
+    location.assign(`${authOrigin}/`);
+    return false;
+  };
+}

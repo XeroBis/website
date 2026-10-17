@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 # Importing the models registers their tables on Base.metadata for
 # create_all below.
 from core import database, models  # noqa: E402, F401
+from domains.media import models as media_models  # noqa: E402, F401
 from domains.portfolio import models as portfolio_models  # noqa: E402, F401
 
 
@@ -50,7 +51,7 @@ _create_test_database()
 _reset_schemas()
 
 import app  # noqa: E402 -- safe to import now that the schema exists
-from core.models import User  # noqa: E402
+from core.models import User, UserApp  # noqa: E402
 from core.rate_limit import limiter  # noqa: E402
 from core.security import CSRF_COOKIE, hash_password  # noqa: E402
 
@@ -79,13 +80,16 @@ def db():
         yield session
 
 
-def make_user(email="user@example.com", pseudo="Testy", is_admin=False) -> User:
+def make_user(
+    email="user@example.com", pseudo="Testy", is_admin=False, apps=()
+) -> User:
     with database.SessionLocal() as session:
         user = User(
             email=email,
             hashed_password=hash_password(PASSWORD),
             pseudo=pseudo,
             is_admin=is_admin,
+            app_grants=[UserApp(app=app) for app in apps],
         )
         session.add(user)
         session.commit()

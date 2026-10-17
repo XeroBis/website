@@ -1,8 +1,28 @@
 import { Routes } from '@angular/router';
 
-import { Placeholder } from '@shared';
+import { appGuard } from '@shared';
 
 export const routes: Routes = [
-  { path: '', component: Placeholder, data: { appName: 'Media' } },
+  {
+    path: '',
+    canActivate: [appGuard('media')],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'library' },
+      {
+        path: 'library',
+        title: 'pageTitle.library',
+        loadComponent: () => import('./pages/library/library').then((m) => m.Library),
+      },
+      {
+        path: 'library/:id',
+        loadComponent: () => import('./pages/entry/entry').then((m) => m.EntryPage),
+      },
+      {
+        path: 'add',
+        title: 'pageTitle.add',
+        loadComponent: () => import('./pages/add/add').then((m) => m.Add),
+      },
+    ],
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -6,7 +6,12 @@ from fastapi.testclient import TestClient
 
 from core import security
 from core.database import SessionLocal
-from core.deps import get_current_user, get_optional_user, require_admin
+from core.deps import (
+    get_current_user,
+    get_optional_user,
+    require_admin,
+    require_app,
+)
 from core.models import User
 from core.rate_limit import limiter
 from core.security import SESSION_COOKIE, create_token
@@ -40,6 +45,11 @@ def current_post(user: User = Depends(get_current_user)):
 
 @probe.get("/admin")
 def admin(user: User = Depends(require_admin)):
+    return {"user": user.email}
+
+
+@probe.get("/workout")
+def workout(user: User = Depends(require_app("workout"))):
     return {"user": user.email}
 
 
@@ -118,3 +128,22 @@ def test_require_admin(client):
     assert client.get("/admin").status_code == 403
     login(client, email="admin@example.com")
     assert client.get("/admin").json() == {"user": "admin@example.com"}
+
+
+def test_require_app(client):
+    make_user(email="user@example.com")
+    make_user(email="cards@example.com", apps=["cards"])
+    make_user(email="workout@example.com", apps=["workout"])
+    make_user(email="admin@example.com", is_admin=True)
+    assert client.get("/workout").status_code == 401
+    for email in ("user@example.com", "cards@example.com"):
+        login(client, email=email)
+        assert client.get("/workout").status_code == 403
+    for email in ("workout@example.com", "admin@example.com"):
+        login(client, email=email)
+        assert client.get("/workout").json() == {"user": email}
+
+
+def test_require_app_rejects_unknown_app():
+    with pytest.raises(ValueError):
+        require_app("auth")

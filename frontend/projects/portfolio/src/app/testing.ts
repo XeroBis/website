@@ -17,8 +17,10 @@ export const USER: User = {
   pseudo: 'Testy',
   language: 'fr',
   is_admin: false,
+  apps: [],
 };
-export const ADMIN: User = { ...USER, email: 'admin@example.com', is_admin: true };
+/** Can edit the portfolio, through the grant (not admin). */
+export const EDITOR: User = { ...USER, email: 'editor@example.com', apps: ['portfolio'] };
 
 export const PROJECT: Project = {
   id: 3,

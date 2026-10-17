@@ -10,7 +10,7 @@ const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 /**
  * `/`: the intro and the public project list, filterable by tag (`?tag=`).
- * Admins also get Edit/Delete on each card.
+ * Editors (the `portfolio` app, admins included) also get Edit/Delete on each card.
  */
 @Component({
   selector: 'ab-project-list',
@@ -73,7 +73,7 @@ const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
                 @if (project.repo_url) {
                   <a class="source" [href]="project.repo_url" target="_blank" rel="noopener">{{ 'HOME.SOURCE' | translate }} ↗</a>
                 }
-                @if (auth.isAdmin()) {
+                @if (auth.canUse('portfolio')) {
                   <span class="admin-actions">
                     <a [routerLink]="['/admin/projects', project.id]">{{ 'HOME.EDIT' | translate }}</a>
                     <button type="button" class="link-btn danger" (click)="remove(project)">

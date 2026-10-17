@@ -165,7 +165,7 @@ def test_delete_unknown_is_404(admin):
     assert admin.delete(f"{URL}/999", headers=csrf(admin)).status_code == 404
 
 
-# ── admin: access control ────────────────────────────────────────────────────
+# ── editors: access control ───────────────────────────────────────────────────
 
 
 def test_writes_need_a_session(admin):
@@ -176,10 +176,10 @@ def test_writes_need_a_session(admin):
     assert admin.delete(f"{URL}/{project['id']}").status_code == 401
 
 
-def test_writes_are_admin_only(admin):
+def test_writes_need_the_portfolio_app(admin):
     project = create(admin)
-    make_user(email="user@example.com")
-    login(admin)  # now a non-admin
+    make_user(email="user@example.com", apps=["workout", "cards", "media"])
+    login(admin)  # now a user without the portfolio app
     h = csrf(admin)
     assert admin.post(URL, json=body(name="X"), headers=h).status_code == 403
     assert (
@@ -187,6 +187,16 @@ def test_writes_are_admin_only(admin):
     )
     assert admin.delete(f"{URL}/{project['id']}", headers=h).status_code == 403
     assert len(admin.get(URL).json()) == 1
+
+
+def test_users_with_the_portfolio_app_can_write(client):
+    make_user(email="editor@example.com", apps=["portfolio"])
+    login(client, email="editor@example.com")
+    project = create(client)
+    h = csrf(client)
+    r = client.put(f"{URL}/{project['id']}", json=body(name="Renamed"), headers=h)
+    assert r.json()["name"] == "Renamed"
+    assert client.delete(f"{URL}/{project['id']}", headers=h).status_code == 204
 
 
 def test_writes_need_csrf(admin):

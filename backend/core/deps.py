@@ -3,16 +3,19 @@
 - `get_current_user`: logged-in user, else 401.
 - `get_optional_user`: logged-in user or None, for public routes.
 - `require_admin`: logged-in admin, else 401/403.
+- `require_app(app)`: logged-in user with access to `app`, else 401/403.
 
 On unsafe methods (anything but GET/HEAD/OPTIONS) a session also needs the
 double-submit CSRF header (`x-csrf-token` == `csrf` cookie), else 403.
 """
 
+from collections.abc import Callable
+
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.models import User
+from core.models import APPS, User
 from core.security import (
     CSRF_COOKIE,
     CSRF_HEADER,
@@ -67,3 +70,16 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin only")
     return user
+
+
+def require_app(app: str) -> Callable[..., User]:
+    """Dependency for an app's routes: the user needs that app's grant (or admin)."""
+    if app not in APPS:
+        raise ValueError(f"Unknown app {app!r}")
+
+    def dependency(user: User = Depends(get_current_user)) -> User:
+        if not user.can_use(app):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "No access to this app")
+        return user
+
+    return dependency

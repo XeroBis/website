@@ -2,7 +2,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { App } from './app';
-import { ADMIN, USER, flushMe, setup } from './testing';
+import { EDITOR, USER, flushMe, setup } from './testing';
 
 describe('App', () => {
   let http: HttpTestingController;
@@ -23,12 +23,12 @@ describe('App', () => {
     expect(links).toEqual(['https://github.com/XeroBis', 'https://www.linkedin.com/in/alan-bignon/']);
   });
 
-  it('shows the new-project link to admins only', async () => {
+  it('shows the new-project link to editors only', async () => {
     expect((await render(USER)).querySelector('[data-testid="new-project"]')).toBeNull();
   });
 
-  it('shows the new-project link to an admin', async () => {
-    const link = (await render(ADMIN)).querySelector('[data-testid="new-project"]');
+  it('shows the new-project link to an editor', async () => {
+    const link = (await render(EDITOR)).querySelector('[data-testid="new-project"]');
     expect(link?.getAttribute('href')).toBe('/admin/projects/new');
   });
 });

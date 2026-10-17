@@ -1,16 +1,18 @@
-import { Component, WritableSignal, inject, signal } from '@angular/core';
+import { Component, WritableSignal, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { AppName, AuthService, ENVIRONMENT, httpStatus, Language } from '@shared';
+import { AuthService, ENVIRONMENT, GRANTABLE_APPS, httpStatus, Language } from '@shared';
 
-const LINKED_APPS: AppName[] = ['portfolio', 'workout', 'cards', 'media'];
-
-/** `/` (behind authGuard): pseudo, language, links to the apps, logout. */
+/**
+ * `/` (behind authGuard): pseudo, language, links to the apps the user can
+ * use (the portfolio is public, so always), a link to `/admin/users` for
+ * admins, logout.
+ */
 @Component({
   selector: 'ab-account',
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   template: `
     @if (auth.user(); as user) {
       <main class="card">
@@ -70,13 +72,22 @@ const LINKED_APPS: AppName[] = ['portfolio', 'workout', 'cards', 'media'];
 
         <p class="subtitle">{{ 'ACCOUNT.WHERE_TO' | translate }}</p>
         <nav class="app-list">
-          @for (app of apps; track app.key) {
+          @for (app of apps(); track app.key) {
             <a class="app-link" [href]="app.url">
               <span class="app-name">{{ 'APPS.' + app.key | translate }}</span>
               <span class="app-description">{{ 'APPS.' + app.key + '_DESC' | translate }}</span>
             </a>
           }
         </nav>
+        @if (apps().length === 1) {
+          <p class="hint no-apps" data-testid="no-apps">{{ 'ACCOUNT.NO_OTHER_APP' | translate }}</p>
+        }
+        @if (user.is_admin) {
+          <a class="app-link admin-link" routerLink="/admin/users" data-testid="users-link">
+            <span class="app-name">{{ 'ACCOUNT.USERS' | translate }}</span>
+            <span class="app-description">{{ 'ACCOUNT.USERS_DESC' | translate }}</span>
+          </a>
+        }
 
         <button type="button" class="logout" (click)="logout()">
           {{ 'ACCOUNT.LOGOUT' | translate }}
@@ -94,10 +105,12 @@ export class Account {
     { code: 'fr', label: 'Français' },
     { code: 'en', label: 'English' },
   ];
-  protected readonly apps = LINKED_APPS.map((app) => ({
-    key: app.toUpperCase(),
-    url: `${this.env.appUrls[app]}/`,
-  }));
+  protected readonly apps = computed(() =>
+    GRANTABLE_APPS.filter((app) => app === 'portfolio' || this.auth.canUse(app)).map((app) => ({
+      key: app.toUpperCase(),
+      url: `${this.env.appUrls[app]}/`,
+    })),
+  );
 
   protected readonly pseudoForm = inject(NonNullableFormBuilder).group({
     pseudo: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(/\S/)]],

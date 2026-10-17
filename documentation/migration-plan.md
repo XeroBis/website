@@ -10,14 +10,16 @@ biggest app (cards) last.
 | 1 | **Skeleton**: backend (health, config, DB, one schema per app, Alembic, tests), Angular workspace (`shared` + 5 placeholder apps), dev/prod compose, edge nginx, docs | ✅ done 2026-10-17 |
 | 2 | **Auth**: `core.users` (+ revoked tokens), register/login/refresh/logout/me, cookie JWT + CSRF, `get_current_user` dependency, `auth` app (login, signup, account: pseudo, language), shared `AuthService`/guard/interceptor/i18n in `@shared` | ✅ done 2026-10-17 |
 | 3 | **Portfolio**: `portfolio` schema (projects, tags), public list, admin CRUD, `portfolio` app | ✅ done 2026-10-17 |
-| 4 | **Media**: port `../media` (already on the target stack) | ⏳ next |
-| 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | |
+| 4 | **Media**: port `../media` (already on the target stack) | ✅ done 2026-10-17 |
+| 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | ⏳ next |
 | 6 | **Cards**: port `../pokemon_cards` (43 migrations squashed into this history, scanning, card images now auth-checked by the backend instead of nginx) incl. its import | |
 | 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | |
 
 Step 2 notes: `auth-service`'s `/internal/validate` (nginx `auth_request`) and its CORS setup are dropped. Its `revoked_tokens` and pseudo/language features are kept. See decisions.md for what changed (libraries, cookie names and lifetimes, rate limits).
 
 Step 3 notes: written from scratch rather than ported, with workout's `projects` feature as the reference. No rows imported. Changes from workout are in decisions.md ("Portfolio: hand-written projects…"). The shared header `ab-header` and `httpStatus` were added to `@shared`.
+
+Step 4 notes: `domains/media` adapted rather than rewritten (models in the `media` schema with FKs to `core.users`, `require_app("media")` instead of `X-User-*` headers, no shadow `users` table, no CORS, no dev auth bypass), one fresh migration (`0005`), routes under `/api/media`. `/api/dashboard` and `/api/users/me` dropped; share links weren't built in `../media` and stay in ideas.md. Tests ported to `tests/media/` (own conftest with a fake TMDB / Open Library). `ab-icon` added to `@shared`. No rows imported. See decisions.md "Media: ported from `../media`…".
 
 ## Per-app port checklist
 

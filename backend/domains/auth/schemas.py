@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, StringConstraints
@@ -7,6 +8,7 @@ Pseudo = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)
 ]
 Language = Literal["en", "fr"]
+App = Literal["portfolio", "workout", "cards", "media"]  # core.models.APPS
 
 PASSWORD_MIN_LENGTH = 12
 
@@ -39,3 +41,13 @@ class UserOut(BaseModel):
     pseudo: str
     language: Language
     is_admin: bool
+    # Effective access: every app for an admin (see User.apps).
+    apps: list[App]
+
+
+class AdminUserOut(UserOut):
+    created_at: datetime
+
+
+class AppsUpdate(BaseModel):
+    apps: list[App]

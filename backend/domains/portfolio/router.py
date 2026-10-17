@@ -4,11 +4,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.deps import require_admin
+from core.deps import require_app
 from domains.portfolio.models import Project, Tag, project_tags
 from domains.portfolio.schemas import ProjectIn, ProjectOut
 
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
+
+# The portfolio is public; its app grant only allows writing to it.
+require_editor = require_app("portfolio")
 
 # The public page's order: the admin's manual position, newest first on ties.
 PUBLIC_ORDER = (Project.position.asc(), Project.id.desc())
@@ -86,14 +89,14 @@ def list_tags(db: Session = Depends(get_db)):
     return db.scalars(select(Tag.name).order_by(func.lower(Tag.name))).all()
 
 
-# ── admin ────────────────────────────────────────────────────────────────────
+# ── editors ────────────────────────────────────────────────────────────────
 
 
 @router.post(
     "/projects",
     response_model=ProjectOut,
     status_code=201,
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_editor)],
 )
 def create_project(payload: ProjectIn, db: Session = Depends(get_db)):
     return _save(db, Project(), payload)
@@ -102,14 +105,14 @@ def create_project(payload: ProjectIn, db: Session = Depends(get_db)):
 @router.put(
     "/projects/{project_id}",
     response_model=ProjectOut,
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_editor)],
 )
 def update_project(project_id: int, payload: ProjectIn, db: Session = Depends(get_db)):
     return _save(db, _get_or_404(db, project_id), payload)
 
 
 @router.delete(
-    "/projects/{project_id}", status_code=204, dependencies=[Depends(require_admin)]
+    "/projects/{project_id}", status_code=204, dependencies=[Depends(require_editor)]
 )
 def delete_project(project_id: int, db: Session = Depends(get_db)):
     db.delete(_get_or_404(db, project_id))

@@ -11,7 +11,7 @@ import {
 } from '@angular/router';
 
 import { ENVIRONMENT } from '../environment/environment.token';
-import { adminGuard, authGuard } from './auth.guards';
+import { adminGuard, appGuard, authGuard } from './auth.guards';
 import { BrowserLocation } from './browser-location';
 import { TEST_ENV, TEST_USER } from './testing';
 
@@ -86,6 +86,29 @@ describe('auth guards', () => {
       setup(TEST_ENV.appUrls.portfolio);
       expect(await run(adminGuard, null)).toBe(false);
       expect(location.assign).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('appGuard', () => {
+    it('lets a user with the app through', async () => {
+      setup(TEST_ENV.appUrls.cards);
+      expect(await run(appGuard('cards'), { ...TEST_USER, apps: ['cards'] })).toBe(true);
+      expect(location.assign).not.toHaveBeenCalled();
+    });
+
+    it('sends a user without the app to the account page', async () => {
+      setup(TEST_ENV.appUrls.cards);
+      expect(await run(appGuard('cards'), { ...TEST_USER, apps: ['workout'] })).toBe(false);
+      expect(location.assign).toHaveBeenCalledWith('http://localhost:4604/');
+    });
+
+    it('sends a logged-out user to the login page', async () => {
+      setup(TEST_ENV.appUrls.cards);
+      expect(await run(appGuard('cards'), null)).toBe(false);
+      expect(location.assign).toHaveBeenCalledWith(
+        'http://localhost:4604/login?redirect=' +
+          encodeURIComponent('http://localhost:4602/decks/3?x=1'),
+      );
     });
   });
 });

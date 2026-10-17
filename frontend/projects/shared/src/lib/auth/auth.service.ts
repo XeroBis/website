@@ -4,7 +4,7 @@ import { Observable, finalize, firstValueFrom, shareReplay } from 'rxjs';
 
 import { ENVIRONMENT } from '../environment/environment.token';
 import { Language } from '../i18n/language';
-import { Credentials, Registration, User } from './user';
+import { Credentials, GrantableApp, Registration, User } from './user';
 
 /**
  * The session shared by every app: same cookies on every host (see
@@ -20,6 +20,11 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isLoggedIn = computed(() => this._user() !== null);
   readonly isAdmin = computed(() => this._user()?.is_admin ?? false);
+
+  /** Whether the user can use `app` (the portfolio's grant means "may edit"). */
+  canUse(app: GrantableApp): boolean {
+    return this._user()?.apps.includes(app) ?? false;
+  }
 
   private loaded: Promise<User | null> | null = null;
   private refreshing: Observable<void> | null = null;

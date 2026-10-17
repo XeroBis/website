@@ -40,7 +40,26 @@
     "LOGOUT": "Se déconnecter",
     "ERROR_SESSION_EXPIRED": "Session expirée, veuillez vous reconnecter.",
     "ERROR_PSEUDO_SAVE": "Impossible d'enregistrer le pseudo.",
-    "ERROR_LANGUAGE_SAVE": "Impossible d'enregistrer la langue."
+    "ERROR_LANGUAGE_SAVE": "Impossible d'enregistrer la langue.",
+    "NO_OTHER_APP": "Aucune autre application pour l'instant : demandez l'accès à Alan.",
+    "USERS": "Utilisateurs",
+    "USERS_DESC": "Qui peut utiliser quelle application"
+  },
+  "USERS": {
+    "TITLE": "Utilisateurs",
+    "SUBTITLE": "Cochez les applications accessibles à chaque compte. Les changements sont enregistrés aussitôt.",
+    "LOADING": "Chargement…",
+    "SINCE": "Depuis le {{date}}",
+    "ALL_APPS": "Admin : toutes les applications",
+    "APP_PORTFOLIO": "Portfolio (édition)",
+    "APP_WORKOUT": "Workout",
+    "APP_CARDS": "Cards",
+    "APP_MEDIA": "Media",
+    "BACK": "← Retour à votre compte",
+    "ERROR_LOAD": "Impossible de charger les utilisateurs.",
+    "ERROR_SAVE": "Impossible d'enregistrer les accès.",
+    "ERROR_SESSION_EXPIRED": "Session expirée, veuillez vous reconnecter.",
+    "ERROR_FORBIDDEN": "Réservé aux admins."
   },
   "APPS": {
     "PORTFOLIO": "Portfolio",

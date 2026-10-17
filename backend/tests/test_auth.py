@@ -35,6 +35,7 @@ def test_register_creates_user_and_logs_in(client):
         "pseudo": "Newbie",
         "language": "fr",
         "is_admin": False,
+        "apps": [],
     }
     assert client.get("/api/auth/me").json()["email"] == "new@example.com"
 
@@ -123,6 +124,7 @@ def test_me_returns_current_user(client, user):
         "pseudo": "Testy",
         "language": "fr",
         "is_admin": False,
+        "apps": [],
     }
 
 

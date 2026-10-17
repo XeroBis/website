@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { LanguageService, User } from '@shared';
 
 import { Project } from '../projects.service';
-import { ADMIN, PROJECT, flushMe, settle, setup } from '../testing';
+import { EDITOR, PROJECT, flushMe, settle, setup } from '../testing';
 import { ProjectList } from './project-list';
 
 const PROJECTS: Project[] = [
@@ -76,13 +76,13 @@ describe('ProjectList', () => {
     expect(el.querySelector('[data-testid="empty"]')?.textContent?.trim()).toBe('Aucun projet avec ce tag.');
   });
 
-  it('hides admin actions from visitors', async () => {
+  it('hides editor actions from visitors', async () => {
     const el = (await render()).nativeElement as HTMLElement;
     expect(el.querySelector('.admin-actions')).toBeNull();
   });
 
-  it('lets an admin edit and delete', async () => {
-    const fixture = await render({ user: ADMIN });
+  it('lets an editor edit and delete', async () => {
+    const fixture = await render({ user: EDITOR });
     const el = fixture.nativeElement as HTMLElement;
     expect(cards(el)[1].querySelector('.admin-actions a')?.getAttribute('href')).toBe('/admin/projects/2');
 

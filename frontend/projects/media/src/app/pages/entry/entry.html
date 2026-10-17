@@ -1,0 +1,250 @@
+<div class="entry-page">
+  @if (error()) {
+    <p class="error" role="alert">{{ error()! | translate }}</p>
+  }
+
+  @if (entry(); as e) {
+    <section class="top" [attr.data-type]="e.item.type" [style.--h]="hue()">
+      <div abPoster class="cover" [item]="e.item" [showText]="false"></div>
+
+      <div class="info">
+        <span class="pill type" [attr.data-type]="e.item.type"
+          ><ab-icon [name]="icon[e.item.type]" /> {{ typeLabel[e.item.type] | translate }}</span
+        >
+        <h1 class="display">{{ e.item | localTitle: lang() }}</h1>
+        @if (otherTitles().length) {
+          <p class="original muted">{{ otherTitles().join(' · ') }}</p>
+        }
+        <p class="facts">
+          @if (e.item.year) {
+            <span>{{ e.item.year }}</span>
+          }
+          @if (e.item.creators) {
+            <span>{{ e.item.creators }}</span>
+          }
+          @if (e.item.runtime_minutes) {
+            <span>{{ 'entry.minutes' | translate: { count: e.item.runtime_minutes } }}</span>
+          }
+          @if (e.item.season_episode_counts?.length) {
+            <span>{{
+              (e.item.season_episode_counts!.length === 1
+                ? 'entry.seasonsOne'
+                : 'entry.seasonsMany'
+              ) | translate: { count: e.item.season_episode_counts!.length }
+            }}</span>
+          }
+          @if (e.item.isbn) {
+            <span>{{ 'entry.isbn' | translate: { isbn: e.item.isbn } }}</span>
+          }
+        </p>
+        @if (e.item.genres.length) {
+          <div class="genres">
+            @for (g of e.item.genres; track g) {
+              <a class="pill" routerLink="/library" [queryParams]="{ genre: g }">{{ g }}</a>
+            }
+          </div>
+        }
+
+        <div class="status">
+          <span class="state" [class]="e.status">{{
+            statusLabel(e.status, e.item.type) | translate
+          }}</span>
+          @if (episode() && e.status !== 'want') {
+            <span class="state"
+              >{{ episode() }}
+              @if (seasonCount()) {
+                <small>&nbsp;{{ 'entry.episodeOf' | translate: { count: seasonCount() } }}</small>
+              }
+            </span>
+          }
+          @if (percent() !== null && e.status !== 'want') {
+            <span class="ring" [style.--p]="percent()"
+              ><span>{{ percent() }}%</span></span
+            >
+          }
+        </div>
+        <div class="buttons">
+          @for (b of buttons(); track b.action) {
+            <button
+              type="button"
+              class="btn"
+              [class.soft]="b.style === 'soft'"
+              [class.ghost]="b.style === 'ghost'"
+              [disabled]="busy()"
+              (click)="act(b.action)"
+            >
+              @if (b.icon) {
+                <ab-icon [name]="b.icon" />
+              }
+              {{ b.label | translate }}
+            </button>
+          }
+        </div>
+        @if (e.at_last_known_episode && e.status === 'in_progress') {
+          <p class="muted hint">{{ 'entry.lastEpisodeHint' | translate }}</p>
+        }
+      </div>
+    </section>
+
+    @if (e.item | localSynopsis: lang(); as synopsis) {
+      <p class="synopsis">{{ synopsis }}</p>
+    }
+
+    <div class="panels">
+      <section class="panel">
+        <h2 class="section-title">{{ 'entry.rating' | translate }}</h2>
+        <ab-star-rating [value]="e.rating" (valueChange)="rate($event)" />
+      </section>
+
+      <section class="panel">
+        <h2 class="section-title">{{ 'entry.ownedAs' | translate }}</h2>
+        <div class="chips">
+          @for (f of formats(); track f) {
+            <button
+              type="button"
+              class="chip"
+              [class.on]="e.owned_formats.includes(f)"
+              [disabled]="busy()"
+              (click)="toggleFormat(f)"
+              [attr.aria-pressed]="e.owned_formats.includes(f)"
+            >
+              {{ formatLabel(f) | translate }}
+            </button>
+          }
+        </div>
+        @if (!e.owned_formats.length) {
+          <p class="muted small">{{ 'entry.notOwned' | translate }}</p>
+        }
+      </section>
+
+      @if (e.item.type === 'series') {
+        <section class="panel">
+          <h2 class="section-title">{{ 'entry.whereYouAre' | translate }}</h2>
+          <form
+            class="progress"
+            (submit)="$event.preventDefault(); saveProgress(season.value, ep.value)"
+          >
+            <label>
+              <span class="label">{{ 'entry.season' | translate }}</span>
+              <input
+                #season
+                class="field"
+                type="number"
+                min="1"
+                [value]="e.current_season ?? 1"
+                (change)="saveProgress(season.value, ep.value)"
+              />
+            </label>
+            <label>
+              <span class="label">{{ 'entry.lastEpisode' | translate }}</span>
+              <input
+                #ep
+                class="field"
+                type="number"
+                min="0"
+                [value]="e.current_episode ?? 0"
+                (change)="saveProgress(season.value, ep.value)"
+              />
+            </label>
+          </form>
+        </section>
+      }
+
+      <section class="panel wide">
+        <h2 class="section-title">
+          {{ 'entry.notes' | translate }}
+          @if (notesSaved()) {
+            <small><ab-icon name="check" /> {{ 'entry.saved' | translate }}</small>
+          }
+        </h2>
+        <textarea
+          class="field"
+          rows="4"
+          [placeholder]="'entry.notesPlaceholder' | translate"
+          [(ngModel)]="notes"
+          (blur)="saveNotes()"
+        ></textarea>
+      </section>
+
+      <section class="panel wide">
+        <h2 class="section-title">
+          {{ (e.item.type === 'book' ? 'entry.reads' : 'entry.watches') | translate }}
+          <small>{{ e.sessions.length }}</small>
+        </h2>
+        @if (e.sessions.length) {
+          <ul class="sessions">
+            @for (s of e.sessions; track s.id) {
+              <li>
+                <label>
+                  <span class="label">{{ 'entry.started' | translate }}</span>
+                  <input
+                    #start
+                    class="field"
+                    type="date"
+                    [value]="s.started_on ?? ''"
+                    (change)="saveSession(s, start.value, finish.value)"
+                  />
+                </label>
+                <label>
+                  <span class="label">{{ 'entry.finished' | translate }}</span>
+                  <input
+                    #finish
+                    class="field"
+                    type="date"
+                    [value]="s.finished_on ?? ''"
+                    (change)="saveSession(s, start.value, finish.value)"
+                  />
+                </label>
+                <span class="when muted">
+                  @if (!s.finished_on) {
+                    {{ 'entry.ongoing' | translate }}
+                  } @else {
+                    {{ s.finished_on | date: 'MMM y' : undefined : lang() }}
+                  }
+                </span>
+                <button
+                  type="button"
+                  class="btn danger small"
+                  (click)="deleteSession(s)"
+                  [attr.aria-label]="'entry.deleteSession' | translate"
+                >
+                  <ab-icon name="x" />
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="muted small">
+            {{ (e.item.type === 'book' ? 'entry.noReads' : 'entry.noWatches') | translate }}
+          </p>
+        }
+        <form class="new-session" (submit)="$event.preventDefault(); addSession()">
+          <label>
+            <span class="label">{{ 'entry.started' | translate }}</span>
+            <input class="field" type="date" name="start" [(ngModel)]="newStart" />
+          </label>
+          <label>
+            <span class="label">{{ 'entry.finished' | translate }}</span>
+            <input class="field" type="date" name="finish" [(ngModel)]="newFinish" />
+          </label>
+          <button
+            class="btn soft"
+            type="submit"
+            [disabled]="busy() || (!newStart() && !newFinish())"
+          >
+            <ab-icon name="plus" />
+            {{ (e.item.type === 'book' ? 'entry.addPastRead' : 'entry.addPastWatch') | translate }}
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <p class="remove">
+      <button type="button" class="btn danger" (click)="remove()">
+        {{ 'entry.remove' | translate }}
+      </button>
+    </p>
+  } @else if (!error()) {
+    <p class="muted">{{ 'entry.loading' | translate }}</p>
+  }
+</div>

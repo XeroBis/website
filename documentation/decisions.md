@@ -20,7 +20,7 @@ Each app's tables stay grouped, readable and droppable on their own, and `core.u
 
 ## Auth verified by the backend, not the proxy (2026-10-17)
 
-The backend checks the session cookie itself through a FastAPI dependency. The old flow is removed: nginx `auth_request` to `auth-service`'s `/internal/validate`, then `X-User-*` headers, then a per-app shadow `users` row. With one backend there is no separate service to ask, and a dependency is testable and visible in the code, where the old check was hidden in proxy config. The dependencies are `get_current_user`, `get_optional_user` and `require_admin` in `core/deps.py`; see architecture.md "Session".
+The backend checks the session cookie itself through a FastAPI dependency. The old flow is removed: nginx `auth_request` to `auth-service`'s `/internal/validate`, then `X-User-*` headers, then a per-app shadow `users` row. With one backend there is no separate service to ask, and a dependency is testable and visible in the code, where the old check was hidden in proxy config. The dependencies are `get_current_user`, `get_optional_user`, `require_admin` and `require_app` in `core/deps.py`; see architecture.md "Session".
 
 ## API exposed as `/api` on every host, not `api.alanbignon.com` (2026-10-17)
 
@@ -88,8 +88,8 @@ Same library as auth-service. `provideI18n({ en, fr })` from `@shared` sets it u
 
 ## Portfolio: hand-written projects, bilingual descriptions, free-text tags (2026-10-17)
 
-Projects are created and edited by an admin only, through `require_admin` routes. There is no GitHub sync, and nothing is imported from workout's `projects` table. Changes from workout's version:
-- **No `user_id`**: workout scoped projects per user and picked the "portfolio user" from an env var. There is now one portfolio, and access is decided by `is_admin`.
+Projects are created and edited by users with the `portfolio` app (and admins), through `require_app("portfolio")` routes (was `require_admin`, see "Per-user app access"). There is no GitHub sync, and nothing is imported from workout's `projects` table. Changes from workout's version:
+- **No `user_id`**: workout scoped projects per user and picked the "portfolio user" from an env var. There is now one portfolio, and write access is decided by the `portfolio` grant.
 - **Bilingual descriptions**: `description_fr` and `description_en` columns, both required, shown by the UI language. Chosen over one free-language column because the site is FR/EN everywhere else. The name isn't translated, since it's a proper noun.
 - **`repo_url` over `github_link`**: any `https://` URL, not only `github.com`, so a project hosted on another forge can be linked.
 - **`featured` + `position`**: the order is `position` only (manual). `featured` only highlights a card. Chosen over "featured first" so there is one ordering rule.
@@ -100,3 +100,25 @@ Projects are created and edited by an admin only, through `require_admin` routes
 ## Shared header in `@shared`, with its strings shipped by `provideI18n` (2026-10-17)
 
 The top bar (title, app links slot, FR/EN switch, login or account link) is an `@shared` component, `ab-header`, because every app except auth needs the same one. Its few strings live in `@shared` under a `SHARED` key that `provideI18n` merges into each app's translations. Chosen over asking every app to copy the header keys into its own JSON. Only `portfolio` uses it in this step; the other apps adopt it when they are ported. The header links logged-in users to the auth app's account page rather than offering a logout button, so account actions (pseudo, language, logout) stay in one place. `httpStatus` (error → HTTP status) also moved from the auth app to `@shared`, since portfolio needs it too.
+
+## Per-user app access in `core.user_apps`, managed from the auth app (2026-10-17)
+
+Each account starts with access to no app. An admin grants `workout`, `cards`, `media` or `portfolio` per user on the auth app's `/admin/users` page. Choices:
+- **A `core.user_apps` join table** (user, app) over an array column on `users` or per-app tables: one row per grant, a check constraint on the app name, and `ON DELETE CASCADE` with the user. It lives in `core` because every app reads it.
+- **Admins bypass**: `is_admin` implies every app, so the admin can't lock themselves out and needs no rows. `/api/auth/me` returns the *effective* list (`apps`), so the frontend has one thing to check.
+- **Portfolio stays public**: its grant means "may edit projects", replacing the `is_admin` check on its write routes.
+- **Enforced on both sides**: `require_app("<app>")` in `core/deps.py` (403 without access) on each app's routes, and `appGuard(app)` in `@shared` on each app's pages. A logged-in user without access is sent to the auth app's account page, which lists only the apps they can open. Chosen over a "no access" page in each app because the account page already is the hub of apps.
+- Still only `make seed-user` sets `is_admin`; the users page doesn't toggle it or delete accounts (see ideas.md).
+
+## Media: ported from `../media` with its data model, sources and covers (2026-10-17)
+
+`../media` was already on this stack, so its `domains/media` was adapted rather than rewritten. What changed:
+- **Auth**: `core.deps.require_app("media")` (a session, the `media` grant or admin, and CSRF on unsafe routes) replaces the `X-User-*` headers, the `REQUIRE_AUTH=false` dev bypass, the CORS setup and the `users` shadow table. `library_entries.user_id` and `media_items.created_by_user_id` reference `core.users.id`. Every user with access to media has their own library over the shared catalog.
+- **Routes** moved under `/api/media/...`. The cover route became `/api/media/items/{id}/cover` (was `/api/media/{id}/cover`). `/api/dashboard` (unused since media's home page was removed) and `/api/users/me` (replaced by `/api/auth/me`) are dropped.
+- **No share links**: media had none yet (only an idea, which is why its docs reserved `/api/public/`). They stay in ideas.md.
+- **Kept as-is**: the shared catalog + per-user `library_entries` + `reading_sessions` model, the status rules, TMDB (films, series) and Open Library (books) as metadata sources called only by the backend, covers cached in Postgres (`bytea`, so the one database backup includes them), and EN + FR titles/synopses in the catalog. One fresh migration; media's own history is not carried over, and no rows are imported (see "No production data migration").
+- **HTTP client**: `httpx2`, already used by the test client, is now also a runtime dependency for the source calls (media used `httpx`, which Starlette deprecated). Tests swap its transport for an `httpx2.MockTransport` that fails on any unregistered URL.
+- **TMDB token**: `TMDB_READ_ACCESS_TOKEN` in `core/config.py`, from `.env` in dev and prod. Without it, film and series search answer 502 and books still work. Tests never use a real token.
+- **Metadata refresh**: media's `scripts/refresh_metadata.py` became `domains/media/refresh.py`, run with `make media-refresh` / `make prod-media-refresh`.
+- **Frontend**: the app uses `@shared`'s `authGuard`, `AuthService`, `LanguageService` (so the header's FR/EN switch now also changes titles, which media couldn't do) and `ab-header`, instead of its own copies. Only the inline-SVG icon component moved to `@shared` (as `ab-icon`); labels, API wrappers, poster, rating and quick actions stay in the media app, since no other app uses them.
+- **Look**: "library paper" (cream paper, ink text, Fraunces serif headings, oxblood accent), deliberately unlike portfolio (dark/lime) and auth (neo-brutalist). Films and series get their own accents (teal, ochre) so the app doesn't read as books-only. It replaces media's light indigo look, which matched pokemon_cards.

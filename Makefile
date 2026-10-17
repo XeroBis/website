@@ -1,4 +1,4 @@
-.PHONY: help up build down logs ps seed-user hooks lint test b-test f-test prod prod-down prod-seed-user
+.PHONY: help up build down logs ps seed-user media-refresh hooks lint test b-test f-test prod prod-down prod-seed-user prod-media-refresh
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -27,6 +27,9 @@ ps: ## Show dev containers
 seed-user: ## Create or update the dev admin account
 	docker compose exec $(foreach v,ADMIN_EMAIL ADMIN_PASSWORD ADMIN_PSEUDO,$(if $($(v)),-e $(v)="$($(v))" )) backend /opt/venv/bin/python -m domains.auth.seed
 
+media-refresh: ## Re-fetch every TMDB / Open Library catalog row (dev)
+	docker compose exec backend /opt/venv/bin/python -m domains.media.refresh
+
 # ── quality ──────────────────────────────────────────────────────────────────
 
 hooks: ## Enable the git pre-commit hook (ruff + black on staged backend files)
@@ -54,3 +57,6 @@ prod-down: ## Stop the prod stack
 prod-seed-user: ## Create or update the prod admin: make prod-seed-user ADMIN_EMAIL=… ADMIN_PASSWORD=…
 	@test -n "$(ADMIN_EMAIL)" -a -n "$(ADMIN_PASSWORD)" || { echo "ADMIN_EMAIL and ADMIN_PASSWORD are required"; exit 1; }
 	docker compose -f docker-compose.prod.yml exec -e ADMIN_EMAIL="$(ADMIN_EMAIL)" -e ADMIN_PASSWORD="$(ADMIN_PASSWORD)" $(if $(ADMIN_PSEUDO),-e ADMIN_PSEUDO="$(ADMIN_PSEUDO)" )backend /opt/venv/bin/python -m domains.auth.seed
+
+prod-media-refresh: ## Re-fetch every TMDB / Open Library catalog row (prod)
+	docker compose -f docker-compose.prod.yml exec backend /opt/venv/bin/python -m domains.media.refresh

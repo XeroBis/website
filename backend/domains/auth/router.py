@@ -6,8 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.deps import get_current_user, require_csrf
-from core.models import User
+from core.deps import get_current_user, require_admin, require_csrf
+from core.models import APPS, User, UserApp
 from core.rate_limit import limiter
 from core.security import (
     REFRESH_COOKIE,
@@ -22,6 +22,8 @@ from core.security import (
     verify_password,
 )
 from domains.auth.schemas import (
+    AdminUserOut,
+    AppsUpdate,
     LanguageUpdate,
     LoginIn,
     PseudoUpdate,
@@ -132,4 +134,36 @@ def update_language(
 ):
     user.language = payload.language
     db.commit()
+    return user
+
+
+# ── admin: app access ────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/users",
+    response_model=list[AdminUserOut],
+    dependencies=[Depends(require_admin)],
+)
+def list_users(db: Session = Depends(get_db)):
+    return db.scalars(select(User).order_by(User.created_at, User.id)).all()
+
+
+@router.put(
+    "/users/{user_id}/apps",
+    response_model=AdminUserOut,
+    dependencies=[Depends(require_admin)],
+)
+def set_user_apps(user_id: int, payload: AppsUpdate, db: Session = Depends(get_db)):
+    """Full replace of the user's grants (no effect on an admin's access)."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    wanted = set(payload.apps)
+    granted = {grant.app for grant in user.app_grants}
+    user.app_grants = [grant for grant in user.app_grants if grant.app in wanted] + [
+        UserApp(app=app) for app in APPS if app in wanted - granted
+    ]
+    db.commit()
+    db.refresh(user)
     return user

@@ -2,7 +2,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
-import { ADMIN, PROJECT, flushMe, settle, setup } from '../testing';
+import { EDITOR, PROJECT, flushMe, settle, setup } from '../testing';
 import { ProjectForm, parseTags } from './project-form';
 
 describe('parseTags', () => {
@@ -27,7 +27,7 @@ describe('ProjectForm', () => {
     navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
     fixture = TestBed.createComponent(ProjectForm);
     if (id) fixture.componentRef.setInput('id', id);
-    flushMe(http, ADMIN);
+    flushMe(http, EDITOR);
     fixture.detectChanges();
     http.expectOne('/api/portfolio/tags').flush(tags);
     el = fixture.nativeElement;

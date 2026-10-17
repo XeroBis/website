@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 
-import { Placeholder } from '@shared';
+import { Placeholder, appGuard } from '@shared';
 
 export const routes: Routes = [
-  { path: '', component: Placeholder, data: { appName: 'Workout' } },
+  { path: '', component: Placeholder, canActivate: [appGuard('workout')], data: { appName: 'Workout' } },
   { path: '**', redirectTo: '' },
 ];

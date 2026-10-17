@@ -20,6 +20,7 @@ export const TEST_USER: User = {
   pseudo: 'Testy',
   language: 'fr',
   is_admin: false,
+  apps: [],
 };
 
 export function setCookie(name: string, value: string): void {

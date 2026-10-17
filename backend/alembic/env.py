@@ -9,6 +9,7 @@ from alembic import context
 from core import models as core_models  # noqa: F401, E402
 from core.config import settings
 from core.database import SCHEMAS, Base
+from domains.media import models as media_models  # noqa: F401, E402
 from domains.portfolio import models as portfolio_models  # noqa: F401, E402
 
 config = context.config

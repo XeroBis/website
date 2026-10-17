@@ -1,0 +1,112 @@
+<div class="library-page">
+  <header class="head">
+    <h1 class="display">{{ 'library.title' | translate }}</h1>
+    <input
+      class="field search"
+      type="search"
+      [placeholder]="'library.search' | translate"
+      [attr.aria-label]="'library.search' | translate"
+      [(ngModel)]="q"
+      (ngModelChange)="searchTyped()"
+      (keydown.enter)="apply()"
+    />
+  </header>
+
+  <div class="chips types">
+    <button type="button" class="chip" [class.on]="type() === ''" (click)="setType('')">
+      {{ 'library.all' | translate }}
+    </button>
+    @for (t of types; track t) {
+      <button
+        type="button"
+        class="chip"
+        [attr.data-type]="t"
+        [class.on]="type() === t"
+        (click)="setType(t)"
+      >
+        <ab-icon [name]="icon[t]" /> {{ typePlural[t] | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="filters">
+    <label>
+      <span class="label">{{ 'library.status' | translate }}</span>
+      <select class="field" [(ngModel)]="status" (ngModelChange)="apply()">
+        <option value="">{{ 'library.anyStatus' | translate }}</option>
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ statusLabel(s) | translate }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span class="label">{{ 'library.owned' | translate }}</span>
+      <select class="field" [(ngModel)]="owned" (ngModelChange)="apply()">
+        <option value="">{{ 'library.ownedAny' | translate }}</option>
+        <option value="true">{{ 'library.ownedYes' | translate }}</option>
+        <option value="false">{{ 'library.ownedNo' | translate }}</option>
+      </select>
+    </label>
+    <label>
+      <span class="label">{{ 'library.genre' | translate }}</span>
+      <select class="field" [(ngModel)]="genre" (ngModelChange)="apply()">
+        <option value="">{{ 'library.anyGenre' | translate }}</option>
+        @for (g of genres(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span class="label">{{ 'library.sortBy' | translate }}</span>
+      <select class="field" [(ngModel)]="sort" (ngModelChange)="apply()">
+        @for (s of sorts; track s) {
+          <option [value]="s">{{ 'library.sort.' + s | translate }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error()! | translate }}</p>
+  }
+
+  @if (entries(); as list) {
+    <p class="count muted">
+      {{
+        (list.length === 1 ? 'library.countOne' : 'library.countMany')
+          | translate: { count: list.length }
+      }}
+    </p>
+    @if (list.length === 0) {
+      <div class="empty">
+        <p class="muted">{{ 'library.nothing' | translate }}</p>
+        <a class="btn" routerLink="/add"
+          ><ab-icon name="plus" /> {{ 'library.addSomething' | translate }}</a
+        >
+      </div>
+    }
+    <div class="grid">
+      @for (e of list; track e.id) {
+        <div class="cell" data-testid="entry">
+          <a abPoster [item]="e.item" [routerLink]="['/library', e.id]"></a>
+          <div class="meta">
+            <span class="status" [class]="e.status">{{ caption(e) | translate }}</span>
+            @if (e.rating) {
+              <span class="rating"
+                ><ab-icon name="star" /> {{ e.rating / 2 | number: '1.0-1' : lang() }}</span
+              >
+            }
+            @if (e.owned_formats.length) {
+              <span
+                class="owned"
+                [title]="'library.ownedYes' | translate"
+                [attr.aria-label]="'library.ownedYes' | translate"
+              ></span>
+            }
+          </div>
+          <ab-quick-actions [entry]="e" [soft]="true" (changed)="load()" />
+        </div>
+      }
+    </div>
+  }
+</div>

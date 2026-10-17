@@ -35,7 +35,7 @@ function tagsValidator(control: AbstractControl<string>): ValidationErrors | nul
 const notBlank = Validators.pattern(/\S/);
 
 /**
- * `/admin/projects/new` and `/admin/projects/:id` (behind adminGuard):
+ * `/admin/projects/new` and `/admin/projects/:id` (behind appGuard('portfolio')):
  * create or fully update a project, then back to the list.
  */
 @Component({

@@ -27,6 +27,7 @@ services:
       REGISTER_SECRET: ${REGISTER_SECRET:?set in .env}
       COOKIE_DOMAIN: .alanbignon.com
       COOKIE_SECURE: "true"
+      TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy

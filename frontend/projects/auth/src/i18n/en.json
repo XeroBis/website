@@ -40,7 +40,26 @@
     "LOGOUT": "Log out",
     "ERROR_SESSION_EXPIRED": "Session expired, please log in again.",
     "ERROR_PSEUDO_SAVE": "Could not save pseudo.",
-    "ERROR_LANGUAGE_SAVE": "Could not save language."
+    "ERROR_LANGUAGE_SAVE": "Could not save language.",
+    "NO_OTHER_APP": "No other app yet: ask Alan for access.",
+    "USERS": "Users",
+    "USERS_DESC": "Who can use which app"
+  },
+  "USERS": {
+    "TITLE": "Users",
+    "SUBTITLE": "Tick the apps each account can use. Changes are saved at once.",
+    "LOADING": "Loading…",
+    "SINCE": "Since {{date}}",
+    "ALL_APPS": "Admin: all apps",
+    "APP_PORTFOLIO": "Portfolio (edit)",
+    "APP_WORKOUT": "Workout",
+    "APP_CARDS": "Cards",
+    "APP_MEDIA": "Media",
+    "BACK": "← Back to your account",
+    "ERROR_LOAD": "Could not load users.",
+    "ERROR_SAVE": "Could not save access.",
+    "ERROR_SESSION_EXPIRED": "Session expired, please log in again.",
+    "ERROR_FORBIDDEN": "Admins only."
   },
   "APPS": {
     "PORTFOLIO": "Portfolio",

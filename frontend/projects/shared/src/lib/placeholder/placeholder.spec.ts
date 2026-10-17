@@ -56,6 +56,7 @@ describe('Placeholder', () => {
       pseudo: 'Testy',
       language: 'fr',
       is_admin: false,
+      apps: [],
     });
     await fixture.whenStable();
     expect(session(fixture.nativeElement)).toContain('Logged in as Testy');

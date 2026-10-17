@@ -373,3 +373,100 @@ button {
     background: #ffe3e1;
   }
 }
+
+.no-apps {
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+}
+
+.admin-link {
+  margin-top: 0.65rem;
+  background: var(--soft);
+}
+
+/* Users page (admin) */
+
+.card.wide {
+  width: min(720px, 100%);
+  margin-block: auto; /* stays scrollable when taller than the screen */
+}
+
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.user-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border: var(--border);
+  border-radius: 4px;
+  background: var(--soft);
+}
+
+.user-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+
+  .pseudo {
+    font-size: 1rem;
+  }
+  .email {
+    margin: 0;
+  }
+}
+
+.since {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.all-apps {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--blue);
+}
+
+.app-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.app-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border: var(--border);
+  border-radius: 4px;
+  background: var(--paper);
+  cursor: pointer;
+
+  &:has(input:checked) {
+    background: var(--accent);
+  }
+  &:has(input:disabled) {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    padding: 0;
+    accent-color: var(--ink);
+  }
+}

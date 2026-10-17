@@ -14,7 +14,7 @@ export const CONTACT_LINKS = {
   selector: 'ab-root',
   template: `
     <ab-header title="Alan Bignon">
-      @if (auth.isAdmin()) {
+      @if (auth.canUse('portfolio')) {
         <a routerLink="/admin/projects/new" data-testid="new-project">{{ 'NAV.NEW_PROJECT' | translate }}</a>
       }
     </ab-header>

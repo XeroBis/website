@@ -1,0 +1,168 @@
+{
+  "nav": {
+    "library": "Library",
+    "add": "Add"
+  },
+  "pageTitle": {
+    "library": "Library",
+    "add": "Add"
+  },
+  "credit": "Film and series data from <a href=\"https://www.themoviedb.org\" target=\"_blank\" rel=\"noopener\">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB. Book data from <a href=\"https://openlibrary.org\" target=\"_blank\" rel=\"noopener\">Open Library</a>.",
+  "type": {
+    "book": "Book",
+    "film": "Film",
+    "series": "Series"
+  },
+  "types": {
+    "book": "Books",
+    "film": "Films",
+    "series": "Series"
+  },
+  "status": {
+    "any": {
+      "want": "Want",
+      "in_progress": "In progress",
+      "done": "Done",
+      "dropped": "Dropped"
+    },
+    "book": {
+      "want": "Want to read",
+      "in_progress": "Reading",
+      "done": "Read",
+      "dropped": "Dropped"
+    },
+    "watch": {
+      "want": "Want to watch",
+      "in_progress": "Watching",
+      "done": "Watched",
+      "dropped": "Dropped"
+    }
+  },
+  "format": {
+    "paperback": "Paperback",
+    "hardcover": "Hardcover",
+    "ebook": "Ebook",
+    "audiobook": "Audiobook",
+    "dvd": "DVD",
+    "bluray": "Blu-ray",
+    "bluray_4k": "4K Blu-ray",
+    "digital": "Digital"
+  },
+  "action": {
+    "start": "Start",
+    "startReading": "Start reading",
+    "resume": "Resume",
+    "finish": "Finish",
+    "nextEpisode": "+1 episode",
+    "alreadyRead": "Already read",
+    "alreadyWatched": "Already watched",
+    "notForMe": "Not for me",
+    "drop": "Drop",
+    "readAgain": "Read again",
+    "watchAgain": "Watch again"
+  },
+  "library": {
+    "title": "Library",
+    "search": "Search titles and creators…",
+    "all": "All",
+    "status": "Status",
+    "anyStatus": "Any status",
+    "owned": "Owned",
+    "ownedAny": "Owned or not",
+    "ownedYes": "Owned",
+    "ownedNo": "Not owned",
+    "genre": "Genre",
+    "anyGenre": "Any genre",
+    "sortBy": "Sort by",
+    "sort": {
+      "added": "Date added",
+      "title": "Title",
+      "year": "Year",
+      "rating": "Rating",
+      "finished": "Last finished"
+    },
+    "countOne": "1 item",
+    "countMany": "{{count}} items",
+    "nothing": "Nothing matches.",
+    "addSomething": "Add something"
+  },
+  "add": {
+    "title": "Add to your library",
+    "type": "Type",
+    "placeholderBook": "Title or author…",
+    "placeholder": "Title…",
+    "titleLabel": "Title",
+    "search": "Search",
+    "searching": "Searching…",
+    "searchingIn": "Searching {{source}}.",
+    "status": "Status",
+    "ownIt": "I own it as",
+    "noResults": "No results.",
+    "inLibrary": "In library",
+    "addToLibrary": "Add to library",
+    "adding": "Adding…",
+    "cantFind": "Can't find it?",
+    "byHand": "Add it by hand",
+    "manualTitle": {
+      "book": "Add a book by hand",
+      "film": "Add a film by hand",
+      "series": "Add a series by hand"
+    },
+    "titleRequired": "Title *",
+    "creators": {
+      "book": "Author(s)",
+      "film": "Director(s)",
+      "series": "Creator(s)"
+    },
+    "year": "Year",
+    "genres": "Genres (comma-separated)",
+    "cancel": "Cancel",
+    "back": "Back to the library",
+    "errorTitle": "A title is required."
+  },
+  "entry": {
+    "minutes": "{{count}} min",
+    "seasonsOne": "1 season",
+    "seasonsMany": "{{count}} seasons",
+    "isbn": "ISBN {{isbn}}",
+    "episodeOf": "of {{count}}",
+    "lastEpisodeHint": "That was the last known episode. Finish it, or move to a new season below if one came out.",
+    "rating": "Your rating",
+    "ownedAs": "Owned as",
+    "notOwned": "Not owned.",
+    "whereYouAre": "Where you are",
+    "season": "Season",
+    "lastEpisode": "Last episode watched",
+    "notes": "Notes",
+    "saved": "Saved",
+    "notesPlaceholder": "What did you think?",
+    "reads": "Reads",
+    "watches": "Watches",
+    "started": "Started",
+    "finished": "Finished",
+    "ongoing": "Ongoing",
+    "deleteSession": "Delete session",
+    "noReads": "No reads recorded yet.",
+    "noWatches": "No watches recorded yet.",
+    "addPastRead": "Add a past read",
+    "addPastWatch": "Add a past watch",
+    "remove": "Remove from library",
+    "loading": "Loading…",
+    "confirmRemove": "Remove “{{title}}” from your library? Its sessions, rating and notes will be deleted.",
+    "confirmDeleteSession": "Delete this session?",
+    "errorProgress": "Season must be 1 or more, episode 0 or more.",
+    "errorSessionOrder": "The finish date can't be before the start date.",
+    "notFound": "Entry not found."
+  },
+  "rating": {
+    "label": "Rating",
+    "stars": "{{count}} stars",
+    "unrated": "Unrated",
+    "outOf": "{{value}} / 5",
+    "clear": "Clear"
+  },
+  "errors": {
+    "unreachable": "The server is unreachable.",
+    "generic": "Something went wrong."
+  }
+}

@@ -1,0 +1,171 @@
+<div class="add-page">
+  <header>
+    <h1 class="display">{{ 'add.title' | translate }}</h1>
+  </header>
+
+  <div class="chips types" role="group" [attr.aria-label]="'add.type' | translate">
+    @for (t of types; track t) {
+      <button
+        type="button"
+        class="chip"
+        [attr.data-type]="t"
+        [class.on]="type() === t"
+        (click)="setType(t)"
+      >
+        <ab-icon [name]="icon[t]" /> {{ typeLabel[t] | translate }}
+      </button>
+    }
+  </div>
+
+  <form class="search" role="search" (submit)="$event.preventDefault(); search()">
+    <input
+      class="field"
+      type="search"
+      name="q"
+      [placeholder]="(type() === 'book' ? 'add.placeholderBook' : 'add.placeholder') | translate"
+      [attr.aria-label]="'add.titleLabel' | translate"
+      [(ngModel)]="query"
+      autofocus
+    />
+    <button class="btn" type="submit" [disabled]="searching() || !query().trim()">
+      {{ (searching() ? 'add.searching' : 'add.search') | translate }}
+    </button>
+  </form>
+  <p class="source muted">
+    {{ 'add.searchingIn' | translate: { source: type() === 'book' ? 'Open Library' : 'TMDB' } }}
+  </p>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error()! | translate }}</p>
+  }
+
+  <ng-template #options>
+    <div class="options">
+      <div>
+        <span class="label">{{ 'add.status' | translate }}</span>
+        <div class="chips">
+          @for (s of initialStatuses; track s) {
+            <button type="button" class="chip" [class.on]="status() === s" (click)="status.set(s)">
+              {{ statusLabel(s, type()) | translate }}
+            </button>
+          }
+        </div>
+      </div>
+      <div>
+        <span class="label">{{ 'add.ownIt' | translate }}</span>
+        <div class="chips">
+          @for (f of formatsFor[type()]; track f) {
+            <button
+              type="button"
+              class="chip"
+              [class.on]="formats().includes(f)"
+              (click)="toggleFormat(f)"
+            >
+              {{ formatLabel(f) | translate }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  @if (results(); as list) {
+    @if (list.length === 0) {
+      <p class="muted">{{ 'add.noResults' | translate }}</p>
+    }
+    <ul class="results">
+      @for (r of list; track r.external_id) {
+        <li [class.open]="selected() === r">
+          <button type="button" class="result" (click)="choose(r)">
+            @if (r.thumb_url) {
+              <img [src]="r.thumb_url" alt="" loading="lazy" />
+            } @else {
+              <span class="noimg"><ab-icon [name]="icon[r.type]" /></span>
+            }
+            <span class="text">
+              <strong>{{ r.title }}</strong>
+              <span class="muted"
+                >{{ r.year ?? '—' }}
+                @if (r.creators) {
+                  · {{ r.creators }}
+                }
+              </span>
+            </span>
+            @if (r.library_entry_id !== null) {
+              <span class="pill"
+                >{{ 'add.inLibrary' | translate }} <ab-icon name="arrow-right"
+              /></span>
+            }
+          </button>
+          @if (selected() === r) {
+            <div class="confirm">
+              <ng-container *ngTemplateOutlet="options" />
+              <button type="button" class="btn" [disabled]="saving()" (click)="addSelected()">
+                @if (!saving()) {
+                  <ab-icon name="plus" />
+                }
+                {{ (saving() ? 'add.adding' : 'add.addToLibrary') | translate }}
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (!manual()) {
+    <p class="manual-link">
+      {{ 'add.cantFind' | translate }}
+      <button type="button" class="btn ghost small" (click)="openManual()">
+        {{ 'add.byHand' | translate }}
+      </button>
+    </p>
+  } @else {
+    <form class="manual" (submit)="$event.preventDefault(); addManual()">
+      <h2 class="section-title">{{ 'add.manualTitle.' + type() | translate }}</h2>
+      <label>
+        <span class="label">{{ 'add.titleRequired' | translate }}</span>
+        <input class="field" name="title" required [(ngModel)]="manualTitle" />
+      </label>
+      <div class="row">
+        <label>
+          <span class="label">{{ 'add.creators.' + type() | translate }}</span>
+          <input class="field" name="creators" [(ngModel)]="manualCreators" />
+        </label>
+        <label class="year">
+          <span class="label">{{ 'add.year' | translate }}</span>
+          <input
+            class="field"
+            name="year"
+            type="number"
+            min="0"
+            max="9999"
+            [(ngModel)]="manualYear"
+          />
+        </label>
+      </div>
+      <label>
+        <span class="label">{{ 'add.genres' | translate }}</span>
+        <input class="field" name="genres" [(ngModel)]="manualGenres" />
+      </label>
+      <ng-container *ngTemplateOutlet="options" />
+      <div class="actions">
+        <button class="btn" type="submit" [disabled]="saving() || !manualTitle().trim()">
+          @if (!saving()) {
+            <ab-icon name="plus" />
+          }
+          {{ (saving() ? 'add.adding' : 'add.addToLibrary') | translate }}
+        </button>
+        <button type="button" class="btn ghost" (click)="manual.set(false)">
+          {{ 'add.cancel' | translate }}
+        </button>
+      </div>
+    </form>
+  }
+
+  <p class="back">
+    <a routerLink="/library" class="muted"
+      ><ab-icon name="arrow-left" /> {{ 'add.back' | translate }}</a
+    >
+  </p>
+</div>
