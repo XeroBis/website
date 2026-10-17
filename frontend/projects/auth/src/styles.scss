@@ -1,1 +1,273 @@
-/* You can add global styles to this file, and also import other style files */
+/* Auth app: one centred card per page (ported from auth-service). */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: #f6f6f4;
+  color: #1c1c1e;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  width: min(360px, 100%);
+  padding: 2.75rem 2.5rem;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #eceae4;
+  box-shadow:
+    0 1px 2px rgb(20 20 20 / 4%),
+    0 12px 32px -12px rgb(20 20 20 / 12%);
+  animation: rise 0.35s ease-out;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #16160f;
+}
+
+.subtitle {
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+  color: #8a8a80;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #57574d;
+}
+
+.hint {
+  font-weight: 400;
+  color: #8a8a80;
+}
+
+input {
+  padding: 0.7rem 0.85rem;
+  border-radius: 9px;
+  border: 1px solid #e1dfd6;
+  background: #fbfaf7;
+  color: #1c1c1e;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &::placeholder {
+    color: #b3b1a4;
+  }
+  &:hover {
+    border-color: #cfccbf;
+  }
+  &:focus {
+    border-color: #b45309;
+    background: #fff;
+  }
+}
+
+button {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 9px;
+  border: none;
+  background: #b45309;
+  color: #fff7ed;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    transform 0.08s ease;
+
+  &:hover {
+    background: #c2660f;
+  }
+  &:active {
+    background: #9a4507;
+    transform: translateY(1px);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.error {
+  color: #c0362c;
+  font-size: 0.85rem;
+  margin: 0;
+  animation: rise 0.2s ease-out;
+}
+
+.alt-action {
+  margin: 1.75rem 0 0;
+  font-size: 0.85rem;
+  text-align: center;
+  color: #8a8a80;
+
+  a {
+    color: #b45309;
+    text-decoration: none;
+    font-weight: 700;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Account page */
+
+.identity {
+  margin: 0 0 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eceae4;
+
+  form {
+    gap: 0.85rem;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pseudo {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #16160f;
+}
+
+.email {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.85rem;
+  color: #8a8a80;
+}
+
+.link-btn,
+.link-btn:hover,
+.link-btn:active {
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: #b45309;
+  font-size: 0.8rem;
+  transform: none;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.language-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  color: #8a8a80;
+}
+
+.lang-btn {
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #e1dfd6;
+  background: #fbfaf7;
+  color: #57574d;
+  font-size: 0.8rem;
+
+  &:hover {
+    background: #f1efe8;
+  }
+  &.active {
+    border-color: #b45309;
+    background: #b45309;
+    color: #fff7ed;
+  }
+}
+
+.app-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.app-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #eceae4;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: #b45309;
+  }
+}
+
+.app-name {
+  font-weight: 700;
+  color: #16160f;
+}
+
+.app-description {
+  font-size: 0.8rem;
+  color: #8a8a80;
+}
+
+.logout {
+  width: 100%;
+  margin-top: 1.75rem;
+  background: #fff;
+  color: #57574d;
+  border: 1px solid #e1dfd6;
+
+  &:hover {
+    background: #f6f6f4;
+  }
+}

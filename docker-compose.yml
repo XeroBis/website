@@ -23,6 +23,16 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://website:website@db:5432/website
       LOG_LEVEL: DEBUG
+      # Fixed fake secrets: dev only, never valid in prod (different .env).
+      SECRET_KEY: dev-secret-key-not-for-production-0000
+      REGISTER_SECRET: dev-register-secret
+      # Cookies: no Domain (host-only on localhost, shared by every port), not
+      # Secure (plain http).
+      COOKIE_SECURE: "false"
+      # Account created/updated by `make seed-user`.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin-password}
+      ADMIN_PSEUDO: ${ADMIN_PSEUDO:-Admin}
     ports:
       - "8400:8000"
     volumes:

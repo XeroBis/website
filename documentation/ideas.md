@@ -9,3 +9,7 @@ decision, move it to the right file and delete it here.
 - **Nx**, if builds or tests ever get slow enough that affected-only runs matter.
 - **CI**: lint + backend tests + frontend tests on push, then SSH deploy (the old repos each had their own `lint.yml`/`deploy.yml`).
 - **DB backups**: port `vps-edge/backups/backup.sh`/`restore.sh` (weekly `pg_dump`, emailed via msmtp). Now one database instead of three, and per-schema restore with `pg_dump -n <schema>`.
+- **Password reset** (by email). For now, `make prod-seed-user` resets the admin's password, and any other account needs a manual DB update.
+- **Language picker on the login page** for logged-out visitors (`LanguageService.set` already exists).
+- **Shared rate-limit storage** (Redis, via slowapi's `storage_uri`) if the backend ever runs several workers or replicas. Limits are per process today.
+- **MFA / OAuth login, audit log of logins**: only if there is ever more than one real user (carried over from auth-service's ideas).

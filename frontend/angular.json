@@ -78,7 +78,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shared/src/lib/environment/environment.ts",
+                  "with": "projects/shared/src/lib/environment/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -150,7 +156,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shared/src/lib/environment/environment.ts",
+                  "with": "projects/shared/src/lib/environment/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -222,7 +234,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shared/src/lib/environment/environment.ts",
+                  "with": "projects/shared/src/lib/environment/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -294,7 +312,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shared/src/lib/environment/environment.ts",
+                  "with": "projects/shared/src/lib/environment/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -366,7 +390,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shared/src/lib/environment/environment.ts",
+                  "with": "projects/shared/src/lib/environment/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

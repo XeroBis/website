@@ -23,6 +23,10 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://website:${POSTGRES_PASSWORD}@db:5432/website
       LOG_LEVEL: INFO
+      SECRET_KEY: ${SECRET_KEY:?set in .env}
+      REGISTER_SECRET: ${REGISTER_SECRET:?set in .env}
+      COOKIE_DOMAIN: .alanbignon.com
+      COOKIE_SECURE: "true"
     depends_on:
       db:
         condition: service_healthy

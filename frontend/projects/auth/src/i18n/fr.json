@@ -1,0 +1,55 @@
+{
+  "LOGIN": {
+    "TITLE": "Content de vous revoir",
+    "SUBTITLE": "Connectez-vous pour continuer vers alanbignon.com",
+    "EMAIL": "Email",
+    "PASSWORD": "Mot de passe",
+    "SUBMIT": "Se connecter",
+    "SIGNUP_LINK": "S'inscrire",
+    "ERROR_INVALID": "Email ou mot de passe invalide.",
+    "ERROR_RATE_LIMITED": "Trop de tentatives, réessayez dans une minute.",
+    "ERROR_GENERIC": "Échec de la connexion."
+  },
+  "SIGNUP": {
+    "TITLE": "Créer un compte",
+    "SUBTITLE": "Inscrivez-vous pour commencer avec alanbignon.com",
+    "EMAIL": "Email",
+    "PASSWORD": "Mot de passe",
+    "PASSWORD_HINT": "Au moins 12 caractères.",
+    "PSEUDO": "Pseudo",
+    "PSEUDO_PLACEHOLDER": "Comment doit-on vous appeler ?",
+    "CODE": "Code d'inscription",
+    "CODE_PLACEHOLDER": "Entrez votre code d'invitation",
+    "SUBMIT": "S'inscrire",
+    "LOGIN_LINK": "Se connecter",
+    "ERROR_CODE": "Code d'inscription invalide.",
+    "ERROR_EMAIL_TAKEN": "Cet email est déjà utilisé.",
+    "ERROR_INVALID": "Vérifiez l'email, le mot de passe (12 caractères minimum) et le pseudo.",
+    "ERROR_RATE_LIMITED": "Trop de tentatives, réessayez plus tard.",
+    "ERROR_GENERIC": "Échec de l'inscription."
+  },
+  "ACCOUNT": {
+    "TITLE": "Votre compte",
+    "CHANGE_PSEUDO": "Changer de pseudo",
+    "PSEUDO": "Pseudo",
+    "PSEUDO_PLACEHOLDER": "Comment doit-on vous appeler ?",
+    "SAVE": "Enregistrer",
+    "CANCEL": "Annuler",
+    "LANGUAGE": "Langue",
+    "WHERE_TO": "Où aller ?",
+    "LOGOUT": "Se déconnecter",
+    "ERROR_SESSION_EXPIRED": "Session expirée, veuillez vous reconnecter.",
+    "ERROR_PSEUDO_SAVE": "Impossible d'enregistrer le pseudo.",
+    "ERROR_LANGUAGE_SAVE": "Impossible d'enregistrer la langue."
+  },
+  "APPS": {
+    "PORTFOLIO": "Portfolio",
+    "PORTFOLIO_DESC": "Projets d'Alan Bignon",
+    "WORKOUT": "Workout",
+    "WORKOUT_DESC": "Suivi d'entraînement",
+    "CARDS": "Pokemon Cards",
+    "CARDS_DESC": "Collection de cartes & deck-building",
+    "MEDIA": "Media",
+    "MEDIA_DESC": "Suivi de livres, films & séries"
+  }
+}

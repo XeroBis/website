@@ -1,0 +1,55 @@
+{
+  "LOGIN": {
+    "TITLE": "Welcome back",
+    "SUBTITLE": "Log in to continue to alanbignon.com",
+    "EMAIL": "Email",
+    "PASSWORD": "Password",
+    "SUBMIT": "Log in",
+    "SIGNUP_LINK": "Sign up",
+    "ERROR_INVALID": "Invalid email or password.",
+    "ERROR_RATE_LIMITED": "Too many attempts, try again in a minute.",
+    "ERROR_GENERIC": "Login failed."
+  },
+  "SIGNUP": {
+    "TITLE": "Create account",
+    "SUBTITLE": "Sign up to get started with alanbignon.com",
+    "EMAIL": "Email",
+    "PASSWORD": "Password",
+    "PASSWORD_HINT": "At least 12 characters.",
+    "PSEUDO": "Pseudo",
+    "PSEUDO_PLACEHOLDER": "How should we call you?",
+    "CODE": "Sign-up code",
+    "CODE_PLACEHOLDER": "Enter your invite code",
+    "SUBMIT": "Sign up",
+    "LOGIN_LINK": "Log in",
+    "ERROR_CODE": "Invalid sign-up code.",
+    "ERROR_EMAIL_TAKEN": "Email already registered.",
+    "ERROR_INVALID": "Check the email, password (12+ characters) and pseudo.",
+    "ERROR_RATE_LIMITED": "Too many attempts, try again later.",
+    "ERROR_GENERIC": "Sign up failed."
+  },
+  "ACCOUNT": {
+    "TITLE": "Your account",
+    "CHANGE_PSEUDO": "Change pseudo",
+    "PSEUDO": "Pseudo",
+    "PSEUDO_PLACEHOLDER": "How should we call you?",
+    "SAVE": "Save",
+    "CANCEL": "Cancel",
+    "LANGUAGE": "Language",
+    "WHERE_TO": "Where to?",
+    "LOGOUT": "Log out",
+    "ERROR_SESSION_EXPIRED": "Session expired, please log in again.",
+    "ERROR_PSEUDO_SAVE": "Could not save pseudo.",
+    "ERROR_LANGUAGE_SAVE": "Could not save language."
+  },
+  "APPS": {
+    "PORTFOLIO": "Portfolio",
+    "PORTFOLIO_DESC": "Projects by Alan Bignon",
+    "WORKOUT": "Workout",
+    "WORKOUT_DESC": "Workout tracking",
+    "CARDS": "Pokemon Cards",
+    "CARDS_DESC": "Card collection & deck-building",
+    "MEDIA": "Media",
+    "MEDIA_DESC": "Books, films & series tracker"
+  }
+}

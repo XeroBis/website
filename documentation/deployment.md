@@ -8,11 +8,15 @@
 `docker-compose.prod.yml` on the VPS: `db` (Postgres 18), `backend`, `edge` (nginx with every app's bundle built in). Only `edge` publishes 80/443.
 
 ```bash
-cp .env.template .env      # POSTGRES_PASSWORD=$(openssl rand -hex 24); chmod 600 .env
+cp .env.template .env      # fill in, then chmod 600 .env:
+                           #   POSTGRES_PASSWORD=$(openssl rand -hex 24)
+                           #   SECRET_KEY=$(openssl rand -hex 32)
+                           #   REGISTER_SECRET=$(openssl rand -hex 16)
 make prod                  # docker compose -f docker-compose.prod.yml up --build -d
+make prod-seed-user ADMIN_EMAIL=… ADMIN_PASSWORD=… [ADMIN_PSEUDO=…]   # admin account
 ```
 
-Migrations run automatically (`alembic upgrade head`) on backend start.
+Migrations run automatically (`alembic upgrade head`) on backend start. The backend refuses to start if `SECRET_KEY` (≥ 32 chars) or `REGISTER_SECRET` (≥ 16 chars) is missing or too short. Changing `SECRET_KEY` logs everyone out. Other accounts sign up at `auth.alanbignon.com/signup` with `REGISTER_SECRET` as the sign-up code.
 
 ## TLS certificate
 
@@ -40,4 +44,4 @@ The certbot deploy hook (`/etc/letsencrypt/renewal-hooks/deploy/`) must do the s
 1. Expand the cert (above). It's the same box, so old and new can't both hold 80/443.
 2. Stop the old stacks (`vps-edge` last).
 3. `make prod` here.
-4. Re-create accounts, then re-import workout and cards data through their import features.
+4. `make prod-seed-user …` for the admin, other accounts through `/signup`, then re-import workout and cards data through their import features.

@@ -20,7 +20,7 @@ Each app's tables stay grouped, readable and droppable on their own, and `core.u
 
 ## Auth verified by the backend, not the proxy (2026-10-17)
 
-The backend checks the session cookie itself through a FastAPI dependency. The old flow is removed: nginx `auth_request` to `auth-service`'s `/internal/validate`, then `X-User-*` headers, then a per-app shadow `users` row. With one backend there is no separate service to ask, and a dependency is testable and visible in the code, where the old check was hidden in proxy config. Details land with the auth domain (`migration-plan.md` step 2).
+The backend checks the session cookie itself through a FastAPI dependency. The old flow is removed: nginx `auth_request` to `auth-service`'s `/internal/validate`, then `X-User-*` headers, then a per-app shadow `users` row. With one backend there is no separate service to ask, and a dependency is testable and visible in the code, where the old check was hidden in proxy config. The dependencies are `get_current_user`, `get_optional_user` and `require_admin` in `core/deps.py`; see architecture.md "Session".
 
 ## API exposed as `/api` on every host, not `api.alanbignon.com` (2026-10-17)
 
@@ -53,3 +53,35 @@ The new database starts on Postgres 18. The old stacks were on 16, but since dat
 ## No production data migration (2026-10-17)
 
 Old data is not copied database-to-database. Workout and cards already have export/import features, which get ported with their apps and are used to reload data after cutover. Media data is re-entered or gets an import later, and auth accounts are recreated. This avoids writing one-off migration scripts across differently-shaped schemas.
+
+## Auth libraries: PyJWT + pwdlib (argon2), not python-jose + passlib (2026-10-17)
+
+auth-service used `python-jose` and `passlib[bcrypt]`, with `bcrypt` pinned to 3.2.2 because passlib breaks on newer bcrypt. Both are effectively unmaintained. PyJWT is maintained and does everything needed here (HS256, `exp`/`nbf`/`iss`/`aud` checks, required claims). pwdlib is the maintained successor to passlib, by the FastAPI user-auth authors, and its recommended hasher is argon2id. No password hashes are carried over (accounts are recreated, see "No production data migration"), so there was no reason to stay on bcrypt.
+
+## Session: httpOnly JWT cookies + double-submit CSRF, as before (2026-10-17)
+
+Kept from auth-service, over a `Authorization: Bearer` token in localStorage, because httpOnly cookies can't be read by injected JS, and one cookie on `.alanbignon.com` logs the user into every app with no SSO redirect dance. Changes from auth-service:
+- Cookies renamed `session` / `refresh` / `csrf` (were `auth_token` / `refresh_token` / `csrf_token`).
+- Lifetimes 15 min access / 30 days refresh (refresh was 7 days), so a monthly visit is enough to stay logged in.
+- `refresh` has `Path=/api/auth`, so the long-lived token is only sent to the two endpoints that use it.
+- The `session` cookie lives as long as the refresh token, longer than the JWT inside it. An expired token still reaches the backend, which answers 401 and makes the frontend refresh. With a cookie dying with its token, `get_optional_user` would silently treat a logged-in user as anonymous on public routes.
+- A session cookie that is present but invalid gives 401 even on `get_optional_user` routes, for the same reason.
+- `Domain`/`Secure` come from `COOKIE_DOMAIN`/`COOKIE_SECURE`. Dev: no Domain, so cookies are host-only on `localhost` and shared by every port. Prod: `.alanbignon.com` and Secure. `SameSite=Lax` everywhere.
+- The backend refuses to start without `SECRET_KEY` (≥ 32 chars) and `REGISTER_SECRET` (≥ 16 chars). Dev compose sets fixed fake ones, and prod reads them from `.env`.
+- JWT `iss`/`aud` are fixed to `alanbignon.com`. Dev and prod are told apart by their different secrets.
+
+## Invite-only sign-up kept; no dev auth bypass, `make seed-user` instead (2026-10-17)
+
+`POST /api/auth/register` still needs the `REGISTER_SECRET` as `X-Register-Secret`: the site has one real user, and open sign-up would only attract spam accounts. Other apps don't get a `REQUIRE_AUTH=false`-style bypass for dev. A dev bypass is one more code path that could end up enabled in prod, and it hides real auth bugs. Instead, `make seed-user` creates or updates an admin from `ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_PSEUDO` (dev defaults in compose), and `make prod-seed-user` does the same in prod. It's also the only way to set `is_admin`.
+
+## Rate limiting: slowapi, on login and register only (2026-10-17)
+
+Same library as auth-service (in-memory, per client IP, one uvicorn worker in prod). Only the endpoints worth brute-forcing are limited: login 10/minute, register 20/hour. auth-service also limited every endpoint plus a 120/minute default, which mostly risked throttling the user's own refresh/me calls. `core/rate_limit.py` is shared, so another domain can limit a route with `@limiter.limit(...)`.
+
+## Frontend environment: one shared pair of environment files (2026-10-17)
+
+App URLs (the login page for guards, the portfolio as the default post-login target, links on the account page) and the prod/dev redirect rule come from `projects/shared/src/lib/environment/environment{,.development}.ts`, swapped per build by `fileReplacements`, read through an `ENVIRONMENT` token. Chosen over deriving them from `window.location.hostname` at runtime because the build states which URLs it targets. One pair in `@shared` rather than one per app, because every app needs the same URLs.
+
+## i18n: ngx-translate in `@shared`, translations bundled (2026-10-17)
+
+Same library as auth-service. `provideI18n({ en, fr })` from `@shared` sets it up with the app's own JSON files imported into the bundle (a static loader, no HTTP fetch for translations). `LanguageService` follows the logged-in user's `language`; logged out, it uses the last language used on that site (localStorage), then the browser's, then French.

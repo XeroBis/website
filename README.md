@@ -6,6 +6,7 @@ One FastAPI backend, one Angular workspace, one Postgres, one edge nginx.
 ```bash
 make build                    # dev stack: db 5440, backend 8400, apps 4600-4604
 make up APPS="cards auth"     # only some Angular dev servers (~1 GB RAM each)
+make seed-user                # dev admin: admin@example.com / admin-password
 make test                     # backend + frontend tests
 make hooks                    # enable the ruff/black pre-commit hook
 ```

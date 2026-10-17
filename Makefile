@@ -1,4 +1,4 @@
-.PHONY: help up build down logs ps hooks lint test b-test f-test prod prod-down
+.PHONY: help up build down logs ps seed-user hooks lint test b-test f-test prod prod-down prod-seed-user
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -21,6 +21,11 @@ logs: ## Tail dev logs
 
 ps: ## Show dev containers
 	docker compose ps
+
+# Admin account from ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_PSEUDO (dev defaults in
+# docker-compose.yml, overridable: `make seed-user ADMIN_EMAIL=me@x.com`).
+seed-user: ## Create or update the dev admin account
+	docker compose exec $(foreach v,ADMIN_EMAIL ADMIN_PASSWORD ADMIN_PSEUDO,$(if $($(v)),-e $(v)="$($(v))" )) backend /opt/venv/bin/python -m domains.auth.seed
 
 # ── quality ──────────────────────────────────────────────────────────────────
 
@@ -45,3 +50,7 @@ prod: ## Build and start the prod stack
 
 prod-down: ## Stop the prod stack
 	docker compose -f docker-compose.prod.yml down
+
+prod-seed-user: ## Create or update the prod admin: make prod-seed-user ADMIN_EMAIL=… ADMIN_PASSWORD=…
+	@test -n "$(ADMIN_EMAIL)" -a -n "$(ADMIN_PASSWORD)" || { echo "ADMIN_EMAIL and ADMIN_PASSWORD are required"; exit 1; }
+	docker compose -f docker-compose.prod.yml exec -e ADMIN_EMAIL="$(ADMIN_EMAIL)" -e ADMIN_PASSWORD="$(ADMIN_PASSWORD)" $(if $(ADMIN_PSEUDO),-e ADMIN_PSEUDO="$(ADMIN_PSEUDO)" )backend /opt/venv/bin/python -m domains.auth.seed

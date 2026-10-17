@@ -1,8 +1,12 @@
 import logging
 
 from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from core.config import settings
+from core.rate_limit import limiter
+from domains.auth import router as auth
 from domains.health import router as health
 
 logging.basicConfig(
@@ -18,5 +22,8 @@ logging.basicConfig(
 # documentation/decisions.md "API exposed as /api on every host").
 
 app = FastAPI(title="alanbignon.com")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(health.router)
+app.include_router(auth.router)

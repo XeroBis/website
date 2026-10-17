@@ -3,12 +3,12 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+
+# Import every module defining models here so they register on Base.metadata
+# and autogenerate sees them.
+from core import models as core_models  # noqa: F401, E402
 from core.config import settings
 from core.database import SCHEMAS, Base
-
-# Import every domain's models here so they register on Base.metadata and
-# autogenerate sees them, e.g.:
-# from domains.auth import models as auth_models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
