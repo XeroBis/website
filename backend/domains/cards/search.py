@@ -50,6 +50,33 @@ def name_filter(search: str) -> ColumnElement[bool]:
     )
 
 
+def card_filters(
+    search: str | None = None,
+    set_code: str | None = None,
+    set_name: str | None = None,
+    supertype: list[str] | None = None,
+    rarity: list[str] | None = None,
+    card_number: str | None = None,
+) -> list[ColumnElement[bool]]:
+    """WHERE conditions on the catalog card shared by the catalog browse and
+    the collection search: `set_name` and `card_number` partial, the lists
+    OR within a filter, everything AND across."""
+    conditions = []
+    if search:
+        conditions.append(name_filter(search))
+    if set_code:
+        conditions.append(CardCatalog.set_code == set_code)
+    if set_name:
+        conditions.append(CardCatalog.set_name.ilike(f"%{set_name}%"))
+    if supertype:
+        conditions.append(CardCatalog.supertype.in_(supertype))
+    if rarity:
+        conditions.append(CardCatalog.rarity.in_(rarity))
+    if card_number:
+        conditions.append(CardCatalog.card_number.ilike(f"%{card_number}%"))
+    return conditions
+
+
 def name_column(language: str | None):
     """The displayed name, which name sorts follow."""
     return CardCatalog.display_name if language == "fr" else CardCatalog.name
@@ -57,7 +84,12 @@ def name_column(language: str | None):
 
 def order_by(sort: str, name) -> list:
     """ORDER BY for one of SORT_OPTIONS (unknown → name A-Z). Ties: card
-    number, then name. A set without release date sorts as the oldest."""
+    number, then name, then the catalog id (so pages never overlap). A set
+    without release date sorts as the oldest."""
+    return [*_order_by(sort, name), asc(CardCatalog.id)]
+
+
+def _order_by(sort: str, name) -> list:
     number = numeric_card_number()
     by_number = [number.nulls_last(), asc(CardCatalog.card_number), asc(name)]
     match sort:

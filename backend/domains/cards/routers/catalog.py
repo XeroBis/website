@@ -59,19 +59,9 @@ def browse_catalog(
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
-    conditions = []
-    if search_term:
-        conditions.append(search.name_filter(search_term))
-    if set_code:
-        conditions.append(m.CardCatalog.set_code == set_code)
-    if set_name:
-        conditions.append(m.CardCatalog.set_name.ilike(f"%{set_name}%"))
-    if supertype:
-        conditions.append(m.CardCatalog.supertype.in_(supertype))
-    if rarity:
-        conditions.append(m.CardCatalog.rarity.in_(rarity))
-    if card_number:
-        conditions.append(m.CardCatalog.card_number.ilike(f"%{card_number}%"))
+    conditions = search.card_filters(
+        search_term, set_code, set_name, supertype, rarity, card_number
+    )
     if variant_type:
         conditions.append(
             m.CardCatalog.variants.any(

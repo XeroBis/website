@@ -236,7 +236,7 @@ Audit log of ownership changes, one row per (card, print) change, never edited o
 | `user_id` | integer, FK → `core.users.id` `ON DELETE CASCADE` | |
 | `catalog_id` | integer, FK → `card_catalog.id` | |
 | `variant_type` | text, not null, default `standard` | |
-| `action` | text, not null | `added` / `increased` / `decreased` / `removed`. |
+| `action` | text, not null | `added` / `increased` / `decreased` / `removed`. An unchanged quantity logs nothing. |
 | `source` | text, not null | `manual` / `import`. |
 | `old_quantity` / `new_quantity` | integer, null | Null for `added` / `removed` respectively. |
 | `created_at` | timestamptz, default `now()` | |
@@ -291,9 +291,10 @@ A shopping-round checklist (name unique per owner, `updated_at` moves on every c
 ### Rules
 
 - **Scoping**: every route needs the `cards` app (grant or admin), except the public share routes. Collection, decks, drafts, purchases, shares and shopping lists only see the current user's rows (anyone else's is a 404). The catalog is shared. Combats are shared between cards users, and their deck pickers list every cards user's normal decks. Catalog administration (import, refresh, name fix) needs `core.users.is_admin`.
-- **Totals**: owned = Σ the card's variant quantities; allocated = Σ `quantity_in_deck` over normal decks; available = owned − allocated (also per print). Phantom rows never count as allocated.
+- **Totals**: owned = Σ the card's variant quantities; allocated = Σ `quantity_in_deck` over normal decks; available = owned − allocated (also per print). Phantom rows never count as allocated. Computed in grouped queries over a whole page of cards (no per-card query).
 - **Deck building** (normal decks): ≤ 60 cards, ≤ 4 copies per card except Basic Energy (recognised by name), allocated ≤ owned per print. A card in a deck can't be deleted, and its quantity can't go below what decks use. Phantom decks skip all three limits. Drafts are normal-only; a draft line's result (current + delta) stays within 0–4 (Basic Energy unlimited); applying re-checks everything and consumes the draft.
 - **Logging**: every ownership change writes `collection_history`, every deck change `deck_history`, in the same transaction.
+- **Collection**: adding puts copies on top of what's owned (one `cards` row per catalog card and user, created on the first copy); an edit sets one print's quantity (only a print of the catalog card, never below that print's copies in decks); a print at 0 is deleted, and the card with its last print. A card in a deck can't be deleted. An import matches by `image_path` and replaces each listed print's quantity (unlisted prints kept, never below what decks use), all or nothing. Delete-all removes the user's cards and decks plus every combat that used one of those decks (even with another player's deck on the other side), logging each print as removed first.
 - **Language**: display responses use `display_name`, `set_name_fr` and `image_path_fr` for French users (`core.users.language`) when set; exports and share pages always use the English values.
 - Deleting an account deletes all its cards data and the combats it played.
 
