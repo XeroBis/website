@@ -360,6 +360,11 @@ class UserTemplatesFile(BaseModel):
     templates: list[TemplateFile]
 
 
+class UserCircuitsFile(BaseModel):
+    user_email: str
+    circuits: list[SavedCircuitFile]
+
+
 class _FileMuscle(BaseModel):
     name: str
     intensity: int

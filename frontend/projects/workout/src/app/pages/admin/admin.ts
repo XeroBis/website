@@ -5,7 +5,7 @@ import { TransferSection } from '../../ui/transfer-section';
 import { AdminFileKind, WorkoutApi, errorMessage } from '../../workout/api';
 
 /**
- * Catalog files, multi-user workout/template files (matched by email, how
+ * Catalog files, multi-user workout/template/circuit files (matched by email, how
  * prod data is reloaded) and delete-all, for the users ticked below.
  */
 @Component({
@@ -65,6 +65,7 @@ export class Admin {
   protected readonly sections = [
     { kind: 'workouts', shape: 'userWorkouts', perUser: true },
     { kind: 'templates', shape: 'userTemplates', perUser: true },
+    { kind: 'circuits', shape: 'userCircuits', perUser: true },
     { kind: 'exercises', shape: 'exercises', perUser: false },
     { kind: 'equipments', shape: 'equipments', perUser: false },
   ] as const;

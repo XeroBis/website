@@ -260,10 +260,11 @@
     "circuits": "Circuits enregistrés"
   },
   "admin": {
-    "users": "Utilisateurs (pour les séances et modèles)",
+    "users": "Utilisateurs (pour les séances, modèles et circuits)",
     "allUsers": "Tous",
     "workouts": "Séances",
     "templates": "Modèles",
+    "circuits": "Circuits enregistrés",
     "exercises": "Exercices",
     "equipments": "Matériel",
     "deleted": "Supprimé : {{what}}."

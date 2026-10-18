@@ -260,10 +260,11 @@
     "circuits": "Saved circuits"
   },
   "admin": {
-    "users": "Users (for workouts and templates)",
+    "users": "Users (for workouts, templates and circuits)",
     "allUsers": "All",
     "workouts": "Workouts",
     "templates": "Templates",
+    "circuits": "Saved circuits",
     "exercises": "Exercises",
     "equipments": "Equipment",
     "deleted": "Deleted: {{what}}."

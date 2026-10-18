@@ -120,7 +120,7 @@ A workout log: workouts made of exercises with their sets (and circuits), a shar
 - `/exercises`: the catalog, filtered in the browser by name, type and muscles (map in toggle mode). Each row: name (opens its history), type badge, **Details** (muscle map and equipment). **New exercise** (any workout user, `/exercises/new`): name, type, muscles with intensity, equipment checkboxes. Admins also get **Edit** (`/exercises/:id`, same form) and **Delete** (refused with a message while the exercise is used).
 - `/equipments`: the equipment list with a name filter; **New equipment** for everyone, inline **Edit** and **Delete** (confirmed) for admins.
 - `/data`: your own import/export, one section each for workouts, templates and saved circuits: **Export** downloads `workouts.json` / `templates.json` / `circuits.json`; **Import** reads such a file (checked in the browser first, with the path of the first problem), then shows "N imported, M skipped" and the list of skipped items with the reason.
-- `/admin` (admins; others → `/`): catalog import/export (`exercises.json`, `equipments.json`); workouts and templates import/export for the users ticked in a checklist (old multi-user files, `[{user_email, workouts}]` / `[{user_email, templates}]`); **Delete all** workouts / templates of the ticked users, all exercises, all equipments (each confirmed).
+- `/admin` (admins; others → `/`): catalog import/export (`exercises.json`, `equipments.json`); workouts, templates and saved circuits import/export for the users ticked in a checklist (multi-user files, the old app's `[{user_email, workouts}]` / `[{user_email, templates}]`, and `[{user_email, circuits}]` (new)); **Delete all** workouts / templates / saved circuits of the ticked users, all exercises, all equipments (each confirmed).
 
 ### File formats
 
@@ -166,9 +166,10 @@ Every route needs a session (401) and the `workout` app (403); unsafe ones also 
 | `GET /circuits/export` · `POST /circuits/import` | same for saved circuits | 422 |
 | `GET /admin/workouts/export?user_ids` · `POST /admin/workouts/import` | admin; multi-user files (unknown email → listed) | 403, 422 |
 | `GET /admin/templates/export?user_ids` · `POST /admin/templates/import` | admin; same | 403, 422 |
+| `GET /admin/circuits/export?user_ids` · `POST /admin/circuits/import` | admin; same for saved circuits | 403, 422 |
 | `GET /admin/exercises/export` · `POST /admin/exercises/import` | admin; creates or updates by name → `{created, updated, skipped, ignored}` | 403, 422 |
 | `GET /admin/equipments/export` · `POST /admin/equipments/import` | admin; existing names skipped | 403, 422 |
-| `DELETE /admin/workouts?user_ids` · `DELETE /admin/templates?user_ids` | admin → 204 | 403 |
+| `DELETE /admin/workouts?user_ids` · `DELETE /admin/templates?user_ids` · `DELETE /admin/circuits?user_ids` | admin → 204 | 403 |
 | `DELETE /admin/exercises` · `DELETE /admin/equipments` | admin → 204 | 403, 409 an exercise is used |
 
 A workout is `{id, user_id, status, date, duration_minutes, started_at, ended_at, exercises: [entry]}`; an entry is `{id, type: "exercise", exercise_id, exercise, sets: [{id, …set}]}` or `{id, type: "circuit", name, duration_minutes, rounds, exercises: [exercise entry]}`. Templates are `{id, user_id, name, exercises}`, saved circuits `{id, name, duration_minutes, rounds, exercises}`.

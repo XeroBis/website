@@ -47,7 +47,7 @@ function params(values: object): HttpParams {
 
 /** The files of the import/export sections, by what they hold. */
 export type FileKind = 'workouts' | 'templates' | 'circuits';
-export type AdminFileKind = 'workouts' | 'templates' | 'exercises' | 'equipments';
+export type AdminFileKind = 'workouts' | 'templates' | 'circuits' | 'exercises' | 'equipments';
 
 @Injectable({ providedIn: 'root' })
 export class WorkoutApi {

@@ -274,6 +274,37 @@ def test_multi_user_files(admin, client, other_client, workout_client, ex):
     assert [t["name"] for t in other_client.get(f"{URL}/templates").json()] == ["T"]
 
 
+def test_multi_user_circuits(admin, client, other_client, ex):
+    client.post(
+        f"{URL}/circuits",
+        json={
+            "name": "Core",
+            "rounds": 3,
+            "exercises": [{"exercise_id": ex["Squat"], "sets": [{"reps": 5}]}],
+        },
+    )
+    ids = {"user_ids": [client.user_id, other_client.user_id]}
+    exported = admin.get(f"{URL}/admin/circuits/export", params=ids).json()
+    assert [(f["user_email"], len(f["circuits"])) for f in exported] == [
+        ("alice@example.com", 1),
+        ("bob@example.com", 0),
+    ]
+    files = [
+        {"user_email": "BOB@example.com", "circuits": exported[0]["circuits"]},
+        {"user_email": "ghost@example.com", "circuits": exported[0]["circuits"]},
+    ]
+    r = admin.post(f"{URL}/admin/circuits/import", json=files).json()
+    assert (r["created"], r["skipped"]) == (1, 1)
+    assert r["ignored"] == ["ghost@example.com (no such user)"]
+    assert [c["name"] for c in other_client.get(f"{URL}/circuits").json()] == ["Core"]
+
+    r = admin.delete(f"{URL}/admin/circuits", params={"user_ids": [client.user_id]})
+    assert r.status_code == 204
+    assert client.get(f"{URL}/circuits").json() == []
+    assert len(other_client.get(f"{URL}/circuits").json()) == 1
+    assert client.get(f"{URL}/admin/circuits/export", params=ids).status_code == 403
+
+
 def test_delete_all(admin, client, other_client, ex, add_workout):
     add_workout()
     add_workout(as_client=other_client)

@@ -1,4 +1,4 @@
-"""Admin page: catalog files, multi-user workout/template files (matched to
+"""Admin page: catalog files, multi-user workout/template/circuit files (matched to
 `core.users` by email, used to reload prod at cutover), delete-all."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -12,7 +12,11 @@ from domains.workout import models as m
 from domains.workout import schemas as s
 from domains.workout import transfer
 from domains.workout.catalog import exercise_in_use
-from domains.workout.routers.transfer import user_templates_file, user_workouts_file
+from domains.workout.routers.transfer import (
+    user_circuits_file,
+    user_templates_file,
+    user_workouts_file,
+)
 
 router = APIRouter(prefix="/admin", tags=["workout"])
 
@@ -30,7 +34,23 @@ def _users_by_email(db: Session, emails: list[str]) -> dict[str, User]:
     return {user.email: user for user in users}
 
 
-# ── workouts and templates of several users ──────────────────────────────────
+def _import_per_user(db: Session, files: list, key: str, importer) -> s.ImportResult:
+    """Each file's `key` list imported for the user of its email."""
+    result = s.ImportResult()
+    users = _users_by_email(db, [f.user_email for f in files])
+    for f in files:
+        items = getattr(f, key)
+        user = users.get(f.user_email.lower())
+        if user is None:
+            result.skipped += len(items)
+            result.ignored.append(f"{f.user_email} (no such user)")
+        else:
+            importer(db, user.id, items, result)
+    db.commit()
+    return result
+
+
+# ── workouts, templates and circuits of several users ──────────────────────────────────
 
 
 @router.get("/workouts/export")
@@ -51,17 +71,7 @@ def import_workouts(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    result = s.ImportResult()
-    users = _users_by_email(db, [f.user_email for f in files])
-    for f in files:
-        user = users.get(f.user_email.lower())
-        if user is None:
-            result.skipped += len(f.workouts)
-            result.ignored.append(f"{f.user_email} (no such user)")
-        else:
-            transfer.import_workouts(db, user.id, f.workouts, result)
-    db.commit()
-    return result
+    return _import_per_user(db, files, "workouts", transfer.import_workouts)
 
 
 @router.get("/templates/export")
@@ -82,17 +92,28 @@ def import_templates(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    result = s.ImportResult()
-    users = _users_by_email(db, [f.user_email for f in files])
-    for f in files:
-        user = users.get(f.user_email.lower())
-        if user is None:
-            result.skipped += len(f.templates)
-            result.ignored.append(f"{f.user_email} (no such user)")
-        else:
-            transfer.import_templates(db, user.id, f.templates, result)
-    db.commit()
-    return result
+    return _import_per_user(db, files, "templates", transfer.import_templates)
+
+
+@router.get("/circuits/export")
+def export_circuits(
+    user_ids: list[int] = UserIds,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return [
+        {"user_email": u.email, "circuits": user_circuits_file(db, u.id)}
+        for u in _users(db, user_ids)
+    ]
+
+
+@router.post("/circuits/import", response_model=s.ImportResult)
+def import_circuits(
+    files: list[s.UserCircuitsFile],
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return _import_per_user(db, files, "circuits", transfer.import_circuits)
 
 
 @router.delete("/workouts", status_code=status.HTTP_204_NO_CONTENT)
@@ -114,6 +135,17 @@ def delete_templates(
     db: Session = Depends(get_db),
 ):
     db.execute(delete(m.Template).where(m.Template.user_id.in_(user_ids)))
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/circuits", status_code=status.HTTP_204_NO_CONTENT)
+def delete_circuits(
+    user_ids: list[int] = UserIds,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    db.execute(delete(m.SavedCircuit).where(m.SavedCircuit.user_id.in_(user_ids)))
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

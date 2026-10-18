@@ -8,6 +8,7 @@ export type FileShape =
   | 'circuits'
   | 'userWorkouts'
   | 'userTemplates'
+  | 'userCircuits'
   | 'exercises'
   | 'equipments';
 
@@ -90,7 +91,7 @@ function checkExercise(e: unknown, at: string): string | null {
   return null;
 }
 
-function perUser(key: 'workouts' | 'templates', check: typeof checkWorkout) {
+function perUser(key: 'workouts' | 'templates' | 'circuits', check: typeof checkWorkout) {
   return (u: unknown, at: string): string | null => {
     if (!isObj(u)) return `${at}: not an object`;
     if (typeof u['user_email'] !== 'string') return `${at}: missing "user_email"`;
@@ -117,6 +118,7 @@ const CHECKS: Record<FileShape, (item: unknown, at: string) => string | null> = 
   circuits: checkCircuit,
   userWorkouts: perUser('workouts', checkWorkout),
   userTemplates: perUser('templates', checkTemplate),
+  userCircuits: perUser('circuits', checkCircuit),
   exercises: checkExercise,
   equipments: (v, at) => (typeof v === 'string' ? null : `${at}: not a name`),
 };
@@ -127,7 +129,7 @@ export function checkFile(data: unknown, shape: FileShape): string | null {
   return firstError(data, '', CHECKS[shape]);
 }
 
-/** Admin workout/template files: the old multi-user wrapper, else a plain list. */
+/** Admin workout/template/circuit files: the old multi-user wrapper, else a plain list. */
 export function isMultiUser(data: unknown): boolean {
   return Array.isArray(data) && isObj(data[0]) && typeof data[0]['user_email'] === 'string';
 }

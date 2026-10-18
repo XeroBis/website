@@ -30,6 +30,10 @@ def user_templates_file(db: Session, user_id: int) -> list[dict]:
     return [transfer.template_file(t) for t in db.scalars(user_templates(user_id))]
 
 
+def user_circuits_file(db: Session, user_id: int) -> list[dict]:
+    return [transfer.circuit_file(c) for c in db.scalars(user_circuits(user_id))]
+
+
 @router.get("/workouts/export")
 def export_workouts(user: User = Depends(workout_user), db: Session = Depends(get_db)):
     return user_workouts_file(db, user.id)
@@ -66,7 +70,7 @@ def import_templates(
 
 @router.get("/circuits/export")
 def export_circuits(user: User = Depends(workout_user), db: Session = Depends(get_db)):
-    return [transfer.circuit_file(c) for c in db.scalars(user_circuits(user.id))]
+    return user_circuits_file(db, user.id)
 
 
 @router.post("/circuits/import", response_model=s.ImportResult)
