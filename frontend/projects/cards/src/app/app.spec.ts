@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { Router, provideRouter, RouteReuseStrategy } from '@angular/router';
+import { Router, provideRouter, RouteReuseStrategy, TitleStrategy } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { AuthService, LanguageService, provideI18n, User } from '@shared';
@@ -15,6 +15,7 @@ import fr from '../i18n/fr.json';
 import { routes } from './app.routes';
 import { App } from './app';
 import { CardsRouteReuseStrategy } from './language-routes';
+import { TranslatedTitleStrategy } from './title-strategy';
 import { DeckDetailComponent } from './components/deck/deck-detail/deck-detail.component';
 import { CombatsComponent } from './components/combats/combats.component';
 import { By } from '@angular/platform-browser';
@@ -252,6 +253,7 @@ async function setup() {
     providers: [
       provideRouter(routes),
       { provide: RouteReuseStrategy, useClass: CardsRouteReuseStrategy },
+      { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
       provideHttpClient(withInterceptors([backend])),
       provideI18n({ en, fr }),
       {
@@ -355,6 +357,57 @@ describe('Cards standalone zoneless pages', () => {
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('ab-header')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('a[href="/shares"]')).toBeTruthy();
+  });
+  it("groups the old app's pages into dropdown menus, opened one at a time", async () => {
+    await setup();
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const menus = [...el.querySelectorAll('.nav-menu')];
+    expect(
+      menus.map((m) => m.querySelector('button')?.textContent?.replace('▾', '').trim()),
+    ).toEqual(['Play', 'Track', 'Tools', 'Manage']);
+    expect([...menus[3].querySelectorAll('a')].map((a) => a.getAttribute('href'))).toEqual([
+      '/catalog-management',
+      '/gestion',
+    ]);
+    menus[0].querySelector('button')!.click();
+    await fixture.whenStable();
+    expect(menus[0].classList).toContain('open');
+    menus[1].querySelector('button')!.click();
+    await fixture.whenStable();
+    expect(menus[0].classList).not.toContain('open');
+    expect(menus[1].classList).toContain('open');
+    document.body.click();
+    await fixture.whenStable();
+    expect(menus[1].classList).not.toContain('open');
+  });
+  it('names the tab after the page and the app, in the current language', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/decks/5');
+    await fixture.whenStable();
+    expect(document.title).toBe('Decks · Pokemon Card Collection');
+    expect(fixture.nativeElement.querySelector('ab-header .title')?.textContent).toBe(
+      'Pokemon Card Collection',
+    );
+    await TestBed.inject(LanguageService).change('fr');
+    await fixture.whenStable();
+    await router.navigateByUrl('/sets');
+    await fixture.whenStable();
+    expect(document.title).toBe('Séries · Collection de cartes Pokémon');
+    expect(fixture.nativeElement.querySelector('ab-header .title')?.textContent).toBe(
+      'Collection de cartes Pokémon',
+    );
+  });
+  it('hides the header on the public shared set', async () => {
+    await setup();
+    authState.set(null);
+    const fixture = TestBed.createComponent(App);
+    await TestBed.inject(Router).navigateByUrl('/shared/token');
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('ab-header')).toBeNull();
   });
   it('draws only real deck copies and renders the hand without a server request', async () => {
     const harness = await setup();

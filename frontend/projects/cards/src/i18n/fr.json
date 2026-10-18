@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "Collection de cartes Pokémon"
+  },
   "nav": {
     "toggleMenu": "Basculer le menu de navigation",
     "browse": "Parcourir",
@@ -18,7 +21,8 @@
     "backToApps": "Retour aux applications",
     "shoppingLists": "Listes d'achats",
     "shares": "Partages",
-    "missing": "Cartes manquantes"
+    "missing": "Cartes manquantes",
+    "sharedSet": "Série partagée"
   },
   "common": {
     "loading": "Chargement...",
@@ -524,7 +528,9 @@
     "cardNumberPlaceholder": "N° de carte (ex. 025)",
     "minHp": "PV min",
     "maxHp": "PV max",
-    "clearFilters": "Effacer les filtres"
+    "clearFilters": "Effacer les filtres",
+    "moreVariants": "Afficher {{count}} variantes de plus",
+    "fewerVariants": "Afficher moins de variantes"
   },
   "sets": {
     "addedCard": "« {{name}} » ajoutée à votre collection.",

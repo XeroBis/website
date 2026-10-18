@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "Pokemon Card Collection"
+  },
   "nav": {
     "toggleMenu": "Toggle navigation menu",
     "browse": "Browse",
@@ -18,7 +21,8 @@
     "backToApps": "Back to apps",
     "shoppingLists": "Shopping Lists",
     "shares": "Shares",
-    "missing": "Missing cards"
+    "missing": "Missing cards",
+    "sharedSet": "Shared set"
   },
   "common": {
     "loading": "Loading...",
@@ -524,7 +528,9 @@
     "cardNumberPlaceholder": "Card # (e.g. 025)",
     "minHp": "Min PV",
     "maxHp": "Max PV",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "moreVariants": "Show {{count}} more variants",
+    "fewerVariants": "Show fewer variants"
   },
   "sets": {
     "addedCard": "Added \"{{name}}\" to your collection.",

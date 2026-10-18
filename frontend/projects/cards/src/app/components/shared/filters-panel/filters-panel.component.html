@@ -79,7 +79,7 @@
       <div class="filter-group">
         <span class="filter-group-label">{{ variantFilterLabel | translate }}</span>
         <div class="type-toggle-row icon-row rarity-icon-row variant-icon-row">
-          @for (v of variantOptions; track v) {
+          @for (v of shownVariantOptions; track v) {
             <button
               type="button"
               class="type-toggle-btn icon-btn rarity-toggle-btn"
@@ -89,6 +89,27 @@
               (click)="toggleVariantType(v)"
             >
               <img [src]="variantIcon(v)" [alt]="variantLabel(v)" />
+            </button>
+          }
+          @if (hiddenVariantCount) {
+            <button
+              type="button"
+              class="type-toggle-btn variant-more-btn"
+              [attr.aria-label]="'filters.moreVariants' | translate: { count: hiddenVariantCount }"
+              [title]="'filters.moreVariants' | translate: { count: hiddenVariantCount }"
+              (click)="showAllVariants = true"
+            >
+              +{{ hiddenVariantCount }}
+            </button>
+          } @else if (collapseVariants && showAllVariants) {
+            <button
+              type="button"
+              class="type-toggle-btn variant-more-btn"
+              [attr.aria-label]="'filters.fewerVariants' | translate"
+              [title]="'filters.fewerVariants' | translate"
+              (click)="showAllVariants = false"
+            >
+              −
             </button>
           }
         </div>

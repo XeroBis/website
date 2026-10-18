@@ -24,6 +24,12 @@ const MOBILE_BREAKPOINT_PX = 900;
  * card_catalog.supertype. */
 const CARD_TYPES = ['Pokémon', 'Trainer', 'Energy'];
 
+/** Reverse and the ball reverses (Poké, Friend, Love, Dusk, Quick, Rocket,
+ * Master Ball): the prints a collapsed variant filter keeps in view. */
+function isMainVariant(value: VariantType): boolean {
+  return value === 'reverse' || /^reverse_\w+ball$/.test(value);
+}
+
 @Component({
   selector: 'app-filters-panel',
   imports: [FormsModule, TranslatePipe],
@@ -82,6 +88,9 @@ export class FiltersPanelComponent implements OnChanges {
   @Input() variantOptions: VariantType[] = [];
   @Input() variantFilterLabel = 'filters.printVariant';
   @Input() variantType: VariantType[] = [];
+  /** Show only the main prints (plus any selected one) until "+" is pressed. */
+  @Input() collapseVariants = false;
+  showAllVariants = false;
   @Output() variantTypeChange = new EventEmitter<VariantType[]>();
 
   @Input() available: '' | 'available' | 'unavailable' = '';
@@ -163,6 +172,17 @@ export class FiltersPanelComponent implements OnChanges {
     const next = active ? this.rarity.filter((v) => v !== value) : [...this.rarity, value];
     this.rarityChange.emit(next);
     this.filterChange.emit();
+  }
+
+  get shownVariantOptions(): VariantType[] {
+    if (!this.collapseVariants || this.showAllVariants) {
+      return this.variantOptions;
+    }
+    return this.variantOptions.filter((v) => isMainVariant(v) || this.variantType.includes(v));
+  }
+
+  get hiddenVariantCount(): number {
+    return this.variantOptions.length - this.shownVariantOptions.length;
   }
 
   isVariantTypeActive(value: VariantType): boolean {

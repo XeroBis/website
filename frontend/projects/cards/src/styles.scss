@@ -475,17 +475,136 @@ select {
   outline-offset: 3px;
 }
 
-ab-header .links {
-  flex-wrap: wrap;
+// The old app's navbar: underlined top links, then dropdown menus (Manage set apart).
+ab-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: var(--shadow-sm);
+  a.title {
+    font-size: 1.1rem;
+  }
+  // `.menu >` outweighs the shared header's own scoped `.links` rules.
+  .menu > .links {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-left: auto;
+    margin-right: 0.5rem;
+    > a,
+    .nav-menu > button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.35rem 0;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--color-text-muted);
+      font: inherit;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition:
+        color 0.15s ease,
+        border-color 0.15s ease;
+      &:hover {
+        color: var(--color-text);
+      }
+    }
+    > a.active,
+    .nav-menu.active-group > button {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+  }
+  .nav-menu {
+    position: relative;
+    > button span {
+      font-size: 0.75em;
+      transition: transform 0.15s ease;
+    }
+    &.open > button span {
+      transform: rotate(180deg);
+    }
+  }
+  .nav-menu-items {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    left: 50%;
+    z-index: 1;
+    min-width: max-content;
+    padding: 0.4rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    transform: translateX(-50%);
+    a {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: var(--radius-sm);
+      color: var(--color-text-muted);
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      &:hover,
+      &.active {
+        color: var(--color-primary);
+        background: var(--color-primary-light);
+      }
+    }
+  }
+  .nav-menu.open .nav-menu-items {
+    display: block;
+  }
+  .manage-menu {
+    padding-left: 1.5rem;
+    border-left: 1px solid var(--color-border);
+  }
 }
-ab-header .links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  text-decoration: none;
-}
-ab-header .links a.active {
-  color: var(--ab-accent);
-  text-decoration: underline;
-  text-underline-offset: 0.3rem;
+@media (max-width: 720px) {
+  ab-header {
+    .menu > .links {
+      gap: 0;
+      margin: 0;
+      > a,
+      .nav-menu > button {
+        width: 100%;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--color-border);
+      }
+      .nav-menu > button {
+        justify-content: space-between;
+      }
+      > a.active,
+      .nav-menu.active-group > button {
+        border-bottom-color: var(--color-border);
+      }
+    }
+    .nav-menu-items {
+      position: static;
+      padding: 0 0 0.25rem 1rem;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      transform: none;
+      a {
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--color-border);
+        border-radius: 0;
+        &:hover,
+        &.active {
+          background: transparent;
+        }
+      }
+    }
+    .manage-menu {
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
 }
