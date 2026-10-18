@@ -208,7 +208,9 @@
     "titleEdit": "Edit template",
     "name": "Name",
     "notFound": "Template not found.",
-    "errName": "Give the template a name."
+    "errName": "Give the template a name.",
+    "search": "Search a template or an exercise…",
+    "noMatch": "No template matches this search."
   },
   "circuits": {
     "new": "New circuit",

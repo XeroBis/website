@@ -12,58 +12,88 @@ import { LANGUAGES, Language } from '../i18n/language';
  * Top bar for every app: the app's title (link home), the app's own links
  * (projected content), a FR/EN switch, and the session: pseudo + a link to
  * the auth app's account page (where logging out happens), or a log in link
- * coming back to the current page. Needs `provideI18n`.
+ * coming back to the current page. On phones (≤ 720px) everything but the
+ * title folds into a menu opened by a button. Needs `provideI18n`.
  */
 @Component({
   selector: 'ab-header',
   imports: [RouterLink, TranslatePipe],
+  host: { '(document:keydown.escape)': 'open.set(false)' },
   template: `
-    <header>
-      <a class="title" routerLink="/">{{ title() }}</a>
-      <nav class="links"><ng-content /></nav>
-      <div class="languages" role="group" [attr.aria-label]="'SHARED.LANGUAGE' | translate">
-        @for (lang of languages; track lang) {
-          <button
-            type="button"
-            [class.active]="language.current() === lang"
-            [attr.aria-pressed]="language.current() === lang"
-            [disabled]="busy()"
-            (click)="setLanguage(lang)"
-          >
-            {{ lang.toUpperCase() }}
-          </button>
-        }
-      </div>
-      <div class="session">
-        @if (auth.user(); as user) {
-          <span class="pseudo" data-testid="pseudo">{{ user.pseudo }}</span>
-          <!-- Grid icon, as on the old workout app's navbar. -->
-          <a
-            class="account"
-            [href]="accountUrl"
-            [attr.aria-label]="'SHARED.ACCOUNT' | translate"
-            [title]="'SHARED.ACCOUNT' | translate"
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
+    <header [class.open]="open()">
+      <a class="title" routerLink="/" (click)="open.set(false)">{{ title() }}</a>
+      <button
+        type="button"
+        class="menu-toggle"
+        aria-controls="ab-header-menu"
+        [attr.aria-expanded]="open()"
+        [attr.aria-label]="'SHARED.MENU' | translate"
+        (click)="open.set(!open())"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          @if (open()) {
+            <path d="M6 6l12 12M18 6L6 18"></path>
+          } @else {
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          }
+        </svg>
+      </button>
+      <!-- Desktop: display: contents, so its children sit in the header's row. -->
+      <div class="menu" id="ab-header-menu" (click)="closeOnLink($event)">
+        <nav class="links"><ng-content /></nav>
+        <div class="languages" role="group" [attr.aria-label]="'SHARED.LANGUAGE' | translate">
+          @for (lang of languages; track lang) {
+            <button
+              type="button"
+              [class.active]="language.current() === lang"
+              [attr.aria-pressed]="language.current() === lang"
+              [disabled]="busy()"
+              (click)="setLanguage(lang)"
             >
-              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-            </svg>
-          </a>
-        } @else {
-          <a class="login" [href]="loginUrl()">{{ 'SHARED.LOGIN' | translate }}</a>
-        }
+              {{ lang.toUpperCase() }}
+            </button>
+          }
+        </div>
+        <div class="session">
+          @if (auth.user(); as user) {
+            <span class="pseudo" data-testid="pseudo">{{ user.pseudo }}</span>
+            <!-- Grid icon, as on the old workout app's navbar. -->
+            <a
+              class="account"
+              [href]="accountUrl"
+              [attr.aria-label]="'SHARED.ACCOUNT' | translate"
+              [title]="'SHARED.ACCOUNT' | translate"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+              </svg>
+            </a>
+          } @else {
+            <a class="login" [href]="loginUrl()">{{ 'SHARED.LOGIN' | translate }}</a>
+          }
+        </div>
       </div>
     </header>
   `,
@@ -142,6 +172,53 @@ import { LANGUAGES, Language } from '../i18n/language';
       color: var(--ab-text, #1c1c1e);
       border-color: var(--ab-accent, #b45309);
     }
+    .menu {
+      display: contents;
+    }
+    .menu-toggle {
+      display: none;
+    }
+    @media (max-width: 720px) {
+      header {
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem 0.5rem 1rem;
+      }
+      .title {
+        margin-right: auto;
+      }
+      .menu-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+      }
+      .menu {
+        display: none;
+      }
+      header.open .menu {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem 1rem;
+        flex-basis: 100%;
+        max-height: calc(100dvh - 4rem);
+        overflow-y: auto;
+        padding: 0.5rem 0 0.25rem;
+        border-top: 1px solid var(--ab-border, #eceae4);
+      }
+      .links {
+        flex-basis: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.15rem;
+        margin-right: 0;
+      }
+      .session {
+        margin-left: auto;
+      }
+    }
   `,
 })
 export class Header {
@@ -155,10 +232,17 @@ export class Header {
 
   protected readonly languages = LANGUAGES;
   protected readonly busy = signal(false);
+  /** The phone menu. */
+  protected readonly open = signal(false);
 
   /** Computed on use, so it returns to the page currently shown. */
   protected loginUrl(): string {
     return this.auth.loginUrl(this.location.href);
+  }
+
+  /** A tapped link navigates (or leaves), so the phone menu closes. */
+  protected closeOnLink(event: Event): void {
+    if ((event.target as Element).closest('a')) this.open.set(false);
   }
 
   protected async setLanguage(lang: Language): Promise<void> {

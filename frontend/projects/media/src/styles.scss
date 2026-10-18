@@ -111,38 +111,6 @@ ab-header {
       font-weight: 600;
     }
   }
-
-  /* Phones: title, FR/EN and session on one row, the links as tabs on a
-     second full-width row. The header's own rules outrank these selectors,
-     hence the !important on the properties it sets. */
-  @media (max-width: 640px) {
-    header {
-      gap: 0.5rem 0.75rem !important;
-      padding: 0.6rem 1rem 0 !important;
-    }
-    .title {
-      margin-right: auto;
-    }
-    .links {
-      order: 1;
-      /* Edge to edge, past the header's side padding. */
-      flex-basis: calc(100% + 2rem);
-      gap: 0 !important;
-      margin: 0 -1rem !important;
-      border-top: 1px solid var(--ab-border);
-    }
-    .links a {
-      flex: 1;
-      justify-content: center;
-      padding: 0.55rem 0.5rem;
-    }
-    .pseudo {
-      max-width: 7rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
 }
 
 a {

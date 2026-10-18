@@ -1,4 +1,4 @@
-import { Component, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, resource, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -10,10 +10,14 @@ import { EntryList } from '../../ui/entry-list';
 import { HistoryModal } from '../../ui/history-modal';
 import { ViewingSelect } from '../../ui/viewing-select';
 import { WorkoutApi, errorMessage } from '../../workout/api';
+import { matchesTemplate } from '../../workout/format';
 import { Exercise, Template } from '../../workout/models';
 import { Viewing } from '../../workout/viewing';
 
-/** The viewed user's templates: yours to edit, start or delete; others' to copy. */
+/**
+ * The viewed user's templates, collapsed to their name until opened, with a
+ * search: yours to edit, start or delete; others' to copy.
+ */
 @Component({
   selector: 'ab-templates',
   imports: [ConfirmButton, DetailsModal, EntryList, HistoryModal, Icon, RouterLink, TranslatePipe, ViewingSelect],
@@ -21,6 +25,16 @@ import { Viewing } from '../../workout/viewing';
   template: `
     <div class="toolbar">
       <ab-viewing-select />
+      <input
+        type="search"
+        id="template-search"
+        class="search"
+        data-testid="template-search"
+        [attr.aria-label]="'templates.search' | translate"
+        [placeholder]="'templates.search' | translate"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
       @if (viewing.isOwn()) {
         <a class="btn primary push" routerLink="/templates/new"><ab-icon name="plus" /> {{ 'templates.new' | translate }}</a>
       }
@@ -28,10 +42,20 @@ import { Viewing } from '../../workout/viewing';
     @if (message(); as m) {
       <p [class]="m.ok ? 'success' : 'error'" data-testid="message">{{ m.text | translate: m.params }}</p>
     }
-    @for (t of templates.value(); track t.id) {
+    @for (t of shown(); track t.id) {
+      @let isOpen = expanded().has(t.id);
       <article class="card workout-card" data-testid="template">
-        <header class="workout-head">
-          <span class="workout-date">{{ t.name }}</span>
+        <header class="workout-head" [class.collapsed]="!isOpen">
+          <button
+            type="button"
+            class="template-toggle"
+            data-testid="template-toggle"
+            [attr.aria-expanded]="isOpen"
+            (click)="toggle(t.id)"
+          >
+            <ab-icon [name]="isOpen ? 'chevron-down' : 'chevron-right'" />
+            <span class="workout-date">{{ t.name }}</span>
+          </button>
           <span class="workout-duration">{{ 'templates.entries' | translate: { n: t.exercises.length } }}</span>
           <span class="push"></span>
           <button type="button" class="btn ghost sm" (click)="details.set(t)"><ab-icon name="info" /> {{ 'common.details' | translate }}</button>
@@ -45,10 +69,14 @@ import { Viewing } from '../../workout/viewing';
             </button>
           }
         </header>
-        <ab-entry-list [entries]="t.exercises" (exerciseClicked)="history.set($event)" />
+        @if (isOpen) {
+          <ab-entry-list [entries]="t.exercises" (exerciseClicked)="history.set($event)" />
+        }
       </article>
     } @empty {
-      @if (templates.hasValue()) {
+      @if (templates.value()?.length) {
+        <p class="empty">{{ 'templates.noMatch' | translate }}</p>
+      } @else if (templates.hasValue()) {
         <p class="empty">{{ 'templates.empty' | translate }}</p>
       }
     }
@@ -71,9 +99,21 @@ export class Templates {
     params: () => ({ user: this.viewing.queryUserId() }),
     loader: ({ params }) => this.api.templates(params.user),
   });
+  protected readonly query = signal('');
+  protected readonly shown = computed(() =>
+    (this.templates.value() ?? []).filter((t) => matchesTemplate(t, this.query())),
+  );
+  /** Opened templates; the others show only their header. */
+  protected readonly expanded = signal(new Set<number>());
   protected readonly details = signal<Template | null>(null);
   protected readonly history = signal<Exercise | null>(null);
   protected readonly message = signal<{ ok: boolean; text: string; params?: object } | null>(null);
+
+  protected toggle(id: number): void {
+    const next = new Set(this.expanded());
+    if (!next.delete(id)) next.add(id);
+    this.expanded.set(next);
+  }
 
   protected async remove(t: Template): Promise<void> {
     try {

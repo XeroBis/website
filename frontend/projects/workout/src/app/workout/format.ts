@@ -85,6 +85,16 @@ export function parseDate(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+/** Every word of `query` appears in the template's name, circuit names or exercise names. */
+export function matchesTemplate(template: { name: string; exercises: Entry[] }, query: string): boolean {
+  const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const names = template.exercises.flatMap((e) =>
+    e.type === 'exercise' ? [e.exercise.name] : [e.name ?? '', ...e.exercises.map((x) => x.exercise.name)],
+  );
+  const haystack = [template.name, ...names].join(' ').toLowerCase();
+  return words.every((w) => haystack.includes(w));
+}
+
 /** Every word of `query` appears in the exercise's name or muscles. */
 export function matchesExercise(
   exercise: { name: string; muscles: MuscleIntensity[] },

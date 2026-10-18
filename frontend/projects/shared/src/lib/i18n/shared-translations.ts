@@ -10,6 +10,7 @@ export const SHARED_TRANSLATIONS: Translations = {
       LOGIN: 'Se connecter',
       ACCOUNT: 'Mon compte',
       LANGUAGE: 'Langue',
+      MENU: 'Menu',
     },
   },
   en: {
@@ -17,6 +18,7 @@ export const SHARED_TRANSLATIONS: Translations = {
       LOGIN: 'Log in',
       ACCOUNT: 'My account',
       LANGUAGE: 'Language',
+      MENU: 'Menu',
     },
   },
 };

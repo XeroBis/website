@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import {
   Component,
   ElementRef,
+  Injector,
   afterNextRender,
   computed,
   effect,
@@ -48,6 +49,7 @@ const PAGE = 20;
 })
 export class Workouts {
   private readonly api = inject(WorkoutApi);
+  private readonly injector = inject(Injector);
   protected readonly viewing = inject(Viewing);
   protected readonly lang = inject(LanguageService).current;
 
@@ -128,6 +130,7 @@ export class Workouts {
 
   /** Scroll to the requested workout, loading more pages until it's there. */
   private afterLoad(): void {
+    this.fillScreen();
     if (this.scrollTo === null) return;
     setTimeout(() => {
       const el = document.getElementById(`workout-${this.scrollTo}`);
@@ -140,17 +143,36 @@ export class Workouts {
     });
   }
 
+  /**
+   * Keep loading while the end of the list is on screen. The observer only
+   * fires when the sentinel comes into view, so it misses the case where a
+   * loaded page lands in a collapsed group and the sentinel never moves.
+   */
+  private fillScreen(): void {
+    afterNextRender(
+      {
+        read: () => {
+          const el = this.sentinel()?.nativeElement;
+          if (el && el.getBoundingClientRect().top < window.innerHeight + 300) this.loadMore();
+        },
+      },
+      { injector: this.injector },
+    );
+  }
+
   protected toggleLevel(level: Level): void {
     const next = new Set(this.levels());
     if (!next.delete(level)) next.add(level);
     this.levels.set(next);
     this.collapsed.set(new Set());
+    this.fillScreen();
   }
 
   protected toggleGroup(key: string): void {
     const next = new Set(this.collapsed());
     if (!next.delete(key)) next.add(key);
     this.collapsed.set(next);
+    this.fillScreen();
   }
 
   protected async remove(workout: Workout): Promise<void> {

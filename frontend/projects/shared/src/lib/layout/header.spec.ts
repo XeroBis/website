@@ -96,6 +96,28 @@ describe('Header', () => {
     expect(TestBed.inject(TranslateService).getCurrentLang()).toBe('en');
   });
 
+  it('opens and closes the phone menu, closing it when a link is tapped', async () => {
+    const fixture = TestBed.createComponent(Host);
+    http.expectOne('/api/auth/me').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggle = el.querySelector<HTMLButtonElement>('button.menu-toggle')!;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    await fixture.whenStable();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(el.querySelector('header')?.classList).toContain('open');
+    el.querySelector<HTMLAnchorElement>('nav.links a')!.addEventListener('click', (e) => e.preventDefault());
+    el.querySelector<HTMLAnchorElement>('nav.links a')!.click();
+    await fixture.whenStable();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    await fixture.whenStable();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await fixture.whenStable();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it("projects the app's own links", async () => {
     const fixture = TestBed.createComponent(Host);
     http.expectOne('/api/auth/me').flush(null, { status: 401, statusText: 'Unauthorized' });

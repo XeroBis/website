@@ -208,7 +208,9 @@
     "titleEdit": "Modifier le modèle",
     "name": "Nom",
     "notFound": "Modèle introuvable.",
-    "errName": "Donnez un nom au modèle."
+    "errName": "Donnez un nom au modèle.",
+    "search": "Rechercher un modèle ou un exercice…",
+    "noMatch": "Aucun modèle ne correspond à cette recherche."
   },
   "circuits": {
     "new": "Nouveau circuit",

@@ -11,7 +11,7 @@ placeholder page (its name and whether `/api/health` answers) — see
 - **App access**: a new account can use no app. An admin grants apps per user (auth app, `/admin/users`). Admins can use every app. Workout, cards and media are entirely behind their grant (pages and API). The portfolio is public; its grant only allows editing projects.
 - **Language**: the logged-in user's saved language (FR/EN). Logged out: the last language used on that site, then the browser's language if it's French or English, then French.
 - Placeholder pages show who is logged in (pseudo and email) or a "Log in" link.
-- **Header** (`ab-header`, used by portfolio, media and workout): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page).
+- **Header** (`ab-header`, used by portfolio, media and workout): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page). On phones (≤ 720px) only the title and a menu button stay in the bar; the button opens a panel with the links (one per line), the FR/EN switch and the session. Tapping a link, the title or Escape closes it.
 
 ## Auth — `auth.alanbignon.com`
 
@@ -89,7 +89,7 @@ A workout log: workouts made of exercises with their sets (and circuits), a shar
 
 ### Look
 
-"Scoreboard": deep navy background, slightly lighter panels, signal-orange accent, Barlow Condensed (uppercase) for headings and numbers, Inter for the UI, JetBrains Mono for set values and timers (tabular digits). Strength is orange, cardio cyan, circuits violet, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker.
+"Old style, modernised": the old app's warm grey background and rose-brown accent, with white cards, soft warm shadows and rounded corners. Buttons, period pickers, badges and header links are pills, and calendar days are round. Manrope everywhere, with tabular digits so numbers line up. Dashboard totals are centred, in rose. Follows the system theme: light (warm grey, white cards) or dark (warm near-black, lighter rose accent). Strength is rose-brown, cardio sage green, circuits plum, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker.
 
 ### Shared parts
 
@@ -112,7 +112,7 @@ A workout log: workouts made of exercises with their sets (and circuits), a shar
   - **+ Exercise**, **+ Circuit** (blank, or a saved circuit);
   - when every standalone exercise is done, an "All done" banner with **Finish**.
   - Finish keeps only checked sets (see data-model.md) and opens `/workouts`. Checked sets are remembered in the browser, so reloading the page during a session keeps them.
-- `/templates`: the viewed user's templates by name, with their entries, **Details**, and for your own **Start session**, **Edit**, **Delete**; for someone else's, **Copy to my templates** (named like the original, with " (2)", " (3)"… if you already use that name). **New template** → `/templates/new`. `/templates/new`, `/templates/:id`: name + entries editor.
+- `/templates`: the viewed user's templates by name, collapsed by default (name, entry count and buttons; click the name to show or hide its entries), with a search box above them (every word must appear in the template's name, a circuit's name or an exercise's name). Each has **Details**, and for your own **Start session**, **Edit**, **Delete**; for someone else's, **Copy to my templates** (named like the original, with " (2)", " (3)"… if you already use that name). **New template** → `/templates/new`. `/templates/new`, `/templates/:id`: name + entries editor.
 - `/circuits`: your saved circuits (name, duration, rounds, exercises with planned sets), **Edit**, **Delete**. `/circuits/new`, `/circuits/:id`: name (required), duration, rounds, exercise rows.
 - `/exercises`: the catalog, filtered in the browser by name, type and muscles (map in toggle mode). Each row: name (opens its history), type badge, **Details** (muscle map and equipment). **New exercise** (any workout user, `/exercises/new`): name, type, muscles with intensity, equipment checkboxes. Admins also get **Edit** (`/exercises/:id`, same form) and **Delete** (refused with a message while the exercise is used).
 - `/equipments`: the equipment list with a name filter; **New equipment** for everyone, inline **Edit** and **Delete** (confirmed) for admins.
@@ -219,7 +219,7 @@ A personal tracker for books, films and series: what I own, what I've read/watch
 
 ### Pages
 
-- **Every page**: the shared header (title "Media", links Library and Add) and the credits footer. On phones (≤ 640px) the header's links become two full-width tabs on a second row, under the title, FR/EN switch and session; a long pseudo is cut with an ellipsis.
+- **Every page**: the shared header (title "Media", links Library and Add) and the credits footer. On phones the links are in the shared header's menu.
 - `/` → `/library`. Any other path → `/library`.
 - `/library`: poster grid, each with its status (or "S1 · E3" for a series in progress), rating, an "owned" dot and a quick action. Controls: type chips (All / Books / Films / Series); status, owned / not owned, genre (from the genres in the library) and sort selects; a text search on titles (EN and FR), original title and creators, applied as you type. Sorts: date added (default, newest first), title (A–Z in the user's language), year (newest first), rating (highest first), last finished (most recent first); unset values last. Filters live in the URL query (`?type=book&status=done`). Nothing matching: "Nothing matches" + a link to Add.
 - `/add`: pick a type (Book / Film / Series) and search. Results come from TMDB (films, series; first 10) or Open Library (books; first 20) with a thumbnail (hotlinked from their CDN), title, year and creator. Tapping a result opens a confirm panel: initial status (Want by default, Reading/Watching, Read/Watched) and owned formats (books: paperback / hardcover / ebook / audiobook; films and series: DVD / Blu-ray / 4K Blu-ray / digital), then **Add to library**, which opens the new entry. Results already in the library show "In library →" and open that entry; adding twice returns the existing entry. **Add it by hand** (pre-filled with the search text): title (required), creators, year, comma-separated genres, plus status and formats. If a source fails, the error is shown and nothing is added.
