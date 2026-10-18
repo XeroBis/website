@@ -34,9 +34,11 @@ Decisions are in decisions.md "Cards: port plan". Done as one step: every part o
 | 6.5 | **Combats, purchases, shopping lists, shares**: combat log with snapshots + import/export, What I Paid, shopping lists, share links + public token-scoped routes | ✅ 2026-10-18 |
 | 6.6 | **Catalog management** (admin): copy `../pokemon_cards/DATA/` into `backend/domains/cards/source/`, port the refresh steps (HTML import, scan download, thumbnails, logos/symbols, variant icons, TCGdex details; no embeddings step), job state + polling, stats, metadata and images import/export, `GET /public/variant-icons/{file}` (needs the import's variant mapping) | ✅ 2026-10-18 |
 | 6.7 | **Frontend**: `projects/cards` rewritten zoneless with signals, every page above, `@shared` auth/i18n/header/icons, FR/EN JSON, web manifest + Poké Ball icons | ✅ 2026-10-18 |
-| 6.8 | **Look**: "collector's binder" (see features.md Cards) | |
+| 6.8 | **Look**: "old red, modernised" (see features.md Cards) | ✅ 2026-10-18 |
 
 6.7 notes: every old page except Scan and `/design` is available through lazy routes. Component and staging-queue state use signals; HTTP wrappers and debounced input events use RxJS only for I/O. Shared auth, language, header and icons replace the old app wiring. JSON files are read on the page; image archives upload as raw ZIPs with XHR progress and poll through restoration, while export is a streaming anchor download. Catalog Management reattaches to active jobs; public shares use token-scoped images outside the app guard. Neutral CSS tokens leave the collector look for 6.8. No production data has been imported; rehearsal remains 6.9.
+
+6.8 notes: styling only, no behaviour change. Global tokens in `projects/cards/src/styles.scss` (light + `prefers-color-scheme: dark`), pill buttons, inputs, toggles and nav links, white shadowed card tiles with a random holo foil on hover (`util/foil.util.ts` + the global `.card-tile`), Fredoka header title with the Poké Ball. Google Fonts loaded from `index.html`, as in workout and media. The "collector's binder" look first planned here was built, then swapped for this one the same day.
 
 **Route mapping** (everything under `/api/cards`):
 

@@ -1,10 +1,20 @@
-import { Component, computed, inject, effect, signal, untracked } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  DOCUMENT,
+  computed,
+  inject,
+  effect,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { filter, map } from 'rxjs';
 import { LanguageService, AuthService, BrowserLocation, Header, Icon, IconName } from '@shared';
 import { ToastComponent } from './components/shared/toast/toast.component';
+import { shuffleFoil } from './util/foil.util';
 
 interface NavLink {
   path: string;
@@ -127,6 +137,10 @@ export class App {
   );
   readonly isSharedRoute = computed(() => this.url().startsWith('/shared/'));
   constructor() {
+    // A plain listener, not a host one: pointerover fires constantly and must not run change detection.
+    const document = inject(DOCUMENT);
+    document.addEventListener('pointerover', shuffleFoil);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('pointerover', shuffleFoil));
     let previous = this.language.current();
     effect(() => {
       const language = this.language.current();

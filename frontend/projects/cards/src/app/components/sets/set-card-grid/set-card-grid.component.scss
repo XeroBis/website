@@ -1,8 +1,11 @@
 :host {
   display: block;
 }
+// Same card size as one print in a variant group (`.variant-group-tiles`),
+// whatever prints are selected.
 .card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(0, 150px));
+  gap: var(--space-3);
 }
 
 .binder-pages {
@@ -14,13 +17,21 @@
 }
 
 .binder-page {
-  width: min(100%, 360px);
+  // Three pages a row, as wide as the page allows (two, then one, when narrower).
+  width: calc((100% - 2 * var(--space-4)) / 3);
+
+  @media (max-width: 1000px) {
+    width: calc((100% - var(--space-4)) / 2);
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
   box-sizing: border-box;
   padding: 0.6rem;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-alt, var(--color-surface));
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
 }
 
 .binder-page-label {
@@ -42,8 +53,8 @@
   padding: 0.2rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.12);
+  background: var(--color-surface-alt);
+  box-shadow: inset 0 1px 5px rgb(0 0 0 / 12%);
 }
 
 :host ::ng-deep .binder-pocket .card-tile {
@@ -65,7 +76,7 @@
 :host ::ng-deep .binder-pocket .card-info {
   margin: 0;
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 
 :host ::ng-deep .binder-pocket .card-info strong {
@@ -73,7 +84,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 
 @media (hover: none) {
@@ -129,27 +140,31 @@
 }
 
 .variant-group-number {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--color-text-muted);
   white-space: nowrap;
 
   &.secret {
-    color: #b8860b;
+    color: var(--color-warning);
     font-weight: 700;
   }
 }
 
 .variant-group-tiles {
   display: grid;
-  grid-template-columns: repeat(var(--cols, 1), minmax(0, 76px));
-  gap: var(--space-1);
+  grid-template-columns: repeat(var(--cols, 1), minmax(0, 150px));
+  gap: var(--space-2);
 }
 
-/* Compact tiles inside a group, so ~4 four-variant cards fit per row on
- * desktop: tighter padding and a one-line, smaller variant label. */
+/* Tighter tiles inside a group: less padding (the foil follows it) and a
+ * one-line variant label. */
 :host ::ng-deep .variant-group-tiles .card-tile {
   padding: var(--space-1);
+
+  &::after {
+    inset: var(--space-1) var(--space-1) auto;
+  }
 
   .card-info {
     gap: 0;
@@ -162,23 +177,23 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
 
   .owned-badge {
     top: var(--space-1);
     right: var(--space-1);
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
 }
 
 .checklist-number {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--color-text-muted);
   white-space: nowrap;
   &.secret {
-    color: #b8860b;
+    color: var(--color-warning);
     font-weight: 700;
   }
 }

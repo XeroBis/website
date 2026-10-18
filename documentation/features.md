@@ -197,9 +197,9 @@ A private card collection and deck tracker, ported from `../pokemon_cards`. Pers
 - `/gestion`: per-user collection, single/all-deck, combat and purchase JSON import/export, collection history and delete-all actions with two confirmations. Files are read as JSON before submission; malformed files and backend 409/422 refusals are shown. Combat bulk deletion is limited to the user's games except for admins.
 - `/catalog-management` (admin): catalog counts (cards, sets, distinct names), full or individual refresh jobs (one card each: status badge, progress bar while running, then the run's counts as labelled tiles, the previous run's after a reload; unavailable variant badges in amber), metadata import/export and filtered image ZIP import/export. ZIP downloads stream through a normal link; uploads send the raw File with progress, then poll restoration/linking through completion. Opening the page reattaches to any running refresh/step/image job. All six steps remain available; Scan, embeddings and `/design` are absent.
 
-### Look (planned)
+### Look
 
-"Collector's binder": a deep binder-blue/near-black page, card tiles drawn as sleeves with a faint holo-foil sheen on hover, Poké Ball red as the accent, a rounded display font for headings. The Poké Ball favicon is kept.
+"Old red, modernised": the old app's light grey and Poké Ball red (`#d6262a`), made more polished, following the system light/dark setting (dark: neutral near-black, lighter red for text). White cards with soft shadows and rounded corners; buttons, inputs, view toggles and header links are pills. Fredoka for headings and the header title (with the Poké Ball beside it), Figtree for text, JetBrains Mono for card numbers. On hover a card tile lifts and a holo foil sweeps over the scan, different on each hover: a random pattern (rainbow band, light glare, rainbow stripes, prism or glitter), angle, colour shift and direction (no movement with reduced motion). Cards not owned are dimmed and greyed. A set page's grid view uses bigger cards than Browse and Collection (110px): up to 150px wide, the same whether only the standard print is selected or several prints show side by side in each card's group. The binder view shows three pages a row, sharing the page's full width (two below 1000px, one on phones). The Poké Ball favicon and icons are kept.
 
 ### API (`/api/cards`)
 

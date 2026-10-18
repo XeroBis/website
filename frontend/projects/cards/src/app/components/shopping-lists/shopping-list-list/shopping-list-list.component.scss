@@ -91,14 +91,3 @@
     flex: 1;
   }
 }
-
-.btn-danger {
-  background: var(--color-error);
-  border-color: var(--color-error);
-  color: #fff;
-
-  &:hover:not(:disabled) {
-    background: #a5301f;
-    border-color: #a5301f;
-  }
-}

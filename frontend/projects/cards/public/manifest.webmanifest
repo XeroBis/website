@@ -3,7 +3,7 @@
   "short_name": "Card collection",
   "description": "Pokemon card collection and deck tracker",
   "theme_color": "#d6262a",
-  "background_color": "#ffffff",
+  "background_color": "#f4f5f7",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
