@@ -2,14 +2,16 @@
 numbers, filter options, one card's details and where it's used. Any cards
 user reads; only admins correct a name."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import and_, case, desc, distinct, exists, func, select, true
 from sqlalchemy.orm import Session, selectinload
 
 from core.database import get_db
 from core.deps import require_admin
 from core.models import User
-from domains.cards import display, search
+from domains.cards import decklists, display, search
 from domains.cards import models as m
 from domains.cards import schemas as s
 from domains.cards.access import cards_user, not_found
@@ -201,6 +203,119 @@ def list_set_cards(
     if not cards:
         raise not_found("Set")
     return [catalog_out(card, user.language) for card in cards]
+
+
+# ── missing cards as text ────────────────────────────────────────────────────
+
+
+def _missing_cards(
+    db: Session,
+    user_id: int,
+    set_codes: list[str],
+    rarity: list[str] | None,
+    exclude_deck_allocated: bool,
+    variant_type: str | None = None,
+) -> list[m.CardCatalog]:
+    """Cards of `set_codes` the user owns no copy of, by set then number.
+    With `variant_type`, only cards printed in it and owned 0 times in that
+    exact print; `exclude_deck_allocated` doesn't count copies (of that
+    print) in normal decks."""
+    vq = m.CardVariantQuantity
+    owned_copies = select(vq.card_id, func.sum(vq.quantity).label("copies"))
+    in_decks = select(
+        m.DeckCard.card_id, func.sum(m.DeckCard.quantity_in_deck).label("copies")
+    ).where(m.DeckCard.card_id.isnot(None))
+    if variant_type is not None:
+        owned_copies = owned_copies.where(vq.variant_type == variant_type)
+        in_decks = in_decks.where(m.DeckCard.variant_type == variant_type)
+    owned_copies = owned_copies.group_by(vq.card_id).subquery()
+    in_decks = in_decks.group_by(m.DeckCard.card_id).subquery()
+    have = func.coalesce(owned_copies.c.copies, 0)
+    query = (
+        select(m.CardCatalog)
+        .outerjoin(m.Card, _owned_by(user_id))
+        .outerjoin(owned_copies, owned_copies.c.card_id == m.Card.id)
+        .where(m.CardCatalog.set_code.in_(set_codes))
+    )
+    if exclude_deck_allocated:
+        query = query.outerjoin(in_decks, in_decks.c.card_id == m.Card.id)
+        have = have - func.coalesce(in_decks.c.copies, 0)
+    query = query.where(have <= 0)
+    if rarity:
+        query = query.where(m.CardCatalog.rarity.in_(rarity))
+    if variant_type is not None:
+        query = query.where(
+            m.CardCatalog.variants.any(
+                m.CardCatalogVariant.variant_type == variant_type
+            )
+        )
+    return db.scalars(
+        query.order_by(
+            m.CardCatalog.set_code,
+            search.numeric_card_number().nulls_last(),
+            m.CardCatalog.card_number,
+        )
+    ).all()
+
+
+def _missing_text(
+    cards: list[m.CardCatalog], format: decklists.Format, language: str
+) -> Response:
+    """One copy of each, names in `language` (moves and sets English)."""
+    entries = [decklists.entry(card, 1, language) for card in cards]
+    return Response(decklists.render(entries, format), media_type="text/plain")
+
+
+@router.get("/sets/{set_code}/missing/text", response_class=Response)
+def export_set_missing_text(
+    set_code: str,
+    rarity: list[str] | None = Query(None, description="Raw rarity values"),
+    format: decklists.Format = "cardmarket",
+    language: Literal["en", "fr"] = "en",
+    exclude_deck_allocated: bool = Query(
+        False, description="Copies in normal decks don't count as owned"
+    ),
+    variant_type: str | None = Query(None, description="One exact print"),
+    user: User = Depends(cards_user),
+    db: Session = Depends(get_db),
+):
+    """The set's cards the user owns no copy of, as a TCGplayer/PTCGL or
+    Cardmarket list (shopping list)."""
+    if not db.scalar(select(exists().where(m.CardCatalog.set_code == set_code))):
+        raise not_found("Set")
+    if variant_type is not None:
+        _check_variant_types([variant_type])
+    cards = _missing_cards(
+        db, user.id, [set_code], rarity, exclude_deck_allocated, variant_type
+    )
+    return _missing_text(cards, format, language)
+
+
+@router.post("/sets/missing/text", response_class=Response)
+def export_sets_missing_text(
+    body: s.SetCodes,
+    rarity: list[str] | None = Query(None, description="Raw rarity values"),
+    format: decklists.Format = "cardmarket",
+    language: Literal["en", "fr"] = "en",
+    exclude_deck_allocated: bool = Query(
+        False, description="Copies in normal decks don't count as owned"
+    ),
+    user: User = Depends(cards_user),
+    db: Session = Depends(get_db),
+):
+    """The same over several sets at once, by set then number."""
+    known = set(
+        db.scalars(
+            select(m.CardCatalog.set_code)
+            .distinct()
+            .where(m.CardCatalog.set_code.in_(body.set_codes))
+        )
+    )
+    unknown = sorted(set(body.set_codes) - known)
+    if unknown:
+        raise not_found(f"Set {', '.join(unknown)}")
+    cards = _missing_cards(db, user.id, list(known), rarity, exclude_deck_allocated)
+    return _missing_text(cards, format, language)
 
 
 # ── missing numbers ──────────────────────────────────────────────────────────

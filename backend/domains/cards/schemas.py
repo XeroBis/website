@@ -1,8 +1,9 @@
 """Request and response bodies for `/api/cards`."""
 
 from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serializer
 
 # ── catalog ──────────────────────────────────────────────────────────────────
 
@@ -238,3 +239,303 @@ class CollectionImportResult(BaseModel):
 class CollectionWipeResult(BaseModel):
     deleted_cards: int
     deleted_decks: int
+
+
+# ── decks ────────────────────────────────────────────────────────────────────
+
+
+class DeckCreate(BaseModel):
+    name: str
+    description: str | None = None
+    deck_type: Literal["normal", "phantom"] = "normal"
+    # Optional TCGplayer/PTCGL or Cardmarket decklist to fill the deck with
+    # (matched lines only, standard print).
+    decklist_text: str | None = None
+
+
+class DeckUpdate(BaseModel):
+    """Omitted fields are left as they are."""
+
+    name: str | None = None
+    # null or blank clears it.
+    description: str | None = None
+    # Up to 3 distinct deck card ids of this deck, in slot order; [] clears.
+    poster_card_ids: list[int] | None = Field(None, max_length=3)
+
+
+class DeckCopy(BaseModel):
+    name: str
+
+
+class DeckCardOut(BaseModel):
+    """One row of a deck: an owned card's print (normal deck, `card_id` set)
+    or a wanted print (phantom deck, `card_id` null). Normal rows: `available`
+    = copies of that print outside every normal deck, `owned` null. Phantom
+    rows: `owned` = copies of that print owned, `available` = those not in a
+    normal deck, `allocated_decks` = which normal decks hold them."""
+
+    id: int
+    card_id: int | None
+    catalog_id: int
+    variant_type: str
+    quantity_in_deck: int
+    poster_slot: int | None
+    name: str
+    set_name: str
+    set_code: str
+    card_number: str
+    image_path: str
+    supertype: str | None
+    available: int
+    owned: int | None = None
+    allocated_decks: list[DeckUsage] = []
+
+
+class DeckOut(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    deck_type: str
+    has_wdc_cards: bool
+    created_at: datetime
+    total_cards: int
+    # By slot.
+    poster_cards: list[DeckCardOut]
+
+
+class DeckDetailOut(DeckOut):
+    cards: list[DeckCardOut]
+
+
+class DeckCardCreate(BaseModel):
+    """A normal deck takes an owned `card_id`, a phantom deck a
+    `catalog_id`."""
+
+    card_id: int | None = None
+    catalog_id: int | None = None
+    variant_type: str = "standard"
+    quantity_in_deck: int = Field(1, ge=1)
+
+
+class DeckCardUpdate(BaseModel):
+    quantity_in_deck: int = Field(ge=1)
+
+
+class DeckBulkAddItem(BaseModel):
+    card_id: int
+    variant_type: str = "standard"
+    # Add `quantity_in_deck` of every print of the card instead.
+    all_variants: bool = False
+    quantity_in_deck: int = Field(1, ge=1)
+
+
+class DeckBulkAdd(BaseModel):
+    items: list[DeckBulkAddItem] = Field(min_length=1)
+
+
+class DecklistText(BaseModel):
+    decklist_text: str
+
+
+class DeckHistoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    deck_id: int
+    action: str
+    detail: str | None
+    old_value: str | None
+    new_value: str | None
+    variant_type: str | None
+    created_at: datetime
+
+
+class DeckHistoryPage(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: list[DeckHistoryOut]
+
+
+class DeckWipeResult(BaseModel):
+    deleted_decks: int
+
+
+# ── deck files (export / import) ─────────────────────────────────────────────
+
+
+class DeckFileCard(BaseModel):
+    """A card of a deck file, identified by set code and number (`name` is
+    informational; old files' extra `set_name`/`image_path` are ignored)."""
+
+    name: str | None = None
+    set_code: str = Field(min_length=1)
+    card_number: str = Field(min_length=1)
+    variant_type: str = "standard"
+    quantity_in_deck: int = Field(ge=1)
+
+
+class DeckFileDraftEntry(BaseModel):
+    name: str | None = None
+    set_code: str = Field(min_length=1)
+    card_number: str = Field(min_length=1)
+    variant_type: str = "standard"
+    quantity_delta: int
+
+    @field_validator("quantity_delta")
+    @classmethod
+    def _nonzero(cls, value: int) -> int:
+        if value == 0:
+            raise ValueError("must be nonzero")
+        return value
+
+
+class DeckFileDraft(BaseModel):
+    name: str = Field(min_length=1)
+    entries: list[DeckFileDraftEntry] = []
+
+
+class DeckFile(BaseModel):
+    """One deck of `decks.json` / a single deck export. `deck_type` other
+    than `phantom` (missing in old files, or an old `wdc`) imports as
+    normal. `drafts` is left out of exports when empty."""
+
+    name: str = Field(min_length=1)
+    description: str | None = None
+    deck_type: str | None = "normal"
+    cards: list[DeckFileCard] = []
+    drafts: list[DeckFileDraft] | None = None
+
+    @model_serializer(mode="wrap")
+    def _without_empty_drafts(self, handler):
+        data = handler(self)
+        if not data.get("drafts"):
+            data.pop("drafts", None)
+        return data
+
+
+class DecksFile(BaseModel):
+    decks: list[DeckFile]
+
+
+# ── upgrade drafts ───────────────────────────────────────────────────────────
+
+
+class DraftCreate(BaseModel):
+    name: str
+    # A decklist or a deck file's JSON to diff the deck against.
+    decklist_text: str | None = None
+
+
+class DraftRename(BaseModel):
+    name: str
+
+
+class DraftEntryUpdate(BaseModel):
+    quantity_delta: int
+
+    @field_validator("quantity_delta")
+    @classmethod
+    def _nonzero(cls, value: int) -> int:
+        if value == 0:
+            raise ValueError("must be nonzero")
+        return value
+
+
+class DraftOut(BaseModel):
+    id: int
+    deck_id: int
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    entry_count: int
+
+
+class DraftEntryOut(BaseModel):
+    """`available` already keeps one copy back for the binder."""
+
+    catalog_id: int
+    variant_type: str
+    name: str
+    set_name: str
+    image_path: str
+    supertype: str | None
+    baseline_quantity: int
+    quantity_delta: int
+    result_quantity: int
+    owned: int
+    available: int
+
+
+class DraftResultCard(BaseModel):
+    catalog_id: int
+    variant_type: str
+    name: str
+    set_name: str
+    image_path: str
+    supertype: str | None
+    quantity_in_deck: int
+
+
+class DraftDetailOut(BaseModel):
+    """`can_apply`: some entry, a result of ≤ 60 cards, and every proposed
+    addition covered by `available`."""
+
+    id: int
+    deck_id: int
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    current_cards: list[DeckCardOut]
+    entries: list[DraftEntryOut]
+    result_cards: list[DraftResultCard]
+    result_total: int
+    can_apply: bool
+
+
+class DraftPickerItem(BaseModel):
+    """`result_total`: the deck's card count with the draft applied."""
+
+    id: int
+    deck_id: int
+    deck_name: str
+    name: str
+    updated_at: datetime
+    result_total: int
+
+
+class DraftIds(BaseModel):
+    draft_ids: list[int] = Field(min_length=1)
+
+
+class SetCodes(BaseModel):
+    set_codes: list[str] = Field(min_length=1)
+
+
+# ── decklist converter ───────────────────────────────────────────────────────
+
+
+class DecklistConvert(BaseModel):
+    text: str
+    # Cardmarket output only: the `(expansion)` suffix.
+    include_sets: bool = True
+
+
+class DecklistConvertEntry(BaseModel):
+    """A parsed line; card fields (display, in the viewer's language) are
+    null when unmatched, `name` is then the parsed name."""
+
+    quantity: int
+    matched: bool
+    name: str
+    set_name: str | None = None
+    set_code: str | None = None
+    card_number: str | None = None
+    image_path: str | None = None
+    catalog_id: int | None = None
+
+
+class DecklistConvertOut(BaseModel):
+    detected_format: Literal["tcgplayer", "cardmarket"] | None
+    converted_text: str
+    entries: list[DecklistConvertEntry]

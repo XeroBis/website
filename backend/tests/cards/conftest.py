@@ -121,3 +121,24 @@ def set_language(user_id: int, language: str) -> None:
     with database.SessionLocal() as session:
         session.get(m.User, user_id).language = language
         session.commit()
+
+
+def make_deck(user_id: int, name: str = "Deck", deck_type: str = "normal") -> int:
+    with database.SessionLocal() as session:
+        deck = m.Deck(user_id=user_id, name=name, deck_type=deck_type)
+        session.add(deck)
+        session.commit()
+        return deck.id
+
+
+def put_in_deck(deck_id: int, card_id: int, copies: int, variant: str = "standard"):
+    with database.SessionLocal() as session:
+        session.add(
+            m.DeckCard(
+                deck_id=deck_id,
+                card_id=card_id,
+                variant_type=variant,
+                quantity_in_deck=copies,
+            )
+        )
+        session.commit()

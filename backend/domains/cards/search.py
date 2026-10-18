@@ -30,7 +30,8 @@ def numeric_card_number():
     )
 
 
-def _stripped(column):
+def stripped(column):
+    """`column` without the punctuation to_catalog_style() strips."""
     for char in PUNCTUATION_TO_STRIP:
         column = func.replace(column, char, "")
     return column
@@ -45,8 +46,8 @@ def name_filter(search: str) -> ColumnElement[bool]:
     term = search[1 if starts else 0 : -1 if ends else None]
     pattern = ("" if starts else "%") + to_catalog_style(term) + ("" if ends else "%")
     return or_(
-        _stripped(CardCatalog.name).ilike(pattern),
-        _stripped(CardCatalog.display_name).ilike(pattern),
+        stripped(CardCatalog.name).ilike(pattern),
+        stripped(CardCatalog.display_name).ilike(pattern),
     )
 
 

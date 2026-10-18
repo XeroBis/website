@@ -8,30 +8,16 @@ from sqlalchemy import func, select
 
 from core import database
 from domains.cards import models as m
-from tests.cards.conftest import URL, add_catalog_card, own, set_language
+from tests.cards.conftest import (
+    URL,
+    add_catalog_card,
+    make_deck,
+    own,
+    put_in_deck,
+    set_language,
+)
 
 COLLECTION = f"{URL}/collection"
-
-
-def make_deck(user_id: int, name: str = "Deck", deck_type: str = "normal") -> int:
-    with database.SessionLocal() as session:
-        deck = m.Deck(user_id=user_id, name=name, deck_type=deck_type)
-        session.add(deck)
-        session.commit()
-        return deck.id
-
-
-def put_in_deck(deck_id: int, card_id: int, copies: int, variant: str = "standard"):
-    with database.SessionLocal() as session:
-        session.add(
-            m.DeckCard(
-                deck_id=deck_id,
-                card_id=card_id,
-                variant_type=variant,
-                quantity_in_deck=copies,
-            )
-        )
-        session.commit()
 
 
 def history(user_id: int) -> list[tuple]:

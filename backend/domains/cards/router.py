@@ -3,9 +3,9 @@ routers/)."""
 
 from fastapi import APIRouter
 
-from domains.cards.routers import catalog, collection, images
+from domains.cards.routers import catalog, collection, convert, decks, drafts, images
 
 router = APIRouter(prefix="/api/cards")
 
-for module in (catalog, collection, images):
+for module in (catalog, collection, decks, drafts, convert, images):
     router.include_router(module.router)
