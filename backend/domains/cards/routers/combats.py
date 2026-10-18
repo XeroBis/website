@@ -5,6 +5,7 @@ edit or delete any combat; delete-all only removes the combats the user
 played (every combat, for an admin)."""
 
 import logging
+import re
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -17,6 +18,7 @@ from domains.cards import display
 from domains.cards import models as m
 from domains.cards import schemas as s
 from domains.cards.access import cards_user, is_cards_user, not_found
+from domains.cards.refresh.source import PENDING_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,90 @@ def snapshots(db: Session, deck_ids) -> dict[int, list[dict]]:
             ).model_dump()
         )
     return result
+
+
+# A snapshot path from the old app's scraped catalog, before its DATA/ reset:
+# "images/<Set>_<CODE>_<CODE>/<Name>_<CODE>_<number>[_US].jpg".
+_LEGACY_PATH = re.compile(r"^images/[^/]+/.+_([^_/]+)_([^_/]+)\.jpg$")
+
+
+def _legacy_set_and_number(path: str) -> tuple[str, str] | None:
+    match = _LEGACY_PATH.match(path.replace("_US.jpg", ".jpg"))
+    return (match[1].upper(), match[2].lstrip("0")) if match else None
+
+
+def _plain(name: str) -> str:
+    return name.replace("\u2019", "'").replace("-", " ").casefold()
+
+
+def _plain_sql(column):
+    return func.lower(func.replace(func.replace(column, "\u2019", "'"), "-", " "))
+
+
+def _same_name(old: str, current: str) -> bool:
+    """The scraper dropped suffixes: "Boss's Orders" for "Boss's Orders
+    Cyrus", "Dragonite V" for "Dragonite-V SWSH154"."""
+    old, current = _plain(old), _plain(current)
+    return current == old or current.startswith(old + " ")
+
+
+def _relinked(db: Session, snapshot: list[dict]) -> list[dict]:
+    """Snapshot cards whose `image_path` isn't in the catalog (old files)
+    pointed at a current, scanned catalog card: same set code and number if
+    the names agree (basic energies were named differently), else the same
+    name in that set, else in the newest set. Unmatched cards are kept as
+    they are."""
+    paths = {card["image_path"] for card in snapshot}
+    known = set(
+        db.scalars(
+            select(m.CardCatalog.image_path).where(m.CardCatalog.image_path.in_(paths))
+        )
+    )
+    stale = [card for card in snapshot if card["image_path"] not in known]
+    if not stale:
+        return snapshot
+    codes = {
+        legacy[0]
+        for card in stale
+        if (legacy := _legacy_set_and_number(card["image_path"]))
+    }
+    names = {_plain(card["name"]) for card in stale}
+    plain = _plain_sql(m.CardCatalog.name)
+    candidates = db.scalars(
+        select(m.CardCatalog)
+        .where(
+            ~m.CardCatalog.image_path.startswith(PENDING_PREFIX),
+            or_(
+                func.upper(m.CardCatalog.set_code).in_(codes),
+                plain.in_(names),
+                *(plain.startswith(f"{name} ", autoescape=True) for name in names),
+            ),
+        )
+        .order_by(m.CardCatalog.release_date.desc().nulls_last(), m.CardCatalog.id)
+    ).all()
+
+    def find(card: dict) -> m.CardCatalog | None:
+        name = card["name"]
+        legacy = _legacy_set_and_number(card["image_path"])
+        if legacy:
+            code, number = legacy
+            in_set = [c for c in candidates if c.set_code.upper() == code]
+            for found in in_set:
+                if found.card_number.lstrip("0") == number and (
+                    _same_name(name, found.name)
+                    or ("energy" in _plain(name) and "energy" in _plain(found.name))
+                ):
+                    return found
+            for found in in_set:
+                if _same_name(name, found.name):
+                    return found
+        return next((c for c in candidates if _same_name(name, c.name)), None)
+
+    relinked = []
+    for card in snapshot:
+        found = None if card["image_path"] in known else find(card)
+        relinked.append(card | {"image_path": found.image_path} if found else card)
+    return relinked
 
 
 def _combat_deck(db: Session, deck_id: int) -> m.Deck:
@@ -306,7 +392,7 @@ def _import_combats(db: Session, entries: list[s.CombatFileEntry]) -> list[m.Com
                 f"deck_{side}_snapshot": (
                     frozen[deck.id]
                     if snapshot is None
-                    else [card.model_dump() for card in snapshot]
+                    else _relinked(db, [card.model_dump() for card in snapshot])
                 ),
                 f"deck_{side}_name_snapshot": (
                     deck.name if deck else getattr(entry, f"deck_{side}_name")

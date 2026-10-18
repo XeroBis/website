@@ -57,7 +57,7 @@ Decisions are in decisions.md "Cards: port plan". Done as one step: every part o
 **Data load** (rehearsed in dev at 6.9, repeated at cutover, step 7.4). From the old prod, in this order:
 1. Admin, Catalog Management: **Import catalog** (`cards_metadata.json` from the old `GET /api/catalog/export`), then **Import images** (zip from the old `GET /api/catalog/export/images`; the volume needs room for the uploaded zip on top of the restored files, ~4 GB at peak), then the **Import HTML** refresh step (the old export has no variant scan URLs, which later scan downloads need). The image paths keep the old layout, so collection exports still match by `image_path`.
 2. Each user, Gestion: collection (`collection.json`), decks (`decks.json`, incl. drafts), purchases (`purchases.json`).
-3. Combats (`combats.json`): matched by deck name + owner email and player email, so every account must exist and have cards access first.
+3. Combats (`combats.json`): matched by deck name + owner email and player email, so every account must exist and have cards access first. Their snapshots still have the old app's scraper-era image paths, which the import relinks to the catalog (features.md, `POST /combats/import-all`).
 4. Not carried over: shopping lists (the old app has no export for them), share links (short-lived), collection/deck history (rebuilt from the imports onward).
 
 ## Step 7 plan: cutover

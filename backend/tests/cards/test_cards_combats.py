@@ -343,6 +343,50 @@ def test_import_an_old_file(client, other_client, decks):
     assert combat["deck_a_snapshot"][0]["name"] == "Old Card"
 
 
+def test_import_relinks_old_scraper_image_paths(client, other_client, decks):
+    add_catalog_card(set_code="TWM", card_number="64", name="Florges")
+    add_catalog_card(set_code="SVI", card_number="190", name="Pumpkaboo")
+    add_catalog_card(
+        set_code="SVI", card_number="189", name="Professor's Research Professor Sada"
+    )
+    add_catalog_card(set_code="SVE", card_number="9", name="Grass Energy (2024)")
+    add_catalog_card(
+        set_code="WC23", card_number="5", name="Dragonite-V SWSH154", series="WC"
+    )
+    add_catalog_card(set_code="WC23", card_number="6", name="Dragonite-VSTAR")
+    add_catalog_card(
+        set_code="SVI", card_number="2", name="Scanless", image_path="__pending__/x"
+    )
+
+    def card(name, path):
+        return entry()["deck_a_snapshot"][0] | {"name": name, "image_path": path}
+
+    old = [
+        # Same set and number, but a different card now: matched by name.
+        card("Pumpkaboo", "images/Scarlet_Violet_SVI_SVI/Pumpkaboo_SVI_064.jpg"),
+        card(
+            "Professor’s Research", "images/X_SVI_SVI/Professors_Research_SVI_190.jpg"
+        ),
+        card("Basic G Energy", "images/SVE_SVE_SVE/Basic_G_Energy_SVE_009_US.jpg"),
+        card("Dragonite V", "images/Promos_P_P/Dragonite_V_P_SWSH154.jpg"),
+        card("Scanless", "images/X_SVI_SVI/Scanless_SVI_002.jpg"),
+        card("Pikachu", "Scarlet & Violet/SVI/cards/25_pikachu_standard_EN.jpg"),
+    ]
+    response = client.post(
+        f"{COMBATS}/import-all", json={"combats": [entry(deck_a_snapshot=old)]}
+    )
+    paths = [c["image_path"] for c in response.json()[0]["deck_a_snapshot"]]
+    assert paths == [
+        "Scarlet & Violet/SVI/cards/190_pumpkaboo_standard_EN.jpg",
+        "Scarlet & Violet/SVI/cards/189_professor's-research-professor-sada_standard_EN.jpg",
+        "Scarlet & Violet/SVE/cards/9_grass-energy-(2024)_standard_EN.jpg",
+        "WC/WC23/cards/5_dragonite-v-swsh154_standard_EN.jpg",
+        # No scanned card to point at: kept as it was.
+        "images/X_SVI_SVI/Scanless_SVI_002.jpg",
+        "Scarlet & Violet/SVI/cards/25_pikachu_standard_EN.jpg",
+    ]
+
+
 def test_import_matches_decks_by_owner(client, other_client, decks):
     bobs_volt = make_deck(other_client.user_id, "Volt")
     response = client.post(
