@@ -1,0 +1,221 @@
+<div class="sets-page">
+  <div class="sets-page-header">
+    <h2>{{ 'nav.sets' | translate }}</h2>
+    <input
+      type="text"
+      class="input"
+      [placeholder]="'sets.searchSets' | translate"
+      [(ngModel)]="search"
+      (ngModelChange)="onSearchChange()"
+    />
+    <div class="sets-page-actions">
+      <button
+        type="button"
+        class="btn btn-secondary btn-icon"
+        [attr.aria-label]="'sets.myShares' | translate"
+        [title]="'sets.myShares' | translate"
+        (click)="openSharesModal()"
+      >
+        <ab-icon name="share" />
+      </button>
+      <app-combine-sets-export [sets]="sets()" [rarityCategories]="rarityCategories()" />
+    </div>
+  </div>
+
+  <section class="surface filters" [attr.aria-label]="'sets.completionFilter' | translate">
+    <div class="rarity-toggle-row">
+      <button
+        type="button"
+        class="rarity-toggle-btn"
+        [class.active]="isAllRarityCategoriesActive()"
+        [attr.aria-pressed]="isAllRarityCategoriesActive()"
+        [attr.aria-label]="'sets.allRarities' | translate"
+        [title]="'sets.allRarities' | translate"
+        (click)="toggleAllRarityCategories()"
+      >
+        <ab-icon name="layers" />
+      </button>
+      @for (category of quickRarities; track category) {
+        <button
+          type="button"
+          class="rarity-toggle-btn"
+          [class.active]="isRarityCategoryActive(category)"
+          [attr.aria-pressed]="isRarityCategoryActive(category)"
+          [attr.aria-label]="category"
+          [title]="category"
+          (click)="toggleRarityCategory(category)"
+        >
+          <img [src]="rarityIcon(category)" [alt]="category" (error)="onRarityIconError($event)" />
+          <span class="rarity-fallback">{{ category }}</span>
+        </button>
+      }
+      @if (filtersOpen()) {
+        @for (category of otherRarities; track category) {
+          <button
+            type="button"
+            class="rarity-toggle-btn"
+            [class.active]="isRarityCategoryActive(category)"
+            [attr.aria-pressed]="isRarityCategoryActive(category)"
+            [attr.aria-label]="category"
+            [title]="category"
+            (click)="toggleRarityCategory(category)"
+          >
+            <img
+              [src]="rarityIcon(category)"
+              [alt]="category"
+              (error)="onRarityIconError($event)"
+            />
+            <span class="rarity-fallback">{{ category }}</span>
+          </button>
+        }
+      }
+      <button
+        type="button"
+        class="rarity-toggle-btn more-rarities"
+        [attr.aria-expanded]="filtersOpen()"
+        [attr.aria-label]="'filters.rarity' | translate"
+        (click)="filtersOpen.set(!filtersOpen())"
+      >
+        {{ filtersOpen() ? '−' : '+' }}
+      </button>
+    </div>
+    <div class="reverse-filters" [attr.aria-label]="'filters.printVariant' | translate">
+      <button
+        type="button"
+        class="rarity-toggle-btn"
+        [class.active]="selectedVariants().length === 0"
+        [attr.aria-pressed]="selectedVariants().length === 0"
+        [attr.aria-label]="'sets.allVariants' | translate"
+        [title]="'sets.allVariants' | translate"
+        (click)="selectVariant('all')"
+      >
+        <ab-icon name="layers" />
+      </button>
+      @for (
+        variant of variantsOpen() ? printVariantTypes.concat(otherVariantTypes) : printVariantTypes;
+        track variant
+      ) {
+        <button
+          type="button"
+          class="rarity-toggle-btn"
+          [class.active]="selectedVariants().includes(variant)"
+          [attr.aria-pressed]="selectedVariants().includes(variant)"
+          [attr.aria-label]="variantLabels[variant]"
+          [title]="variantLabels[variant]"
+          (click)="selectVariant(variant)"
+        >
+          <img [src]="variantIcon(variant)" [alt]="variantLabels[variant]" />
+        </button>
+      }
+      <button
+        type="button"
+        class="rarity-toggle-btn more-rarities"
+        [attr.aria-expanded]="variantsOpen()"
+        [attr.aria-label]="'filters.printVariant' | translate"
+        (click)="variantsOpen.set(!variantsOpen())"
+      >
+        {{ variantsOpen() ? '−' : '+' }}
+      </button>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else if (groups.length === 0) {
+    <p>{{ 'sets.noMatches' | translate }}</p>
+  } @else {
+    @for (group of groups; track group.series) {
+      <section class="series-section">
+        <h3>{{ group.displayName }}</h3>
+        <div class="card-grid sets-grid">
+          @for (set of group.sets; track set.set_code) {
+            <a
+              class="card-tile set-tile"
+              [routerLink]="['/sets', set.set_code]"
+              [title]="set.set_name"
+            >
+              <img
+                class="set-symbol-badge"
+                [src]="symbolUrl(set)"
+                alt=""
+                loading="lazy"
+                (error)="hideBadge($event, set)"
+              />
+              <img
+                [src]="logoUrl(set)"
+                [alt]="set.set_name"
+                loading="lazy"
+                (error)="onLogoError($event, set)"
+              />
+              @if (set.completion_percent !== null) {
+                <div class="card-info">
+                  <div class="completion">
+                    <div class="completion-bar">
+                      <div class="completion-fill" [style.width.%]="set.completion_percent"></div>
+                    </div>
+                    <span class="completion-label">{{ set.completion_percent }}%</span>
+                  </div>
+                </div>
+              } @else {
+                <div class="card-info" [title]="'sets.completionNotApplicable' | translate">
+                  <span class="completion-label">N/A</span>
+                </div>
+              }
+            </a>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
+
+@if (sharesModalOpen()) {
+  <app-modal [title]="'sets.myShares' | translate" (closed)="closeSharesModal()">
+    @if (sharesLoading()) {
+      <p>{{ 'common.loading' | translate }}</p>
+    } @else if (shares().length === 0) {
+      <p>{{ 'sets.noSharesYet' | translate }}</p>
+    } @else {
+      <table class="shares-table">
+        <thead>
+          <tr>
+            <th>{{ 'common.set' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (share of shares(); track share.id) {
+            <tr>
+              <td>
+                <strong>{{ share.set_name ?? share.set_code }}</strong>
+                <div class="shares-table-meta">
+                  {{
+                    'sets.shareLinkExpires'
+                      | translate: { date: (share.expires_at | date: 'medium') }
+                  }}
+                </div>
+              </td>
+              <td>
+                <div class="shares-table-status">
+                  <span class="shares-status-badge" [class]="'status-' + share.status">
+                    {{ shareStatusKey(share) | translate }}
+                  </span>
+                  @if (share.status === 'active') {
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      [disabled]="isRevoking(share)"
+                      (click)="revokeShare(share)"
+                    >
+                      {{ 'sets.revokeShare' | translate }}
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </app-modal>
+}

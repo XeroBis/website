@@ -1,0 +1,291 @@
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.set-detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  text-align: center;
+
+  h2 {
+    margin: 0;
+  }
+
+  .card-count {
+    color: var(--color-text-muted);
+  }
+}
+
+.completion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 320px;
+}
+
+.completion-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt, var(--color-border));
+  overflow: hidden;
+}
+
+.completion-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.completion-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.export-missing-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.export-missing-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.export-missing-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.export-missing-radio-row {
+  display: flex;
+  gap: var(--space-3);
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+}
+
+.share-link-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: var(--space-1);
+}
+
+.export-missing-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.set-detail-logo {
+  max-width: min(480px, 90%);
+  max-height: 200px;
+  object-fit: contain;
+  margin-bottom: var(--space-2);
+}
+
+.set-detail-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+
+  &-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    flex: 1;
+    min-width: 0;
+  }
+
+  &-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .input {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 44px;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 640px) {
+  .set-detail-filters-left,
+  .set-detail-filters-right {
+    width: 100%;
+  }
+
+  .set-detail-filters-left .input {
+    flex-basis: 100%;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+.rarity-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.rarity-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  img,
+  ab-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    object-fit: contain;
+  }
+  .rarity-fallback {
+    display: none;
+  }
+  .rarity-fallback.visible {
+    display: inline;
+  }
+  &.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
+}
+.set-detail-filters .btn-icon.active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast, #fff);
+  border-color: var(--color-primary);
+}
+
+/* Tile chrome (image/badges/name/click) lives in shared CardTileComponent
+ * now -- see components/shared/card-tile. These qty-controls-* rules stay
+ * here since the actual stepper buttons are written in this page's own
+ * template and projected into CardTileComponent's controls slot, keeping
+ * their styles scoped to this component. */
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.15rem 0.3rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.qty-controls-reverse {
+  .qty-controls-btn {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.75rem;
+  }
+}
+
+.qty-controls-reverse-label {
+  min-width: 2.2rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.qty-controls-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted, var(--color-border));
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary);
+    color: var(--color-primary-contrast, #fff);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.qty-controls-value {
+  min-width: 1.2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.qty-controls-add {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+@media (max-width: 640px) {
+  .qty-controls-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+.checklist-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+
+  .qty-controls-btn {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .qty-controls-value {
+    color: var(--color-text-muted);
+  }
+
+  &.owned .qty-controls-value {
+    color: var(--color-text);
+  }
+}

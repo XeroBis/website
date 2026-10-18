@@ -1,0 +1,139 @@
+<div class="top-bar">
+  <input
+    type="text"
+    class="input deck-search"
+    [placeholder]="'decks.searchPlaceholder' | translate"
+    [(ngModel)]="search"
+  />
+
+  <button
+    type="button"
+    class="btn btn-primary btn-icon new-deck-btn"
+    [attr.aria-label]="'decks.createDeck' | translate"
+    (click)="openCreateDeck()"
+  >
+    <ab-icon name="plus" />
+  </button>
+
+  <app-multi-draft-export />
+</div>
+
+@if (createDeckOpen()) {
+  <app-modal [title]="'decks.createDeck' | translate" [wide]="true" (closed)="closeCreateDeck()">
+    <div class="deck-actions-form">
+      <input
+        type="text"
+        class="input"
+        [placeholder]="'decks.deckNamePlaceholder' | translate"
+        [(ngModel)]="newDeckName"
+        (keydown.enter)="createDeck()"
+      />
+      <input
+        type="text"
+        class="input"
+        [placeholder]="'decks.descriptionPlaceholder' | translate"
+        [(ngModel)]="newDeckDescription"
+        (keydown.enter)="createDeck()"
+      />
+      <select class="input" [(ngModel)]="newDeckType">
+        <option value="normal">{{ 'decks.normalDeck' | translate }}</option>
+        <option value="phantom">{{ 'decks.phantomDeck' | translate }}</option>
+      </select>
+      <button type="button" class="btn btn-ghost btn-sm decklist-toggle" (click)="toggleDecklist()">
+        {{ (decklistOpen() ? 'decks.hidePasteDecklist' : 'decks.showPasteDecklist') | translate }}
+      </button>
+      @if (decklistOpen()) {
+        <label for="new-deck-decklist-text">{{ 'decks.pasteDecklistLabel' | translate }}</label>
+        <textarea
+          id="new-deck-decklist-text"
+          class="input decklist-textarea"
+          [placeholder]="'decks.pasteDecklistPlaceholder' | translate"
+          [(ngModel)]="newDeckDecklistText"
+          (ngModelChange)="onDecklistTextChange()"
+        ></textarea>
+        @if (decklistPreviewLoading()) {
+          <p class="muted">{{ 'convert.converting' | translate }}</p>
+        } @else if (decklistPreviewEntries().length) {
+          <app-decklist-preview [entries]="decklistPreviewEntries()" />
+        }
+      }
+      <div class="deck-actions-form-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeCreateDeck()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="createDeckLoading() || !newDeckName().trim()"
+          (click)="createDeck()"
+        >
+          {{
+            createDeckLoading() ? ('common.creating' | translate) : ('decks.createDeck' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (loading()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (decks().length === 0) {
+  <p>{{ 'decks.noDecksYet' | translate }}</p>
+} @else if (filteredDecks.length === 0) {
+  <p>{{ 'decks.noMatch' | translate }}</p>
+} @else {
+  <ul class="deck-list">
+    @for (deck of filteredDecks; track deck.id) {
+      <li class="surface deck-list-item" (click)="openDeck(deck.id)">
+        <div class="hand-fan">
+          @for (dc of posterSlots(deck); track $index) {
+            @if (dc) {
+              <img
+                [src]="imageUrl(dc.image_path)"
+                [alt]="dc.name | cardDisplayName"
+                class="hand-fan-card"
+                [title]="dc.name | cardDisplayName"
+              />
+            } @else {
+              <span class="hand-fan-card hand-fan-placeholder"></span>
+            }
+          }
+        </div>
+        <div class="deck-name-col">
+          <a [routerLink]="['/decks', deck.id]" (click)="$event.stopPropagation()">{{
+            deck.name
+          }}</a>
+          <div class="energy-used">
+            @for (badge of visualsFor(deck.id).energyBadges; track badge.key) {
+              @if (badge.icon) {
+                <img
+                  [src]="energyIconUrl(badge.icon)"
+                  [alt]="badge.label"
+                  [title]="badge.label"
+                  class="energy-badge-icon"
+                />
+              } @else {
+                <span class="energy-badge-text" [title]="badge.label">{{ badge.label }}</span>
+              }
+            }
+          </div>
+        </div>
+        @if (deck.has_wdc_cards) {
+          <span class="badge badge-warning">WDC</span>
+        }
+        @if (deck.deck_type === 'phantom') {
+          <span class="badge">{{ 'decks.phantomBadge' | translate }}</span>
+        }
+        <span class="badge">{{ 'decks.cardsOf60' | translate: { count: deck.total_cards } }}</span>
+        <app-deck-actions
+          [deck]="deck"
+          (click)="$event.stopPropagation()"
+          (renamed)="onRenamed($event)"
+          (copied)="onCopied($event)"
+          (deleted)="onDeleted($event)"
+        />
+      </li>
+    }
+  </ul>
+}

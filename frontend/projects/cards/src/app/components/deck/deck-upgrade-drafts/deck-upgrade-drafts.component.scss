@@ -1,0 +1,388 @@
+.btn-danger {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #a5301f;
+    border-color: #a5301f;
+  }
+}
+
+.drafts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.draft-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3);
+
+  .input {
+    flex: 1;
+  }
+}
+
+.draft-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.draft-open {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.draft-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.draft-row-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.new-draft-form {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+
+  .input {
+    flex: 1;
+  }
+}
+
+/* Full-screen unified editor */
+.draft-editor-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.draft-editor-total-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-2);
+}
+
+.draft-editor-total {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+
+  &.over-limit {
+    color: var(--color-error);
+  }
+}
+
+.draft-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.draft-card-qty {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.draft-entry-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.qty-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.draft-paste-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.draft-paste-box-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.draft-paste-box-caret {
+  display: inline-block;
+  color: var(--color-text-muted);
+  transition: transform 0.15s ease;
+
+  &.open {
+    transform: rotate(90deg);
+  }
+}
+
+.draft-paste-textarea {
+  min-height: 5rem;
+  resize: vertical;
+  font-family: monospace;
+}
+
+/* Gives the "Add cards" modal a fixed height so its body can be split into a
+ * fixed-height filters column and an independently-scrolling results grid,
+ * instead of the whole modal scrolling as one block (the default for a
+ * non-fullscreen `app-modal`). */
+::ng-deep app-modal.draft-add-modal {
+  .modal-panel {
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+/* "Add cards" search -- filters (same set as Browse/Collection, embedded
+ * inline instead of the page-level fixed sidebar) beside a card grid of
+ * results, inside the "Add cards" modal. */
+.draft-search-layout {
+  display: flex;
+  gap: var(--space-5);
+  flex: 1;
+  min-height: 0;
+}
+
+.draft-search-filters {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding-right: var(--space-3);
+}
+
+.draft-search-results {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.draft-search-grid {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.draft-search-tile {
+  padding: var(--space-2);
+
+  strong {
+    font-size: 0.8rem;
+  }
+
+  span {
+    font-size: 0.7rem;
+  }
+}
+
+.draft-search-tile {
+  cursor: pointer;
+}
+
+/* Filters column is collapsible below 900px so the results grid is what's
+ * visible by default instead of the (much taller, stacked) filters form --
+ * both stay permanently visible side-by-side above that width, where the
+ * toggle button itself is hidden. */
+.draft-filters-toggle-btn {
+  display: none;
+}
+
+.draft-filters-toggle-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+@media (max-width: 900px) {
+  .draft-search-layout {
+    flex-direction: column;
+  }
+
+  .draft-search-filters {
+    width: 100%;
+    overflow-y: visible;
+  }
+
+  .draft-search-filters.draft-search-filters-hidden {
+    display: none;
+  }
+
+  .draft-filters-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    order: -1;
+    width: 100%;
+    height: auto;
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+
+  /* The fixed 85vh split-scroll layout above only makes sense for the
+   * side-by-side desktop columns -- on a single stacked column let the
+   * whole modal scroll normally instead of clipping content past 85vh. */
+  ::ng-deep app-modal.draft-add-modal {
+    .modal-panel {
+      height: auto;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-body {
+      overflow: visible;
+    }
+  }
+
+  .draft-search-results {
+    overflow-y: visible;
+  }
+}
+
+/* Gray backdrop behind the white card tiles, matching the deck-detail page
+ * background instead of the modal's own white surface. */
+.draft-grid-panel {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.draft-card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  align-content: start;
+}
+
+.draft-card-tile {
+  cursor: default;
+
+  &:hover {
+    box-shadow: none;
+    transform: none;
+  }
+
+  .draft-entry-controls {
+    justify-content: center;
+    margin-top: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .draft-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--space-2);
+  }
+
+  .draft-search-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+}
+
+.deck-actions-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.export-mode-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.export-format-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  /* The list modal's rename/export/delete row -- let the draft name take its
+   * own line above instead of squeezing three buttons next to it. */
+  .draft-row-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.variant-badge {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 0.35em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}

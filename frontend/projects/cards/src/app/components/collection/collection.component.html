@@ -1,0 +1,232 @@
+<div class="top-bar">
+  <button type="button" class="btn btn-secondary filters-toggle-btn" (click)="toggleFilters()">
+    <ab-icon name="filter" />
+    <span class="btn-label">{{ 'collection.filters' | translate }}</span>
+  </button>
+  <div class="view-toggle">
+    <button type="button" class="btn" [class.active]="view() === 'grid'" (click)="setView('grid')">
+      <ab-icon name="grid" />
+      {{ 'collection.grid' | translate }}
+    </button>
+    <button
+      type="button"
+      class="btn"
+      [class.active]="view() === 'table'"
+      (click)="setView('table')"
+    >
+      <ab-icon name="list" />
+      {{ 'collection.list' | translate }}
+    </button>
+  </div>
+  <app-variant-mode-toggle
+    [mode]="variantDisplayMode()"
+    [label]="variantModeToggleLabel"
+    (modeChange)="onVariantDisplayModeChange($event)"
+  />
+</div>
+
+<div class="collection-layout">
+  <app-filters-panel
+    [open]="filtersOpen()"
+    [cardCountLabel]="
+      'collection.cardCountLabel' | translate: { unique: total(), total: totalQuantity() }
+    "
+    [hasActiveFilters]="hasActiveFilters"
+    [showAvailableFilter]="true"
+    [showSetTextFilter]="true"
+    [sets]="sets()"
+    [rarities]="rarities()"
+    [variantOptions]="ownedVariantTypes()"
+    variantFilterLabel="filters.ownedVariant"
+    [(variantType)]="variantType"
+    [(search)]="search"
+    [(setCode)]="setCode"
+    [(setFilter)]="setFilter"
+    [(supertype)]="supertype"
+    [(rarity)]="rarity"
+    [(available)]="available"
+    [(cardNumber)]="cardNumber"
+    [(sort)]="sort"
+    (filterChange)="onFilterChange()"
+    (clear)="clearFilters()"
+    (close)="closeFilters()"
+  />
+
+  <div class="collection-content">
+    @if (loading()) {
+      <p>{{ 'common.loading' | translate }}</p>
+    } @else if (isCollectionEmpty) {
+      <p>{{ 'collection.empty' | translate }}</p>
+    } @else if (total() === 0) {
+      <p>{{ 'collection.noMatch' | translate }}</p>
+    } @else if (view() === 'grid') {
+      <div class="card-grid">
+        @if (variantDisplayMode() !== 'standard') {
+          @for (tile of variantTiles; track tile.entry.id + ':' + tile.variant.variant_type) {
+            <div class="card-tile" (click)="openDetail(tile.entry, tile.variant)">
+              <img
+                [src]="variantTileImageUrl(tile.entry, tile.variant)"
+                [alt]="(tile.entry.name | cardDisplayName) + ' — ' + variantTileLabel(tile.variant)"
+                loading="lazy"
+              />
+              <div class="card-info">
+                <strong>{{ tile.entry.name | cardDisplayName }}</strong>
+                <span>{{ tile.entry.set_name }} · {{ variantTileLabel(tile.variant) }}</span>
+                <span class="owned-available-line">
+                  {{ 'collection.owned' | translate }}: {{ tile.variant.quantity }}
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm btn-icon"
+                  [attr.aria-label]="'collection.addToDeck' | translate"
+                  [attr.title]="'collection.addToDeck' | translate"
+                  [disabled]="tile.entry.available === 0"
+                  (click)="$event.stopPropagation(); addToList(tile.entry, tile.variant)"
+                >
+                  <ab-icon name="plus" />
+                </button>
+              </div>
+            </div>
+          }
+        } @else {
+          @for (card of cards(); track card.id) {
+            <div class="card-tile" (click)="openDetail(card)">
+              <img [src]="thumbnailUrl(card)" [alt]="card.name | cardDisplayName" loading="lazy" />
+              <div class="card-info">
+                <strong>{{ card.name | cardDisplayName }}</strong>
+                <span>{{ card.set_name }}</span>
+                <span class="owned-available-line">
+                  {{ 'collection.owned' | translate }}: {{ card.quantity }} ·
+                  {{ 'collection.available' | translate }}:
+                  <span [class.badge-warning-text]="card.available === 0">{{
+                    card.available
+                  }}</span>
+                  @if (reverseTotal(card) > 0) {
+                    · Reverse: {{ reverseTotal(card) }}
+                  }
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm btn-icon"
+                  [attr.aria-label]="'collection.addToDeck' | translate"
+                  [attr.title]="'collection.addToDeck' | translate"
+                  [disabled]="card.available === 0"
+                  (click)="$event.stopPropagation(); addToList(card)"
+                >
+                  <ab-icon name="plus" />
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>{{ 'common.name' | translate }}</th>
+              <th>{{ 'common.set' | translate }}</th>
+              <th>{{ 'collection.owned' | translate }}</th>
+              <th>{{ 'collection.allocated' | translate }}</th>
+              <th>{{ 'collection.available' | translate }}</th>
+              <th>{{ 'collection.decks' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (card of cards(); track card.id) {
+              <tr>
+                <td>
+                  <img
+                    [src]="thumbnailUrl(card)"
+                    [alt]="card.name | cardDisplayName"
+                    (click)="openDetail(card)"
+                  />
+                </td>
+                <td>{{ card.name | cardDisplayName }}</td>
+                <td>{{ card.set_name }}</td>
+                <td>
+                  {{ card.quantity }}
+                  @if (reverseTotal(card) > 0) {
+                    <span class="variant-note">({{ reverseTotal(card) }} Reverse)</span>
+                  }
+                </td>
+                <td>{{ card.allocated }}</td>
+                <td>
+                  <span class="badge" [class.badge-warning]="card.available === 0">{{
+                    card.available
+                  }}</span>
+                </td>
+                <td>
+                  @if (card.decks.length) {
+                    <span class="deck-tags">
+                      @for (d of card.decks; track d.deck_id) {
+                        <span class="badge badge-deck"
+                          >{{ d.deck_name }} ×{{ d.quantity_in_deck }}</span
+                        >
+                      }
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  <div class="card-info-row">
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm btn-icon"
+                      [attr.aria-label]="'collection.addToDeck' | translate"
+                      [attr.title]="'collection.addToDeck' | translate"
+                      [disabled]="card.available === 0"
+                      (click)="addToList(card)"
+                    >
+                      <ab-icon name="plus" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="openDetail(card)"
+                    >
+                      {{ 'common.details' | translate }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (!isCollectionEmpty && total() > 0) {
+      <div class="scroll-status">
+        @if (loadingMore()) {
+          <span>{{ 'common.loadingMore' | translate }}</span>
+        } @else if (!hasMore && cards().length > 0) {
+          <span>{{ 'browse.allLoaded' | translate: { count: total() } }}</span>
+        } @else {
+          <span>{{ 'browse.ofCards' | translate: { shown: cards().length, total: total() } }}</span>
+        }
+      </div>
+
+      <div #scrollSentinel class="scroll-sentinel"></div>
+    }
+  </div>
+</div>
+
+@if (detailCard()!) {
+  <app-modal [title]="detailCard()!.name | cardDisplayName" [wide]="true" (closed)="closeDetail()">
+    <app-card-detail
+      [card]="detailCard()!"
+      [imageUrl]="imageUrl(detailCard()!, detailVariant()!)"
+      [initialVariantType]="detailVariant()?.variant_type ?? null"
+      editMode="collection"
+      (saveQuantity)="saveDetailQuantity($event)"
+      (deleteCard)="deleteDetailCard()"
+    />
+  </app-modal>
+}
+
+<app-deck-list-panel (added)="load()" />

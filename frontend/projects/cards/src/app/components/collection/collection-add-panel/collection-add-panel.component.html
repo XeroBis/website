@@ -1,0 +1,90 @@
+@if (entries().length > 0) {
+  <aside class="collection-add-panel surface" [class.expanded]="expanded()">
+    <button
+      type="button"
+      class="collection-add-header collection-add-header-toggle"
+      (click)="toggleExpanded()"
+    >
+      <span>{{ 'browse.addToCollection' | translate }}</span>
+      <span class="card-count">{{
+        (entries().length === 1 ? 'browse.cardCount' : 'browse.cardCountPlural')
+          | translate: { count: entries().length }
+      }}</span>
+    </button>
+
+    <ul class="collection-add-entries">
+      @for (entry of entries(); track entry.key) {
+        <li class="collection-add-entry">
+          <div class="entry-row">
+            <span class="entry-label"
+              >{{ entry.quantity }} &times; {{ entry.name | cardDisplayName }}</span
+            >
+            <div class="entry-controls">
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                [disabled]="entry.quantity <= 1"
+                (click)="decrement(entry)"
+              >
+                -
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" (click)="increment(entry)">
+                +
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                [attr.aria-label]="'panel.removeFromList' | translate"
+                (click)="removeEntry(entry)"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+          <select
+            class="select select-sm"
+            [ngModel]="entry.variantType"
+            [disabled]="entry.allVariants"
+            (ngModelChange)="onVariantChange(entry, $event)"
+          >
+            @for (v of variantOptionsFor(entry); track v) {
+              <option [ngValue]="v">{{ variantLabel(v) }}</option>
+            }
+          </select>
+          <label class="entry-option">
+            <input
+              type="checkbox"
+              [ngModel]="entry.allVariants"
+              (ngModelChange)="toggleAllVariants(entry, $event)"
+            />
+            {{ 'panel.addAllVariants' | translate }}
+          </label>
+        </li>
+      }
+    </ul>
+
+    <div class="collection-add-footer">
+      <select class="select" [(ngModel)]="selectedDeckId">
+        <option [ngValue]="null">{{ 'panel.alsoAddToDeck' | translate }}</option>
+        @for (deck of decks(); track deck.id) {
+          <option [ngValue]="deck.id">
+            {{ deck.name }}{{ deck.has_wdc_cards ? ' (WDC)' : '' }}
+          </option>
+        }
+      </select>
+      <div class="collection-add-actions">
+        <button type="button" class="btn btn-secondary" (click)="clearList()">
+          {{ 'panel.clearList' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="submitting()"
+          (click)="addToCollection()"
+        >
+          {{ submitting() ? ('panel.adding' | translate) : ('browse.addToCollection' | translate) }}
+        </button>
+      </div>
+    </div>
+  </aside>
+}

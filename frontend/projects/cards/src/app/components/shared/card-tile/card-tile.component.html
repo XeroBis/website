@@ -1,0 +1,24 @@
+<div
+  class="card-tile"
+  [class.not-owned]="notOwned"
+  [class.not-clickable]="!clickable"
+  (click)="onClick()"
+>
+  <img [src]="imageUrl" [alt]="alt" loading="lazy" />
+  @if (numberBadge) {
+    <span class="number-badge" [class.secret]="secretNumber">{{ numberBadge }}</span>
+  }
+  @if (ownedQty > 0) {
+    <span class="owned-badge">×{{ ownedQty }}</span>
+    @if (reverseQty > 0) {
+      <span class="reverse-badge">R×{{ reverseQty }}</span>
+    }
+  }
+  <div class="card-info">
+    <strong>{{ title }}</strong>
+    <span>{{ subLabel }}</span>
+  </div>
+  <div class="qty-controls-group" (click)="$event.stopPropagation()">
+    <ng-content></ng-content>
+  </div>
+</div>

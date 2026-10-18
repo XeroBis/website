@@ -18,3 +18,4 @@ export * from './lib/i18n/language';
 export * from './lib/icon/icon';
 export * from './lib/layout/header';
 export * from './lib/placeholder/placeholder';
+export * from './lib/files/files';

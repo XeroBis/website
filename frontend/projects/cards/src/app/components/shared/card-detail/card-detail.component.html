@@ -1,0 +1,241 @@
+<div class="card-detail">
+  <div class="card-detail-image-column">
+    <img [src]="displayedImageUrl" [alt]="card.name | cardDisplayName" class="card-detail-image" />
+
+    @if (availableVariants().length > 1) {
+      <div class="card-detail-variant-strip">
+        @for (variant of availableVariants(); track variant.variant_type) {
+          <button
+            type="button"
+            class="card-detail-variant-thumb"
+            [class.active]="selectedVariantType() === variant.variant_type"
+            (click)="selectVariant(variant.variant_type)"
+            [attr.aria-label]="variantLabel(variant.variant_type)"
+            [title]="variantLabel(variant.variant_type)"
+          >
+            <img [src]="variantImageUrl(variant)" [alt]="variantLabel(variant.variant_type)" />
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="card-detail-body">
+    <div class="card-detail-meta">
+      {{ card.set_name }}
+      @if ($any(card).card_number) {
+        #{{ $any(card).card_number }}
+      }
+      @if (card.rarity) {
+        · {{ card.rarity }}
+      }
+    </div>
+
+    @if (card.supertype) {
+      <div class="card-detail-meta">
+        {{ supertypeKey(card.supertype) | translate }}
+      </div>
+    }
+
+    @if (card.series || card.release_date) {
+      <div class="card-detail-footer">
+        @if (card.series) {
+          <span>{{ card.series }}</span>
+        }
+        @if (card.release_date) {
+          <span>{{ card.release_date | date: 'mediumDate' }}</span>
+        }
+      </div>
+    }
+
+    @if (details()!; as d) {
+      <section class="card-detail-text" [attr.lang]="detailsLanguage()!">
+        @if (detailsLanguage()! !== translateLanguage) {
+          <p class="card-detail-meta">{{ 'cardDetail.languageFallback' | translate }}</p>
+        }
+        <div class="card-detail-game-stats">
+          @if (d.hp != null) {
+            <strong>{{ d.hp }} {{ 'cardDetail.hp' | translate }}</strong>
+          }
+          @for (type of d.types ?? []; track $index) {
+            @if (energyIcon(type); as icon) {
+              <img class="energy-symbol" [src]="icon" [alt]="type" [title]="type" />
+            } @else {
+              <span>{{ type }}</span>
+            }
+          }
+          @if (d.stage) {
+            <span>{{ d.stage }}</span>
+          }
+        </div>
+        @if (d.evolveFrom) {
+          <p>{{ 'cardDetail.evolvesFrom' | translate }}: {{ d.evolveFrom }}</p>
+        }
+        @for (ability of d.abilities ?? []; track $index) {
+          <div class="card-detail-move">
+            <strong>{{ ability.name }}</strong>
+            @if (ability.type) {
+              <span class="card-detail-meta"> · {{ ability.type }}</span>
+            }
+            @if (ability.effect) {
+              <p>{{ ability.effect }}</p>
+            }
+          </div>
+        }
+        @for (attack of d.attacks ?? []; track $index) {
+          <div class="card-detail-move">
+            <div class="card-detail-game-stats">
+              @for (cost of attack.cost ?? []; track $index) {
+                @if (energyIcon(cost); as icon) {
+                  <img class="energy-symbol" [src]="icon" [alt]="cost" [title]="cost" />
+                } @else {
+                  <span>{{ cost }}</span>
+                }
+              }
+              <strong>{{ attack.name }}</strong>
+              @if (attack.damage != null) {
+                <strong class="attack-damage">{{ attack.damage }}</strong>
+              }
+            </div>
+            @if (attack.effect) {
+              <p>{{ attack.effect }}</p>
+            }
+          </div>
+        }
+        @if (d.effect) {
+          <p>{{ d.effect }}</p>
+        }
+        <div class="card-detail-meta">
+          @if (d.weaknesses?.length) {
+            <p>
+              {{ 'cardDetail.weakness' | translate }}:
+              @for (w of d.weaknesses; track $index) {
+                {{ w.type }} {{ w.value }}
+              }
+            </p>
+          }
+          @if (d.resistances?.length) {
+            <p>
+              {{ 'cardDetail.resistance' | translate }}:
+              @for (r of d.resistances; track $index) {
+                {{ r.type }} {{ r.value }}
+              }
+            </p>
+          }
+          @if (d.retreat != null) {
+            <p>{{ 'cardDetail.retreat' | translate }}: {{ d.retreat }}</p>
+          }
+          @if (d.illustrator) {
+            <p>{{ 'cardDetail.illustrator' | translate }}: {{ d.illustrator }}</p>
+          }
+          @if (d.regulationMark) {
+            <p>{{ 'cardDetail.regulation' | translate }}: {{ d.regulationMark }}</p>
+          }
+        </div>
+      </section>
+    }
+
+    @if ($any(card).card_number) {
+      <div class="card-detail-links">
+        <div class="card-detail-tcg-line">
+          <code>{{ tcgplayerLine }}</code>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="copyTcgLine()">
+            {{ 'common.copy' | translate }}
+          </button>
+        </div>
+        <a
+          class="btn btn-secondary btn-sm"
+          [href]="cardmarketUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ 'cardDetail.cardmarketLink' | translate }}
+        </a>
+      </div>
+    }
+
+    @if (editMode === 'collection' && collectionCard; as cc) {
+      <div class="card-detail-collection-stats">
+        <span
+          >{{ 'cardDetail.available' | translate }} <strong>{{ cc.available }}</strong></span
+        >
+      </div>
+      <div class="card-detail-edit-panel">
+        @for (variantType of availableVariantTypes; track variantType) {
+          <div
+            class="card-detail-edit-row"
+            [class.card-detail-edit-row-unowned]="variantQuantity(variantType) === 0"
+          >
+            <div class="card-menu-field">
+              <label>{{ variantLabel(variantType) }}</label>
+              <div class="qty-stepper">
+                <button
+                  type="button"
+                  class="qty-stepper-btn"
+                  [disabled]="variantQuantity(variantType) <= 0"
+                  (click)="stepVariantQuantity(variantType, -1)"
+                  [attr.aria-label]="'cardDetail.decreaseQuantityOwned' | translate"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  class="qty-stepper-input"
+                  min="0"
+                  [ngModel]="variantQuantity(variantType)"
+                  (change)="setVariantQuantity(variantType, $any($event.target).value)"
+                />
+                <button
+                  type="button"
+                  class="qty-stepper-btn"
+                  (click)="stepVariantQuantity(variantType, 1)"
+                  [attr.aria-label]="'cardDetail.increaseQuantityOwned' | translate"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+        <div class="card-detail-edit-actions">
+          <button
+            type="button"
+            class="btn btn-secondary btn-icon"
+            [attr.aria-label]="'cardDetail.removeFromCollection' | translate"
+            (click)="confirmDelete()"
+          >
+            <ab-icon name="trash" />
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (deckUsage()?.allocated_decks?.length) {
+      <div class="card-detail-decks">
+        <label>{{ 'cardDetail.usedInDecks' | translate }}</label>
+        <ul class="deck-usage-list">
+          @for (d of deckUsage()!.allocated_decks; track d.deck_id) {
+            <li>
+              <span>{{ d.deck_name }}</span>
+              <span class="badge">×{{ d.quantity_in_deck }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (deckUsage()?.phantom_decks?.length) {
+      <div class="card-detail-decks">
+        <label>{{ 'cardDetail.wantedInPhantomDecks' | translate }}</label>
+        <ul class="deck-usage-list">
+          @for (d of deckUsage()!.phantom_decks; track d.deck_id) {
+            <li>
+              <span>{{ d.deck_name }}</span>
+              <span class="badge">×{{ d.quantity_in_deck }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+</div>

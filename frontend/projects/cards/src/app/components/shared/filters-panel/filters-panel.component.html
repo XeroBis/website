@@ -1,0 +1,127 @@
+@if (open && !inline) {
+  <div class="filters-backdrop" (click)="close.emit()"></div>
+}
+<aside class="filters-panel" [class.open]="open" [class.filters-panel-inline]="inline">
+  <div class="filters-header">
+    <span>{{ 'filters.title' | translate }}</span>
+    <span class="card-count">{{ cardCountLabel }}</span>
+    @if (!inline) {
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm filters-close-btn"
+        [attr.aria-label]="'filters.close' | translate"
+        (click)="close.emit()"
+      >
+        ✕
+      </button>
+    }
+  </div>
+
+  <div class="filters">
+    <input
+      #searchInput
+      type="text"
+      class="input"
+      [placeholder]="'filters.searchPlaceholder' | translate"
+      [title]="'filters.searchHint' | translate"
+      [ngModel]="search"
+      (ngModelChange)="onSearchChange($event)"
+    />
+    @if (showSetTextFilter) {
+      <input
+        type="text"
+        class="input"
+        [placeholder]="'filters.filterSetsPlaceholder' | translate"
+        [ngModel]="setFilter"
+        (ngModelChange)="onSetFilterChange($event)"
+      />
+    }
+    <select class="select" [ngModel]="setCode" (ngModelChange)="onSetCodeChange($event)">
+      <option value="">{{ 'filters.allSets' | translate }}</option>
+      @for (set of showSetTextFilter ? filteredSets : sets; track set.set_code) {
+        <option [value]="set.set_code">{{ set.set_name }}</option>
+      }
+    </select>
+    <div class="filter-group">
+      <span class="filter-group-label">{{ 'filters.cardType' | translate }}</span>
+      <div class="type-toggle-row">
+        @for (st of cardTypes; track st) {
+          <button
+            type="button"
+            class="type-toggle-btn"
+            [class.active]="isSupertypeActive(st)"
+            (click)="toggleSupertype(st)"
+          >
+            {{ supertypeKey(st) | translate }}
+          </button>
+        }
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-group-label">{{ 'filters.rarity' | translate }}</span>
+      <div class="type-toggle-row icon-row rarity-icon-row">
+        @for (r of rarities; track r) {
+          <button
+            type="button"
+            class="type-toggle-btn icon-btn rarity-toggle-btn"
+            [class.active]="isRarityActive(r)"
+            [attr.aria-label]="r"
+            [title]="r"
+            (click)="toggleRarity(r)"
+          >
+            <img [src]="rarityIcon(r)" [alt]="r" (error)="onRarityIconError($event)" />
+            <span class="icon-fallback rarity-icon-fallback">{{ r }}</span>
+          </button>
+        }
+      </div>
+    </div>
+    @if (variantOptions.length) {
+      <div class="filter-group">
+        <span class="filter-group-label">{{ variantFilterLabel | translate }}</span>
+        <div class="type-toggle-row icon-row rarity-icon-row variant-icon-row">
+          @for (v of variantOptions; track v) {
+            <button
+              type="button"
+              class="type-toggle-btn icon-btn rarity-toggle-btn"
+              [class.active]="isVariantTypeActive(v)"
+              [attr.aria-label]="variantLabel(v)"
+              [title]="variantLabel(v)"
+              (click)="toggleVariantType(v)"
+            >
+              <img [src]="variantIcon(v)" [alt]="variantLabel(v)" />
+            </button>
+          }
+        </div>
+      </div>
+    }
+    @if (showAvailableFilter) {
+      <select class="select" [ngModel]="available" (ngModelChange)="onAvailableChange($event)">
+        <option value="">{{ 'filters.allCards' | translate }}</option>
+        <option value="available">{{ 'filters.available' | translate }}</option>
+        <option value="unavailable">{{ 'filters.unavailable' | translate }}</option>
+      </select>
+    }
+    <input
+      type="text"
+      class="input"
+      [placeholder]="'filters.cardNumberPlaceholder' | translate"
+      [ngModel]="cardNumber"
+      (ngModelChange)="onCardNumberChange($event)"
+    />
+    <select class="select" [ngModel]="sort" (ngModelChange)="onSortChange($event)">
+      @for (opt of sortOptions; track opt.value) {
+        <option [value]="opt.value">
+          {{ 'common.sortLabel' | translate: { label: ('sort.' + opt.value | translate) } }}
+        </option>
+      }
+    </select>
+    <button
+      type="button"
+      class="btn btn-ghost"
+      [disabled]="!hasActiveFilters"
+      (click)="clear.emit()"
+    >
+      {{ 'filters.clearFilters' | translate }}
+    </button>
+  </div>
+</aside>

@@ -1,0 +1,526 @@
+<div class="page-header">
+  <div class="header-actions">
+    <button
+      type="button"
+      class="btn btn-primary btn-icon new-combat-btn"
+      [attr.aria-label]="'combats.logCombat' | translate"
+      (click)="openLogCombat()"
+    >
+      <ab-icon name="plus" />
+    </button>
+  </div>
+</div>
+
+@if (logCombatOpen()) {
+  <app-modal
+    [title]="'combats.logCombatModalTitle' | translate"
+    [wide]="true"
+    (closed)="closeLogCombat()"
+  >
+    <div class="new-combat">
+      <div class="matchup">
+        <div
+          class="team"
+          [class.winning-team]="form().winner === 'a'"
+          [class.losing-team]="form().winner === 'b'"
+        >
+          @if (form().winner === 'a') {
+            <ab-icon name="crown" class="crown-badge" />
+          }
+          <button type="button" class="team-header" (click)="setWinner(form(), 'a')">
+            <span class="team-label">{{ 'combats.teamA' | translate }}</span>
+            @if (form().winner === 'a') {
+              <span class="winner-tag">{{ 'combats.winner' | translate }}</span>
+            } @else {
+              <span class="winner-tag winner-tag-hint">{{
+                'combats.clickToMarkWinner' | translate
+              }}</span>
+            }
+          </button>
+          <label>
+            {{ 'common.deck' | translate }}
+            <app-searchable-select
+              [items]="deckItems()"
+              [value]="form().deck_a_id"
+              (valueChange)="form().deck_a_id = $event"
+              [placeholder]="'common.chooseADeck' | translate"
+            ></app-searchable-select>
+          </label>
+          <label>
+            {{ 'common.player' | translate }}
+            <select class="input" [(ngModel)]="form().player_a_id">
+              <option [ngValue]="null" disabled>{{ 'combats.choosePlayer' | translate }}</option>
+              @for (user of users(); track user.id) {
+                <option [ngValue]="user.id">{{ displayName(user) }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div class="vs-divider" aria-hidden="true">
+          <span class="vs-badge">VS</span>
+        </div>
+
+        <div
+          class="team"
+          [class.winning-team]="form().winner === 'b'"
+          [class.losing-team]="form().winner === 'a'"
+        >
+          @if (form().winner === 'b') {
+            <ab-icon name="crown" class="crown-badge" />
+          }
+          <button type="button" class="team-header" (click)="setWinner(form(), 'b')">
+            <span class="team-label">{{ 'combats.teamB' | translate }}</span>
+            @if (form().winner === 'b') {
+              <span class="winner-tag">{{ 'combats.winner' | translate }}</span>
+            } @else {
+              <span class="winner-tag winner-tag-hint">{{
+                'combats.clickToMarkWinner' | translate
+              }}</span>
+            }
+          </button>
+          <label>
+            {{ 'common.deck' | translate }}
+            <app-searchable-select
+              [items]="deckItems()"
+              [value]="form().deck_b_id"
+              (valueChange)="form().deck_b_id = $event"
+              [placeholder]="'common.chooseADeck' | translate"
+            ></app-searchable-select>
+          </label>
+          <label>
+            {{ 'common.player' | translate }}
+            <select class="input" [(ngModel)]="form().player_b_id">
+              <option [ngValue]="null" disabled>{{ 'combats.choosePlayer' | translate }}</option>
+              @for (user of users(); track user.id) {
+                <option [ngValue]="user.id">{{ displayName(user) }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      </div>
+
+      @if (form().winner !== null) {
+        <div class="loser-score-section">
+          <span class="loser-score-caption">{{
+            'combats.prizesLeftFor' | translate: { name: loserPlayerLabel(form()) }
+          }}</span>
+          <div class="qty-stepper">
+            <button
+              type="button"
+              class="qty-stepper-btn"
+              [disabled]="form().loser_score <= 1"
+              (click)="stepLoserScore(form(), -1)"
+              [attr.aria-label]="'combats.decreasePrizes' | translate"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              class="qty-stepper-input"
+              min="1"
+              max="6"
+              [(ngModel)]="form().loser_score"
+            />
+            <button
+              type="button"
+              class="qty-stepper-btn"
+              [disabled]="form().loser_score >= 6"
+              (click)="stepLoserScore(form(), 1)"
+              [attr.aria-label]="'combats.increasePrizes' | translate"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      }
+
+      <div class="played-at-section">
+        <label class="played-at-label">
+          <span>{{ 'combats.playedAt' | translate }}</span>
+          <input type="date" class="input played-at-input" [(ngModel)]="form().played_at" />
+        </label>
+      </div>
+
+      <div class="new-combat-footer">
+        <button type="button" class="btn btn-ghost" (click)="closeLogCombat()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="logCombat()"
+          [disabled]="submitting()"
+        >
+          {{ submitting() ? ('combats.logging' | translate) : ('combats.logCombat' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (loading()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (combats().length === 0) {
+  <p>{{ 'combats.noneLoggedYet' | translate }}</p>
+} @else {
+  <div class="table-wrap">
+    <table class="combat-table">
+      <thead>
+        <tr>
+          <th>{{ 'combats.date' | translate }}</th>
+          <th>{{ 'combats.teamA' | translate }}</th>
+          <th>{{ 'combats.teamB' | translate }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (combat of combats(); track combat.id) {
+          <tr>
+            <td>{{ combat.played_at | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              @if (combat.winner === 'a') {
+                <span class="winner-badge">
+                  <ab-icon name="crown" class="winner-icon" />
+                  {{ combatPlayerAName(combat) }}
+                </span>
+              } @else {
+                {{ combatPlayerAName(combat) }}
+              }
+              —
+              {{ combat.deck_a_name }}
+              @if (combat.winner === 'b') {
+                <span class="loser-score-inline">({{ combat.loser_score }})</span>
+              }
+              <button
+                type="button"
+                class="btn-icon-eye"
+                [attr.aria-label]="
+                  'combats.viewAsPlayedAria' | translate: { name: combat.deck_a_name }
+                "
+                (click)="viewDeckASnapshot(combat)"
+              >
+                <ab-icon name="eye" />
+              </button>
+            </td>
+            <td>
+              @if (combat.winner === 'b') {
+                <span class="winner-badge">
+                  <ab-icon name="crown" class="winner-icon" />
+                  {{ combatPlayerBName(combat) }}
+                </span>
+              } @else {
+                {{ combatPlayerBName(combat) }}
+              }
+              —
+              {{ combat.deck_b_name }}
+              @if (combat.winner === 'a') {
+                <span class="loser-score-inline">({{ combat.loser_score }})</span>
+              }
+              <button
+                type="button"
+                class="btn-icon-eye"
+                [attr.aria-label]="
+                  'combats.viewAsPlayedAria' | translate: { name: combat.deck_b_name }
+                "
+                (click)="viewDeckBSnapshot(combat)"
+              >
+                <ab-icon name="eye" />
+              </button>
+            </td>
+            <td class="row-actions">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="openEdit(combat)">
+                {{ 'common.edit' | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                (click)="openDeleteConfirm(combat)"
+              >
+                {{ 'common.delete' | translate }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (editOpen() && editCombat()!) {
+  <app-modal [title]="'combats.editCombatTitle' | translate" [wide]="true" (closed)="closeEdit()">
+    <div class="edit-form">
+      <div class="matchup">
+        <div
+          class="team"
+          [class.winning-team]="editForm().winner === 'a'"
+          [class.losing-team]="editForm().winner === 'b'"
+        >
+          @if (editForm().winner === 'a') {
+            <ab-icon name="crown" class="crown-badge" />
+          }
+          <button type="button" class="team-header" (click)="setWinner(editForm(), 'a')">
+            <span class="team-label">{{ 'combats.teamA' | translate }}</span>
+            @if (editForm().winner === 'a') {
+              <span class="winner-tag">{{ 'combats.winner' | translate }}</span>
+            } @else {
+              <span class="winner-tag winner-tag-hint">{{
+                'combats.clickToMarkWinner' | translate
+              }}</span>
+            }
+          </button>
+          <label>
+            {{ 'common.deck' | translate }}
+            <app-searchable-select
+              [items]="deckItems()"
+              [value]="editForm().deck_a_id"
+              (valueChange)="editForm().deck_a_id = $event"
+              [placeholder]="'common.chooseADeck' | translate"
+            ></app-searchable-select>
+          </label>
+          <label>
+            {{ 'common.player' | translate }}
+            <select class="input" [(ngModel)]="editForm().player_a_id">
+              @for (user of users(); track user.id) {
+                <option [ngValue]="user.id">{{ displayName(user) }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div class="vs-divider" aria-hidden="true">
+          <span class="vs-badge">VS</span>
+        </div>
+
+        <div
+          class="team"
+          [class.winning-team]="editForm().winner === 'b'"
+          [class.losing-team]="editForm().winner === 'a'"
+        >
+          @if (editForm().winner === 'b') {
+            <ab-icon name="crown" class="crown-badge" />
+          }
+          <button type="button" class="team-header" (click)="setWinner(editForm(), 'b')">
+            <span class="team-label">{{ 'combats.teamB' | translate }}</span>
+            @if (editForm().winner === 'b') {
+              <span class="winner-tag">{{ 'combats.winner' | translate }}</span>
+            } @else {
+              <span class="winner-tag winner-tag-hint">{{
+                'combats.clickToMarkWinner' | translate
+              }}</span>
+            }
+          </button>
+          <label>
+            {{ 'common.deck' | translate }}
+            <app-searchable-select
+              [items]="deckItems()"
+              [value]="editForm().deck_b_id"
+              (valueChange)="editForm().deck_b_id = $event"
+              [placeholder]="'common.chooseADeck' | translate"
+            ></app-searchable-select>
+          </label>
+          <label>
+            {{ 'common.player' | translate }}
+            <select class="input" [(ngModel)]="editForm().player_b_id">
+              @for (user of users(); track user.id) {
+                <option [ngValue]="user.id">{{ displayName(user) }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      </div>
+
+      @if (editForm().winner !== null) {
+        <div class="loser-score-section">
+          <span class="loser-score-caption">{{
+            'combats.prizesLeftFor' | translate: { name: loserPlayerLabel(editForm()) }
+          }}</span>
+          <div class="qty-stepper">
+            <button
+              type="button"
+              class="qty-stepper-btn"
+              [disabled]="editForm().loser_score <= 1"
+              (click)="stepLoserScore(editForm(), -1)"
+              [attr.aria-label]="'combats.decreasePrizes' | translate"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              class="qty-stepper-input"
+              min="1"
+              max="6"
+              [(ngModel)]="editForm().loser_score"
+            />
+            <button
+              type="button"
+              class="qty-stepper-btn"
+              [disabled]="editForm().loser_score >= 6"
+              (click)="stepLoserScore(editForm(), 1)"
+              [attr.aria-label]="'combats.increasePrizes' | translate"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      }
+
+      <div class="played-at-section">
+        <label class="played-at-label">
+          <span>{{ 'combats.playedAt' | translate }}</span>
+          <input type="date" class="input played-at-input" [(ngModel)]="editForm().played_at" />
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeEdit()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="editSubmitting()"
+          (click)="submitEdit()"
+        >
+          {{ editSubmitting() ? ('common.saving' | translate) : ('common.save' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (viewSnapshot()) {
+  <app-modal
+    [title]="'combats.deckAsPlayedTitle' | translate: { name: viewSnapshot()!.deckName }"
+    [wide]="true"
+    (closed)="closeViewSnapshot()"
+  >
+    @if (viewSnapshot()!.cards.length === 0) {
+      <p>{{ 'combats.noCardsAtLogTime' | translate }}</p>
+    } @else {
+      <div class="snapshot-controls">
+        <span class="supertype-breakdown">
+          <span class="supertype-chip">{{
+            'common.pokemonCount' | translate: { count: snapshotSupertypeCounts().pokemon }
+          }}</span>
+          <span class="supertype-chip">{{
+            'common.trainerCount' | translate: { count: snapshotSupertypeCounts().trainer }
+          }}</span>
+          <span class="supertype-chip">{{
+            'common.energyCount' | translate: { count: snapshotSupertypeCounts().energy }
+          }}</span>
+        </span>
+        <select class="select" [(ngModel)]="snapshotSort">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">
+              {{ 'common.sortLabel' | translate: { label: ('sort.' + opt.value | translate) } }}
+            </option>
+          }
+        </select>
+        <div class="view-toggle">
+          <button
+            type="button"
+            class="btn"
+            [class.active]="snapshotView() === 'grid'"
+            (click)="setSnapshotView('grid')"
+          >
+            <ab-icon name="grid" />
+            {{ 'common.grid' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.active]="snapshotView() === 'table'"
+            (click)="setSnapshotView('table')"
+          >
+            <ab-icon name="list" />
+            {{ 'common.list' | translate }}
+          </button>
+        </div>
+      </div>
+      @if (snapshotView() === 'grid') {
+        <div class="card-grid snapshot-grid">
+          @for (card of sortedSnapshotCards; track card.card_id + ':' + card.variant_type) {
+            <div class="card-tile">
+              <img
+                [src]="imageUrl(card.image_path)"
+                [alt]="card.name | cardDisplayName"
+                loading="lazy"
+              />
+              <div class="card-info">
+                <strong>{{ card.name | cardDisplayName }}</strong>
+                @if (variantBadge(card); as badge) {
+                  <span class="variant-badge">{{ badge }}</span>
+                }
+                <span class="supertype-chip">{{ supertypeKey(card.supertype) | translate }}</span>
+                <span>{{ card.set_name }}</span>
+                <span>{{ 'common.qtyLabel' | translate: { count: card.quantity_in_deck } }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>{{ 'common.name' | translate }}</th>
+                <th>{{ 'common.type' | translate }}</th>
+                <th>{{ 'common.set' | translate }}</th>
+                <th>{{ 'common.quantity' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (card of sortedSnapshotCards; track card.card_id + ':' + card.variant_type) {
+                <tr>
+                  <td>
+                    <img
+                      [src]="imageUrl(card.image_path)"
+                      [alt]="card.name | cardDisplayName"
+                      loading="lazy"
+                    />
+                  </td>
+                  <td>
+                    {{ card.name | cardDisplayName }}
+                    @if (variantBadge(card); as badge) {
+                      <span class="variant-badge">{{ badge }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="supertype-chip">{{
+                      supertypeKey(card.supertype) | translate
+                    }}</span>
+                  </td>
+                  <td>{{ card.set_name }}</td>
+                  <td>
+                    {{ card.quantity_in_deck }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </app-modal>
+}
+
+@if (deleteCombat()!) {
+  <app-modal [title]="'combats.deleteCombatTitle' | translate" (closed)="closeDeleteConfirm()">
+    <p>{{ 'combats.deleteCombatBody' | translate }}</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="deleteLoading()"
+        (click)="confirmDelete()"
+      >
+        {{ deleteLoading() ? ('common.deleting' | translate) : ('common.delete' | translate) }}
+      </button>
+    </div>
+  </app-modal>
+}

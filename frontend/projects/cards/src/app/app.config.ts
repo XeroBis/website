@@ -1,15 +1,20 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, RouteReuseStrategy } from '@angular/router';
 
-import { authInterceptor } from '@shared';
+import { authInterceptor, provideI18n } from '@shared';
 
+import en from '../i18n/en.json';
+import fr from '../i18n/fr.json';
+import { CardsRouteReuseStrategy } from './language-routes';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    { provide: RouteReuseStrategy, useClass: CardsRouteReuseStrategy },
+    provideI18n({ en, fr }),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
   ],
 };

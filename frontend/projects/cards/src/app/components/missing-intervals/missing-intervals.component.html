@@ -1,0 +1,159 @@
+<div class="missing-page" [class.has-selection]="!!selectedSet">
+  <header class="missing-header">
+    <div>
+      <h2>{{ 'missingIntervals.title' | translate }}</h2>
+    </div>
+  </header>
+
+  <section class="surface filters" [attr.aria-label]="'missingIntervals.filters' | translate">
+    <div class="rarity-toggle-row">
+      @for (category of quickRarities; track category) {
+        <button
+          type="button"
+          class="rarity-toggle-btn"
+          [class.active]="selectedRarityCategories().has(category)"
+          [attr.aria-pressed]="selectedRarityCategories().has(category)"
+          [attr.aria-label]="category"
+          [title]="category"
+          (click)="toggleRarity(category)"
+        >
+          <img [src]="rarityIcon(category)" [alt]="category" (error)="onRarityIconError($event)" />
+          <span class="rarity-fallback">{{ category }}</span>
+        </button>
+      }
+      @if (filtersOpen()) {
+        @for (category of otherRarities; track category) {
+          <button
+            type="button"
+            class="rarity-toggle-btn"
+            [class.active]="selectedRarityCategories().has(category)"
+            [attr.aria-pressed]="selectedRarityCategories().has(category)"
+            [attr.aria-label]="category"
+            [title]="category"
+            (click)="toggleRarity(category)"
+          >
+            <img
+              [src]="rarityIcon(category)"
+              [alt]="category"
+              (error)="onRarityIconError($event)"
+            />
+            <span class="rarity-fallback">{{ category }}</span>
+          </button>
+        }
+        <button
+          type="button"
+          class="rarity-toggle-btn"
+          [class.active]="selectedRarityCategories().size === 0"
+          (click)="clearRarities()"
+        >
+          {{ 'missingIntervals.allRarities' | translate }}
+        </button>
+      }
+      <button
+        type="button"
+        class="rarity-toggle-btn more-rarities"
+        [attr.aria-expanded]="filtersOpen()"
+        [attr.aria-label]="'filters.rarity' | translate"
+        (click)="filtersOpen.set(!filtersOpen())"
+      >
+        {{ filtersOpen() ? '−' : '+' }}
+      </button>
+    </div>
+    <div class="reverse-filters" [attr.aria-label]="'filters.printVariant' | translate">
+      @for (
+        variant of variantsOpen()
+          ? printVariantTypes().concat(otherVariantTypes())
+          : printVariantTypes();
+        track variant
+      ) {
+        <button
+          type="button"
+          class="rarity-toggle-btn"
+          [class.active]="selectedVariant() === variant"
+          [attr.aria-pressed]="selectedVariant() === variant"
+          [attr.aria-label]="variantLabels[variant]"
+          [title]="variantLabels[variant]"
+          (click)="toggleVariant(variant)"
+        >
+          <img [src]="variantIcon(variant)" [alt]="variantLabels[variant]" />
+        </button>
+      }
+      <button
+        type="button"
+        class="rarity-toggle-btn more-rarities"
+        [attr.aria-expanded]="variantsOpen()"
+        [attr.aria-label]="'filters.printVariant' | translate"
+        (click)="variantsOpen.set(!variantsOpen())"
+      >
+        {{ variantsOpen() ? '−' : '+' }}
+      </button>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else if (groups.length === 0) {
+    <p class="empty-state">{{ 'missingIntervals.noMissing' | translate }}</p>
+  } @else {
+    @for (group of groups; track group.series) {
+      <section class="series-section">
+        <h3>{{ group.displayName }}</h3>
+        <div class="missing-sets">
+          @for (set of group.sets; track set.set_code) {
+            <button
+              type="button"
+              class="set-symbol-button"
+              [class.active]="expandedSetCodes().has(set.set_code)"
+              [attr.aria-label]="set.set_name"
+              [attr.aria-expanded]="expandedSetCodes().has(set.set_code)"
+              [title]="set.set_name"
+              (click)="toggleSet(set.set_code)"
+            >
+              @if (symbolUrl(set); as symbolUrl) {
+                <img class="set-symbol" [src]="symbolUrl" alt="" />
+              } @else {
+                <span class="set-code-fallback">{{ set.set_code }}</span>
+              }
+            </button>
+          }
+        </div>
+      </section>
+    }
+  }
+  @if (!loading()) {
+    @if (selectedSet; as selected) {
+      <section class="selected-panel surface" [attr.aria-label]="selected.set_name">
+        <header class="selected-heading">
+          @if (symbolUrl(selected); as url) {
+            <img [src]="url" alt="" />
+          }
+          <div class="selected-title">
+            <h4>{{ selected.set_name }}</h4>
+            <span
+              >{{ selected.set_code }} ·
+              {{
+                (selected.missing_count === 1
+                  ? 'missingIntervals.missingCount'
+                  : 'missingIntervals.missingCountPlural'
+                ) | translate: { count: selected.missing_count }
+              }}</span
+            >
+          </div>
+          <button
+            type="button"
+            class="close-panel"
+            [attr.aria-label]="'common.close' | translate"
+            (click)="toggleSet(selected.set_code)"
+          >
+            ×
+          </button>
+        </header>
+        <div class="intervals" [attr.aria-label]="'missingIntervals.ranges' | translate">
+          @for (interval of selected.intervals; track interval.start_number) {
+            <span class="interval">{{ rangeLabel(interval) }}</span>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

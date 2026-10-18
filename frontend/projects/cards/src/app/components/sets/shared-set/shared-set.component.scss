@@ -1,0 +1,119 @@
+.shared-set-expired {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.shared-set-expiry {
+  margin-top: var(--space-6);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.set-detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  text-align: center;
+
+  h2 {
+    margin: 0;
+  }
+
+  .card-count {
+    color: var(--color-text-muted);
+  }
+}
+
+.set-detail-logo {
+  max-width: min(480px, 90%);
+  max-height: 200px;
+  object-fit: contain;
+  margin-bottom: var(--space-2);
+}
+
+.completion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 320px;
+}
+
+.completion-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt, var(--color-border));
+  overflow: hidden;
+}
+
+.completion-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.completion-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.set-detail-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+
+  &-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    flex: 1;
+    min-width: 0;
+  }
+
+  &-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .input {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 44px;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 640px) {
+  .set-detail-filters-left,
+  .set-detail-filters-right {
+    width: 100%;
+  }
+
+  .set-detail-filters-left .input {
+    flex-basis: 100%;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+.set-detail-filters .btn-icon.active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast, #fff);
+  border-color: var(--color-primary);
+}
+
+/* Tile chrome (image/badges/name, and the not-clickable cursor override)
+ * lives in shared CardTileComponent -- see components/shared/card-tile. */

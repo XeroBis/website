@@ -1,0 +1,397 @@
+@if (loading()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (deck()!) {
+  <div class="deck-header">
+    <div class="deck-header-top">
+      <a
+        routerLink="/decks"
+        class="back-link"
+        [title]="'decks.backToDecks' | translate"
+        [attr.aria-label]="'decks.backToDecks' | translate"
+      >
+        <ab-icon name="arrow-left" />
+      </a>
+      <div class="hand-fan">
+        @for (dc of posterSlots; track $index) {
+          @if (dc) {
+            <img
+              [src]="thumbnailUrl(dc.image_path)"
+              [alt]="dc.name | cardDisplayName"
+              class="hand-fan-card"
+              [title]="dc.name | cardDisplayName"
+            />
+          } @else {
+            <span class="hand-fan-card hand-fan-placeholder"></span>
+          }
+        }
+      </div>
+      <div class="deck-title-row">
+        <h2 [title]="deck()!.name">{{ deck()!.name }}</h2>
+        @if (deck()!.has_wdc_cards) {
+          <span class="badge badge-warning">WDC</span>
+        }
+        @if (deck()!.deck_type === 'phantom') {
+          <span class="badge">{{ 'decks.phantomBadge' | translate }}</span>
+        }
+      </div>
+      <div class="energy-used">
+        @for (badge of energyBadges(); track badge.key) {
+          @if (badge.icon) {
+            <img
+              [src]="energyIconUrl(badge.icon)"
+              [alt]="badge.label"
+              [title]="badge.label"
+              class="energy-badge-icon"
+            />
+          } @else {
+            <span class="energy-badge-text" [title]="badge.label">{{ badge.label }}</span>
+          }
+        }
+      </div>
+      <div class="deck-actions-slot">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="openStartHand()">
+          {{ 'decks.startHand' | translate }}
+        </button>
+        @if (isNormal) {
+          <app-deck-upgrade-drafts [deck]="deck()!" (applied)="onDraftApplied($event)" />
+        }
+        <app-deck-actions
+          [deck]="deck()!"
+          (renamed)="onRenamed($event)"
+          (copied)="onCopied($event)"
+          (deleted)="onDeleted()"
+          (pasted)="onDraftApplied($event)"
+        />
+      </div>
+    </div>
+    <div class="deck-header-controls">
+      <div class="view-toggle">
+        <button
+          type="button"
+          class="btn"
+          [class.active]="sort() === 'supertype'"
+          (click)="setSort('supertype')"
+        >
+          {{ 'sort.supertype' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.active]="sort() === 'name_asc'"
+          (click)="setSort('name_asc')"
+        >
+          {{ 'sort.name_asc' | translate }}
+        </button>
+      </div>
+      @if (isPhantom) {
+        <select
+          class="select"
+          [(ngModel)]="wantListFilter"
+          [attr.aria-label]="'decks.wantListFilterLabel' | translate"
+        >
+          <option value="full">{{ 'decks.wantListFilterFull' | translate }}</option>
+          <option value="missing">{{ 'decks.wantListFilterMissing' | translate }}</option>
+          <option value="not_available">
+            {{ 'decks.wantListFilterNotAvailable' | translate }}
+          </option>
+        </select>
+      }
+      <div class="view-toggle">
+        <button
+          type="button"
+          class="btn"
+          [class.active]="view() === 'grid'"
+          (click)="setView('grid')"
+        >
+          <ab-icon name="grid" />
+          {{ 'common.grid' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.active]="view() === 'table'"
+          (click)="setView('table')"
+        >
+          <ab-icon name="list" />
+          {{ 'common.list' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+  @if (deck()!.description) {
+    <p class="description">{{ deck()!.description }}</p>
+  }
+  <p class="card-count-line">
+    @if (isPhantom) {
+      {{ 'decks.cardsWantedCount' | translate: { count: deck()!.total_cards } }}
+    } @else {
+      {{ 'decks.cardsOf60' | translate: { count: deck()!.total_cards } }}
+    }
+    <span class="supertype-breakdown">
+      <span class="supertype-chip">{{
+        'common.pokemonCount' | translate: { count: supertypeCounts().pokemon }
+      }}</span>
+      <span class="supertype-chip">{{
+        'common.trainerCount' | translate: { count: supertypeCounts().trainer }
+      }}</span>
+      <span class="supertype-chip">{{
+        'common.energyCount' | translate: { count: supertypeCounts().energy }
+      }}</span>
+    </span>
+  </p>
+
+  @if (deck()!.cards.length === 0) {
+    <p>{{ 'decks.noCardsYet' | translate }}</p>
+  } @else if (sortedCards.length === 0) {
+    <p>{{ 'decks.noCardsMatchWantListFilter' | translate }}</p>
+  } @else if (view() === 'grid') {
+    <div class="card-grid">
+      @for (dc of sortedCards; track dc.id) {
+        <div class="card-tile" (click)="openDetail(dc)">
+          <img
+            [src]="thumbnailUrl(dc.image_path)"
+            [alt]="dc.name | cardDisplayName"
+            loading="lazy"
+          />
+          <div class="card-info">
+            <strong>{{ dc.name | cardDisplayName }}</strong>
+            @if (variantBadge(dc); as badge) {
+              <span class="variant-badge">{{ badge }}</span>
+            }
+            @if (isPhantom) {
+              <span
+                [class.owned-short]="dc.owned! < dc.quantity_in_deck"
+                [class.owned-full]="dc.owned! >= dc.quantity_in_deck"
+              >
+                {{ 'decks.ownedOfWanted' | translate: { count: dc.owned } }}
+              </span>
+              <span
+                class="allocation-hint"
+                [class.has-tooltip]="dc.allocated_decks.length > 0"
+                [attr.tabindex]="dc.allocated_decks.length > 0 ? 0 : null"
+                (click)="$event.stopPropagation()"
+                (mouseenter)="showAllocationTooltip($event, dc)"
+                (mouseleave)="hideAllocationTooltip()"
+                (focus)="showAllocationTooltip($event, dc)"
+                (blur)="hideAllocationTooltip()"
+              >
+                <span
+                  [class.owned-short]="dc.available! < dc.quantity_in_deck"
+                  [class.owned-full]="dc.available! >= dc.quantity_in_deck"
+                >
+                  {{ 'decks.phantomAvailable' | translate: { count: dc.available } }}
+                </span>
+              </span>
+            } @else {
+              <span>{{ 'decks.availableOutsideDeck' | translate: { count: dc.available } }}</span>
+            }
+            <div class="card-info-row" (click)="$event.stopPropagation()">
+              <div class="qty-stepper">
+                <button
+                  type="button"
+                  class="qty-stepper-btn"
+                  [disabled]="dc.quantity_in_deck <= 1"
+                  (click)="stepQuantity(dc, -1)"
+                  [attr.aria-label]="'decks.decreaseQuantity' | translate"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  class="qty-stepper-input"
+                  min="1"
+                  [attr.max]="maxQuantity(dc.name)"
+                  [value]="dc.quantity_in_deck"
+                  (change)="updateQuantity(dc, +$any($event.target).value)"
+                />
+                <button
+                  type="button"
+                  class="qty-stepper-btn"
+                  [disabled]="
+                    maxQuantity(dc.name) !== null && dc.quantity_in_deck >= maxQuantity(dc.name)!
+                  "
+                  (click)="stepQuantity(dc, 1)"
+                  [attr.aria-label]="'decks.increaseQuantity' | translate"
+                >
+                  +
+                </button>
+              </div>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm remove-card-btn"
+                (click)="removeCard(dc)"
+              >
+                {{ 'common.remove' | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>{{ 'common.name' | translate }}</th>
+            <th>{{ 'common.quantity' | translate }}</th>
+            @if (isPhantom) {
+              <th>{{ 'decks.ownedOfWantedHeader' | translate }}</th>
+              <th>{{ 'decks.phantomAvailableHeader' | translate }}</th>
+            } @else {
+              <th>{{ 'decks.availableOutsideDeckHeader' | translate }}</th>
+            }
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (dc of sortedCards; track dc.id) {
+            <tr>
+              <td>
+                <img
+                  [src]="thumbnailUrl(dc.image_path)"
+                  [alt]="dc.name | cardDisplayName"
+                  loading="lazy"
+                  (click)="openDetail(dc)"
+                />
+              </td>
+              <td>
+                {{ dc.name | cardDisplayName }}
+                @if (variantBadge(dc); as badge) {
+                  <span class="variant-badge">{{ badge }}</span>
+                }
+              </td>
+              <td>
+                <div class="qty-stepper">
+                  <button
+                    type="button"
+                    class="qty-stepper-btn"
+                    [disabled]="dc.quantity_in_deck <= 1"
+                    (click)="stepQuantity(dc, -1)"
+                    [attr.aria-label]="'decks.decreaseQuantity' | translate"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    class="qty-stepper-input"
+                    min="1"
+                    [attr.max]="maxQuantity(dc.name)"
+                    [value]="dc.quantity_in_deck"
+                    (change)="updateQuantity(dc, +$any($event.target).value)"
+                  />
+                  <button
+                    type="button"
+                    class="qty-stepper-btn"
+                    [disabled]="
+                      maxQuantity(dc.name) !== null && dc.quantity_in_deck >= maxQuantity(dc.name)!
+                    "
+                    (click)="stepQuantity(dc, 1)"
+                    [attr.aria-label]="'decks.increaseQuantity' | translate"
+                  >
+                    +
+                  </button>
+                </div>
+              </td>
+              @if (isPhantom) {
+                <td
+                  [class.owned-short]="dc.owned! < dc.quantity_in_deck"
+                  [class.owned-full]="dc.owned! >= dc.quantity_in_deck"
+                >
+                  {{ dc.owned }}
+                </td>
+                <td
+                  [class.owned-short]="dc.available! < dc.quantity_in_deck"
+                  [class.owned-full]="dc.available! >= dc.quantity_in_deck"
+                >
+                  <span
+                    class="allocation-hint"
+                    [class.has-tooltip]="dc.allocated_decks.length > 0"
+                    [attr.tabindex]="dc.allocated_decks.length > 0 ? 0 : null"
+                    (mouseenter)="showAllocationTooltip($event, dc)"
+                    (mouseleave)="hideAllocationTooltip()"
+                    (focus)="showAllocationTooltip($event, dc)"
+                    (blur)="hideAllocationTooltip()"
+                  >
+                    {{ dc.available }}
+                  </span>
+                </td>
+              } @else {
+                <td>{{ dc.available }}</td>
+              }
+              <td>
+                <button type="button" class="btn btn-secondary btn-sm" (click)="removeCard(dc)">
+                  {{ 'common.remove' | translate }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (hoveredAllocationCard()!) {
+    <div
+      class="allocation-tooltip-float"
+      role="tooltip"
+      [style.top.px]="allocationTooltipTop()"
+      [style.left.px]="allocationTooltipLeft()"
+    >
+      <strong>{{ 'decks.allocatedElsewhereTitle' | translate }}</strong>
+      <ul>
+        @for (a of hoveredAllocationCard()!.allocated_decks; track a.deck_id) {
+          <li>
+            {{
+              'decks.allocatedElsewhereItem'
+                | translate: { deckName: a.deck_name, count: a.quantity_in_deck }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (startHandOpen()) {
+    <app-modal [title]="'decks.sampleStartHandTitle' | translate" (closed)="closeStartHand()">
+      @if (startHand().length === 0) {
+        <p>{{ 'decks.noCardsToDraw' | translate }}</p>
+      } @else {
+        <div class="start-hand-grid">
+          @for (dc of startHand(); track $index) {
+            <img
+              [src]="thumbnailUrl(dc.image_path)"
+              [alt]="dc.name | cardDisplayName"
+              loading="lazy"
+              [title]="dc.name | cardDisplayName"
+              class="start-hand-card"
+            />
+          }
+        </div>
+      }
+      <div class="start-hand-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeStartHand()">
+          {{ 'common.close' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary" (click)="drawStartHand()">
+          {{ 'decks.redraw' | translate }}
+        </button>
+      </div>
+    </app-modal>
+  }
+
+  @if (detailCard()!) {
+    <app-modal
+      [title]="detailCard()!.name | cardDisplayName"
+      [wide]="true"
+      (closed)="closeDetail()"
+    >
+      <app-card-detail
+        [card]="detailCard()!"
+        [imageUrl]="imageUrl(detailCard()!.image_path)"
+        editMode="none"
+      />
+    </app-modal>
+  }
+}

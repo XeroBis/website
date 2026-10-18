@@ -1,0 +1,10 @@
+<div class="gestion-action">
+  <div class="gestion-action-row">
+    <ng-content select="[action]"></ng-content>
+    <div class="gestion-action-info">
+      <strong>{{ actionTitle }}</strong>
+      <p>{{ description }}</p>
+    </div>
+  </div>
+  <ng-content select="[progress]"></ng-content>
+</div>

@@ -1,0 +1,254 @@
+$filters-width: 340px;
+
+.filters-backdrop {
+  display: none;
+}
+
+.filters-panel {
+  position: fixed;
+  top: 5.5rem;
+  left: var(--space-4);
+  width: $filters-width;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-lg);
+  z-index: 5;
+
+  &.filters-panel-inline {
+    position: static;
+    width: 100%;
+    max-height: none;
+    overflow-y: visible;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    z-index: auto;
+  }
+}
+
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-weight: 600;
+}
+
+.filters-close-btn {
+  display: none;
+}
+
+.card-count {
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+
+  .input,
+  .select {
+    width: 100%;
+  }
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.filter-group-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.type-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+
+  &.disabled {
+    opacity: 0.45;
+  }
+}
+
+// Unselected (the default -- no explicit filter) renders as plain, unboxed
+// text so the group doesn't look "filtered" out of the box; picking a value
+// gives it a visible highlight, since that's the state the user changed.
+.type-toggle-btn {
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+
+  &.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.icon-row {
+  .type-toggle-btn {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+
+  img {
+    width: 1.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+  }
+
+  .type-toggle-btn:not(.active) img {
+    filter: grayscale(100%);
+    opacity: 0.5;
+  }
+
+  .icon-fallback {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+}
+
+// Rarity icons vary a lot more in aspect ratio/label length than the fixed
+// 11-value Pokémon-type set, and any category with no icon dropped in yet
+// needs to fall back to its (potentially long) name rather than one letter
+// -- so this gets its own auto-width, bordered button style layered on top
+// of .icon-row's square/borderless one, plus a fallback that's hidden by
+// default and only shown once its sibling <img> actually 404s (see
+// FiltersPanelComponent.onRarityIconError()).
+.rarity-icon-row:not(.variant-icon-row) {
+  .rarity-toggle-btn {
+    width: auto;
+    height: auto;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: var(--space-1) var(--space-2);
+    border: none;
+    border-radius: var(--radius-sm);
+
+    &.active {
+      border: 1px solid #000;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px #000;
+    }
+  }
+
+  img {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .rarity-toggle-btn:not(.active) img {
+    filter: none;
+    opacity: 1;
+  }
+
+  .rarity-icon-fallback {
+    display: none;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: normal;
+    max-width: 4rem;
+
+    &.visible {
+      display: block;
+    }
+  }
+}
+
+// Variant icons are always displayed in their own colors. Like rarity
+// buttons, selection is communicated by a border instead of recoloring the
+// icon. Variant SVGs are part of the shipped icon set, so no letter fallback
+// is rendered beside them.
+.variant-icon-row {
+  .rarity-toggle-btn {
+    border: none;
+    border-radius: var(--radius-sm);
+
+    &.active {
+      border: 1px solid #000;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px #000;
+    }
+  }
+
+  .rarity-toggle-btn:not(.active) img {
+    filter: none;
+    opacity: 1;
+  }
+}
+
+.hp-range {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.hp-input {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .filters-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 30, 0.45);
+    z-index: 20;
+  }
+
+  .filters-panel:not(.filters-panel-inline) {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    max-height: none;
+    width: min(85vw, 320px);
+    border-radius: 0;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 21;
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+
+    &.open {
+      transform: translateX(0);
+    }
+  }
+
+  .filters-close-btn {
+    display: inline-flex;
+  }
+}

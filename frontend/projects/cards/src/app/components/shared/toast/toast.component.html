@@ -1,0 +1,15 @@
+<div class="toast-stack">
+  @for (toast of toasts; track toast.id) {
+    <div class="toast" [class.toast-error]="toast.kind === 'error'">
+      <span>{{ toast.text }}</span>
+      <button
+        type="button"
+        class="toast-close"
+        (click)="dismiss(toast.id)"
+        [attr.aria-label]="'common.dismiss' | translate"
+      >
+        ×
+      </button>
+    </div>
+  }
+</div>

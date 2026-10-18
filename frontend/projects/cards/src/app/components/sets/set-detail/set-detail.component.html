@@ -1,0 +1,396 @@
+<div class="set-detail-page">
+  <a routerLink="/sets" class="back-link">&larr; {{ 'sets.backToSets' | translate }}</a>
+
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else {
+    <div class="set-detail-header">
+      <img
+        class="set-detail-logo"
+        [src]="logoUrl()"
+        [alt]="setName()"
+        (error)="onLogoError($event)"
+      />
+      <h2>{{ setName() }}</h2>
+      <span class="card-count">{{ 'sets.cardCount' | translate: { count: displayedCount } }}</span>
+      <div class="completion">
+        <div class="completion-bar">
+          <div class="completion-fill" [style.width.%]="displayedCompletionPercent"></div>
+        </div>
+        <span class="completion-label">{{ displayedCompletionPercent }}%</span>
+      </div>
+    </div>
+
+    <div class="set-detail-filters">
+      <div class="set-detail-filters-left">
+        <app-set-filters
+          [rarities]="availableRarities"
+          [variants]="exportVariantTypes"
+          [selectedRarities]="selectedRarities()"
+          [selectedVariants]="selectedVariants()"
+          (raritiesChange)="onRaritiesChange($event)"
+          (variantsChange)="onVariantsChange($event)"
+        >
+          <input
+            type="text"
+            class="input"
+            [placeholder]="'sets.searchSet' | translate"
+            [attr.aria-label]="'sets.searchSet' | translate"
+            [ngModel]="search()"
+            (ngModelChange)="onSearchChange($event)"
+          />
+        </app-set-filters>
+      </div>
+      <div class="set-detail-filters-right">
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [class.active]="duplicatesOnly()"
+          [attr.aria-label]="'sets.duplicatesOnly' | translate"
+          [title]="'sets.duplicatesOnly' | translate"
+          [attr.aria-pressed]="duplicatesOnly()"
+          (click)="toggleDuplicatesOnly()"
+        >
+          <span aria-hidden="true">2+</span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [class.active]="missingOnly()"
+          [attr.aria-label]="'sets.missingOnly' | translate"
+          [title]="'sets.missingOnly' | translate"
+          (click)="toggleMissingOnly()"
+        >
+          <ab-icon name="layers" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [class.active]="excludeInDeck()"
+          [attr.aria-label]="'sets.excludeInDeck' | translate"
+          [title]="'sets.excludeInDeck' | translate"
+          (click)="toggleExcludeInDeck()"
+        >
+          <ab-icon name="layers" />
+        </button>
+        <div class="view-toggle">
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'grid'"
+            [attr.aria-label]="'sets.viewGrid' | translate"
+            [title]="'sets.viewGrid' | translate"
+            (click)="setView('grid')"
+          >
+            <ab-icon name="grid" />
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'checklist'"
+            [attr.aria-label]="'sets.viewChecklist' | translate"
+            [title]="'sets.viewChecklist' | translate"
+            (click)="setView('checklist')"
+          >
+            <ab-icon name="check" />
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'binder'"
+            [attr.aria-label]="'sets.viewBinder' | translate"
+            [title]="'sets.viewBinder' | translate"
+            [attr.aria-pressed]="view() === 'binder'"
+            (click)="setView('binder')"
+          >
+            <ab-icon name="grid" />
+          </button>
+        </div>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [attr.aria-label]="'sets.exportMissing' | translate"
+          [title]="'sets.exportMissing' | translate"
+          (click)="openExportModal()"
+        >
+          <ab-icon name="download" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [attr.aria-label]="'sets.shareSet' | translate"
+          [title]="'sets.shareSet' | translate"
+          (click)="openShareModal()"
+        >
+          <ab-icon name="share" />
+        </button>
+      </div>
+    </div>
+
+    <app-set-card-grid
+      [cards]="filteredCards()"
+      [adapter]="gridAdapter"
+      [mode]="variantDisplayMode()"
+      [view]="view()"
+      [interactive]="true"
+      [localizeNames]="true"
+      [controls]="gridControls"
+      [checklistControls]="checklistControls"
+    />
+    <ng-template #checklistControls let-card let-variant="variant">
+      <div class="checklist-stepper" [class.owned]="variantTileOwnedQuantity(card, variant) > 0">
+        @if (variantTileOwnedQuantity(card, variant) > 0) {
+          <button
+            type="button"
+            class="qty-controls-btn"
+            [disabled]="isPending(card)"
+            (click)="stepVariantQuantity(card, variant, -1, $event)"
+            [attr.aria-label]="'sets.decreaseQuantity' | translate"
+          >
+            −
+          </button>
+        }
+        <span class="qty-controls-value">{{ variantTileOwnedQuantity(card, variant) }}</span>
+        <button
+          type="button"
+          class="qty-controls-btn"
+          [disabled]="isPending(card)"
+          (click)="stepVariantQuantity(card, variant, 1, $event)"
+          [attr.aria-label]="'sets.increaseQuantity' | translate"
+        >
+          +
+        </button>
+      </div>
+    </ng-template>
+    <ng-template #gridControls let-card let-variant="variant">
+      @if (variant) {
+        <div class="qty-controls">
+          @if (variantTileOwnedQuantity(card, variant) > 0) {
+            <button
+              type="button"
+              class="qty-controls-btn"
+              [disabled]="isPending(card)"
+              (click)="stepVariantQuantity(card, variant, -1, $event)"
+              [attr.aria-label]="'sets.decreaseQuantity' | translate"
+            >
+              −
+            </button>
+            <span class="qty-controls-value">{{ variantTileOwnedQuantity(card, variant) }}</span>
+            <button
+              type="button"
+              class="qty-controls-btn"
+              [disabled]="isPending(card)"
+              (click)="stepVariantQuantity(card, variant, 1, $event)"
+              [attr.aria-label]="'sets.increaseQuantity' | translate"
+            >
+              +
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="qty-controls-btn qty-controls-add"
+              [disabled]="isPending(card)"
+              (click)="stepVariantQuantity(card, variant, 1, $event)"
+              [attr.aria-label]="'sets.addToCollection' | translate"
+            >
+              +
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="qty-controls">
+          @if (quantityOwned(card) > 0) {
+            <button
+              type="button"
+              class="qty-controls-btn"
+              [disabled]="isPending(card)"
+              (click)="stepQuantity(card, -1, $event)"
+              [attr.aria-label]="'sets.decreaseQuantity' | translate"
+            >
+              −
+            </button>
+            <span class="qty-controls-value">{{ quantityOwned(card) }}</span>
+            <button
+              type="button"
+              class="qty-controls-btn"
+              [disabled]="isPending(card)"
+              (click)="stepQuantity(card, 1, $event)"
+              [attr.aria-label]="'sets.increaseQuantity' | translate"
+            >
+              +
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="qty-controls-btn qty-controls-add"
+              [disabled]="isPending(card)"
+              (click)="stepQuantity(card, 1, $event)"
+              [attr.aria-label]="'sets.addToCollection' | translate"
+            >
+              +
+            </button>
+          }
+        </div>
+      }
+    </ng-template>
+  }
+</div>
+
+@if (detailCard()!) {
+  <app-modal [title]="detailCard()!.name | cardDisplayName" [wide]="true" (closed)="closeDetail()">
+    <app-card-detail
+      [card]="detailCard()!"
+      [imageUrl]="detailImageUrl()"
+      [initialVariantType]="detailVariant()?.variant_type ?? null"
+    />
+  </app-modal>
+}
+
+@if (exportModalOpen()) {
+  <app-modal [title]="'sets.exportMissing' | translate" (closed)="closeExportModal()">
+    <div class="export-missing-modal">
+      <div class="export-missing-field">
+        <span class="export-missing-label">{{ 'sets.exportVariant' | translate }}</span>
+        <div class="rarity-toggle-row">
+          @for (variant of exportVariantTypes; track variant) {
+            <button
+              type="button"
+              class="rarity-toggle-btn"
+              [class.active]="exportVariantType() === variant"
+              [attr.aria-pressed]="exportVariantType() === variant"
+              [attr.aria-label]="exportVariantLabels[variant]"
+              [title]="exportVariantLabels[variant]"
+              (click)="exportVariantType.set(variant)"
+            >
+              <img [src]="exportVariantIcon(variant)" [alt]="exportVariantLabels[variant]" />
+            </button>
+          }
+        </div>
+      </div>
+      @if (availableRarities.length > 0) {
+        <div class="export-missing-field">
+          <span class="export-missing-label">{{ 'sets.exportRarities' | translate }}</span>
+          <div class="rarity-toggle-row">
+            <button
+              type="button"
+              class="rarity-toggle-btn"
+              [class.active]="isAllExportRaritiesActive()"
+              [attr.aria-label]="'sets.allRarities' | translate"
+              [title]="'sets.allRarities' | translate"
+              (click)="clearExportRarities()"
+            >
+              <ab-icon name="copy" />
+            </button>
+            @for (r of availableRarities; track r) {
+              <button
+                type="button"
+                class="rarity-toggle-btn"
+                [class.active]="isExportRarityActive(r)"
+                [attr.aria-label]="r"
+                [title]="r"
+                (click)="toggleExportRarity(r)"
+              >
+                <img [src]="rarityIcon(r)" [alt]="r" (error)="onRarityIconError($event)" />
+                <span class="rarity-fallback">{{ r }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+      <div class="export-missing-field">
+        <span class="export-missing-label">{{ 'sets.exportFormat' | translate }}</span>
+        <div class="export-missing-radio-row">
+          <label>
+            <input type="radio" name="exportFormat" value="tcgplayer" [(ngModel)]="exportFormat" />
+            TCGplayer
+          </label>
+          <label>
+            <input type="radio" name="exportFormat" value="cardmarket" [(ngModel)]="exportFormat" />
+            Cardmarket
+          </label>
+        </div>
+      </div>
+      <div class="export-missing-field">
+        <span class="export-missing-label">{{ 'sets.exportLanguage' | translate }}</span>
+        <div class="export-missing-radio-row">
+          <label>
+            <input type="radio" name="exportLanguage" value="en" [(ngModel)]="exportLanguage" />
+            {{ 'sets.exportLanguageEn' | translate }}
+          </label>
+          <label>
+            <input type="radio" name="exportLanguage" value="fr" [(ngModel)]="exportLanguage" />
+            {{ 'sets.exportLanguageFr' | translate }}
+          </label>
+        </div>
+      </div>
+      <div class="export-missing-field">
+        <label class="export-missing-checkbox">
+          <input type="checkbox" [(ngModel)]="exportExcludeInDeck" />
+          {{ 'sets.excludeInDeck' | translate }}
+        </label>
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="exportingMissing()"
+        (click)="exportMissing()"
+      >
+        {{ (exportingMissing() ? 'common.exporting' : 'sets.exportMissing') | translate }}
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (shareModalOpen()) {
+  <app-modal [title]="'sets.shareSet' | translate" (closed)="closeShareModal()">
+    <div class="export-missing-modal">
+      @if (!createdShare()!) {
+        <div class="export-missing-field">
+          <span class="export-missing-label">{{ 'sets.shareDuration' | translate }}</span>
+          <div class="export-missing-radio-row">
+            @for (days of shareDurationOptions(); track days) {
+              <label>
+                <input
+                  type="radio"
+                  name="shareDuration"
+                  [value]="days"
+                  [(ngModel)]="shareDurationDays"
+                />
+                {{
+                  (days === 1 ? 'sets.shareDurationOneDay' : 'sets.shareDurationDays')
+                    | translate: { count: days }
+                }}
+              </label>
+            }
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="creatingShare()"
+          (click)="createShare()"
+        >
+          {{ (creatingShare() ? 'sets.shareCreating' : 'sets.shareCreateLink') | translate }}
+        </button>
+      } @else {
+        <div class="export-missing-field">
+          <input
+            type="text"
+            class="input share-link-input"
+            readonly
+            [value]="shareUrl(createdShare()!)"
+          />
+          <span class="export-missing-label">
+            {{
+              'sets.shareLinkExpires'
+                | translate: { date: (createdShare()!.expires_at | date: 'medium') }
+            }}
+          </span>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="copyShareLink(createdShare()!)">
+          {{ 'sets.shareCopyLink' | translate }}
+        </button>
+      }
+    </div>
+  </app-modal>
+}

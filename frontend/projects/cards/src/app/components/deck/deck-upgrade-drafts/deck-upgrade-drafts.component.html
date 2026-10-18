@@ -1,0 +1,363 @@
+<button type="button" class="btn btn-secondary btn-sm" (click)="openList()">
+  {{ 'decks.drafts.draftsButton' | translate }}
+</button>
+
+@if (listOpen()) {
+  <app-modal [title]="'decks.drafts.listTitle' | translate" (closed)="closeList()">
+    <div class="drafts-list">
+      @if (listLoading()) {
+        <p>{{ 'common.loading' | translate }}</p>
+      } @else if (drafts().length === 0) {
+        <p>{{ 'decks.drafts.noDraftsYet' | translate }}</p>
+      } @else {
+        @for (d of drafts(); track d.id) {
+          <div class="draft-row surface">
+            @if (renamingDraftId()! === d.id) {
+              <input
+                type="text"
+                class="input"
+                [(ngModel)]="renameName"
+                (keydown.enter)="submitRename(d)"
+                (keydown.escape)="cancelRename()"
+              />
+              <div class="draft-row-actions">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="cancelRename()">
+                  {{ 'common.cancel' | translate }}
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="submitRename(d)">
+                  {{ 'common.save' | translate }}
+                </button>
+              </div>
+            } @else if (confirmDeleteId()! === d.id) {
+              <span class="draft-name">{{
+                'decks.drafts.confirmDelete' | translate: { name: d.name }
+              }}</span>
+              <div class="draft-row-actions">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="cancelDeleteDraft()">
+                  {{ 'common.cancel' | translate }}
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDeleteDraft(d)">
+                  {{ 'common.delete' | translate }}
+                </button>
+              </div>
+            } @else {
+              <button type="button" class="draft-name draft-open" (click)="openEditor(d)">
+                {{ d.name }}
+                <span class="draft-meta">{{
+                  'decks.drafts.entryCount' | translate: { count: d.entry_count }
+                }}</span>
+              </button>
+              <div class="draft-row-actions">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="startRename(d)">
+                  {{ 'common.rename' | translate }}
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" (click)="openExport(d.id)">
+                  {{ 'decks.drafts.exportMissing' | translate }}
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="askDeleteDraft(d)">
+                  {{ 'common.delete' | translate }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+    <div class="new-draft-form">
+      <input
+        type="text"
+        class="input"
+        [placeholder]="'decks.drafts.newDraftNamePlaceholder' | translate"
+        [(ngModel)]="newDraftName"
+        (keydown.enter)="createDraft()"
+      />
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="creating() || !newDraftName().trim()"
+        (click)="createDraft()"
+      >
+        {{
+          creating() ? ('common.saving' | translate) : ('decks.drafts.newDraftButton' | translate)
+        }}
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (editorOpen()) {
+  <app-modal [title]="draft()?.name ?? ''" [fullscreen]="true" (closed)="closeEditor()">
+    @if (editorLoading() || !draft()!) {
+      <p>{{ 'common.loading' | translate }}</p>
+    } @else {
+      <div class="draft-editor-body">
+        <div class="draft-editor-total-row">
+          <span class="draft-editor-total" [class.over-limit]="draft()!.result_total > 60">
+            {{ 'decks.drafts.resultTotal' | translate: { count: draft()!.result_total } }}
+          </span>
+        </div>
+        <div class="draft-grid-panel">
+          <div class="card-grid draft-card-grid">
+            @for (c of unifiedCards; track c.catalog_id + ':' + c.variant_type) {
+              <div class="card-tile draft-card-tile">
+                <img
+                  [src]="thumbnailUrl(c.image_path)"
+                  [alt]="c.name | cardDisplayName"
+                  loading="lazy"
+                />
+                <div class="card-info">
+                  <strong>{{ c.name | cardDisplayName }}</strong>
+                  @if (variantLabel(c.variant_type); as label) {
+                    @if (c.variant_type !== 'standard') {
+                      <span class="variant-badge">{{ label }}</span>
+                    }
+                  }
+                  <span>{{ c.set_name }}</span>
+                  <div class="draft-card-badges">
+                    <span class="draft-card-qty">×{{ c.baseline_quantity }}</span>
+                    @if (c.quantity_delta > 0) {
+                      <span class="badge badge-success">+{{ c.quantity_delta }}</span>
+                    } @else if (c.quantity_delta < 0) {
+                      <span class="badge badge-error">{{ c.quantity_delta }}</span>
+                    }
+                    @if (c.quantity_delta > 0 && c.quantity_delta <= c.available) {
+                      <span class="badge">{{ 'decks.drafts.available' | translate }}</span>
+                    }
+                  </div>
+                  <div class="draft-entry-controls">
+                    <button
+                      type="button"
+                      class="qty-stepper-btn"
+                      (click)="decrementEntry(c.catalog_id, c.variant_type)"
+                    >
+                      −
+                    </button>
+                    <button
+                      type="button"
+                      class="qty-stepper-btn"
+                      (click)="incrementEntry(c.catalog_id, c.variant_type)"
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm"
+                      [disabled]="!c.hasEntry"
+                      (click)="removeEntry(c.catalog_id, c.variant_type)"
+                    >
+                      {{ 'common.remove' | translate }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (addPanelOpen()) {
+          <app-modal
+            class="draft-add-modal"
+            [title]="'decks.drafts.addCards' | translate"
+            [wide]="true"
+            (closed)="closeAddPanel()"
+          >
+            <div class="draft-paste-box surface">
+              <button type="button" class="draft-paste-box-toggle" (click)="togglePasteBox()">
+                <span>{{ 'decks.drafts.pasteDiffLabel' | translate }}</span>
+                <span class="draft-paste-box-caret" [class.open]="pasteBoxOpen()">▸</span>
+              </button>
+              @if (pasteBoxOpen()) {
+                <textarea
+                  id="draft-paste-text"
+                  class="input draft-paste-textarea"
+                  [attr.aria-label]="'decks.drafts.pasteDiffLabel' | translate"
+                  [placeholder]="'decks.drafts.pasteDiffPlaceholder' | translate"
+                  [(ngModel)]="pasteText"
+                  (ngModelChange)="onPasteTextChange()"
+                ></textarea>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  [disabled]="pasteSubmitting() || !pasteText().trim()"
+                  (click)="submitDiffFromPaste()"
+                >
+                  {{
+                    pasteSubmitting()
+                      ? ('common.saving' | translate)
+                      : ('decks.drafts.pasteDiffButton' | translate)
+                  }}
+                </button>
+              }
+            </div>
+
+            <div class="draft-search-layout">
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm draft-filters-toggle-btn"
+                (click)="toggleSearchFilters()"
+              >
+                <span>{{
+                  (searchFiltersOpen() ? 'decks.drafts.hideFilters' : 'decks.drafts.showFilters')
+                    | translate
+                }}</span>
+                @if (hasActiveSearchFilters) {
+                  <span class="draft-filters-toggle-dot"></span>
+                }
+              </button>
+
+              <app-filters-panel
+                class="draft-search-filters"
+                [class.draft-search-filters-hidden]="!searchFiltersOpen()"
+                [inline]="true"
+                [open]="true"
+                [sets]="sets()"
+                [rarities]="rarities()"
+                [showSetTextFilter]="true"
+                [cardCountLabel]="searchCountLabel"
+                [hasActiveFilters]="hasActiveSearchFilters"
+                [search]="search()"
+                (searchChange)="search.set($event)"
+                [setCode]="setCode()"
+                (setCodeChange)="setCode.set($event)"
+                [setFilter]="setFilter()"
+                (setFilterChange)="setFilter.set($event)"
+                [supertype]="supertype()"
+                (supertypeChange)="supertype.set($event)"
+                [rarity]="rarity()"
+                (rarityChange)="rarity.set($event)"
+                [sort]="sort()"
+                (sortChange)="sort.set($event)"
+                (filterChange)="onSearchFilterChange()"
+                (clear)="clearSearchFilters()"
+              ></app-filters-panel>
+
+              <div class="draft-search-results">
+                @if (searchLoading()) {
+                  <p class="muted">{{ 'common.loading' | translate }}</p>
+                } @else if (searchResults().length === 0) {
+                  <p class="muted">{{ 'decks.drafts.noSearchResults' | translate }}</p>
+                } @else {
+                  <div class="card-grid draft-search-grid">
+                    @for (r of searchResults(); track r.id) {
+                      <div class="card-tile draft-search-tile" (click)="addFromSearch(r)">
+                        <img
+                          [src]="thumbnailUrl(r.image_path)"
+                          [alt]="r.name | cardDisplayName"
+                          loading="lazy"
+                        />
+                        <div class="card-info">
+                          <strong>{{ r.name | cardDisplayName }}</strong>
+                          <span>{{ r.set_name }}</span>
+                          <select
+                            class="select select-sm"
+                            [ngModel]="selectedVariantFor(r.id)"
+                            (ngModelChange)="setSelectedVariant(r.id, $event)"
+                            (click)="$event.stopPropagation()"
+                          >
+                            @for (v of variantOptionsFor(r.id); track v) {
+                              <option [ngValue]="v">{{ variantLabel(v) }}</option>
+                            }
+                          </select>
+                          <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            (click)="addFromSearch(r); $event.stopPropagation()"
+                          >
+                            {{ 'decks.drafts.addOne' | translate }}
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </app-modal>
+        }
+      </div>
+    }
+    @if (draft()!) {
+      <ng-container modal-footer>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="openAddPanel()">
+          {{ 'decks.drafts.addCards' | translate }}
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="openExport(draft()!.id)">
+          {{ 'decks.drafts.exportMissing' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          [disabled]="!draft()!.can_apply || applying()"
+          (click)="applyDraft()"
+        >
+          {{
+            applying() ? ('common.saving' | translate) : ('decks.drafts.applyButton' | translate)
+          }}
+        </button>
+      </ng-container>
+    }
+  </app-modal>
+}
+
+@if (exportOpen()) {
+  <app-modal [title]="'decks.drafts.exportMissingTitle' | translate" (closed)="closeExport()">
+    <div class="deck-actions-form">
+      <label class="export-mode-option">
+        <input type="radio" name="draft-export-mode" value="full" [(ngModel)]="exportMode" />
+        {{ 'decks.drafts.exportModeFull' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input type="radio" name="draft-export-mode" value="missing" [(ngModel)]="exportMode" />
+        {{ 'decks.exportModeMissing' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input
+          type="radio"
+          name="draft-export-mode"
+          value="not_available"
+          [(ngModel)]="exportMode"
+        />
+        {{ 'decks.exportModeNotAvailable' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input
+          type="radio"
+          name="draft-export-mode"
+          value="reserve_singles"
+          [(ngModel)]="exportMode"
+        />
+        {{ 'decks.drafts.exportModeReserveSingles' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input type="checkbox" [(ngModel)]="exportIncludeSets" />
+        {{ 'decks.exportIncludeSets' | translate }}
+      </label>
+      <div class="export-format-buttons">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="exporting()"
+          (click)="closeExport()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="exporting()"
+          (click)="doExport('tcgplayer')"
+        >
+          {{ 'decks.exportFormatTcgplayer' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="exporting()"
+          (click)="doExport('cardmarket')"
+        >
+          {{ 'decks.exportFormatCardmarket' | translate }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}

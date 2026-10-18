@@ -1,0 +1,345 @@
+<h2>{{ 'nav.gestion' | translate }}</h2>
+
+<section class="gestion-section">
+  <h3>{{ 'collection.gestionTitle' | translate }}</h3>
+
+  <app-gestion-action
+    actionTitle="Export collection"
+    description="Download your full collection as JSON."
+  >
+    <button
+      action
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="exportingCollection()"
+      (click)="exportCollection()"
+    >
+      {{
+        exportingCollection()
+          ? ('collection.exporting' | translate)
+          : ('collection.export' | translate)
+      }}
+    </button>
+  </app-gestion-action>
+
+  <app-gestion-action
+    actionTitle="Import collection"
+    description="Restore or merge a previously exported collection.json file. All-or-nothing: if any card is invalid, nothing is imported."
+  >
+    <label action class="btn btn-secondary import-archive" [class.disabled]="importingCollection()">
+      {{
+        importingCollection()
+          ? ('collection.importing' | translate)
+          : ('collection.import' | translate)
+      }}
+      <input
+        type="file"
+        accept=".json"
+        [disabled]="importingCollection()"
+        (change)="importCollection($event)"
+        hidden
+      />
+    </label>
+  </app-gestion-action>
+
+  <app-gestion-action
+    actionTitle="History"
+    description="View the log of quantity changes for your collection."
+  >
+    <button action type="button" class="btn btn-secondary" (click)="openHistory()">
+      {{ 'collection.history' | translate }}
+    </button>
+  </app-gestion-action>
+
+  <app-gestion-action
+    actionTitle="Delete all cards"
+    description="Permanently wipe your entire collection, all decks, and combat history."
+  >
+    <button
+      action
+      type="button"
+      class="btn btn-danger"
+      (click)="openDeleteAllConfirm('collection')"
+    >
+      {{ 'collection.deleteAll' | translate }}
+    </button>
+  </app-gestion-action>
+</section>
+
+<section class="gestion-section">
+  <h3>{{ 'decks.gestionTitle' | translate }}</h3>
+
+  <app-gestion-action
+    [actionTitle]="'decks.importDeckTitle' | translate"
+    [description]="'decks.importDeckDesc' | translate"
+  >
+    <label action class="btn btn-secondary import-archive" [class.disabled]="importingDeck()">
+      {{ importingDeck() ? ('common.importing' | translate) : ('decks.importDeck' | translate) }}
+      <input
+        type="file"
+        accept=".json"
+        [disabled]="importingDeck()"
+        (change)="importDeck($event)"
+        hidden
+      />
+    </label>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'decks.exportAllTitle' | translate"
+    [description]="'decks.exportAllDesc' | translate"
+  >
+    <button
+      action
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="exportingAllDecks()"
+      (click)="exportAllDecks()"
+    >
+      {{ exportingAllDecks() ? ('common.exporting' | translate) : ('decks.exportAll' | translate) }}
+    </button>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'decks.importAllTitle' | translate"
+    [description]="'decks.importAllDesc' | translate"
+  >
+    <label action class="btn btn-secondary import-archive" [class.disabled]="importingAllDecks()">
+      {{ importingAllDecks() ? ('common.importing' | translate) : ('decks.importAll' | translate) }}
+      <input
+        type="file"
+        accept=".json"
+        [disabled]="importingAllDecks()"
+        (change)="importAllDecks($event)"
+        hidden
+      />
+    </label>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'decks.deleteAllTitle' | translate"
+    [description]="'decks.deleteAllDesc' | translate"
+  >
+    <button action type="button" class="btn btn-danger" (click)="openDeleteAllConfirm('decks')">
+      {{ 'common.deleteAll' | translate }}
+    </button>
+  </app-gestion-action>
+</section>
+
+<section class="gestion-section">
+  <h3>{{ 'combats.gestionTitle' | translate }}</h3>
+
+  <app-gestion-action
+    [actionTitle]="'combats.exportAllTitle' | translate"
+    [description]="'combats.exportAllDesc' | translate"
+  >
+    <button
+      action
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="exportingAllCombats()"
+      (click)="exportAllCombats()"
+    >
+      {{
+        exportingAllCombats()
+          ? ('common.exporting' | translate)
+          : ('combats.exportAllTitle' | translate)
+      }}
+    </button>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'combats.importAllTitle' | translate"
+    [description]="'combats.importAllDesc' | translate"
+  >
+    <label action class="btn btn-secondary import-archive" [class.disabled]="importingAllCombats()">
+      {{
+        importingAllCombats() ? ('common.importing' | translate) : ('combats.importAll' | translate)
+      }}
+      <input
+        type="file"
+        accept=".json"
+        [disabled]="importingAllCombats()"
+        (change)="importAllCombats($event)"
+        hidden
+      />
+    </label>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'combats.deleteAllTitle' | translate"
+    [description]="'combats.deleteAllDesc' | translate"
+  >
+    <button action type="button" class="btn btn-danger" (click)="openDeleteAllConfirm('combats')">
+      {{ 'common.deleteAll' | translate }}
+    </button>
+  </app-gestion-action>
+</section>
+
+<section class="gestion-section">
+  <h3>{{ 'purchases.gestionTitle' | translate }}</h3>
+
+  <app-gestion-action
+    [actionTitle]="'purchases.exportAllTitle' | translate"
+    [description]="'purchases.exportAllDesc' | translate"
+  >
+    <button
+      action
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="exportingAllPurchases()"
+      (click)="exportAllPurchases()"
+    >
+      {{
+        exportingAllPurchases()
+          ? ('common.exporting' | translate)
+          : ('purchases.exportAllTitle' | translate)
+      }}
+    </button>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'purchases.importAllTitle' | translate"
+    [description]="'purchases.importAllDesc' | translate"
+  >
+    <label
+      action
+      class="btn btn-secondary import-archive"
+      [class.disabled]="importingAllPurchases()"
+    >
+      {{
+        importingAllPurchases()
+          ? ('common.importing' | translate)
+          : ('purchases.importAll' | translate)
+      }}
+      <input
+        type="file"
+        accept=".json"
+        [disabled]="importingAllPurchases()"
+        (change)="importAllPurchases($event)"
+        hidden
+      />
+    </label>
+  </app-gestion-action>
+
+  <app-gestion-action
+    [actionTitle]="'purchases.deleteAllTitle' | translate"
+    [description]="'purchases.deleteAllDesc' | translate"
+  >
+    <button action type="button" class="btn btn-danger" (click)="openDeleteAllConfirm('purchases')">
+      {{ 'common.deleteAll' | translate }}
+    </button>
+  </app-gestion-action>
+</section>
+
+
+
+@if (deleteAllStep() === 1) {
+  <app-modal [title]="deleteAllTitleKey | translate" (closed)="closeDeleteAllConfirm()">
+    <div class="deck-actions-form">
+      <p>{{ deleteAllConfirmBodyKey | translate }}</p>
+      <div class="deck-actions-form-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeDeleteAllConfirm()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="deleteAllCountLoading()"
+          (click)="proceedToFinalDeleteAllConfirm()"
+        >
+          {{
+            deleteAllCountLoading()
+              ? ('common.loading' | translate)
+              : ('common.continue' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (deleteAllStep() === 2) {
+  <app-modal [title]="'common.areYouSure' | translate" (closed)="closeDeleteAllConfirm()">
+    <div class="deck-actions-form">
+      <p>
+        {{ deleteAllFinalBodyKey | translate: { count: deleteAllCount(), qty: deleteAllQty() } }}
+      </p>
+      <div class="deck-actions-form-buttons">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="deletingAll()"
+          (click)="closeDeleteAllConfirm()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="deletingAll()"
+          (click)="confirmDeleteAll()"
+        >
+          {{
+            deletingAll()
+              ? ('common.deleting' | translate)
+              : ('common.confirmDeleteAll' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (historyOpen()) {
+  <app-modal [title]="'collection.historyTitle' | translate" (closed)="closeHistory()">
+    <div class="history-search">
+      <input
+        type="text"
+        class="input"
+        [attr.placeholder]="'collection.historySearchPlaceholder' | translate"
+        [(ngModel)]="historySearch"
+        (ngModelChange)="onHistorySearchChange()"
+      />
+    </div>
+    <div class="history-list">
+      @if (historyLoading()) {
+        <p>{{ 'common.loading' | translate }}</p>
+      } @else if (historyItems().length === 0) {
+        <p>
+          {{
+            (historySearch().trim() ? 'collection.historyNoMatch' : 'collection.historyEmpty')
+              | translate
+          }}
+        </p>
+      } @else {
+        @for (entry of historyItems(); track entry.id) {
+          <div class="history-row">
+            <img
+              [src]="imageUrlFor(entry.image_path)"
+              [alt]="entry.name | cardDisplayName"
+              loading="lazy"
+            />
+            <div class="history-info">
+              <strong>{{ entry.name | cardDisplayName }}</strong>
+              <span>{{ entry.set_name }}</span>
+              <span>
+                {{ historyActionLabel(entry) }}: {{ historyQuantityLabel(entry) }}
+                @if (entry.source === 'import') {
+                  <span class="badge">import</span>
+                }
+              </span>
+              <span class="history-date">{{ entry.created_at | date: 'medium' }}</span>
+            </div>
+          </div>
+        }
+        @if (historyLoadingMore()) {
+          <p>{{ 'common.loadingMore' | translate }}</p>
+        } @else if (!hasMoreHistory) {
+          <p class="history-end">{{ 'collection.historyEnd' | translate }}</p>
+        }
+        <div #historySentinel class="scroll-sentinel"></div>
+      }
+    </div>
+  </app-modal>
+}

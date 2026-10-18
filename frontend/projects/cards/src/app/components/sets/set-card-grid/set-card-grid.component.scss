@@ -1,0 +1,274 @@
+:host {
+  display: block;
+}
+.card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+}
+
+.binder-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.binder-page {
+  width: min(100%, 360px);
+  box-sizing: border-box;
+  padding: 0.6rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt, var(--color-surface));
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+.binder-page-label {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.binder-pockets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.binder-pocket {
+  min-width: 0;
+  aspect-ratio: 0.69;
+  padding: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.12);
+}
+
+:host ::ng-deep .binder-pocket .card-tile {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:host ::ng-deep .binder-pocket .card-tile img {
+  width: 100%;
+  height: calc(100% - 1.25rem);
+  object-fit: contain;
+}
+
+:host ::ng-deep .binder-pocket .card-info {
+  margin: 0;
+  text-align: center;
+  font-size: 0.7rem;
+}
+
+:host ::ng-deep .binder-pocket .card-info strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.7rem;
+}
+
+@media (hover: none) {
+  :host ::ng-deep .binder-pocket .card-tile .qty-controls-group {
+    position: absolute;
+    bottom: 1.3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+  }
+}
+/* "Show variants: both" -- one framed group per card (number + name header,
+ * its variant tiles side by side) instead of a flat grid where a card's
+ * variants blur into its neighbours'. --cols is the card's variant count,
+ * so each frame is only as wide as its own prints. */
+.variant-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.variant-group {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt, transparent);
+}
+
+@media (max-width: 640px) {
+  .variant-groups {
+    justify-content: center;
+  }
+}
+
+.variant-group-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  &.interactive {
+    cursor: pointer;
+  }
+  font-size: 0.85rem;
+}
+
+.variant-group-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.variant-group-number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+
+  &.secret {
+    color: #b8860b;
+    font-weight: 700;
+  }
+}
+
+.variant-group-tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 1), minmax(0, 76px));
+  gap: var(--space-1);
+}
+
+/* Compact tiles inside a group, so ~4 four-variant cards fit per row on
+ * desktop: tighter padding and a one-line, smaller variant label. */
+:host ::ng-deep .variant-group-tiles .card-tile {
+  padding: var(--space-1);
+
+  .card-info {
+    gap: 0;
+    margin-top: var(--space-1);
+  }
+
+  .card-info strong {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.7rem;
+  }
+
+  .owned-badge {
+    top: var(--space-1);
+    right: var(--space-1);
+    font-size: 0.65rem;
+  }
+}
+
+.checklist-number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  &.secret {
+    color: #b8860b;
+    font-weight: 700;
+  }
+}
+
+/* Checklist -- one row per card, one stepper column per variant type. */
+.checklist-wrap table.checklist {
+  min-width: 0;
+
+  th,
+  td {
+    padding: var(--space-1) var(--space-2);
+    vertical-align: middle;
+  }
+
+  tr.not-owned td:not(.checklist-variant-col) {
+    color: var(--color-text-muted);
+  }
+}
+
+.checklist-variant-col {
+  text-align: center !important;
+  white-space: nowrap;
+
+  span {
+    font-size: 0.7rem;
+  }
+}
+
+.checklist-variant-icon {
+  width: 1rem !important;
+  height: 1rem;
+  vertical-align: middle;
+  margin-right: 0.15rem;
+}
+
+.checklist-name {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.checklist-rarity {
+  img {
+    width: 1.1rem !important;
+    height: 1.1rem;
+    object-fit: contain;
+  }
+
+  .rarity-fallback {
+    display: none;
+    font-size: 0.75rem;
+
+    &.visible {
+      display: inline;
+    }
+  }
+}
+
+.checklist-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+
+  .qty-controls-btn {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .qty-controls-value {
+    color: var(--color-text-muted);
+  }
+
+  &.owned .qty-controls-value {
+    color: var(--color-text);
+  }
+}
+
+.checklist-na {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.missing {
+  color: var(--color-text-muted);
+}

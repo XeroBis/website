@@ -1,0 +1,159 @@
+<button
+  type="button"
+  class="btn btn-primary btn-icon combine-drafts-btn"
+  [attr.aria-label]="'decks.multiDraftExport.button' | translate"
+  [title]="'decks.multiDraftExport.button' | translate"
+  (click)="openPicker()"
+>
+  <ab-icon name="repeat" />
+</button>
+
+@if (pickerOpen()) {
+  <app-modal
+    [title]="'decks.multiDraftExport.pickerTitle' | translate"
+    [wide]="true"
+    (closed)="closePicker()"
+  >
+    <div class="draft-picker">
+      @if (pickerLoading()) {
+        <p>{{ 'common.loading' | translate }}</p>
+      } @else if (drafts().length === 0) {
+        <p>{{ 'decks.multiDraftExport.noDraftsYet' | translate }}</p>
+      } @else {
+        <p class="muted">{{ 'decks.multiDraftExport.pickerHint' | translate }}</p>
+        <ul class="draft-picker-list">
+          @for (d of drafts(); track d.id) {
+            <li
+              class="draft-picker-row surface"
+              [class.selected]="isSelected(d)"
+              (click)="toggleSelected(d)"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSelected(d)"
+                (click)="$event.stopPropagation()"
+                (change)="toggleSelected(d)"
+              />
+              <div class="draft-picker-info">
+                <span class="draft-picker-name">{{ d.name }}</span>
+                <span class="draft-picker-deck">{{ d.deck_name }}</span>
+              </div>
+              <span class="badge">{{
+                'decks.drafts.resultTotal' | translate: { count: d.result_total }
+              }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    <div class="deck-actions-form-buttons">
+      <button type="button" class="btn btn-ghost" (click)="closePicker()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="selectedCount === 0"
+        (click)="goToExportStep()"
+      >
+        {{ 'decks.multiDraftExport.continue' | translate: { count: selectedCount } }}
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (exportOpen()) {
+  <app-modal
+    [title]="'decks.multiDraftExport.exportTitle' | translate: { count: selectedCount }"
+    (closed)="closeExport()"
+  >
+    <div class="deck-actions-form">
+      <label class="export-mode-option">
+        <input type="radio" name="multi-draft-export-mode" value="full" [(ngModel)]="exportMode" />
+        {{ 'decks.drafts.exportModeFull' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input
+          type="radio"
+          name="multi-draft-export-mode"
+          value="missing"
+          [(ngModel)]="exportMode"
+        />
+        {{ 'decks.exportModeMissing' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input
+          type="radio"
+          name="multi-draft-export-mode"
+          value="not_available"
+          [(ngModel)]="exportMode"
+        />
+        {{ 'decks.exportModeNotAvailable' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input
+          type="radio"
+          name="multi-draft-export-mode"
+          value="reserve_singles"
+          [(ngModel)]="exportMode"
+        />
+        {{ 'decks.drafts.exportModeReserveSingles' | translate }}
+      </label>
+      <label class="export-mode-option">
+        <input type="checkbox" [(ngModel)]="exportIncludeSets" />
+        {{ 'decks.exportIncludeSets' | translate }}
+      </label>
+      <div class="export-language-field">
+        <span class="export-language-label">{{
+          'decks.multiDraftExport.exportLanguage' | translate
+        }}</span>
+        <div class="export-language-radio-row">
+          <label class="export-mode-option">
+            <input
+              type="radio"
+              name="multi-draft-export-language"
+              value="en"
+              [(ngModel)]="exportLanguage"
+            />
+            {{ 'decks.multiDraftExport.exportLanguageEn' | translate }}
+          </label>
+          <label class="export-mode-option">
+            <input
+              type="radio"
+              name="multi-draft-export-language"
+              value="fr"
+              [(ngModel)]="exportLanguage"
+            />
+            {{ 'decks.multiDraftExport.exportLanguageFr' | translate }}
+          </label>
+        </div>
+      </div>
+      <div class="export-format-buttons">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="exporting()"
+          (click)="backToPicker()"
+        >
+          {{ 'common.back' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="exporting()"
+          (click)="doExport('tcgplayer')"
+        >
+          {{ 'decks.exportFormatTcgplayer' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="exporting()"
+          (click)="doExport('cardmarket')"
+        >
+          {{ 'decks.exportFormatCardmarket' | translate }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}

@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="btn btn-secondary btn-icon variant-mode-toggle"
+  [class.active]="mode !== 'standard'"
+  [attr.aria-label]="label"
+  [title]="label"
+  (click)="cycle()"
+>
+  <ab-icon name="layers" />
+</button>

@@ -181,7 +181,19 @@ Stats: `{date_from, date_to` (the range used: the query's, else first and last w
 
 ## Cards — `cards.alanbignon.com`
 
-Placeholder, behind `appGuard`. Being ported from `../pokemon_cards` (migration-plan.md step 6). Until then its behaviour is described in `../pokemon_cards/documentation/features.md`, minus Card Scan, the `/design` page and the service worker.
+A private card collection and deck tracker, ported from `../pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The shared header links the pages below and the account/app hub. The web manifest and Poké Ball icons support home-screen installation, with no service worker. Part 6.7 is complete; the collector look and data-import rehearsal remain 6.8/6.9.
+
+### Pages
+
+- `/browse`: catalog search, persisted set/name/number/type/rarity/print filters, server sorting and pagination, grid/table and variant display, card details, collection staging and batch add (optionally directly into a normal deck). Only admins can correct a catalog name.
+- `/sets`, `/sets/:setCode`: series groups and completion, rarity/print filters, set cards in grid/checklist/nine-pocket views, exact-print quantities, duplicates/missing filters, missing-card text exports (single or combined sets), and creating a share. `/missing` lists missing numeric intervals for in-store checks.
+- `/collection`: search, filters, availability, variants, grid/table, quantity editing and deletion, card details/deck usage, and a staging panel for deck allocations. Collection history is in Gestion's Collection section.
+- `/decks`, `/decks/:id`: normal/phantom decks, pasted decklists, posters, history, copy/rename/delete, per-print deck rows, phantom ownership/availability views, exports, and a locally sampled starting hand. Normal decks also have named upgrade drafts with editable deltas, paste/JSON diff, apply and single/combined text exports. `/convert` converts TCGplayer/Cardmarket lists with a card preview.
+- `/combats`: log/edit/delete shared games, deck/player pickers, winner/prizes/date and frozen card snapshots. Deleted decks keep their historical snapshots and their combats remain editable.
+- `/purchases`: What I Paid, with add/edit/delete, name search, sorting and a running total. `/shopping-lists`, `/shopping-lists/:id`: create from a pasted decklist, rename/delete, add more cards, filter, EN/FR names and independent acquisition tallies.
+- `/shares`: create/list/revoke expiring set links (also available from Sets). `/shared/:token` is public, outside the app guard, with read-only cards and token-scoped scans/logo/symbol; unavailable links show the same message whether unknown, expired or revoked.
+- `/gestion`: per-user collection, single/all-deck, combat and purchase JSON import/export, collection history and delete-all actions with two confirmations. Files are read as JSON before submission; malformed files and backend 409/422 refusals are shown. Combat bulk deletion is limited to the user's games except for admins.
+- `/catalog-management` (admin): catalog/variant counts, full or individual refresh jobs, metadata import/export and filtered image ZIP import/export. ZIP downloads stream through a normal link; uploads send the raw File with progress, then poll restoration/linking through completion. Opening the page reattaches to any running refresh/step/image job. All six steps remain available; Scan, embeddings and `/design` are absent.
 
 ### Look (planned)
 
@@ -189,7 +201,7 @@ Placeholder, behind `appGuard`. Being ported from `../pokemon_cards` (migration-
 
 ### API (`/api/cards`)
 
-Built so far: catalog, images, collection, decks, upgrade drafts, the decklist converter, combats, purchases, shopping lists, share links and catalog management (the frontend comes at step 6.7). Every route needs a session (401) and the `cards` app (403); unsafe ones also need CSRF (403). Catalog management needs an admin instead (403). The `public/...` routes need neither. Display fields (`name`, `set_name`, `image_path`) are in the user's language: French name / set title / scan when known, else English. Refused business rules are 409, invalid input 422.
+Implemented: catalog, images, collection, decks, upgrade drafts, the decklist converter, combats, purchases, shopping lists, share links and catalog management, with the frontend above. Every route needs a session (401) and the `cards` app (403); unsafe ones also need CSRF (403). Catalog management needs an admin instead (403). The `public/...` routes need neither. Display fields (`name`, `set_name`, `image_path`) are in the user's language: French name / set title / scan when known, else English. Refused business rules are 409, invalid input 422.
 
 An owned card (`/collection` responses) is `{id, catalog_id, quantity, created_at, name, set_name, set_code, card_number, image_path, supertype, rarity, series, card_count, release_date, variants: [{variant_type, quantity, image_path_fr, image_path_us}], allocated, allocated_variants: {print: copies}, available, decks: [{deck_id, deck_name, quantity_in_deck}]}`: `quantity` sums its prints, `allocated` the copies in normal decks, `available` = `quantity − allocated`; each print's scans come from its catalog variant (null for `standard`); `decks` sums each deck's copies over prints, by deck name.
 

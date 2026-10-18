@@ -1,0 +1,5 @@
+.variant-mode-toggle.active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast, #fff);
+  border-color: var(--color-primary);
+}

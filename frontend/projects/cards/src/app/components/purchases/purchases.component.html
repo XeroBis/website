@@ -1,0 +1,209 @@
+<datalist id="purchase-sources">
+  @for (source of sourceSuggestions; track source) {
+    <option [value]="source"></option>
+  }
+</datalist>
+
+<div class="top-bar">
+  <input
+    type="text"
+    class="input purchase-search"
+    [placeholder]="'purchases.searchPlaceholder' | translate"
+    [(ngModel)]="search"
+  />
+
+  <button
+    type="button"
+    class="btn btn-primary btn-icon new-purchase-btn"
+    [attr.aria-label]="'purchases.logPurchase' | translate"
+    (click)="openAdd()"
+  >
+    <ab-icon name="plus" />
+  </button>
+</div>
+
+@if (addOpen()) {
+  <app-modal [title]="'purchases.logPurchaseModalTitle' | translate" (closed)="closeAdd()">
+    <div class="purchase-form">
+      <label>
+        {{ 'purchases.productName' | translate }}
+        <input type="text" class="input" [(ngModel)]="form().product_name" />
+      </label>
+      <label>
+        {{ 'purchases.price' | translate }}
+        <input type="number" min="0" step="0.01" class="input" [(ngModel)]="form().price" />
+      </label>
+      <label>
+        {{ 'common.quantity' | translate }}
+        <input type="number" min="1" step="1" class="input" [(ngModel)]="form().quantity" />
+      </label>
+      <label>
+        {{ 'purchases.purchasedAt' | translate }}
+        <input type="date" class="input" [(ngModel)]="form().purchased_at" />
+      </label>
+      <label>
+        {{ 'purchases.source' | translate }}
+        <input type="text" class="input" list="purchase-sources" [(ngModel)]="form().source" />
+      </label>
+      <label>
+        {{ 'purchases.description' | translate }}
+        <textarea class="input" rows="2" [(ngModel)]="form().description"></textarea>
+      </label>
+      <label>
+        {{ 'purchases.sets' | translate }}
+        <select class="select" multiple size="5" [(ngModel)]="form().sets">
+          @for (set of availableSets(); track set.set_code) {
+            <option [value]="set.set_code">{{ set.set_code }} - {{ set.set_name }}</option>
+          }
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeAdd()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="submitting()"
+          (click)="submitAdd()"
+        >
+          {{
+            submitting() ? ('purchases.logging' | translate) : ('purchases.logPurchase' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+<div class="sort-row">
+  <select class="select" [(ngModel)]="sort">
+    @for (opt of sortOptions; track opt) {
+      <option [value]="opt">
+        {{ 'common.sortLabel' | translate: { label: ('purchases.sort.' + opt | translate) } }}
+      </option>
+    }
+  </select>
+  <span class="total-spent">{{
+    'purchases.totalSpent' | translate: { amount: (totalSpent | number: '1.2-2') }
+  }}</span>
+</div>
+
+@if (loading()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (filteredPurchases.length === 0) {
+  <p>{{ 'purchases.noneLoggedYet' | translate }}</p>
+} @else {
+  <div class="table-wrap">
+    <table class="purchase-table">
+      <thead>
+        <tr>
+          <th>{{ 'purchases.date' | translate }}</th>
+          <th>{{ 'purchases.productName' | translate }}</th>
+          <th>{{ 'common.quantity' | translate }}</th>
+          <th>{{ 'purchases.price' | translate }}</th>
+          <th>{{ 'purchases.source' | translate }}</th>
+          <th>{{ 'purchases.sets' | translate }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (purchase of filteredPurchases; track purchase.id) {
+          <tr>
+            <td>{{ purchase.purchased_at | date: 'dd/MM/yyyy' }}</td>
+            <td [title]="purchase.description ?? ''">{{ purchase.product_name }}</td>
+            <td>{{ purchase.quantity }}</td>
+            <td>{{ purchase.price | number: '1.2-2' }}</td>
+            <td>{{ purchase.source }}</td>
+            <td class="sets-cell" [title]="purchase.sets.join(', ')">
+              {{ purchase.sets.join(', ') }}
+            </td>
+            <td class="row-actions">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="openEdit(purchase)">
+                {{ 'common.edit' | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                (click)="openDeleteConfirm(purchase)"
+              >
+                {{ 'common.delete' | translate }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (editOpen() && editPurchase()!) {
+  <app-modal [title]="'purchases.editPurchaseTitle' | translate" (closed)="closeEdit()">
+    <div class="purchase-form">
+      <label>
+        {{ 'purchases.productName' | translate }}
+        <input type="text" class="input" [(ngModel)]="editForm().product_name" />
+      </label>
+      <label>
+        {{ 'purchases.price' | translate }}
+        <input type="number" min="0" step="0.01" class="input" [(ngModel)]="editForm().price" />
+      </label>
+      <label>
+        {{ 'common.quantity' | translate }}
+        <input type="number" min="1" step="1" class="input" [(ngModel)]="editForm().quantity" />
+      </label>
+      <label>
+        {{ 'purchases.purchasedAt' | translate }}
+        <input type="date" class="input" [(ngModel)]="editForm().purchased_at" />
+      </label>
+      <label>
+        {{ 'purchases.source' | translate }}
+        <input type="text" class="input" list="purchase-sources" [(ngModel)]="editForm().source" />
+      </label>
+      <label>
+        {{ 'purchases.description' | translate }}
+        <textarea class="input" rows="2" [(ngModel)]="editForm().description"></textarea>
+      </label>
+      <label>
+        {{ 'purchases.sets' | translate }}
+        <select class="select" multiple size="5" [(ngModel)]="editForm().sets">
+          @for (set of availableSets(); track set.set_code) {
+            <option [value]="set.set_code">{{ set.set_code }} - {{ set.set_name }}</option>
+          }
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeEdit()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="editSubmitting()"
+          (click)="submitEdit()"
+        >
+          {{ editSubmitting() ? ('common.saving' | translate) : ('common.save' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (deletePurchase()!) {
+  <app-modal [title]="'purchases.deletePurchaseTitle' | translate" (closed)="closeDeleteConfirm()">
+    <p>{{ 'purchases.deletePurchaseBody' | translate }}</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="deleteLoading()"
+        (click)="confirmDelete()"
+      >
+        {{ deleteLoading() ? ('common.deleting' | translate) : ('common.delete' | translate) }}
+      </button>
+    </div>
+  </app-modal>
+}

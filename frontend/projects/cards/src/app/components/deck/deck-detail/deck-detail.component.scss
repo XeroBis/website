@@ -1,0 +1,411 @@
+.start-hand-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.start-hand-card {
+  width: 120px;
+  aspect-ratio: 5 / 7;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+}
+
+.start-hand-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.deck-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  .select {
+    height: 2.375rem;
+    padding: 0 0.75rem;
+  }
+}
+
+// Title + hand-fan + energy badges: always its own row, so the header's
+// height/shape stays the same regardless of how long the deck name is —
+// it can never push the controls row below into a different wrap pattern.
+.deck-header-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+// Sort/want-list-filter/view-toggle: a second row under the title, right-aligned,
+// so it wraps independently of the title's width.
+.deck-header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+// Start Hand + Rename/Copy/History/Export/Delete: pinned to the right of the
+// title row via the preceding .energy-used's margin-right: auto.
+.deck-actions-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deck-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    min-width: 0;
+    max-width: 16rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 640px) {
+  .deck-header-top {
+    // Back link + hand-fan + energy badges share one centered, vertically
+    // aligned line (back link stays leftmost via DOM order/default order:0),
+    // then the title centered on its own line below -- instead of the
+    // default DOM order which stranded the title between the fan and the
+    // energy row.
+    justify-content: center;
+
+    .hand-fan {
+      order: 1;
+      min-width: 8rem;
+      height: 5.75rem;
+    }
+
+    .hand-fan-card {
+      width: 4.5rem;
+
+      &:not(:first-child) {
+        margin-left: -2.4rem;
+      }
+    }
+
+    .energy-used {
+      order: 2;
+      margin-right: 0;
+    }
+
+    .deck-title-row {
+      order: 3;
+      flex: 0 0 100%;
+      justify-content: center;
+
+      h2 {
+        max-width: 100%;
+        font-size: 1.4rem;
+      }
+    }
+
+    .deck-actions-slot {
+      order: 4;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-right: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--color-text);
+    background: var(--color-surface-alt, var(--color-surface));
+  }
+}
+
+.hand-fan {
+  display: flex;
+  align-items: flex-end;
+  min-width: 6.5rem;
+  height: 4.75rem;
+}
+
+.hand-fan-card {
+  width: 3.75rem;
+  aspect-ratio: 5 / 7;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--color-border);
+
+  &:not(:first-child) {
+    margin-left: -2rem;
+  }
+
+  &:nth-child(1) {
+    transform: rotate(-12deg);
+    z-index: 1;
+  }
+
+  &:nth-child(2) {
+    transform: rotate(0deg) translateY(-0.5rem);
+    z-index: 2;
+  }
+
+  &:nth-child(3) {
+    transform: rotate(12deg);
+    z-index: 3;
+  }
+}
+
+// An unpicked poster slot -- a blank card-shaped outline instead of an
+// image, in the same fanned position its picked counterpart would take.
+.hand-fan-placeholder {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+
+.variant-badge {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 0.35em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.energy-used {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  flex-wrap: wrap;
+}
+
+.energy-badge-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.energy-badge-text {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt, var(--color-surface));
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+}
+
+.description {
+  color: var(--color-text-muted);
+}
+
+.card-count-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.owned-short {
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.owned-full {
+  color: var(--color-success);
+}
+
+.allocation-hint {
+  &.has-tooltip {
+    cursor: help;
+    text-decoration: underline dotted var(--color-text-muted);
+    text-underline-offset: 2px;
+  }
+}
+
+// Rendered once, fixed to the viewport, and positioned in TS from the
+// hovered/focused trigger's bounding rect (see showAllocationTooltip) --
+// not CSS-anchored to the trigger, since that would get clipped by
+// .table-wrap's forced vertical overflow (overflow-x: auto forces
+// overflow-y to auto too, per spec, regardless of what it's set to) in the
+// table view, and would need to fight the app's fixed header's stacking
+// context (started by the grid tile's hover transform) in the grid view.
+.allocation-tooltip-float {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 0.4rem));
+  z-index: 50;
+  min-width: 12rem;
+  max-width: 16rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt, var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: 0.78rem;
+  font-weight: 400;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+
+  strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1rem;
+  }
+}
+
+.card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  }
+}
+
+table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: var(--space-4);
+}
+
+th,
+td {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+th {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+table img {
+  width: 48px;
+  aspect-ratio: 5 / 7;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+}
+
+.card-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: auto;
+
+  .qty-stepper {
+    width: 100%;
+  }
+
+  .qty-stepper-input {
+    flex: 1;
+  }
+
+  .remove-card-btn {
+    margin-top: 0;
+  }
+}
+
+.qty-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  height: 1.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.qty-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.qty-stepper-input {
+  width: 2.75rem;
+  border: none;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  padding: 0 0.25rem;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  -moz-appearance: textfield;
+}

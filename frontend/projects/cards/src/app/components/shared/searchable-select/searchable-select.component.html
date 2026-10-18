@@ -1,0 +1,29 @@
+<div class="searchable-select">
+  <input
+    type="text"
+    class="input"
+    [placeholder]="placeholder"
+    [ngModel]="query()"
+    (ngModelChange)="onQueryChange($event)"
+    (focus)="onFocus()"
+  />
+  @if (open()) {
+    <ul class="searchable-select-options">
+      @if (filteredItems.length === 0) {
+        <li class="searchable-select-empty">{{ 'common.noMatches' | translate }}</li>
+      }
+      @for (item of filteredItems; track item.id) {
+        <li>
+          <button
+            type="button"
+            class="searchable-select-option"
+            [class.selected]="item.id === value"
+            (click)="select(item)"
+          >
+            {{ item.label }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

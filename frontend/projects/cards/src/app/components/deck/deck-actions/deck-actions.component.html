@@ -1,0 +1,312 @@
+<div class="deck-actions">
+  <div class="deck-actions-inline">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="openRename()">
+      {{ 'common.rename' | translate }}
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" (click)="openCopy()">
+      {{ 'common.copy' | translate }}
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" (click)="openPaste()">
+      {{ 'decks.pasteButton' | translate }}
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" (click)="openHistory()">
+      {{ 'decks.history' | translate }}
+    </button>
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm"
+      [disabled]="exporting()"
+      (click)="exportDeck()"
+    >
+      {{ exporting() ? ('common.exporting' | translate) : ('collection.export' | translate) }}
+    </button>
+    <button type="button" class="btn btn-ghost btn-sm" (click)="openDeleteConfirm()">
+      {{ 'common.delete' | translate }}
+    </button>
+  </div>
+  <div class="deck-actions-menu">
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm menu-trigger"
+      (click)="toggleMenu()"
+      [attr.aria-label]="'decks.moreActions' | translate"
+      [attr.aria-expanded]="menuOpen()"
+    >
+      <ab-icon name="more" />
+    </button>
+    @if (menuOpen()) {
+      <div class="menu-dropdown">
+        <button type="button" (click)="openRename(); closeMenu()">
+          {{ 'common.rename' | translate }}
+        </button>
+        <button type="button" (click)="openCopy(); closeMenu()">
+          {{ 'common.copy' | translate }}
+        </button>
+        <button type="button" (click)="openPaste(); closeMenu()">
+          {{ 'decks.pasteButton' | translate }}
+        </button>
+        <button type="button" (click)="openHistory(); closeMenu()">
+          {{ 'decks.history' | translate }}
+        </button>
+        <button type="button" [disabled]="exporting()" (click)="exportDeck(); closeMenu()">
+          {{ exporting() ? ('common.exporting' | translate) : ('collection.export' | translate) }}
+        </button>
+        <button type="button" class="menu-danger" (click)="openDeleteConfirm(); closeMenu()">
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+@if (renameOpen()) {
+  <app-modal [title]="'decks.renameDeckTitle' | translate" (closed)="closeRename()">
+    <div class="deck-actions-form">
+      <input
+        type="text"
+        class="input"
+        [placeholder]="'decks.deckNamePlaceholder' | translate"
+        [(ngModel)]="renameName"
+        (keydown.enter)="submitRename()"
+      />
+
+      <div class="poster-cards">
+        <p class="poster-cards-label">{{ 'decks.posterCardsLabel' | translate }}</p>
+        <div class="poster-slots">
+          @for (card of posterSelection(); track $index) {
+            <div class="poster-slot">
+              @if (card) {
+                <button
+                  type="button"
+                  class="poster-slot-fill"
+                  (click)="openPosterPicker($index)"
+                  [title]="card.name | cardDisplayName"
+                >
+                  <img [src]="thumbnailUrl(card.image_path)" [alt]="card.name | cardDisplayName" />
+                </button>
+                <button
+                  type="button"
+                  class="poster-slot-clear"
+                  [attr.aria-label]="'decks.posterCardClear' | translate"
+                  (click)="clearPosterSlot($index)"
+                >
+                  &times;
+                </button>
+              } @else {
+                <button type="button" class="poster-slot-empty" (click)="openPosterPicker($index)">
+                  {{ 'decks.posterCardChoose' | translate }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (posterPickerSlot()! !== null) {
+          <div class="poster-picker">
+            @if (posterCardChoicesLoading()) {
+              <p class="muted">{{ 'common.loading' | translate }}</p>
+            } @else if (posterChoicesFor(posterPickerSlot()!).length === 0) {
+              <p class="muted">{{ 'decks.posterCardNoChoices' | translate }}</p>
+            } @else {
+              <div class="poster-picker-grid">
+                @for (card of posterChoicesFor(posterPickerSlot()!); track card.id) {
+                  <button
+                    type="button"
+                    class="poster-picker-option"
+                    (click)="choosePosterCard(posterPickerSlot()!, card)"
+                    [title]="card.name | cardDisplayName"
+                  >
+                    <img
+                      [src]="thumbnailUrl(card.image_path)"
+                      [alt]="card.name | cardDisplayName"
+                    />
+                  </button>
+                }
+              </div>
+            }
+            <button type="button" class="btn btn-ghost btn-sm" (click)="closePosterPicker()">
+              {{ 'common.cancel' | translate }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="deck-actions-form-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeRename()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="renameLoading() || !renameName().trim()"
+          (click)="submitRename()"
+        >
+          {{ renameLoading() ? ('decks.renaming' | translate) : ('common.rename' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (copyOpen()) {
+  <app-modal [title]="'decks.copyDeckTitle' | translate" (closed)="closeCopy()">
+    <div class="deck-actions-form">
+      <input
+        type="text"
+        class="input"
+        [placeholder]="'decks.newDeckNamePlaceholder' | translate"
+        [(ngModel)]="copyName"
+        (keydown.enter)="submitCopy()"
+      />
+      <div class="deck-actions-form-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeCopy()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="copyLoading() || !copyName().trim()"
+          (click)="submitCopy()"
+        >
+          {{ copyLoading() ? ('decks.copying' | translate) : ('common.copy' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (pasteOpen()) {
+  <app-modal [title]="'decks.showPasteDecklist' | translate" (closed)="closePaste()">
+    <div class="paste-decklist-box">
+      <label for="paste-decklist-text">{{ 'decks.pasteDecklistLabel' | translate }}</label>
+      <textarea
+        id="paste-decklist-text"
+        class="input decklist-textarea"
+        [placeholder]="'decks.pasteDecklistPlaceholder' | translate"
+        [(ngModel)]="pasteText"
+        (ngModelChange)="onPasteTextChange()"
+      ></textarea>
+      @if (pastePreviewLoading()) {
+        <p class="muted">{{ 'convert.converting' | translate }}</p>
+      } @else if (pastePreviewEntries().length) {
+        <app-decklist-preview [entries]="pastePreviewEntries()" />
+      }
+      <div class="paste-decklist-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closePaste()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="pasteSubmitting() || !pasteText().trim()"
+          (click)="submitPaste()"
+        >
+          {{
+            pasteSubmitting() ? ('common.saving' | translate) : ('decks.pasteAddButton' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (deleteConfirmOpen()) {
+  <app-modal [title]="'decks.deleteDeckTitle' | translate" (closed)="closeDeleteConfirm()">
+    <div class="deck-actions-form">
+      <p>{{ 'decks.deleteDeckBody' | translate: { name: deck.name } }}</p>
+      <div class="deck-actions-form-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeDeleteConfirm()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="deleteLoading()"
+          (click)="confirmDelete()"
+        >
+          {{ deleteLoading() ? ('common.deleting' | translate) : ('common.delete' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (exportOpen()) {
+  <app-modal [title]="'decks.exportDeckTitle' | translate" (closed)="closeExport()">
+    <div class="deck-actions-form">
+      @if (deck.deck_type === 'phantom') {
+        <label class="export-mode-option">
+          <input type="radio" name="export-mode" value="full" [(ngModel)]="exportMode" />
+          {{ 'decks.exportModeFull' | translate }}
+        </label>
+        <label class="export-mode-option">
+          <input type="radio" name="export-mode" value="missing" [(ngModel)]="exportMode" />
+          {{ 'decks.exportModeMissing' | translate }}
+        </label>
+        <label class="export-mode-option">
+          <input type="radio" name="export-mode" value="not_available" [(ngModel)]="exportMode" />
+          {{ 'decks.exportModeNotAvailable' | translate }}
+        </label>
+      }
+      <div class="export-format-buttons">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="exporting()"
+          (click)="closeExport()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="exporting()"
+          (click)="doExport('tcgplayer')"
+        >
+          {{ 'decks.exportFormatTcgplayer' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="exporting()"
+          (click)="doExport('cardmarket')"
+        >
+          {{ 'decks.exportFormatCardmarket' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="exporting()"
+          (click)="doExport('json')"
+        >
+          {{ 'decks.exportFormatJson' | translate }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (historyOpen()) {
+  <app-modal [title]="'decks.deckHistoryTitle' | translate" (closed)="closeHistory()">
+    <div class="history-list">
+      @if (historyLoading()) {
+        <p>{{ 'common.loading' | translate }}</p>
+      } @else if (historyItems().length === 0) {
+        <p>{{ 'decks.noHistoryYet' | translate }}</p>
+      } @else {
+        @for (entry of historyItems(); track entry.id) {
+          <div class="history-row">
+            <span>{{ historyLabel(entry) }}</span>
+            <span class="history-date">{{ entry.created_at | date: 'medium' }}</span>
+          </div>
+        }
+        @if (historyLoadingMore()) {
+          <p>{{ 'common.loadingMore' | translate }}</p>
+        } @else if (!hasMoreHistory) {
+          <p class="history-end">{{ 'decks.noMoreHistory' | translate }}</p>
+        }
+        <div #historySentinel class="scroll-sentinel"></div>
+      }
+    </div>
+  </app-modal>
+}

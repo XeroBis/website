@@ -21,10 +21,7 @@ export function downloadJson(data: unknown, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** The parsed file, or throws `SyntaxError` for invalid JSON. */
-export async function readJson(file: File): Promise<unknown> {
-  return JSON.parse(await file.text());
-}
+export { readJson } from '@shared';
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -33,7 +30,8 @@ function checkMember(e: unknown, at: string): string | null {
   if (!isObj(e)) return `${at}: not an object`;
   if (typeof e['exercise_name'] !== 'string') return `${at}: missing "exercise_name"`;
   const legacyCardio =
-    e['type'] === 'cardio' && (typeof e['intervals'] === 'number' || typeof e['duration_s'] === 'number');
+    e['type'] === 'cardio' &&
+    (typeof e['intervals'] === 'number' || typeof e['duration_s'] === 'number');
   if (!Array.isArray(e['sets']) && !legacyCardio) return `${at}: missing "sets"`;
   return null;
 }
@@ -83,8 +81,10 @@ function checkExercise(e: unknown, at: string): string | null {
   const err = checkNamed(e, at);
   if (err) return err;
   const o = e as Obj;
-  if (o['type'] !== 'strength' && o['type'] !== 'cardio') return `${at}: "type" must be strength or cardio`;
-  if (o['muscles'] !== undefined && !Array.isArray(o['muscles'])) return `${at}: "muscles" must be a list`;
+  if (o['type'] !== 'strength' && o['type'] !== 'cardio')
+    return `${at}: "type" must be strength or cardio`;
+  if (o['muscles'] !== undefined && !Array.isArray(o['muscles']))
+    return `${at}: "muscles" must be a list`;
   if (o['equipments'] !== undefined && !Array.isArray(o['equipments']))
     return `${at}: "equipments" must be a list`;
   return null;

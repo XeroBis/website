@@ -1,0 +1,69 @@
+<h2>{{ 'nav.convert' | translate }}</h2>
+<p class="intro">
+  {{ 'convert.intro' | translate }}
+</p>
+
+<div class="convert-columns">
+  <div class="convert-col">
+    <label for="input-text">
+      {{ 'convert.decklist' | translate }}
+      @if (detectedFormat()!) {
+        <span class="badge">{{ sourceFormatLabel }}</span>
+      }
+      <button type="button" class="btn btn-sm btn-ghost label-action" (click)="pasteInput()">
+        {{ 'convert.paste' | translate }}
+      </button>
+    </label>
+    <textarea
+      id="input-text"
+      class="input decklist-textarea"
+      [placeholder]="'convert.inputPlaceholder' | translate"
+      [(ngModel)]="inputText"
+      (ngModelChange)="onInputChange()"
+    ></textarea>
+  </div>
+
+  <div class="convert-col">
+    <label for="output-text">
+      {{ 'convert.converted' | translate }}
+      @if (detectedFormat()!) {
+        <span class="badge">{{ otherFormatLabel }}</span>
+      }
+      @if (showIncludeSetsToggle) {
+        <span class="include-sets-toggle">
+          <input
+            type="checkbox"
+            [(ngModel)]="includeSets"
+            (ngModelChange)="onIncludeSetsChange()"
+          />
+          {{ 'convert.includeSetNames' | translate }}
+        </span>
+      }
+      <button
+        type="button"
+        class="btn btn-sm btn-ghost label-action"
+        [disabled]="!convertedText()"
+        (click)="copyOutput()"
+      >
+        {{ 'common.copy' | translate }}
+      </button>
+    </label>
+    <textarea
+      id="output-text"
+      class="input decklist-textarea"
+      readonly
+      [value]="convertedText()"
+      [placeholder]="'convert.outputPlaceholder' | translate"
+    ></textarea>
+  </div>
+</div>
+
+@if (loading()) {
+  <p class="muted">{{ 'convert.converting' | translate }}</p>
+} @else if (searched() && !detectedFormat()!) {
+  <p class="message error">
+    {{ 'convert.notRecognized' | translate }}
+  </p>
+} @else if (entries().length) {
+  <app-decklist-preview [entries]="entries()" />
+}

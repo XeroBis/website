@@ -1,0 +1,236 @@
+<div class="top-bar">
+  <button type="button" class="btn btn-secondary filters-toggle-btn" (click)="toggleFilters()">
+    <ab-icon name="filter" />
+    <span class="btn-label">{{ 'browse.filters' | translate }}</span>
+    @if (total()) {
+      <span class="card-count">{{ total() }}</span>
+    }
+  </button>
+  <div class="view-toggle">
+    <button type="button" class="btn" [class.active]="view() === 'grid'" (click)="setView('grid')">
+      <ab-icon name="grid" />
+      {{ 'browse.grid' | translate }}
+    </button>
+    <button
+      type="button"
+      class="btn"
+      [class.active]="view() === 'table'"
+      (click)="setView('table')"
+    >
+      <ab-icon name="list" />
+      {{ 'browse.list' | translate }}
+    </button>
+  </div>
+  <app-variant-mode-toggle
+    [mode]="variantDisplayMode()"
+    [label]="variantModeToggleLabel"
+    (modeChange)="onVariantDisplayModeChange($event)"
+  />
+</div>
+
+<div class="browse-layout">
+  <app-filters-panel
+    [open]="filtersOpen()"
+    [cardCountLabel]="
+      (total() === 1 ? 'browse.cardCount' : 'browse.cardCountPlural')
+        | translate: { count: total() }
+    "
+    [hasActiveFilters]="hasActiveFilters"
+    [showSetTextFilter]="true"
+    [sets]="sets()"
+    [rarities]="rarities()"
+    [(search)]="search"
+    [(setCode)]="setCode"
+    [(setFilter)]="setFilter"
+    [(supertype)]="supertype"
+    [(rarity)]="rarity"
+    [variantOptions]="variantOptions()"
+    [(variantType)]="variantType"
+    [(cardNumber)]="cardNumber"
+    [(sort)]="sort"
+    (filterChange)="onFilterChange()"
+    (clear)="clearFilters()"
+    (close)="closeFilters()"
+  />
+
+  <div class="browse-content">
+    @if (loading()) {
+      <p>{{ 'common.loading' | translate }}</p>
+    } @else {
+      @if (view() === 'grid') {
+        <div class="card-grid">
+          @if (variantDisplayMode() !== 'standard') {
+            @for (tile of variantTiles; track tile.entry.id + ':' + tile.variant.variant_type) {
+              <div class="card-tile" (click)="openDetail(tile.entry, tile.variant)">
+                <img
+                  [src]="variantTileImageUrl(tile.entry, tile.variant)"
+                  [alt]="
+                    (tile.entry.name | cardDisplayName) + ' — ' + variantTileLabel(tile.variant)
+                  "
+                  loading="lazy"
+                />
+                <div class="card-info">
+                  <strong>{{ tile.entry.name | cardDisplayName }}</strong>
+                  <span
+                    >{{ tile.entry.set_name }} #{{ tile.entry.card_number }} ·
+                    {{ variantTileLabel(tile.variant) }}</span
+                  >
+                  @if (tile.entry.supertype) {
+                    <span class="card-meta">
+                      {{ supertypeKey(tile.entry.supertype) | translate }}
+                    </span>
+                  }
+                  @if (tile.entry.rarity) {
+                    <span class="card-meta">{{ tile.entry.rarity }}</span>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm btn-icon"
+                    [attr.aria-label]="'browse.addToCollection' | translate"
+                    [attr.title]="'browse.addToCollection' | translate"
+                    (click)="$event.stopPropagation(); addToCollection(tile.entry)"
+                  >
+                    <ab-icon name="plus" />
+                  </button>
+                </div>
+              </div>
+            }
+          } @else {
+            @for (card of items(); track card.id) {
+              <div class="card-tile" (click)="openDetail(card)">
+                <img
+                  [src]="thumbnailUrl(card)"
+                  [alt]="card.name | cardDisplayName"
+                  loading="lazy"
+                />
+                <div class="card-info">
+                  <strong>{{ card.name | cardDisplayName }}</strong>
+                  <span>{{ card.set_name }} #{{ card.card_number }}</span>
+                  @if (card.supertype) {
+                    <span class="card-meta">
+                      {{ supertypeKey(card.supertype) | translate }}
+                    </span>
+                  }
+                  @if (card.rarity) {
+                    <span class="card-meta">{{ card.rarity }}</span>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm btn-icon"
+                    [attr.aria-label]="'browse.addToCollection' | translate"
+                    [attr.title]="'browse.addToCollection' | translate"
+                    (click)="$event.stopPropagation(); addToCollection(card)"
+                  >
+                    <ab-icon name="plus" />
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>{{ 'common.name' | translate }}</th>
+                <th>{{ 'common.set' | translate }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (card of items(); track card.id) {
+                <tr>
+                  <td>
+                    <img
+                      [src]="thumbnailUrl(card)"
+                      [alt]="card.name | cardDisplayName"
+                      (click)="openDetail(card)"
+                    />
+                  </td>
+                  <td>{{ card.name | cardDisplayName }}</td>
+                  <td>{{ card.set_name }} #{{ card.card_number }}</td>
+                  <td>
+                    <div class="card-info-row">
+                      <button
+                        type="button"
+                        class="btn btn-primary btn-sm btn-icon"
+                        [attr.aria-label]="'browse.addToCollection' | translate"
+                        [title]="'browse.addToCollection' | translate"
+                        (click)="addToCollection(card)"
+                      >
+                        <ab-icon name="plus" />
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        (click)="openDetail(card)"
+                      >
+                        {{ 'common.details' | translate }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="scroll-status">
+        @if (loadingMore()) {
+          <span>{{ 'common.loadingMore' | translate }}</span>
+        } @else if (!hasMore && items().length > 0) {
+          <span>{{ 'browse.allLoaded' | translate: { count: total() } }}</span>
+        } @else {
+          <span>{{ 'browse.ofCards' | translate: { shown: items().length, total: total() } }}</span>
+        }
+      </div>
+
+      <div #scrollSentinel class="scroll-sentinel"></div>
+    }
+  </div>
+</div>
+
+<app-collection-add-panel></app-collection-add-panel>
+
+@if (detailCard()!) {
+  <app-modal [title]="detailCard()!.name | cardDisplayName" [wide]="true" (closed)="closeDetail()">
+    <div modal-title class="modal-title-edit">
+      @if (cardDetailRef.editing()) {
+        <input
+          type="text"
+          class="input"
+          [(ngModel)]="cardDetailRef.editName"
+          (keydown.enter)="cardDetailRef.confirmSave()"
+          (keydown.escape)="cardDetailRef.cancelEdit()"
+        />
+        <button type="button" class="btn btn-ghost btn-sm" (click)="cardDetailRef.cancelEdit()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          [disabled]="!cardDetailRef.editName().trim()"
+          (click)="cardDetailRef.confirmSave()"
+        >
+          {{ 'common.save' | translate }}
+        </button>
+      } @else {
+        <h3>{{ detailCard()!.name | cardDisplayName }}</h3>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="cardDetailRef.startEdit()">
+          {{ 'common.edit' | translate }}
+        </button>
+      }
+    </div>
+    <app-card-detail
+      #cardDetailRef
+      [card]="detailCard()!"
+      [imageUrl]="imageUrl(detailCard()!, detailVariant()!)"
+      [initialVariantType]="detailVariant()?.variant_type ?? null"
+      [editMode]="auth.isAdmin() ? 'catalog-name' : 'none'"
+      (saveName)="saveDetailName($event)"
+    />
+  </app-modal>
+}

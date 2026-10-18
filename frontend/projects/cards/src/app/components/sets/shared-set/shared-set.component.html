@@ -1,0 +1,118 @@
+<div class="shared-set-page">
+  @if (loading()) {
+    <p>{{ 'common.loading' | translate }}</p>
+  } @else if (notFound() || !set()!) {
+    <div class="shared-set-expired">
+      <h2>{{ 'share.unavailable' | translate }}</h2>
+      <p>{{ 'share.unavailableBody' | translate }}</p>
+    </div>
+  } @else {
+    <div class="set-detail-header">
+      <img
+        class="set-detail-logo"
+        [src]="logoUrl()"
+        [alt]="set()!.set_name"
+        (error)="onLogoError($event)"
+      />
+      <h2>{{ set()!.set_name }}</h2>
+      <span class="card-count">{{ 'sets.cardCount' | translate: { count: displayedCount } }}</span>
+      <div class="completion">
+        <div class="completion-bar">
+          <div class="completion-fill" [style.width.%]="displayedCompletionPercent"></div>
+        </div>
+        <span class="completion-label">{{ displayedCompletionPercent }}%</span>
+      </div>
+    </div>
+
+    <div class="set-detail-filters">
+      <div class="set-detail-filters-left">
+        <app-set-filters
+          [rarities]="availableRarities"
+          [variants]="variantTypes"
+          [selectedRarities]="selectedRarities()"
+          [selectedVariants]="selectedVariants()"
+          (raritiesChange)="onRaritiesChange($event)"
+          (variantsChange)="onVariantsChange($event)"
+        >
+          <input
+            type="text"
+            class="input"
+            [placeholder]="'sets.searchSet' | translate"
+            [attr.aria-label]="'sets.searchSet' | translate"
+            [(ngModel)]="search"
+          />
+        </app-set-filters>
+      </div>
+      <div class="set-detail-filters-right">
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [class.active]="duplicatesOnly()"
+          [attr.aria-label]="'sets.duplicatesOnly' | translate"
+          [title]="'sets.duplicatesOnly' | translate"
+          [attr.aria-pressed]="duplicatesOnly()"
+          (click)="duplicatesOnly.set(!duplicatesOnly())"
+        >
+          <span aria-hidden="true">2+</span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [class.active]="missingOnly()"
+          [attr.aria-label]="'sets.missingOnly' | translate"
+          [title]="'sets.missingOnly' | translate"
+          [attr.aria-pressed]="missingOnly()"
+          (click)="missingOnly.set(!missingOnly())"
+        >
+          <ab-icon name="layers" />
+        </button>
+        <div class="view-toggle">
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'grid'"
+            [attr.aria-label]="'sets.viewGrid' | translate"
+            [title]="'sets.viewGrid' | translate"
+            [attr.aria-pressed]="view() === 'grid'"
+            (click)="view.set('grid')"
+          >
+            <ab-icon name="grid" />
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'checklist'"
+            [attr.aria-label]="'sets.viewChecklist' | translate"
+            [title]="'sets.viewChecklist' | translate"
+            [attr.aria-pressed]="view() === 'checklist'"
+            (click)="view.set('checklist')"
+          >
+            <ab-icon name="check" />
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'binder'"
+            [attr.aria-label]="'sets.viewBinder' | translate"
+            [title]="'sets.viewBinder' | translate"
+            [attr.aria-pressed]="view() === 'binder'"
+            (click)="view.set('binder')"
+          >
+            <ab-icon name="grid" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-set-card-grid
+      [cards]="filteredCards"
+      [adapter]="gridAdapter"
+      [mode]="variantDisplayMode()"
+      [view]="view()"
+    />
+
+    <p class="shared-set-expiry">
+      {{ 'sets.shareLinkExpires' | translate: { date: (set()!.expires_at | date: 'mediumDate') } }}
+    </p>
+  }
+</div>

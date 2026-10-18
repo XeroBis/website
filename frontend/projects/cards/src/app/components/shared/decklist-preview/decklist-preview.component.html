@@ -1,0 +1,30 @@
+@if (entries.length) {
+  <h3>
+    {{
+      'decklistPreview.uniqueTotal' | translate: { unique: entries.length, total: entriesQuantity }
+    }}
+  </h3>
+  <div class="card-grid">
+    @for (entry of entries; track $index) {
+      <div class="card-tile">
+        @if (entry.matched && entry.image_path) {
+          <img
+            [src]="imageUrl(entry.image_path)"
+            [alt]="entry.name | cardDisplayName"
+            loading="lazy"
+          />
+        } @else {
+          <div class="unmatched-placeholder">{{ 'decklistPreview.noImage' | translate }}</div>
+        }
+        <div class="card-info">
+          <strong>{{ entry.quantity }}× {{ entry.name | cardDisplayName }}</strong>
+          @if (entry.matched) {
+            <span>{{ entry.set_name }}</span>
+          } @else {
+            <span class="badge badge-warning">{{ 'decklistPreview.unmatched' | translate }}</span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

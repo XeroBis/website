@@ -1,0 +1,257 @@
+.deck-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.deck-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.deck-actions-menu {
+  display: none;
+  position: relative;
+}
+
+.menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  padding: 0;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: var(--space-2);
+  gap: var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+  button {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--color-surface-alt, var(--color-primary-light));
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  .menu-danger {
+    color: var(--color-error);
+  }
+}
+
+@media (max-width: 640px) {
+  .deck-actions-inline {
+    display: none;
+  }
+
+  .deck-actions-menu {
+    display: block;
+  }
+}
+
+.btn-danger {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #a5301f;
+    border-color: #a5301f;
+  }
+}
+
+.deck-actions-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  p {
+    margin: 0;
+  }
+}
+
+.deck-actions-form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.export-mode-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.export-format-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 0.9rem;
+}
+
+.history-date {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.history-end {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.paste-decklist-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.decklist-textarea {
+  min-height: 140px;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.paste-decklist-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.poster-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.poster-cards-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.poster-slots {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.poster-slot {
+  position: relative;
+  width: 4.5rem;
+}
+
+.poster-slot-fill,
+.poster-slot-empty {
+  width: 4.5rem;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+  }
+}
+
+.poster-slot-fill {
+  border: 1px solid var(--color-border);
+  background: var(--color-border);
+}
+
+.poster-slot-empty {
+  border: 1px dashed var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.poster-slot-clear {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  line-height: 1;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.poster-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.poster-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
+  gap: var(--space-2);
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.poster-picker-option {
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+  }
+}

@@ -1,0 +1,175 @@
+@if (view === 'checklist') {
+  <div class="table-wrap checklist-wrap">
+    <table class="checklist">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{{ 'sets.checklistName' | translate }}</th>
+          <th>{{ 'sets.checklistRarity' | translate }}</th>
+          @for (type of variantTypes; track type) {
+            <th class="checklist-variant-col" [title]="variantTypeLabel(type)">
+              <img class="checklist-variant-icon" [src]="variantIcon(type)" alt="" /><span>{{
+                variantBadge(type)
+              }}</span>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (card of cards; track card.id) {
+          <tr [class.not-owned]="adapter.quantity(card) === 0">
+            <td class="checklist-number" [class.secret]="adapter.secret(card)">
+              {{ adapter.number(card) }}
+            </td>
+            <td>
+              @if (interactive) {
+                <button type="button" class="checklist-name" (click)="adapter.open(card)">
+                  {{ localizeNames ? (card.name | cardDisplayName) : card.name }}
+                </button>
+              } @else {
+                {{ card.name }}
+              }
+            </td>
+            <td class="checklist-rarity">
+              @if (card.rarity) {
+                <img
+                  [src]="rarityIcon(rarityCategory(card.rarity))"
+                  [alt]="card.rarity"
+                  [title]="card.rarity"
+                  (error)="onRarityIconError($event)"
+                />
+                <span class="rarity-fallback">{{ rarityCategory(card.rarity) }}</span>
+              }
+            </td>
+            @for (type of variantTypes; track type) {
+              <td class="checklist-variant-col">
+                @if (variant(card, type); as print) {
+                  @if (checklistControls) {
+                    <ng-container
+                      *ngTemplateOutlet="
+                        checklistControls;
+                        context: { $implicit: card, variant: print }
+                      "
+                    />
+                  } @else {
+                    <span [class.missing]="adapter.quantity(card, print) === 0">{{
+                      adapter.quantity(card, print)
+                    }}</span>
+                  }
+                } @else {
+                  <span class="checklist-na" aria-hidden="true">·</span>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (view === 'binder') {
+  <div class="binder-pages">
+    @for (page of binderPages(); track $index) {
+      <section
+        class="binder-page"
+        [attr.aria-label]="
+          'sets.binderPage' | translate: { page: $index + 1, total: binderPages().length }
+        "
+      >
+        <div class="binder-page-label">
+          {{ 'sets.binderPage' | translate: { page: $index + 1, total: binderPages().length } }}
+        </div>
+        <div class="binder-pockets">
+          @for (slot of page; track $index) {
+            <div class="binder-pocket" [class.empty]="!slot">
+              @if (slot; as item) {
+                <app-card-tile
+                  [imageUrl]="adapter.image(item.card, item.variant)"
+                  [alt]="
+                    (localizeNames ? (item.card.name | cardDisplayName) : item.card.name) +
+                    (item.variant && mode !== 'standard' ? ' — ' + variantLabel(item.variant) : '')
+                  "
+                  [title]="
+                    mode === 'standard' ? adapter.number(item.card) : shortLabel(item.variant!)
+                  "
+                  subLabel=""
+                  [ownedQty]="adapter.quantity(item.card, item.variant)"
+                  [notOwned]="adapter.quantity(item.card, item.variant) === 0"
+                  [clickable]="interactive"
+                  (tileClick)="adapter.open(item.card, item.variant)"
+                >
+                  <ng-container
+                    *ngTemplateOutlet="
+                      controls;
+                      context: { $implicit: item.card, variant: item.variant }
+                    "
+                  />
+                </app-card-tile>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else if (mode !== 'standard') {
+  <div class="variant-groups">
+    @for (card of cards; track card.id) {
+      <section class="variant-group" [style.--cols]="adapter.variants(card).length">
+        <header
+          class="variant-group-header"
+          [class.interactive]="interactive"
+          (click)="adapter.open(card)"
+        >
+          <span class="variant-group-number" [class.secret]="adapter.secret(card)">{{
+            adapter.number(card)
+          }}</span>
+          <span class="variant-group-name">{{
+            localizeNames ? (card.name | cardDisplayName) : card.name
+          }}</span>
+        </header>
+        <div class="variant-group-tiles">
+          @for (variant of adapter.variants(card); track variant.variant_type) {
+            <app-card-tile
+              [imageUrl]="adapter.image(card, variant)"
+              [alt]="
+                (localizeNames ? (card.name | cardDisplayName) : card.name) +
+                ' — ' +
+                variantLabel(variant)
+              "
+              [title]="shortLabel(variant)"
+              subLabel=""
+              [ownedQty]="adapter.quantity(card, variant)"
+              [notOwned]="adapter.quantity(card, variant) === 0"
+              [clickable]="interactive"
+              (tileClick)="adapter.open(card, variant)"
+            >
+              <ng-container
+                *ngTemplateOutlet="controls; context: { $implicit: card, variant: variant }"
+              />
+            </app-card-tile>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <div class="card-grid">
+    @for (card of cards; track card.id) {
+      <app-card-tile
+        [imageUrl]="adapter.image(card)"
+        [alt]="localizeNames ? (card.name | cardDisplayName) : card.name"
+        [title]="localizeNames ? (card.name | cardDisplayName) : card.name"
+        subLabel=""
+        [numberBadge]="adapter.number(card)"
+        [secretNumber]="adapter.secret(card)"
+        [ownedQty]="adapter.quantity(card)"
+        [reverseQty]="adapter.reverse(card)"
+        [notOwned]="adapter.quantity(card) === 0"
+        [clickable]="interactive"
+        (tileClick)="adapter.open(card)"
+      >
+        <ng-container *ngTemplateOutlet="controls; context: { $implicit: card }" />
+      </app-card-tile>
+    }
+  </div>
+}
