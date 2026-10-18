@@ -98,3 +98,26 @@ def add_catalog_card(
         session.add(card)
         session.commit()
         return card.id
+
+
+def own(user_id: int, catalog_id: int, **quantities: int) -> int:
+    """Give `user_id` copies of a catalog card, per print
+    (`own(uid, cid, standard=2, reverse=1)`); returns the `cards` row id."""
+    with database.SessionLocal() as session:
+        card = m.Card(
+            user_id=user_id,
+            catalog_id=catalog_id,
+            variant_quantities=[
+                m.CardVariantQuantity(variant_type=v, quantity=q)
+                for v, q in (quantities or {"standard": 1}).items()
+            ],
+        )
+        session.add(card)
+        session.commit()
+        return card.id
+
+
+def set_language(user_id: int, language: str) -> None:
+    with database.SessionLocal() as session:
+        session.get(m.User, user_id).language = language
+        session.commit()

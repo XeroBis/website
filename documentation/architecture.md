@@ -32,7 +32,9 @@ website/
 │   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
 │   │   │                       #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)
 │   │   ├── cards/              #   /api/cards (being ported, migration-plan step 6): `cards` schema models,
-│   │   │                       #   variant_order.py (print variants + display order), access.py
+│   │   │                       #   variant_order.py (print variants + display order), access.py, names.py (name
+│   │   │                       #   normalization), display.py (FR/EN display fields), search.py (name match + sorts),
+│   │   │                       #   routers/: catalog, images
 │   │   └── workout/            #   /api/workout routes (routers/: catalog, workouts, templates, circuits, session,
 │   │                           #   stats, transfer = import/export, admin), `workout` schema models, muscles.py,
 │   │                           #   entries.py (shared build/serialize of workout/template/circuit entries), stats.py, transfer.py

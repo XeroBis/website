@@ -187,6 +187,23 @@ Placeholder, behind `appGuard`. Being ported from `../pokemon_cards` (migration-
 
 "Collector's binder": a deep binder-blue/near-black page, card tiles drawn as sleeves with a faint holo-foil sheen on hover, Poké Ball red as the accent, a rounded display font for headings. The Poké Ball favicon is kept.
 
+### API (`/api/cards`)
+
+Built so far (the frontend comes at step 6.7). Every route needs a session (401) and the `cards` app (403); unsafe ones also need CSRF (403). Display fields (`name`, `set_name`, `image_path`) are in the user's language: French name / set title / scan when known, else English.
+
+| Endpoint | Body / query → result | Errors |
+|---|---|---|
+| `GET /catalog?search=&set_code=&set_name=&supertype=&rarity=&card_number=&variant_type=&sort=&page=&page_size=` | → `{total, page, page_size, items}` (page size 1–200, default 50), each card with its `variants`. `search`: partial, case- and punctuation-insensitive (`’ ' . :`), on the English or French name; leading `^` / trailing `$` anchor it. `set_name` and `card_number` are partial; `supertype`, `rarity` (raw values) and `variant_type` (cards printed in it) are repeatable, OR within a filter, AND across. `sort`: `name_asc` (default) / `name_desc` / `card_number_asc` / `card_number_desc` / `set_release_asc` / `set_release_desc` / `set_name_asc` / `set_name_desc`; names sort by the displayed name, numbers numerically (non-numeric last), undated sets as the oldest. | |
+| `GET /catalog/sets?rarity=&variant_type=&reverse=` | → every set, newest first with World Championships sets last: `{set_code, set_name, set_name_fr, series, series_display_name, card_count, release_date, logo_path, logo_path_fr, symbol_path, completion_percent}`. Completion is the user's, over the selected cards (data-model.md `cards` "Rules"): by default normal numbering owned in any print (with `rarity`: all numbering); with `variant_type` each selected existing print counts on its own and needs that exact print; `reverse` does that over every print. `null` when nothing matches. | 422 unknown variant |
+| `GET /catalog/sets/{set_code}/cards` | → the set's cards by number | 404 |
+| `GET /catalog/missing-intervals?rarity=&variant_type=&reverse=` | → per set with a missing selected card, sorted by set name: `{set_code, set_name, series, symbol_path, missing_count, intervals: [{start_number, end_number}], missing_numbers, owned_numbers, excluded_numbers}`. Numeric numbers only. Missing selected cards start and end intervals; other rarities can only bridge two of them; an owned selected card or a gap in the numbering cuts. A number shared by several cards stays missing until all are owned. `variant_type` (or `reverse` = `reverse`) only considers cards printed in it, owned in that exact print. | 422 unknown variant |
+| `GET /catalog/supertypes`, `/catalog/rarities` | → distinct values, sorted | |
+| `GET /catalog/variant-types` | → non-standard prints present in the catalog, in display order | |
+| `GET /catalog/{id}`, `/catalog/{id}/variants` | → one card (with `details`) / its prints | 404 |
+| `PATCH /catalog/{id}` | `{name}` → the card. **Admin only**: corrects the English name (trimmed, not blank); the French one is untouched. | 403, 404, 422 |
+| `GET /catalog/{id}/deck-usage` | → `{allocated_decks, phantom_decks}` of `{deck_id, deck_name, quantity_in_deck}`: the user's normal decks holding owned copies (summed over prints) and their phantom decks wanting it | 404 |
+| `GET /images/{path}` | → a file under `CARDS_DATA_DIR` (scan, thumbnail, logo, symbol), `Cache-Control: private, max-age=31536000, immutable` | 404 missing, or a path leaving the folder |
+
 ## Media — `media.alanbignon.com`
 
 A personal tracker for books, films and series: what I own, what I've read/watched, what's next. Ported from `../media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → login; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
