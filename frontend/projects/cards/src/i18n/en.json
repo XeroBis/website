@@ -675,13 +675,16 @@
     }
   },
   "admin": {
-    "stats": "{{cards}} cards · {{sets}} sets · {{names}} distinct names",
     "refresh": "Catalog refresh",
     "metadata": "Metadata",
     "images": "Images",
     "exportImages": "Export images",
     "importImages": "Import images",
     "upload": "Uploading",
+    "languages": "Languages",
+    "imageTypes": "Image types",
+    "setsSelected": "{{count}} / {{total}} selected",
+    "selectionHint": "Pick at least one language, one image type and one set.",
     "selection": {
       "french": "French",
       "english": "English",
@@ -704,6 +707,35 @@
       "generate_thumbnails": "Generate thumbnails",
       "scrape_logos_symbols": "Download logos and symbols",
       "download_variant_icons": "Download variant badges"
+    },
+    "statCards": "cards",
+    "statSets": "sets",
+    "statNames": "distinct names",
+    "run": "Run",
+    "lastRun": "Last run",
+    "importResult": "{{created}} created · {{updated}} updated",
+    "imageSteps": {
+      "upload": "Receiving the archive",
+      "restore": "Restoring the selected files",
+      "link": "Linking catalog scans"
+    },
+    "result": {
+      "sets_processed": "Sets processed",
+      "cards_upserted": "Cards upserted",
+      "matched": "Matched",
+      "unmatched": "Unmatched",
+      "skipped": "Skipped",
+      "failed": "Failed",
+      "french_missing": "French missing",
+      "images_downloaded": "Scans downloaded",
+      "thumbnails_generated": "Thumbnails generated",
+      "set_logos_updated": "Sets with new logos",
+      "variant_icons_downloaded": "Badges downloaded",
+      "variant_icons_unavailable": "Badges unavailable",
+      "copied": "Files copied",
+      "linked": "Scans linked",
+      "created": "Created",
+      "updated": "Updated"
     }
   },
   "share": {

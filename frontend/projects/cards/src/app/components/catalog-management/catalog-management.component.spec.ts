@@ -155,4 +155,29 @@ describe('Catalog job lifecycle', () => {
     expect(page.pending()).toBe(false);
     fixture.destroy();
   });
+
+  it('renders finished counts as labelled tiles and the metadata import as a sentence', async () => {
+    const { fixture, page } = setup();
+    await fixture.whenStable();
+    page.statuses.update((statuses) => ({
+      ...statuses,
+      images: {
+        ...status('idle'),
+        last_run_at: '2026-10-18T10:00:00Z',
+        last_run_result: { copied: 3, variant_icons_unavailable: ['a.svg', 'b.svg'] },
+      },
+    }));
+    await fixture.whenStable();
+    const tiles = [...fixture.nativeElement.querySelectorAll('.result')].map((el: Element) =>
+      [...el.children].map((child) => child.textContent?.trim()).join(' '),
+    );
+    expect(tiles).toContain('Files copied 3');
+    expect(tiles).toContain('Badges unavailable 2');
+    expect(fixture.nativeElement.querySelector('pre')).toBeNull();
+    await page.importMetadata({
+      target: { files: [{ text: async () => '{"cards":[{}]}' }], value: '' },
+    } as unknown as Event);
+    expect(page.message()).toBe('1 created · 0 updated');
+    fixture.destroy();
+  });
 });

@@ -675,13 +675,16 @@
     }
   },
   "admin": {
-    "stats": "{{cards}} cartes · {{sets}} séries · {{names}} noms distincts",
     "refresh": "Actualisation du catalogue",
     "metadata": "Métadonnées",
     "images": "Images",
     "exportImages": "Exporter les images",
     "importImages": "Importer les images",
     "upload": "Envoi",
+    "languages": "Langues",
+    "imageTypes": "Types d'images",
+    "setsSelected": "{{count}} / {{total}} sélectionnés",
+    "selectionHint": "Choisissez au moins une langue, un type d'image et une extension.",
     "selection": {
       "french": "Français",
       "english": "Anglais",
@@ -704,6 +707,35 @@
       "generate_thumbnails": "Générer les miniatures",
       "scrape_logos_symbols": "Télécharger logos et symboles",
       "download_variant_icons": "Télécharger les badges"
+    },
+    "statCards": "cartes",
+    "statSets": "séries",
+    "statNames": "noms distincts",
+    "run": "Lancer",
+    "lastRun": "Dernière exécution",
+    "importResult": "{{created}} créées · {{updated}} mises à jour",
+    "imageSteps": {
+      "upload": "Réception de l'archive",
+      "restore": "Restauration des fichiers sélectionnés",
+      "link": "Liaison des scans au catalogue"
+    },
+    "result": {
+      "sets_processed": "Séries traitées",
+      "cards_upserted": "Cartes enregistrées",
+      "matched": "Trouvées",
+      "unmatched": "Non trouvées",
+      "skipped": "Ignorées",
+      "failed": "Échecs",
+      "french_missing": "Français manquant",
+      "images_downloaded": "Scans téléchargés",
+      "thumbnails_generated": "Miniatures générées",
+      "set_logos_updated": "Séries avec nouveaux logos",
+      "variant_icons_downloaded": "Badges téléchargés",
+      "variant_icons_unavailable": "Badges indisponibles",
+      "copied": "Fichiers copiés",
+      "linked": "Scans liés",
+      "created": "Créées",
+      "updated": "Mises à jour"
     }
   },
   "share": {
