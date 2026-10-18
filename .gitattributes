@@ -1,0 +1,2 @@
+# Scraped card pages used as import data, not source code: keep them out of GitHub's language stats
+backend/domains/cards/source/** linguist-vendored
