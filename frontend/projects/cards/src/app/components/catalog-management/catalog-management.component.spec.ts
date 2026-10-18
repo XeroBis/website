@@ -156,7 +156,7 @@ describe('Catalog job lifecycle', () => {
     fixture.destroy();
   });
 
-  it('renders finished counts as labelled tiles and the metadata import as a sentence', async () => {
+  it('renders finished counts as one labelled line and the metadata import as a sentence', async () => {
     const { fixture, page } = setup();
     await fixture.whenStable();
     page.statuses.update((statuses) => ({
@@ -168,11 +168,11 @@ describe('Catalog job lifecycle', () => {
       },
     }));
     await fixture.whenStable();
-    const tiles = [...fixture.nativeElement.querySelectorAll('.result')].map((el: Element) =>
+    const results = [...fixture.nativeElement.querySelectorAll('.result')].map((el: Element) =>
       [...el.children].map((child) => child.textContent?.trim()).join(' '),
     );
-    expect(tiles).toContain('Files copied 3');
-    expect(tiles).toContain('Badges unavailable 2');
+    expect(results).toContain('Files copied 3');
+    expect(results).toContain('Badges unavailable 2');
     expect(fixture.nativeElement.querySelector('pre')).toBeNull();
     await page.importMetadata({
       target: { files: [{ text: async () => '{"cards":[{}]}' }], value: '' },

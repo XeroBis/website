@@ -25,82 +25,126 @@ export const REFRESH_STEPS = [
   imports: [Icon, DatePipe, NgTemplateOutlet, FormsModule, TranslatePipe],
   template: `
     <h1>{{ 'nav.catalogManagement' | translate }}</h1>
+    @if (stats(); as s) {
+      <p class="stats">
+        <span
+          ><strong>{{ s.total_cards }}</strong> {{ 'admin.statCards' | translate }}</span
+        >
+        <span
+          ><strong>{{ s.total_sets }}</strong> {{ 'admin.statSets' | translate }}</span
+        >
+        <span
+          ><strong>{{ s.distinct_card_names }}</strong> {{ 'admin.statNames' | translate }}</span
+        >
+      </p>
+    }
     @if (error()) {
       <p class="notice notice-error" role="alert"><ab-icon name="info" /> {{ error() }}</p>
     }
     @if (message()) {
       <p class="notice notice-success" role="status"><ab-icon name="check" /> {{ message() }}</p>
     }
-    @if (stats(); as s) {
-      <div class="stats">
-        <div class="stat surface">
-          <strong>{{ s.total_cards }}</strong>
-          <span>{{ 'admin.statCards' | translate }}</span>
-        </div>
-        <div class="stat surface">
-          <strong>{{ s.total_sets }}</strong>
-          <span>{{ 'admin.statSets' | translate }}</span>
-        </div>
-        <div class="stat surface">
-          <strong>{{ s.distinct_card_names }}</strong>
-          <span>{{ 'admin.statNames' | translate }}</span>
-        </div>
-      </div>
-    }
     <section class="surface admin-section">
-      <h2>{{ 'admin.refresh' | translate }}</h2>
-      <div class="jobs">
-        @for (key of jobs; track key) {
-          <article class="job" [class.job-full]="key === 'full'">
-            <header class="job-head">
-              <h3>{{ 'admin.steps.' + key | translate }}</h3>
+      <header class="section-head">
+        <h2>{{ 'admin.refresh' | translate }}</h2>
+        @if (statuses()['full']; as status) {
+          <span [class]="badgeClass(status)">{{
+            'admin.status.' + status.status | translate
+          }}</span>
+        }
+        <button class="btn btn-primary" [disabled]="busy()" (click)="start('full')">
+          <ab-icon name="play" /> {{ 'admin.steps.full' | translate }}
+        </button>
+      </header>
+      @if (statuses()['full']; as status) {
+        @if (
+          status.status === 'running' ||
+          status.error ||
+          status.last_run_at ||
+          resultEntries(status).length
+        ) {
+          <div class="row">
+            <ng-container
+              *ngTemplateOutlet="jobBody; context: { $implicit: status, steps: 'admin.steps.' }"
+            />
+          </div>
+        }
+      }
+      @for (key of steps; track key) {
+        <div class="row">
+          <div class="row-main">
+            <span class="row-title">
+              {{ 'admin.steps.' + key | translate }}
               @if (statuses()[key]; as status) {
                 <span [class]="badgeClass(status)">{{
                   'admin.status.' + status.status | translate
                 }}</span>
               }
-              <button
-                class="btn btn-sm"
-                [class.btn-primary]="key === 'full'"
-                [class.btn-secondary]="key !== 'full'"
-                [disabled]="busy()"
-                (click)="start(key)"
-              >
-                <ab-icon name="play" /> {{ 'admin.run' | translate }}
-              </button>
-            </header>
-            @if (statuses()[key]; as status) {
-              <ng-container
-                *ngTemplateOutlet="jobBody; context: { $implicit: status, steps: 'admin.steps.' }"
-              />
-            }
-          </article>
-        }
-      </div>
+            </span>
+            <button class="btn btn-sm btn-secondary" [disabled]="busy()" (click)="start(key)">
+              <ab-icon name="play" /> {{ 'admin.run' | translate }}
+            </button>
+          </div>
+          @if (statuses()[key]; as status) {
+            <ng-container
+              *ngTemplateOutlet="jobBody; context: { $implicit: status, steps: 'admin.steps.' }"
+            />
+          }
+        </div>
+      }
     </section>
     <section class="surface admin-section">
-      <h2>{{ 'admin.metadata' | translate }}</h2>
-      <div class="actions">
-        <a class="btn btn-secondary" href="/api/cards/catalog/export" download="cards_metadata.json"
-          ><ab-icon name="download" /> {{ 'common.export' | translate }}</a
-        >
-        <label class="btn btn-secondary"
-          ><ab-icon name="upload" /> {{ 'common.import' | translate
-          }}<input
-            type="file"
-            accept=".json,application/json"
-            [disabled]="busy()"
-            (change)="importMetadata($event)"
-            hidden
-        /></label>
-      </div>
+      <header class="section-head">
+        <h2>{{ 'admin.metadata' | translate }}</h2>
+        <div class="actions">
+          <a
+            class="btn btn-secondary"
+            href="/api/cards/catalog/export"
+            download="cards_metadata.json"
+            ><ab-icon name="download" /> {{ 'common.export' | translate }}</a
+          >
+          <label class="btn btn-secondary" [class.btn-disabled]="busy()"
+            ><ab-icon name="upload" /> {{ 'common.import' | translate
+            }}<input
+              type="file"
+              accept=".json,application/json"
+              [disabled]="busy()"
+              (change)="importMetadata($event)"
+              hidden
+          /></label>
+        </div>
+      </header>
     </section>
     <section class="surface admin-section">
-      <h2>{{ 'admin.images' | translate }}</h2>
-      <div class="option-groups">
+      <header class="section-head">
+        <h2>{{ 'admin.images' | translate }}</h2>
+        <div class="actions">
+          <a
+            class="btn btn-primary"
+            [class.btn-disabled]="!validSelection()"
+            [attr.aria-disabled]="!validSelection()"
+            [attr.href]="validSelection() ? exportImagesUrl() : null"
+            download="card_images.zip"
+            ><ab-icon name="download" /> {{ 'admin.exportImages' | translate }}</a
+          >
+          <label class="btn btn-secondary" [class.btn-disabled]="busy() || !validSelection()"
+            ><ab-icon name="upload" /> {{ 'admin.importImages' | translate
+            }}<input
+              type="file"
+              accept=".zip,application/zip"
+              [disabled]="busy() || !validSelection()"
+              (change)="importImages($event)"
+              hidden
+          /></label>
+        </div>
+      </header>
+      @if (!validSelection()) {
+        <p class="hint">{{ 'admin.selectionHint' | translate }}</p>
+      }
+      <div class="row option-groups">
         @for (group of selectionGroups; track group.label) {
           <div class="option-group">
-            <span class="option-label">{{ group.label | translate }}</span>
+            <span class="label">{{ group.label | translate }}</span>
             <div class="chips">
               @for (key of group.keys; track key) {
                 <label class="chip" [class.chip-on]="selection[key]"
@@ -113,67 +157,46 @@ export const REFRESH_STEPS = [
           </div>
         }
       </div>
-      <div class="set-picker">
+      <div class="row">
         <div class="set-picker-head">
-          <span class="option-label">{{ 'nav.sets' | translate }}</span>
-          <span class="badge" [class.badge-success]="selection.setCodes.length">{{
+          <span class="label">{{ 'nav.sets' | translate }}</span>
+          <span class="muted">{{
             'admin.setsSelected'
               | translate: { count: selection.setCodes.length, total: sets().length }
           }}</span>
           <div class="set-picker-actions">
-            <button class="btn btn-sm btn-secondary" (click)="selectSets(true)">
+            <button class="btn btn-sm btn-ghost" (click)="selectSets(true)">
               {{ 'common.selectAll' | translate }}
             </button>
-            <button class="btn btn-sm btn-secondary" (click)="selectSets(false)">
+            <button class="btn btn-sm btn-ghost" (click)="selectSets(false)">
               {{ 'common.clear' | translate }}
             </button>
           </div>
         </div>
         <div class="set-list">
           @for (group of setGroups(); track group.series) {
-            <div class="set-group">
+            <fieldset class="set-group">
               @if (group.series) {
-                <h3>{{ group.series }}</h3>
+                <legend class="label">{{ group.series }}</legend>
               }
-              <div class="chips">
+              <div class="set-columns">
                 @for (set of group.sets; track set.set_code) {
-                  <label class="chip" [class.chip-on]="selection.setCodes.includes(set.set_code)"
+                  <label class="set-option"
                     ><input
                       type="checkbox"
                       [checked]="selection.setCodes.includes(set.set_code)"
                       (change)="toggleSet(set.set_code, $any($event.target).checked)"
-                    />{{ set.set_name }} <span class="chip-code">{{ set.set_code }}</span></label
+                    /><span class="set-name">{{ set.set_name }}</span>
+                    <span class="set-code">{{ set.set_code }}</span></label
                   >
                 }
               </div>
-            </div>
+            </fieldset>
           }
         </div>
       </div>
-      <div class="actions images-actions">
-        @if (!validSelection()) {
-          <span class="muted hint">{{ 'admin.selectionHint' | translate }}</span>
-        }
-        <a
-          class="btn btn-primary"
-          [class.btn-disabled]="!validSelection()"
-          [attr.aria-disabled]="!validSelection()"
-          [attr.href]="validSelection() ? exportImagesUrl() : null"
-          download="card_images.zip"
-          ><ab-icon name="download" /> {{ 'admin.exportImages' | translate }}</a
-        >
-        <label class="btn btn-secondary" [class.btn-disabled]="busy() || !validSelection()"
-          ><ab-icon name="upload" /> {{ 'admin.importImages' | translate
-          }}<input
-            type="file"
-            accept=".zip,application/zip"
-            [disabled]="busy() || !validSelection()"
-            (change)="importImages($event)"
-            hidden
-        /></label>
-      </div>
       @if (uploading()) {
-        <div class="job">
+        <div class="row">
           <div class="progress-line">
             <span>{{ 'admin.upload' | translate }}</span>
             <span class="muted">{{ uploadPercent() }}%</span>
@@ -183,20 +206,20 @@ export const REFRESH_STEPS = [
       }
       @if (statuses()['images']; as status) {
         @if (status.status !== 'idle' || status.last_run_result) {
-          <article class="job">
-            <header class="job-head">
-              <h3>{{ 'admin.importImages' | translate }}</h3>
+          <div class="row">
+            <span class="row-title">
+              {{ 'admin.importImages' | translate }}
               <span [class]="badgeClass(status)">{{
                 'admin.status.' + status.status | translate
               }}</span>
-            </header>
+            </span>
             <ng-container
               *ngTemplateOutlet="
                 jobBody;
                 context: { $implicit: status, steps: 'admin.imageSteps.' }
               "
             />
-          </article>
+          </div>
         }
       }
     </section>
@@ -224,32 +247,43 @@ export const REFRESH_STEPS = [
       @if (status.error) {
         <p class="error" role="alert">{{ status.error }}</p>
       }
-      @if (resultEntries(status); as entries) {
-        @if (entries.length) {
-          <dl class="results">
-            @for (entry of entries; track entry.key) {
-              <div class="result" [class.result-warning]="entry.warning">
-                <dt>{{ 'admin.result.' + entry.key | translate }}</dt>
-                <dd [title]="entry.detail">{{ entry.value }}</dd>
-              </div>
-            }
-          </dl>
-        }
-      }
-      @if (status.last_run_at) {
-        <small class="muted"
-          >{{ 'admin.lastRun' | translate }} {{ status.last_run_at | date: 'short' }}</small
-        >
+      @let entries = resultEntries(status);
+      @if (entries.length || status.last_run_at) {
+        <dl class="results">
+          @for (entry of entries; track entry.key) {
+            <div class="result" [class.result-warning]="entry.warning">
+              <dt>{{ 'admin.result.' + entry.key | translate }}</dt>
+              <dd [title]="entry.detail">{{ entry.value }}</dd>
+            </div>
+          }
+          @if (status.last_run_at) {
+            <div class="result last-run">
+              <dt>{{ 'admin.lastRun' | translate }}</dt>
+              <dd>{{ status.last_run_at | date: 'short' }}</dd>
+            </div>
+          }
+        </dl>
       }
     </ng-template>
   `,
   styles: `
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1) var(--space-5);
+      margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+      color: var(--color-text-muted);
+      strong {
+        color: var(--color-text);
+        font-variant-numeric: tabular-nums;
+      }
+    }
     .notice {
       display: flex;
       align-items: center;
       gap: var(--space-2);
       padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-md);
     }
     .notice-error {
       background: var(--color-error-bg);
@@ -259,68 +293,75 @@ export const REFRESH_STEPS = [
       background: var(--color-success-bg);
       color: var(--color-success);
     }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-      gap: var(--space-3);
-      margin-block: var(--space-4) var(--space-3);
-    }
-    .stat {
-      display: flex;
-      flex-direction: column;
-      padding: var(--space-3) var(--space-4);
-      strong {
-        font-size: 1.5rem;
-        font-variant-numeric: tabular-nums;
-      }
-      span {
-        color: var(--color-text-muted);
-        font-size: 0.875rem;
-      }
-    }
     .admin-section {
-      padding: var(--space-4);
+      padding: var(--space-4) var(--space-5);
       margin-block: var(--space-4);
+    }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2) var(--space-3);
       h2 {
-        margin-top: 0;
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      > .btn,
+      > .actions {
+        margin-left: auto;
       }
     }
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-2);
-      margin-block: var(--space-3);
     }
-    .jobs {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-      gap: var(--space-3);
+    .hint {
+      margin: var(--space-2) 0 0;
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
     }
-    .job {
+    /* Every block inside a section is a row under a divider. */
+    .row {
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
-      padding: var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      background: var(--color-bg);
+      padding-block: var(--space-3);
+      border-top: 1px solid var(--color-border);
       min-width: 0;
+      &:last-child {
+        padding-bottom: 0;
+      }
     }
-    .job-full {
-      grid-column: 1 / -1;
-      border-color: var(--color-primary);
+    .section-head + .row,
+    .hint + .row {
+      margin-top: var(--space-3);
     }
-    .job-head {
+    .row-main {
       display: flex;
       align-items: center;
-      gap: var(--space-2);
-      h3 {
-        margin: 0;
-        font-size: 1rem;
-      }
+      gap: var(--space-3);
       .btn {
         margin-left: auto;
+        flex-shrink: 0;
       }
+    }
+    .row-title {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      font-weight: 600;
+    }
+    .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+    }
+    .muted {
+      color: var(--color-text-muted);
     }
     .progress-line {
       display: flex;
@@ -333,57 +374,56 @@ export const REFRESH_STEPS = [
       height: 0.5rem;
       accent-color: var(--color-primary);
     }
-    .muted {
-      color: var(--color-text-muted);
+    .error {
+      margin: 0;
+      font-size: 0.875rem;
     }
+    /* Counts as one muted line: "Label 12 · Label 3 · Last run …". */
     .results {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-2);
+      gap: var(--space-1) var(--space-2);
       margin: 0;
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
     }
     .result {
-      display: flex;
-      flex-direction: column;
-      padding: var(--space-1) var(--space-3);
-      border-radius: var(--radius-sm);
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      dt {
-        font-size: 0.75rem;
-        color: var(--color-text-muted);
-      }
+      display: inline-flex;
+      gap: 0.3em;
+      dt,
       dd {
         margin: 0;
+      }
+      dd {
+        color: var(--color-text);
         font-weight: 600;
         font-variant-numeric: tabular-nums;
       }
-    }
-    .result-warning {
-      background: var(--color-warning-bg);
-      border-color: transparent;
-      dt,
-      dd {
-        color: var(--color-warning);
+      & + .result::before {
+        content: '·';
+        margin-right: var(--space-2);
       }
     }
+    .result-warning dd {
+      padding: 0 0.45rem;
+      border-radius: 999px;
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
+      cursor: help;
+    }
+    .last-run dd {
+      font-weight: 400;
+      color: inherit;
+    }
     .option-groups {
-      display: flex;
+      flex-direction: row;
       flex-wrap: wrap;
       gap: var(--space-3) var(--space-6);
-      margin-block: var(--space-3);
     }
     .option-group {
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
-    }
-    .option-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--color-text-muted);
     }
     .chips {
       display: flex;
@@ -393,7 +433,6 @@ export const REFRESH_STEPS = [
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-1);
       padding: 0.3rem 0.75rem;
       border: 1px solid var(--color-border);
       border-radius: 999px;
@@ -422,54 +461,68 @@ export const REFRESH_STEPS = [
       color: var(--color-primary-dark);
       font-weight: 600;
     }
-    .chip-code {
-      font-size: 0.75rem;
-      font-weight: 400;
-      color: var(--color-text-muted);
-    }
-    .set-picker {
-      margin-block: var(--space-4);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      background: var(--color-bg);
-    }
     .set-picker-head {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-3);
-      border-bottom: 1px solid var(--color-border);
+      gap: var(--space-2) var(--space-3);
+      font-size: 0.875rem;
     }
     .set-picker-actions {
       display: flex;
-      gap: var(--space-2);
+      gap: var(--space-1);
       margin-left: auto;
     }
     .set-list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-3);
-      max-height: 22rem;
+      gap: var(--space-4);
+      max-height: 24rem;
       overflow-y: auto;
-      padding: var(--space-3);
+      padding-block: var(--space-2);
     }
-    .set-group h3 {
-      margin: 0 0 var(--space-2);
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--color-text-muted);
-    }
-    .images-actions {
-      justify-content: flex-end;
-      align-items: center;
-      .hint {
-        margin-right: auto;
-        font-size: 0.875rem;
+    .set-group {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      min-width: 0;
+      legend {
+        padding: 0;
+        margin-bottom: var(--space-1);
       }
     }
+    .set-columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+      gap: 0 var(--space-4);
+    }
+    .set-option {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding-block: 0.2rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      min-width: 0;
+      input {
+        margin: 0;
+        accent-color: var(--color-primary);
+        flex-shrink: 0;
+      }
+    }
+    .set-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .set-code {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-faint);
+    }
     .btn-disabled {
-      opacity: 0.6;
+      opacity: 0.55;
       pointer-events: none;
     }
   `,
@@ -478,6 +531,7 @@ export class CatalogManagementComponent {
   private readonly api = inject(CatalogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+  readonly steps = REFRESH_STEPS;
   readonly jobs = ['full', ...REFRESH_STEPS];
   readonly selectionKeys = [
     'french',
