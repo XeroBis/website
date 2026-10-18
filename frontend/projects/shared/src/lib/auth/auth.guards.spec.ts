@@ -53,20 +53,15 @@ describe('auth guards', () => {
       expect(location.assign).not.toHaveBeenCalled();
     });
 
-    it('sends a logged-out user of another app to the auth login page', async () => {
-      setup(TEST_ENV.appUrls.cards);
-      expect(await run(authGuard, null)).toBe(false);
-      expect(location.assign).toHaveBeenCalledWith(
-        'http://localhost:4604/login?redirect=' +
-          encodeURIComponent('http://localhost:4602/decks/3?x=1'),
-      );
+    it('sends a logged-out user of another app to the portfolio', async () => {
+      setup(TEST_ENV.appUrls.auth);
+      expect(await run(authGuard, null, '/')).toBe(false);
+      expect(location.assign).toHaveBeenCalledWith('http://localhost:4600/');
     });
 
-    it('routes to /login inside the auth app itself', async () => {
-      setup(TEST_ENV.appUrls.auth);
-      const result = (await run(authGuard, null, '/')) as UrlTree;
-      expect(result.root.children['primary'].segments.map(String)).toEqual(['login']);
-      expect(result.queryParams).toEqual({ redirect: 'http://localhost:4604/' });
+    it('routes to / inside the portfolio itself', async () => {
+      setup(TEST_ENV.appUrls.portfolio);
+      expect(serialize(await run(authGuard, null))).toBe('/');
       expect(location.assign).not.toHaveBeenCalled();
     });
   });
@@ -82,10 +77,10 @@ describe('auth guards', () => {
       expect(serialize(await run(adminGuard, TEST_USER))).toBe('/');
     });
 
-    it('sends a logged-out user to the login page', async () => {
-      setup(TEST_ENV.appUrls.portfolio);
+    it('sends a logged-out user to the portfolio', async () => {
+      setup(TEST_ENV.appUrls.auth);
       expect(await run(adminGuard, null)).toBe(false);
-      expect(location.assign).toHaveBeenCalledOnce();
+      expect(location.assign).toHaveBeenCalledWith('http://localhost:4600/');
     });
   });
 
@@ -102,13 +97,10 @@ describe('auth guards', () => {
       expect(location.assign).toHaveBeenCalledWith('http://localhost:4604/');
     });
 
-    it('sends a logged-out user to the login page', async () => {
+    it('sends a logged-out user to the portfolio', async () => {
       setup(TEST_ENV.appUrls.cards);
       expect(await run(appGuard('cards'), null)).toBe(false);
-      expect(location.assign).toHaveBeenCalledWith(
-        'http://localhost:4604/login?redirect=' +
-          encodeURIComponent('http://localhost:4602/decks/3?x=1'),
-      );
+      expect(location.assign).toHaveBeenCalledWith('http://localhost:4600/');
     });
   });
 });

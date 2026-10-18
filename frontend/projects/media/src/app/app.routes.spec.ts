@@ -41,13 +41,11 @@ describe('routes', () => {
     return { router, done };
   }
 
-  it('sends a logged-out visitor to the login page', async () => {
+  it('sends a logged-out visitor to the portfolio', async () => {
     const { done } = go('/library');
     flushMe(http, null);
     expect(await done).toBe(false);
-    expect(assign).toHaveBeenCalledWith(
-      'http://localhost:4604/login?redirect=' + encodeURIComponent('http://localhost:4603/library'),
-    );
+    expect(assign).toHaveBeenCalledWith('http://localhost:4600/');
   });
 
   it('sends a user without media to the account page', async () => {

@@ -7,7 +7,7 @@ placeholder page (its name and whether `/api/health` answers) — see
 ## Shared
 
 - `GET /api/health` → `{"status": "ok"}` when the backend can reach the database (500 otherwise). Available on every host.
-- **One login for every app** (see architecture.md "Session"). A page behind `authGuard` sends a logged-out visitor to the auth app's login page, and they come back to that page afterwards. `adminGuard` does the same, and sends a logged-in non-admin to the app's root. `appGuard(app)` does the same, and sends a logged-in user without access to that app to the auth app's account page.
+- **One login for every app** (see architecture.md "Session"). A page behind `authGuard` sends a logged-out visitor to the portfolio's home page (`alanbignon.com`), never to the login page; they log in from the header's "Log in" link. `adminGuard` does the same, and sends a logged-in non-admin to the app's root. `appGuard(app)` does the same, and sends a logged-in user without access to that app to the auth app's account page.
 - **App access**: a new account can use no app. An admin grants apps per user (auth app, `/admin/users`). Admins can use every app. Workout, cards and media are entirely behind their grant (pages and API). The portfolio is public; its grant only allows editing projects.
 - **Language**: the logged-in user's saved language (FR/EN). Logged out: the last language used on that site, then the browser's language if it's French or English, then French.
 - **Theme**: System (follows the device), Light or Dark, one choice for every app. The logged-in user's saved theme; logged out, the last one picked on any `*.alanbignon.com` site (a cookie), else System. Every app has both a light and a dark look.
@@ -20,8 +20,8 @@ placeholder page (its name and whether `/api/health` answers) — see
 
 - `/login`: email + password. On success, goes to `?redirect=` if it is allowed, otherwise to the portfolio (`alanbignon.com`). Allowed in prod: `https://alanbignon.com` or `https://<anything>.alanbignon.com`, no port, no credentials in the URL. Allowed in dev: `http://localhost:4600`–`4604`. A visitor who is already logged in is sent on right away. Errors: invalid credentials, too many attempts, generic.
 - `/signup` (invite-only): email, password (12+ chars), pseudo (required, ≤ 50), sign-up code. Success logs the user in and follows the same redirect rule. Errors: wrong code, email taken, invalid fields, too many attempts. `?redirect=` is kept when switching between login and sign-up.
-- `/` (account, logged in only, otherwise `/login?redirect=` back here): pseudo and email, inline pseudo editing, language picker (Français/English, applied at once), theme picker (System/Light/Dark, applied at once), links to the portfolio (always) and to the workout/cards/media apps the user has access to ("No other app yet" when none), a "Users" link for admins, log out (then `/login`).
-- `/admin/users` (behind `appGuard('portfolio')`: logged out → login, not an editor → auth app's account page): every user, oldest first, with pseudo, email and sign-up date. Each non-admin row has one checkbox per app (Portfolio (edit), Workout, Cards, Media); a click saves at once (the box is disabled while saving, and reverts with an error if the save fails). Admin rows show "Admin: all apps" instead of checkboxes.
+- `/` (account, logged in only, otherwise the portfolio): pseudo and email, inline pseudo editing, language picker (Français/English, applied at once), theme picker (System/Light/Dark, applied at once), links to the portfolio (always) and to the workout/cards/media apps the user has access to ("No other app yet" when none), a "Users" link for admins, log out (then `/login`).
+- `/admin/users` (behind `adminGuard`: logged out → portfolio, not an admin → `/`): every user, oldest first, with pseudo, email and sign-up date. Each non-admin row has one checkbox per app (Portfolio (edit), Workout, Cards, Media); a click saves at once (the box is disabled while saving, and reverts with an error if the save fails). Admin rows show "Admin: all apps" instead of checkboxes.
 - Any other path → `/`.
 
 ### API (`/api/auth`)
@@ -61,7 +61,7 @@ A public list of the projects Alan has made, added and edited by hand by its edi
 - `/` (public): name, subtitle and a short bio (from workout's old home page), then the projects in their public order (see data-model.md). Each card shows the name, a "Featured" badge when featured (the card is also highlighted), the description in the current language, tags, and a "Source code" link when there is one.
   - **Tag filter**: a chip row with "All" and every tag in use. Clicking a chip (or a tag on a card) sets `?tag=<name>` and shows only matching projects (case-insensitive). With no match, "No project with this tag". Filtering happens in the browser.
   - **Editors only**: "Edit" (→ `/admin/projects/:id`) and "Delete" on each card. Delete asks for confirmation and removes the card.
-- `/admin/projects/new`, `/admin/projects/:id` (behind `appGuard('portfolio')`: logged out → login, not an editor → auth app's account page): one form with name, FR description, EN description, source code link, tags (comma-separated, with existing tags offered as clickable suggestions), position and featured. Save goes back to `/`. Errors: name taken, invalid fields, session expired or not an editor, generic. An unknown id shows "Project not found".
+- `/admin/projects/new`, `/admin/projects/:id` (behind `appGuard('portfolio')`: logged out → the portfolio's home page, not an editor → auth app's account page): one form with name, FR description, EN description, source code link, tags (comma-separated, with existing tags offered as clickable suggestions), position and featured. Save goes back to `/`. Errors: name taken, invalid fields, session expired or not an editor, generic. An unknown id shows "Project not found".
 - Any other path → `/`.
 - SEO: static `<title>`, meta description, Open Graph tags and canonical URL in `index.html`. No prerendering (see ideas.md).
 
@@ -88,11 +88,11 @@ A project is `{id, name, description_fr, description_en, repo_url, featured, pos
 
 ## Workout — `workout.alanbignon.com`
 
-A workout log: workouts made of exercises with their sets (and circuits), a shared exercise catalog, templates, saved circuits, a live session mode for the gym, a stats dashboard, and import/export. Ported from `../workout` (see decisions.md for what changed). Every page is behind `appGuard('workout')` (logged out → login; no workout access → the auth app's account page). FR/EN. Tables and rules: data-model.md `workout`.
+A workout log: workouts made of exercises with their sets (and circuits), a shared exercise catalog, templates, saved circuits, a live session mode for the gym, a stats dashboard, and import/export. Ported from `../workout` (see decisions.md for what changed). Every page is behind `appGuard('workout')` (logged out → portfolio; no workout access → the auth app's account page). FR/EN. Tables and rules: data-model.md `workout`.
 
 ### Look
 
-"Old style, modernised": the old app's warm grey background and rose-brown accent, with white cards, soft warm shadows and rounded corners. Buttons, period pickers, badges and header links are pills, and calendar days are round. Manrope everywhere, with tabular digits so numbers line up. Dashboard totals are centred, in rose. Light (warm grey, white cards) or dark, per the shared theme switch (warm near-black, lighter rose accent). Strength is rose-brown, cardio sage green, circuits plum, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker.
+"Old style, modernised": the old app's warm grey background and rose-brown accent, with white cards, soft warm shadows and rounded corners. Buttons, period pickers, badges and header links are pills, and calendar days are round. Manrope everywhere, with tabular digits so numbers line up. Dashboard totals are centred, in rose. Light (warm grey, white cards) or dark, per the shared theme switch (warm near-black, lighter rose accent). Strength is rose-brown, cardio sage green, circuits plum, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker. A browser still running the old app's cached copy switches to this one on its next visit, with one automatic reload.
 
 ### Shared parts
 
@@ -185,7 +185,7 @@ Stats: `{date_from, date_to` (the range used: the query's, else first and last w
 
 ## Cards — `cards.alanbignon.com`
 
-A private card collection and deck tracker, ported from `../pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The web manifest and Poké Ball icons support home-screen installation, with no service worker.
+A private card collection and deck tracker, ported from `../pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The web manifest and Poké Ball icons support home-screen installation, with no service worker. A browser still running the old app's cached copy switches to this one on its next visit, with one automatic reload; before, it looped between cards and the login page.
 
 ### Pages
 
@@ -311,7 +311,7 @@ A deck row (`DeckCardOut`) is `{id, card_id, catalog_id, variant_type, quantity_
 
 ## Media — `media.alanbignon.com`
 
-A personal tracker for books, films and series: what I own, what I've read/watched, what's next. Ported from `../media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → login; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
+A personal tracker for books, films and series: what I own, what I've read/watched, what's next. Ported from `../media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → portfolio; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
 
 ### Look
 

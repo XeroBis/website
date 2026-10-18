@@ -132,6 +132,10 @@
               {
                 "glob": "**/*",
                 "input": "projects/workout/public"
+              },
+              {
+                "glob": "ngsw-worker.js",
+                "input": "projects/shared/public"
               }
             ],
             "styles": [
@@ -210,6 +214,10 @@
               {
                 "glob": "**/*",
                 "input": "projects/cards/public"
+              },
+              {
+                "glob": "ngsw-worker.js",
+                "input": "projects/shared/public"
               }
             ],
             "styles": [

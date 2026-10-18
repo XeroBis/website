@@ -51,7 +51,8 @@ website/
 │   └── projects/
 │       ├── shared/             # library, imported as `@shared` (from source, never built on its own):
 │       │                       #   auth (AuthService, guards, interceptor), i18n, environment, http (httpStatus),
-│       │                       #   layout (`ab-header`), icon (`ab-icon`), placeholder
+│       │                       #   layout (`ab-header`), icon (`ab-icon`), placeholder;
+│       │                       #   public/ngsw-worker.js: safety worker copied into cards' and workout's builds
 │       └── portfolio/ workout/ cards/ media/ auth/   # one application per site
 ├── infra/
 │   ├── nginx/                  # the edge: nginx.conf, snippets/, Dockerfile (builds the frontend into the image)
@@ -78,7 +79,7 @@ website/
 ### Frontend: projects, library, bundles
 
 - Each application has its own `main.ts`, `index.html`, routes, `public/` assets (and optionally a web manifest), and builds to `frontend/dist/<app>/browser/`.
-- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; each also has a `favicon.svg`, which browsers that support it use instead. Cards keeps the old repo's Poké Ball. Portfolio, workout, media and auth have new ones matching their look: workout a white dumbbell on its rose-brown, portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, rasterized from the same dumbbell, plus a maskable one with the dumbbell shrunk into the safe zone) so it can be installed to a phone's home screen; no app has a service worker. Cards likewise keeps the Poké Ball manifest, regular/maskable icons and a 180px Apple touch icon, without a worker. Workout's body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
+- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; each also has a `favicon.svg`, which browsers that support it use instead. Cards keeps the old repo's Poké Ball. Portfolio, workout, media and auth have new ones matching their look: workout a white dumbbell on its rose-brown, portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, rasterized from the same dumbbell, plus a maskable one with the dumbbell shrunk into the safe zone) so it can be installed to a phone's home screen. Cards likewise keeps the Poké Ball manifest, regular/maskable icons and a 180px Apple touch icon. No app has a real service worker. Cards and workout serve `/ngsw-worker.js` only as a safety worker that removes their old repos' Angular service worker (`projects/shared/public/ngsw-worker.js`, added to their `assets` in `angular.json`; see decisions.md "Safety worker"). Workout's body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
 - `shared` holds what more than one app needs (HTTP services, auth, i18n, layout pieces). Apps import it as `@shared`, which `tsconfig.json` maps to `projects/shared/src/public-api.ts`: the library's source is compiled into each app's bundle at build time, and tree-shaking keeps only the parts that app uses. Nothing is shared at runtime.
 - One `package.json`, so the Angular version is the same for every app.
 - **Environment**: `projects/shared/src/lib/environment/environment.ts` is the prod build's (`production: true`, the `https://*.alanbignon.com` app URLs). Each app's `development` build configuration (`ng serve`) swaps in `environment.development.ts` (the `http://localhost:460x` URLs) through `fileReplacements` in `angular.json`. Code reads it through the `ENVIRONMENT` injection token, which tests override.
@@ -92,7 +93,7 @@ website/
 **Prod.** Browser → `edge` (nginx, 443) → by `Host`:
 - `/api/...` → `backend:8000`, URI unchanged. Same-origin on every host; the backend checks the session cookie itself (no `auth_request`, no `X-User-*` headers).
   It's a `location ^~ /api/`, so the static-asset regex never catches an API path ending in `.jpg`/`.png`/`.svg` (card images, variant badges). 20 MB body limit, except two exact-match locations for cards' images archive: `POST /api/cards/catalog/import/images` (4 GB body, passed on unbuffered as it arrives) and `GET /api/cards/catalog/export/images` (response unbuffered).
-- anything else → static files from `/usr/share/nginx/html/<app>`, with unknown paths falling back to `index.html` (Angular routing). Hashed assets are cached for a year, `index.html` is `no-cache`.
+- anything else → static files from `/usr/share/nginx/html/<app>`, with unknown paths falling back to `index.html` (Angular routing). Hashed assets are cached for a year, `index.html` and `/ngsw-worker.js` are `no-cache`.
 
 **Dev.** Browser → `ng serve` for that app (`localhost:460x`) → its dev-server proxy sends `/api` to the backend (`API_TARGET`, `http://backend:8000` inside compose). Same-origin as in prod. Cookies aren't scoped by port, so a session cookie set on `localhost:4604` (auth) is also sent to `localhost:4602` (cards).
 
@@ -118,7 +119,7 @@ One login for every app. The cookies are set by `/api/auth/login` (or `/register
 | `refresh` | refresh JWT (30 days) | yes | `/api/auth` | 30 days |
 | `csrf` | random token | no | `/` | 30 days |
 
-1. An app's route guard (`authGuard`/`adminGuard`/`appGuard(app)` from `@shared`) calls `/api/auth/me`. Without a session it sends the browser to `<auth app>/login?redirect=<current URL>`. `appGuard` also checks the user's `apps` and sends a user without access to the auth app's account page.
+1. An app's route guard (`authGuard`/`adminGuard`/`appGuard(app)` from `@shared`) calls `/api/auth/me`. Without a session it sends the browser to the portfolio's home page (a router navigation when already on the portfolio). Only the header's "Log in" link opens `<auth app>/login?redirect=<current URL>`. `appGuard` also checks the user's `apps` and sends a user without access to the auth app's account page.
 2. After login, the auth app follows `redirect` if it's allowed, otherwise goes to the portfolio. See `features.md` "Auth".
 3. Every `/api` call carries the cookies. The backend dependency decodes `session`, checks the `jti` isn't in `core.revoked_tokens`, loads the user, and on unsafe methods compares the `x-csrf-token` header to the `csrf` cookie.
 4. When the access token expires, the backend answers 401. The `@shared` interceptor then calls `POST /api/auth/refresh` once (rotating both tokens) and retries the request. If the refresh fails, the user is cleared and the 401 is passed on.
