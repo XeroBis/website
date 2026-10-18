@@ -27,7 +27,7 @@ website/
 │   │   ├── deps.py             #   get_current_user / get_optional_user / require_admin / require_app
 │   │   └── rate_limit.py       #   shared slowapi limiter
 │   ├── domains/<name>/         # one package per app (+ health): router.py, models.py, schemas.py, service code
-│   │   ├── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`)
+│   │   ├── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`, `seed-basic-user`)
 │   │   ├── portfolio/          #   /api/portfolio routes, `portfolio` schema models
 │   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
 │   │   │                       #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)

@@ -1,4 +1,4 @@
-.PHONY: help up build down logs ps seed-user media-refresh hooks lint test b-test f-test prod prod-down prod-seed-user prod-media-refresh
+.PHONY: help up build down logs ps seed-user seed-basic-user media-refresh hooks lint test b-test f-test prod prod-down prod-seed-user prod-media-refresh
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -23,9 +23,17 @@ ps: ## Show dev containers
 	docker compose ps
 
 # Admin account from ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_PSEUDO (dev defaults in
-# docker-compose.yml, overridable: `make seed-user ADMIN_EMAIL=me@x.com`).
+# docker-compose.yml, overridable), e.g.:
+#   make seed-user ADMIN_EMAIL=me@example.com ADMIN_PASSWORD=change-me-please
 seed-user: ## Create or update the dev admin account
 	docker compose exec $(foreach v,ADMIN_EMAIL ADMIN_PASSWORD ADMIN_PSEUDO,$(if $($(v)),-e $(v)="$($(v))" )) backend /opt/venv/bin/python -m domains.auth.seed
+
+# Same, without making the account admin (an existing admin stays admin). Also
+# resets a password. EMAIL and PASSWORD are required, e.g.:
+#   make seed-basic-user EMAIL=friend@example.com PASSWORD=change-me-please PSEUDO=Friend
+seed-basic-user: ## Create or update a dev non-admin account (or reset its password)
+	@test -n "$(EMAIL)" -a -n "$(PASSWORD)" || { echo "EMAIL and PASSWORD are required"; exit 1; }
+	docker compose exec -e ADMIN_EMAIL="$(EMAIL)" -e ADMIN_PASSWORD="$(PASSWORD)" -e ADMIN_PSEUDO="$(or $(PSEUDO),User)" backend /opt/venv/bin/python -m domains.auth.seed --no-admin
 
 media-refresh: ## Re-fetch every TMDB / Open Library catalog row (dev)
 	docker compose exec backend /opt/venv/bin/python -m domains.media.refresh

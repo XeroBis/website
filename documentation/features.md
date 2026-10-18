@@ -42,7 +42,7 @@ A user is `{id, email, pseudo, language, is_admin, apps}`. `apps` is what the us
 ### Validation
 
 - Email: valid address, compared and stored lowercased. A malformed email at login is just a 401.
-- Password: at least 12 characters (sign-up and `make seed-user`; not re-checked at login).
+- Password: at least 12 characters (sign-up, `make seed-user` and `make seed-basic-user`; not re-checked at login).
 - Pseudo: trimmed, 1–50 characters, required.
 - Language: `en` or `fr`.
 - Apps: each one of `portfolio`, `workout`, `cards`, `media`; repeats are dropped. Setting an admin's apps is allowed but changes nothing they can use.

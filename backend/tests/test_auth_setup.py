@@ -1,4 +1,4 @@
-"""Startup settings and the `make seed-user` script."""
+"""Startup settings and the `make seed-user` / `seed-basic-user` script."""
 
 import pytest
 from pydantic import ValidationError
@@ -54,3 +54,16 @@ def test_seed_updates_existing_user(db):
 def test_seed_applies_signup_rules(db):
     with pytest.raises(ValidationError):
         seed_admin(db, "admin@example.com", "short", "Boss")
+
+
+def test_seed_basic_user_is_not_admin(db):
+    user = seed_admin(db, "user@example.com", PASSWORD, "Plain", admin=False)
+    assert (user.pseudo, user.is_admin) == ("Plain", False)
+    assert verify_password(PASSWORD, user.hashed_password)
+
+
+def test_seed_basic_user_keeps_existing_admin_flag(db):
+    existing = make_user(email="boss@example.com", is_admin=True)
+    user = seed_admin(db, "boss@example.com", "a-brand-new-password", "X", admin=False)
+    assert (user.id, user.is_admin) == (existing.id, True)
+    assert verify_password("a-brand-new-password", user.hashed_password)

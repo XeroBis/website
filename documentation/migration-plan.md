@@ -11,7 +11,7 @@ biggest app (cards) last.
 | 2 | **Auth**: `core.users` (+ revoked tokens), register/login/refresh/logout/me, cookie JWT + CSRF, `get_current_user` dependency, `auth` app (login, signup, account: pseudo, language), shared `AuthService`/guard/interceptor/i18n in `@shared` | ✅ done 2026-10-17 |
 | 3 | **Portfolio**: `portfolio` schema (projects, tags), public list, admin CRUD, `portfolio` app | ✅ done 2026-10-17 |
 | 4 | **Media**: port `../media` (already on the target stack) | ✅ done 2026-10-17 |
-| 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | ⏳ next |
+| 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | ✅ done 2026-10-17 |
 | 6 | **Cards**: port `../pokemon_cards` (43 migrations squashed into this history, scanning, card images now auth-checked by the backend instead of nginx) incl. its import | |
 | 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | |
 
