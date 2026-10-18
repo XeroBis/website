@@ -858,3 +858,68 @@ class SharedSetOut(BaseModel):
     release_date: date | None
     expires_at: datetime
     cards: list[SharedSetCardOut]
+
+
+# ── catalog management (admin) ───────────────────────────────────────────────
+
+
+class CatalogStats(BaseModel):
+    total_cards: int
+    total_sets: int
+    distinct_card_names: int
+    # Catalog prints per variant type, `standard` included.
+    variant_counts: dict[str, int]
+
+
+class JobStarted(BaseModel):
+    status: Literal["started"] = "started"
+
+
+class JobStatus(BaseModel):
+    """A catalog job's in-memory state (refresh/jobs.py)."""
+
+    status: Literal["idle", "running", "done", "error"]
+    step: str | None
+    step_label: str | None
+    step_index: int
+    total_steps: int
+    percent: int
+    sub_done: int
+    sub_total: int
+    result: dict
+    error: str | None
+    last_run_at: str | None
+    last_run_result: dict | None
+
+
+class CatalogFileCard(BaseModel):
+    """One card of `cards_metadata.json`, the old app's field names kept so its
+    files import unchanged (`pokemon_name` = `name`, `local_path` =
+    `image_path`, `card_page_url` = `source_url`)."""
+
+    pokemon_name: str
+    display_name: str | None = None
+    details: dict | None = None
+    set_name: str
+    set_name_fr: str | None = None
+    set_code: str
+    card_number: str
+    local_path: str
+    card_page_url: str | None = None
+    supertype: str | None = None
+    rarity: str | None = None
+    series: str | None = None
+    card_count: int | None = None
+    release_date: date | None = None
+    image_path_fr: str | None = None
+    variants: list[CatalogVariantOut] = []
+
+
+class CatalogFile(BaseModel):
+    total_cards: int
+    cards: list[CatalogFileCard]
+
+
+class CatalogImportResult(BaseModel):
+    created: int
+    updated: int

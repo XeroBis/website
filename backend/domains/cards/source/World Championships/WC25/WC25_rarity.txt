@@ -1,0 +1,108 @@
+id,rarity,supertype
+001,Double Rare,Pokémon
+002,Common,Pokémon
+003,Common,Pokémon
+004,Rare,Pokémon
+005,Double Rare,Pokémon
+006,Rare,Pokémon
+007,Double Rare,Pokémon
+008,Uncommon,Pokémon
+009,Double Rare,Pokémon
+010,Uncommon,Pokémon
+011,Rare,Trainer
+012,Uncommon,Trainer
+013,Ultra Rare,Trainer
+014,Uncommon,Trainer
+015,Uncommon,Trainer
+016,Uncommon,Trainer
+017,Uncommon,Trainer
+018,Uncommon,Pokémon
+019,Common,Trainer
+020,ACE SPEC Rare,Trainer
+021,Common,Trainer
+022,Uncommon,Trainer
+023,Uncommon,Trainer
+024,Uncommon,Trainer
+025,No Rarity,Energy
+026,No Rarity,Energy
+027,Double Rare,Pokémon
+028,Common,Pokémon
+029,Double Rare,Pokémon
+030,Double Rare,Pokémon
+031,Common,Pokémon
+032,Double Rare,Pokémon
+033,Double Rare,Pokémon
+034,Double Rare,Pokémon
+035,Double Rare,Pokémon
+036,Uncommon,Trainer
+037,Rare,Trainer
+038,Uncommon,Trainer
+039,Uncommon,Trainer
+040,Uncommon,Trainer
+041,Uncommon,Trainer
+042,Uncommon,Trainer
+043,Uncommon,Trainer
+044,Uncommon,Trainer
+045,Uncommon,Trainer
+046,Uncommon,Trainer
+047,ACE SPEC Rare,Trainer
+048,Uncommon,Trainer
+049,Uncommon,Trainer
+050,No Rarity,Energy
+051,No Rarity,Energy
+052,No Rarity,Energy
+053,Double Rare,Pokémon
+054,Double Rare,Pokémon
+055,Rare,Pokémon
+056,Common,Pokémon
+057,Common,Pokémon
+058,Uncommon,Pokémon
+059,Rare,Pokémon
+060,Double Rare,Pokémon
+061,Double Rare,Pokémon
+062,Rare,Pokémon
+063,Double Rare,Pokémon
+064,Uncommon,Trainer
+065,Rare,Trainer
+066,Uncommon,Trainer
+067,Uncommon,Pokémon
+068,Uncommon,Trainer
+069,Uncommon,Trainer
+070,Uncommon,Trainer
+071,Uncommon,Trainer
+072,Uncommon,Trainer
+073,Uncommon,Trainer
+074,Uncommon,Pokémon
+075,Common,Trainer
+076,ACE SPEC Rare,Trainer
+077,No Rarity,Energy
+078,No Rarity,Energy
+079,No Rarity,Energy
+080,Double Rare,Pokémon
+081,Common,Pokémon
+082,Common,Pokémon
+083,Rare,Pokémon
+084,Common,Pokémon
+085,Common,Pokémon
+086,Common,Pokémon
+087,Double Rare,Pokémon
+088,Uncommon,Pokémon
+089,Rare,Pokémon
+090,Rare,Pokémon
+091,Uncommon,Pokémon
+092,Rare,Trainer
+093,Uncommon,Trainer
+094,Rare,Trainer
+095,Uncommon,Trainer
+096,Uncommon,Trainer
+097,Uncommon,Trainer
+098,Uncommon,Trainer
+099,Uncommon,Trainer
+100,Uncommon,Trainer
+101,Uncommon,Pokémon
+102,Common,Trainer
+103,Uncommon,Trainer
+104,No Rarity,Energy
+105,No Rarity,Energy
+106,Uncommon,Energy
+107,ACE SPEC Rare,Energy

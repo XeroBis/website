@@ -1,0 +1,81 @@
+id,rarity,supertype
+1,Holo Rare V,Pokémon
+2,Common,Pokémon
+3,Common,Pokémon
+4,Uncommon,Pokémon
+5,Holo Rare V,Pokémon
+6,Common,Pokémon
+7,Uncommon,Pokémon
+8,Holo Rare V,Pokémon
+9,Common,Pokémon
+10,Rare Holo,Pokémon
+11,Common,Pokémon
+12,Uncommon,Pokémon
+13,Holo Rare V,Pokémon
+14,Holo Rare V,Pokémon
+15,Holo Rare VMAX,Pokémon
+16,Holo Rare V,Pokémon
+17,Holo Rare VMAX,Pokémon
+18,Common,Pokémon
+19,Uncommon,Pokémon
+20,Rare Holo,Pokémon
+21,Holo Rare V,Pokémon
+22,Holo Rare V,Pokémon
+23,Holo Rare VMAX,Pokémon
+24,Common,Pokémon
+25,Uncommon,Pokémon
+26,Rare Holo,Pokémon
+27,Holo Rare V,Pokémon
+28,Rare Holo,Pokémon
+29,Common,Pokémon
+30,Rare Holo,Pokémon
+31,Common,Pokémon
+32,Holo Rare V,Pokémon
+33,Common,Pokémon
+34,Uncommon,Pokémon
+35,Common,Pokémon
+36,Common,Pokémon
+37,Rare Holo,Pokémon
+38,Uncommon,Pokémon
+39,Common,Pokémon
+40,Uncommon,Pokémon
+41,Common,Pokémon
+42,Rare Holo,Pokémon
+43,Common,Pokémon
+44,Common,Pokémon
+45,Uncommon,Pokémon
+46,Common,Pokémon
+47,Holo Rare V,Pokémon
+48,Common,Pokémon
+49,Rare Holo,Pokémon
+50,Uncommon,Trainer
+51,Uncommon,Trainer
+52,Uncommon,Trainer
+53,Uncommon,Trainer
+54,Uncommon,Trainer
+55,Uncommon,Trainer
+56,Rare Holo,Trainer
+57,Uncommon,Trainer
+58,Uncommon,Trainer
+59,Common,Trainer
+60,Uncommon,Trainer
+61,Common,Trainer
+62,Rare Holo,Trainer
+63,Uncommon,Trainer
+64,Uncommon,Trainer
+65,Uncommon,Trainer
+66,Uncommon,Trainer
+67,Uncommon,Trainer
+68,Uncommon,Trainer
+69,Ultra Rare,Pokémon
+70,Ultra Rare,Pokémon
+71,Ultra Rare,Pokémon
+72,Ultra Rare,Pokémon
+73,Ultra Rare,Trainer
+74,Rainbow Rare,Pokémon
+75,Rainbow Rare,Pokémon
+76,Rainbow Rare,Pokémon
+77,Rainbow Rare,Trainer
+78,Rainbow Rare,Trainer
+79,Rare Secret,Pokémon
+80,Rare Secret,Trainer

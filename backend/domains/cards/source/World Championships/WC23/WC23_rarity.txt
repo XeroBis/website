@@ -1,0 +1,106 @@
+id,rarity,supertype
+001,Holo Rare VMAX,Pokémon
+002,Holo Rare V,Pokémon
+003,Holo Rare V,Pokémon
+004,Rare,Pokémon
+005,Rare,Pokémon
+006,Rare,Trainer
+007,Uncommon,Trainer
+008,Uncommon,Pokémon
+009,Uncommon,Trainer
+010,Uncommon,Trainer
+011,Uncommon,Pokémon
+012,Uncommon,Trainer
+013,Uncommon,Trainer
+014,Uncommon,Trainer
+015,Uncommon,Trainer
+016,Uncommon,Trainer
+017,Uncommon,Pokémon
+018,Common,Trainer
+019,Rare Holo,Trainer
+020,Uncommon,Trainer
+021,Uncommon,Trainer
+022,Uncommon,Trainer
+023,Uncommon,Trainer
+024,Uncommon,Trainer
+025,Uncommon,Energy
+026,Uncommon,Energy
+027,Double Rare,Pokémon
+028,Rare Holo,Pokémon
+029,Uncommon,Pokémon
+030,Uncommon,Pokémon
+031,Common,Pokémon
+032,Common,Pokémon
+033,Rare Holo,Pokémon
+034,Holo Rare V,Pokémon
+035,Radiant Rare,Pokémon
+036,Holo Rare V,Pokémon
+037,Rare Holo,Pokémon
+038,Rare,Pokémon
+039,Uncommon,Pokémon
+040,Rare,Trainer
+041,Rare,Trainer
+042,Uncommon,Trainer
+043,Uncommon,Trainer
+044,Common,Trainer
+045,Uncommon,Trainer
+046,Uncommon,Trainer
+047,Common,Trainer
+048,Uncommon,Trainer
+049,Common,Trainer
+050,Rare Holo,Trainer
+051,Uncommon,Trainer
+052,Uncommon,Trainer
+053,Uncommon,Energy
+054,Ultra Rare,Energy
+055,Holo Rare VSTAR,Pokémon
+056,Holo Rare V,Pokémon
+057,Rare Holo,Pokémon
+058,Holo Rare V,Pokémon
+059,Rare Holo,Pokémon
+060,Holo Rare V,Pokémon
+061,Holo Rare V,Pokémon
+062,Radiant Rare,Pokémon
+063,Holo Rare V,Pokémon
+064,Rare Holo,Pokémon
+065,Ultra Rare,Trainer
+066,Uncommon,Pokémon
+067,Rare,Trainer
+068,Promo,Trainer
+069,Uncommon,Trainer
+070,Uncommon,Trainer
+071,Uncommon,Trainer
+072,Uncommon,Trainer
+073,Uncommon,Trainer
+074,Uncommon,Trainer
+075,Uncommon,Energy
+076,Uncommon,Energy
+077,Uncommon,Energy
+078,Uncommon,Energy
+079,Uncommon,Energy
+080,Rare,Pokémon
+081,Rare Holo,Pokémon
+082,Rare,Pokémon
+083,Promo,Pokémon
+084,Rare,Pokémon
+085,Radiant Rare,Pokémon
+086,Holo Rare V,Pokémon
+087,Rare,Pokémon
+088,Uncommon,Trainer
+089,Uncommon,Trainer
+090,Uncommon,Trainer
+091,Uncommon,Pokémon
+092,Uncommon,Trainer
+093,Uncommon,Trainer
+094,Uncommon,Trainer
+095,Uncommon,Trainer
+096,Uncommon,Trainer
+097,Common,Trainer
+098,Uncommon,Trainer
+099,Uncommon,Trainer
+100,Common,Trainer
+101,Common,Trainer
+102,Uncommon,Trainer
+103,Ultra Rare,Energy
+104,Ultra Rare,Energy
+105,Ultra Rare,Energy

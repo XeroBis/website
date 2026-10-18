@@ -1,0 +1,217 @@
+id,rarity,supertype
+1,Holo Rare V,Pokémon
+2,Common,Pokémon
+3,Common,Pokémon
+4,Rare,Pokémon
+5,Common,Pokémon
+6,Rare,Pokémon
+7,Common,Pokémon
+8,Rare,Pokémon
+9,Holo Rare V,Pokémon
+10,Common,Pokémon
+11,Common,Pokémon
+12,Uncommon,Pokémon
+13,Uncommon,Pokémon
+14,Rare Holo,Pokémon
+15,Rare,Pokémon
+16,Common,Pokémon
+17,Common,Pokémon
+18,Uncommon,Pokémon
+19,Rare,Pokémon
+20,Common,Pokémon
+21,Uncommon,Pokémon
+22,Common,Pokémon
+23,Rare,Pokémon
+24,Holo Rare V,Pokémon
+25,Holo Rare V,Pokémon
+26,Uncommon,Pokémon
+27,Common,Pokémon
+28,Uncommon,Pokémon
+29,Rare,Pokémon
+30,Common,Pokémon
+31,Common,Pokémon
+32,Uncommon,Pokémon
+33,Uncommon,Pokémon
+34,Rare Holo,Pokémon
+35,Rare Holo,Pokémon
+36,Rare,Pokémon
+37,Common,Pokémon
+38,Common,Pokémon
+39,Rare,Pokémon
+40,Common,Pokémon
+41,Rare,Pokémon
+42,Common,Pokémon
+43,Common,Pokémon
+44,Uncommon,Pokémon
+45,Common,Pokémon
+46,Common,Pokémon
+47,Uncommon,Pokémon
+48,Rare,Pokémon
+49,Holo Rare V,Pokémon
+50,Holo Rare VMAX,Pokémon
+51,Uncommon,Pokémon
+52,Uncommon,Pokémon
+53,Holo Rare V,Pokémon
+54,Common,Pokémon
+55,Common,Pokémon
+56,Uncommon,Pokémon
+57,Uncommon,Pokémon
+58,Rare Holo,Pokémon
+59,Rare,Pokémon
+60,Common,Pokémon
+61,Rare,Pokémon
+62,Rare,Pokémon
+63,Common,Pokémon
+64,Rare Holo,Pokémon
+65,Common,Pokémon
+66,Rare,Pokémon
+67,Common,Pokémon
+68,Common,Pokémon
+69,Rare,Pokémon
+70,Common,Pokémon
+71,Uncommon,Pokémon
+72,Holo Rare V,Pokémon
+73,Common,Pokémon
+74,Common,Pokémon
+75,Rare Holo,Pokémon
+76,Rare Holo,Pokémon
+77,Common,Pokémon
+78,Rare,Pokémon
+79,Holo Rare V,Pokémon
+80,Holo Rare VMAX,Pokémon
+81,Common,Pokémon
+82,Rare,Pokémon
+83,Common,Pokémon
+84,Uncommon,Pokémon
+85,Rare Holo,Pokémon
+86,Holo Rare V,Pokémon
+87,Common,Pokémon
+88,Rare,Pokémon
+89,Common,Pokémon
+90,Rare,Pokémon
+91,Holo Rare V,Pokémon
+92,Common,Pokémon
+93,Uncommon,Pokémon
+94,Uncommon,Pokémon
+95,Uncommon,Pokémon
+96,Common,Pokémon
+97,Common,Pokémon
+98,Uncommon,Pokémon
+99,Rare Holo,Pokémon
+100,Uncommon,Pokémon
+101,Common,Pokémon
+102,Common,Pokémon
+103,Rare,Pokémon
+104,Holo Rare V,Pokémon
+105,Common,Pokémon
+106,Rare,Pokémon
+107,Common,Pokémon
+108,Common,Pokémon
+109,Rare,Pokémon
+110,Rare Holo,Pokémon
+111,Common,Pokémon
+112,Common,Pokémon
+113,Rare,Pokémon
+114,Rare,Pokémon
+115,Holo Rare V,Pokémon
+116,Holo Rare VMAX,Pokémon
+117,Common,Pokémon
+118,Uncommon,Pokémon
+119,Rare Holo,Pokémon
+120,Holo Rare V,Pokémon
+121,Common,Pokémon
+122,Rare,Pokémon
+123,Common,Pokémon
+124,Rare Holo,Pokémon
+125,Common,Pokémon
+126,Rare,Pokémon
+127,Common,Pokémon
+128,Rare Holo,Pokémon
+129,Common,Pokémon
+130,Common,Pokémon
+131,Uncommon,Pokémon
+132,Uncommon,Pokémon
+133,Common,Pokémon
+134,Uncommon,Pokémon
+135,Rare,Pokémon
+136,Common,Pokémon
+137,Rare Holo,Pokémon
+138,Holo Rare V,Pokémon
+139,Holo Rare V,Pokémon
+140,Rare,Pokémon
+141,Holo Rare V,Pokémon
+142,Holo Rare VMAX,Pokémon
+143,Common,Pokémon
+144,Rare,Pokémon
+145,Common,Pokémon
+146,Common,Pokémon
+147,Rare,Pokémon
+148,Rare Holo,Pokémon
+149,Rare,Pokémon
+150,Common,Pokémon
+151,Uncommon,Pokémon
+152,Common,Pokémon
+153,Common,Pokémon
+154,Uncommon,Pokémon
+155,Holo Rare V,Pokémon
+156,Uncommon,Trainer
+157,Uncommon,Trainer
+158,Uncommon,Trainer
+159,Uncommon,Trainer
+160,Uncommon,Trainer
+161,Uncommon,Trainer
+162,Uncommon,Trainer
+163,Uncommon,Trainer
+164,Uncommon,Trainer
+165,Uncommon,Trainer
+166,Uncommon,Trainer
+167,Uncommon,Trainer
+168,Uncommon,Trainer
+169,Rare Holo,Trainer
+170,Uncommon,Trainer
+171,Uncommon,Trainer
+172,Uncommon,Trainer
+173,Uncommon,Trainer
+174,Uncommon,Trainer
+175,Uncommon,Trainer
+176,Uncommon,Trainer
+177,Uncommon,Trainer
+178,Rare Holo,Trainer
+179,Uncommon,Trainer
+180,Uncommon,Trainer
+181,Uncommon,Trainer
+182,Uncommon,Trainer
+183,Uncommon,Trainer
+184,Uncommon,Trainer
+185,Uncommon,Trainer
+186,Uncommon,Energy
+187,Ultra Rare,Pokémon
+188,Ultra Rare,Pokémon
+189,Ultra Rare,Pokémon
+190,Ultra Rare,Pokémon
+191,Ultra Rare,Pokémon
+192,Ultra Rare,Pokémon
+193,Ultra Rare,Pokémon
+194,Ultra Rare,Pokémon
+195,Ultra Rare,Pokémon
+196,Ultra Rare,Pokémon
+197,Ultra Rare,Pokémon
+198,Ultra Rare,Pokémon
+199,Ultra Rare,Trainer
+200,Ultra Rare,Trainer
+201,Ultra Rare,Trainer
+202,Ultra Rare,Trainer
+203,Rainbow Rare,Pokémon
+204,Rainbow Rare,Pokémon
+205,Rainbow Rare,Pokémon
+206,Rainbow Rare,Pokémon
+207,Rainbow Rare,Trainer
+208,Rainbow Rare,Trainer
+209,Rainbow Rare,Trainer
+210,Rainbow Rare,Trainer
+211,Rare Secret,Pokémon
+212,Rare Secret,Pokémon
+213,Rare Secret,Trainer
+214,Rare Secret,Trainer
+215,Rare Secret,Trainer
+216,Rare Secret,Trainer

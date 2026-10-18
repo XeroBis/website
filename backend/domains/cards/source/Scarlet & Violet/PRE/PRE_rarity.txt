@@ -1,0 +1,181 @@
+id,rarity,supertype
+001,Common,Pokémon
+002,Uncommon,Pokémon
+003,Common,Pokémon
+004,Common,Pokémon
+005,Rare,Pokémon
+006,Double Rare,Pokémon
+007,Common,Pokémon
+008,Rare,Pokémon
+009,Common,Pokémon
+010,Uncommon,Pokémon
+011,Double Rare,Pokémon
+012,Double Rare,Pokémon
+013,Rare,Pokémon
+014,Double Rare,Pokémon
+015,Common,Pokémon
+016,Uncommon,Pokémon
+017,Double Rare,Pokémon
+018,Common,Pokémon
+019,Uncommon,Pokémon
+020,Common,Pokémon
+021,Uncommon,Pokémon
+022,Rare,Pokémon
+023,Double Rare,Pokémon
+024,Uncommon,Pokémon
+025,Rare,Pokémon
+026,Double Rare,Pokémon
+027,Double Rare,Pokémon
+028,Double Rare,Pokémon
+029,Rare,Pokémon
+030,Double Rare,Pokémon
+031,Double Rare,Pokémon
+032,Double Rare,Pokémon
+033,Rare,Pokémon
+034,Double Rare,Pokémon
+035,Common,Pokémon
+036,Common,Pokémon
+037,Rare,Pokémon
+038,Common,Pokémon
+039,Common,Pokémon
+040,Rare,Pokémon
+041,Double Rare,Pokémon
+042,Uncommon,Pokémon
+043,Rare,Pokémon
+044,Rare,Pokémon
+045,Rare,Pokémon
+046,Rare,Pokémon
+047,Common,Pokémon
+048,Common,Pokémon
+049,Rare,Pokémon
+050,Common,Pokémon
+051,Double Rare,Pokémon
+052,Common,Pokémon
+053,Common,Pokémon
+054,Rare,Pokémon
+055,Uncommon,Pokémon
+056,Double Rare,Pokémon
+057,Rare,Pokémon
+058,Double Rare,Pokémon
+059,Rare,Pokémon
+060,Double Rare,Pokémon
+061,Common,Pokémon
+062,Common,Pokémon
+063,Common,Pokémon
+064,Double Rare,Pokémon
+065,Rare,Pokémon
+066,Common,Pokémon
+067,Uncommon,Pokémon
+068,Uncommon,Pokémon
+069,Common,Pokémon
+070,Rare,Pokémon
+071,Common,Pokémon
+072,Common,Pokémon
+073,Double Rare,Pokémon
+074,Common,Pokémon
+075,Double Rare,Pokémon
+076,Double Rare,Pokémon
+077,Common,Pokémon
+078,Rare,Pokémon
+079,Common,Pokémon
+080,Rare,Pokémon
+081,Common,Pokémon
+082,Double Rare,Pokémon
+083,Common,Pokémon
+084,Common,Pokémon
+085,Common,Pokémon
+086,Uncommon,Pokémon
+087,Uncommon,Pokémon
+088,Common,Pokémon
+089,Uncommon,Pokémon
+090,Common,Pokémon
+091,Double Rare,Pokémon
+092,Double Rare,Pokémon
+093,Common,Trainer
+094,Uncommon,Trainer
+095,Uncommon,Trainer
+096,Common,Trainer
+097,Common,Trainer
+098,Common,Trainer
+099,Common,Trainer
+100,Uncommon,Trainer
+101,Uncommon,Trainer
+102,Uncommon,Trainer
+103,Uncommon,Trainer
+104,Uncommon,Trainer
+105,Uncommon,Trainer
+106,Uncommon,Trainer
+107,Uncommon,Trainer
+108,Uncommon,Trainer
+109,Common,Trainer
+110,Uncommon,Trainer
+111,Common,Trainer
+112,Uncommon,Trainer
+113,Uncommon,Trainer
+114,Uncommon,Trainer
+115,Common,Trainer
+116,ACE SPEC Rare,Trainer
+117,ACE SPEC Rare,Trainer
+118,Uncommon,Trainer
+119,ACE SPEC Rare,Trainer
+120,Uncommon,Trainer
+121,Uncommon,Trainer
+122,Common,Trainer
+123,Common,Trainer
+124,Common,Trainer
+125,Common,Trainer
+126,Uncommon,Trainer
+127,Common,Trainer
+128,ACE SPEC Rare,Trainer
+129,ACE SPEC Rare,Trainer
+130,Uncommon,Trainer
+131,ACE SPEC Rare,Trainer
+132,Ultra Rare,Trainer
+133,Ultra Rare,Trainer
+134,Ultra Rare,Trainer
+135,Ultra Rare,Pokémon
+136,Ultra Rare,Trainer
+137,Ultra Rare,Trainer
+138,Ultra Rare,Trainer
+139,Ultra Rare,Trainer
+140,Ultra Rare,Trainer
+141,Ultra Rare,Trainer
+142,Ultra Rare,Trainer
+143,Ultra Rare,Trainer
+144,Special Illustration Rare,Pokémon
+145,Special Illustration Rare,Pokémon
+146,Special Illustration Rare,Pokémon
+147,Special Illustration Rare,Pokémon
+148,Special Illustration Rare,Pokémon
+149,Special Illustration Rare,Pokémon
+150,Special Illustration Rare,Pokémon
+151,Special Illustration Rare,Pokémon
+152,Special Illustration Rare,Pokémon
+153,Special Illustration Rare,Pokémon
+154,Special Illustration Rare,Pokémon
+155,Special Illustration Rare,Pokémon
+156,Special Illustration Rare,Pokémon
+157,Special Illustration Rare,Pokémon
+158,Special Illustration Rare,Pokémon
+159,Special Illustration Rare,Pokémon
+160,Special Illustration Rare,Pokémon
+161,Special Illustration Rare,Pokémon
+162,Special Illustration Rare,Pokémon
+163,Special Illustration Rare,Pokémon
+164,Special Illustration Rare,Pokémon
+165,Special Illustration Rare,Pokémon
+166,Special Illustration Rare,Pokémon
+167,Special Illustration Rare,Pokémon
+168,Special Illustration Rare,Pokémon
+169,Special Illustration Rare,Pokémon
+170,Special Illustration Rare,Trainer
+171,Special Illustration Rare,Trainer
+172,Special Illustration Rare,Trainer
+173,Special Illustration Rare,Trainer
+174,Special Illustration Rare,Trainer
+175,Special Illustration Rare,Trainer
+176,Hyper Rare,Pokémon
+177,Hyper Rare,Pokémon
+178,Hyper Rare,Pokémon
+179,Hyper Rare,Pokémon
+180,Hyper Rare,Pokémon

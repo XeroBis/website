@@ -1,0 +1,99 @@
+id,rarity,supertype
+01,Rare,Pokémon
+02,Rare,Pokémon
+03,Uncommon,Pokémon
+04,Double Rare,Pokémon
+05,Radiant Rare,Pokémon
+06,Uncommon,Trainer
+07,Uncommon,Trainer
+08,Rare,Trainer
+09,Uncommon,Trainer
+10,Uncommon,Trainer
+11,Common,Trainer
+12,Uncommon,Pokémon
+13,Uncommon,Pokémon
+14,Common,Trainer
+15,Uncommon,Trainer
+16,Uncommon,Trainer
+17,Uncommon,Trainer
+18,Common,Trainer
+19,Uncommon,Trainer
+20,ACE SPEC Rare,Trainer
+21,Uncommon,Trainer
+22,Uncommon,Trainer
+23,Uncommon,Trainer
+24,No Rarity,Energy
+25,Holo Rare V,Pokémon
+26,Holo Rare VSTAR,Pokémon
+27,Double Rare,Pokémon
+28,Double Rare,Pokémon
+29,Holo Rare VSTAR,Pokémon
+30,Holo Rare VSTAR,Pokémon
+31,Double Rare,Pokémon
+32,Double Rare,Pokémon
+33,Double Rare,Pokémon
+34,Uncommon,Pokémon
+35,Rare,Pokémon
+36,Rare,Trainer
+37,Uncommon,Pokémon
+38,Rare,Trainer
+39,Uncommon,Trainer
+40,Uncommon,Trainer
+41,Common,Trainer
+42,Uncommon,Trainer
+43,ACE SPEC Rare,Trainer
+44,Common,Trainer
+45,Uncommon,Trainer
+46,Common,Trainer
+47,Uncommon,Trainer
+48,Uncommon,Trainer
+49,No Rarity,Energy
+50,No Rarity,Energy
+51,Double Rare,Pokémon
+52,Double Rare,Pokémon
+53,Double Rare,Pokémon
+54,Holo Rare V,Pokémon
+55,Double Rare,Pokémon
+56,Double Rare,Pokémon
+57,Holo Rare V,Pokémon
+58,Double Rare,Pokémon
+59,Rare Holo,Pokémon
+60,Radiant Rare,Pokémon
+61,Uncommon,Pokémon
+62,Uncommon,Trainer
+63,Rare,Trainer
+64,Rare,Trainer
+65,Uncommon,Trainer
+66,Uncommon,Trainer
+67,Uncommon,Trainer
+68,Uncommon,Trainer
+69,ACE SPEC Rare,Trainer
+70,Rare Holo,Trainer
+71,Uncommon,Trainer
+72,Uncommon,Trainer
+73,Common,Trainer
+74,No Rarity,Energy
+75,Uncommon,Energy
+76,Double Rare,Pokémon
+77,Uncommon,Trainer
+78,Rare,Trainer
+79,Uncommon,Trainer
+80,Rare,Trainer
+81,Uncommon,Trainer
+82,Uncommon,Pokémon
+83,Uncommon,Trainer
+84,Uncommon,Trainer
+85,Common,Trainer
+86,Common,Trainer
+87,Common,Trainer
+88,Uncommon,Trainer
+89,Uncommon,Trainer
+90,ACE SPEC Rare,Trainer
+91,Uncommon,Trainer
+92,Uncommon,Trainer
+93,Uncommon,Trainer
+94,Uncommon,Trainer
+95,Uncommon,Trainer
+96,Uncommon,Trainer
+97,No Rarity,Energy
+98,Uncommon,Energy

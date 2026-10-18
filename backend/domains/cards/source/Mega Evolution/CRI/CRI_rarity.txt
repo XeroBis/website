@@ -1,0 +1,123 @@
+id,rarity,supertype
+001,Common,Pokémon
+002,Common,Pokémon
+003,Double Rare,Pokémon
+004,Common,Pokémon
+005,Common,Pokémon
+006,Common,Pokémon
+007,Rare,Pokémon
+008,Common,Pokémon
+009,Uncommon,Pokémon
+010,Rare,Pokémon
+011,Common,Pokémon
+012,Common,Pokémon
+013,Rare,Pokémon
+014,Common,Pokémon
+015,Double Rare,Pokémon
+016,Common,Pokémon
+017,Common,Pokémon
+018,Uncommon,Pokémon
+019,Rare,Pokémon
+020,Common,Pokémon
+021,Common,Pokémon
+022,Double Rare,Pokémon
+023,Common,Pokémon
+024,Uncommon,Pokémon
+025,Common,Pokémon
+026,Uncommon,Pokémon
+027,Common,Pokémon
+028,Common,Pokémon
+029,Rare,Pokémon
+030,Common,Pokémon
+031,Uncommon,Pokémon
+032,Uncommon,Pokémon
+033,Uncommon,Pokémon
+034,Uncommon,Pokémon
+035,Double Rare,Pokémon
+036,Common,Pokémon
+037,Uncommon,Pokémon
+038,Common,Pokémon
+039,Rare,Pokémon
+040,Common,Pokémon
+041,Double Rare,Pokémon
+042,Rare,Pokémon
+043,Uncommon,Pokémon
+044,Common,Pokémon
+045,Common,Pokémon
+046,Common,Pokémon
+047,Uncommon,Pokémon
+048,Double Rare,Pokémon
+049,Common,Pokémon
+050,Common,Pokémon
+051,Rare,Pokémon
+052,Common,Pokémon
+053,Common,Pokémon
+054,Uncommon,Pokémon
+055,Double Rare,Pokémon
+056,Common,Pokémon
+057,Uncommon,Pokémon
+058,Common,Pokémon
+059,Common,Pokémon
+060,Common,Pokémon
+061,Uncommon,Pokémon
+062,Common,Pokémon
+063,Uncommon,Pokémon
+064,Double Rare,Pokémon
+065,Double Rare,Pokémon
+066,Common,Pokémon
+067,Common,Pokémon
+068,Rare,Pokémon
+069,Uncommon,Pokémon
+070,Common,Pokémon
+071,Common,Pokémon
+072,Common,Pokémon
+073,Double Rare,Pokémon
+074,Uncommon,Trainer
+075,Uncommon,Pokémon
+076,Uncommon,Trainer
+077,Uncommon,Trainer
+078,Uncommon,Trainer
+079,Uncommon,Trainer
+080,Uncommon,Trainer
+081,Uncommon,Trainer
+082,Uncommon,Trainer
+083,Uncommon,Trainer
+084,Rare,Energy
+085,Rare,Energy
+086,Rare,Energy
+087,Illustration Rare,Pokémon
+088,Illustration Rare,Pokémon
+089,Illustration Rare,Pokémon
+090,Illustration Rare,Pokémon
+091,Illustration Rare,Pokémon
+092,Illustration Rare,Pokémon
+093,Illustration Rare,Pokémon
+094,Illustration Rare,Pokémon
+095,Illustration Rare,Pokémon
+096,Illustration Rare,Pokémon
+097,Illustration Rare,Pokémon
+098,Ultra Rare,Pokémon
+099,Ultra Rare,Pokémon
+100,Ultra Rare,Pokémon
+101,Ultra Rare,Pokémon
+102,Ultra Rare,Pokémon
+103,Ultra Rare,Pokémon
+104,Ultra Rare,Pokémon
+105,Ultra Rare,Pokémon
+106,Ultra Rare,Trainer
+107,Ultra Rare,Trainer
+108,Ultra Rare,Trainer
+109,Ultra Rare,Trainer
+110,Ultra Rare,Trainer
+111,Ultra Rare,Trainer
+112,Ultra Rare,Trainer
+113,Ultra Rare,Trainer
+114,Ultra Rare,Trainer
+115,Ultra Rare,Trainer
+116,Special Illustration Rare,Pokémon
+117,Special Illustration Rare,Pokémon
+118,Special Illustration Rare,Pokémon
+119,Special Illustration Rare,Pokémon
+120,Special Illustration Rare,Trainer
+121,Special Illustration Rare,Trainer
+122,Mega Hyper Rare,Pokémon

@@ -1,0 +1,105 @@
+id,rarity,supertype
+001,Holo Rare VSTAR,Pokémon
+002,Holo Rare V,Pokémon
+003,Holo Rare VMAX,Pokémon
+004,Holo Rare V,Pokémon
+005,Holo Rare VSTAR,Pokémon
+006,Holo Rare V,Pokémon
+007,Rare Holo,Pokémon
+008,Common,Pokémon
+009,Holo Rare V,Pokémon
+010,Common,Pokémon
+011,Holo Rare V,Pokémon
+012,Rare Holo,Trainer
+013,Rare Holo,Pokémon
+014,Rare Holo,Trainer
+015,Uncommon,Trainer
+016,Uncommon,Trainer
+017,Uncommon,Trainer
+018,Uncommon,Trainer
+019,Uncommon,Trainer
+020,Uncommon,Trainer
+021,Uncommon,Energy
+022,Uncommon,Energy
+023,No Rarity,Energy
+024,No Rarity,Energy
+025,Holo Rare VMAX,Pokémon
+026,Holo Rare V,Pokémon
+027,Holo Rare V,Pokémon
+028,Rare,Pokémon
+029,Common,Pokémon
+030,Rare Holo,Trainer
+031,Uncommon,Trainer
+032,Uncommon,Trainer
+033,Uncommon,Trainer
+034,Uncommon,Pokémon
+035,Uncommon,Trainer
+036,Uncommon,Trainer
+037,Uncommon,Trainer
+038,Uncommon,Trainer
+039,Uncommon,Pokémon
+040,Uncommon,Trainer
+041,Uncommon,Trainer
+042,Uncommon,Trainer
+043,Uncommon,Energy
+044,Uncommon,Energy
+045,Holo Rare VMAX,Pokémon
+046,Holo Rare V,Pokémon
+047,Rare Holo,Pokémon
+048,Rare Holo,Pokémon
+049,Uncommon,Pokémon
+050,Common,Pokémon
+051,Rare Holo,Pokémon
+052,Common,Pokémon
+053,Holo Rare V,Pokémon
+054,Rare,Pokémon
+055,Rare Holo,Trainer
+056,Uncommon,Trainer
+057,Rare Holo,Trainer
+058,Rare Holo,Pokémon
+059,Uncommon,Trainer
+060,Uncommon,Trainer
+061,Uncommon,Trainer
+062,Uncommon,Trainer
+063,Uncommon,Trainer
+064,Uncommon,Trainer
+065,Uncommon,Trainer
+066,Uncommon,Pokémon
+067,Uncommon,Trainer
+068,Uncommon,Trainer
+069,Uncommon,Trainer
+070,Uncommon,Trainer
+071,Uncommon,Trainer
+072,Uncommon,Trainer
+073,Uncommon,Energy
+074,No Rarity,Energy
+075,Holo Rare VSTAR,Pokémon
+076,Holo Rare V,Pokémon
+077,Rare Holo,Pokémon
+078,Uncommon,Pokémon
+079,Common,Pokémon
+080,Holo Rare VMAX,Pokémon
+081,Holo Rare V,Pokémon
+082,Radiant Rare,Pokémon
+083,Rare,Pokémon
+084,Rare Holo,Trainer
+085,Rare Holo,Trainer
+086,Uncommon,Trainer
+087,Rare Holo,Trainer
+088,Rare Holo,Pokémon
+089,Rare Holo,Trainer
+090,Uncommon,Trainer
+091,Uncommon,Trainer
+092,Uncommon,Trainer
+093,Uncommon,Trainer
+094,Uncommon,Trainer
+095,Uncommon,Trainer
+096,Uncommon,Trainer
+097,Uncommon,Trainer
+098,Uncommon,Trainer
+099,Uncommon,Pokémon
+100,Uncommon,Trainer
+101,Uncommon,Trainer
+102,Uncommon,Trainer
+103,Uncommon,Trainer
+104,No Rarity,Energy

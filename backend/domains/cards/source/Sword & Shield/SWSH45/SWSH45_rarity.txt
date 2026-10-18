@@ -1,0 +1,196 @@
+id,rarity,supertype
+1,Common,Pokémon
+2,Rare,Pokémon
+3,Rare,Pokémon
+4,Common,Pokémon
+5,Uncommon,Pokémon
+6,Common,Pokémon
+7,Uncommon,Pokémon
+8,Rare Holo,Pokémon
+9,Holo Rare V,Pokémon
+10,Holo Rare VMAX,Pokémon
+11,Common,Pokémon
+12,Uncommon,Pokémon
+13,Rare Holo,Pokémon
+14,Common,Pokémon
+15,Uncommon,Pokémon
+16,Rare,Pokémon
+17,Amazing Rare,Pokémon
+18,Holo Rare V,Pokémon
+19,Holo Rare VMAX,Pokémon
+20,Common,Pokémon
+21,Amazing Rare,Pokémon
+22,Common,Pokémon
+23,Uncommon,Pokémon
+24,Rare,Pokémon
+25,Rare,Pokémon
+26,Common,Pokémon
+27,Rare,Pokémon
+28,Uncommon,Pokémon
+29,Common,Pokémon
+30,Rare Holo,Pokémon
+31,Common,Pokémon
+32,Uncommon,Pokémon
+33,Rare Holo,Pokémon
+34,Uncommon,Pokémon
+35,Common,Pokémon
+36,Common,Pokémon
+37,Holo Rare V,Pokémon
+38,Holo Rare VMAX,Pokémon
+39,Holo Rare V,Pokémon
+40,Common,Pokémon
+41,Common,Pokémon
+42,Rare Holo,Pokémon
+43,Common,Pokémon
+44,Holo Rare V,Pokémon
+45,Holo Rare VMAX,Pokémon
+46,Amazing Rare,Pokémon
+47,Common,Pokémon
+48,Rare Holo,Pokémon
+49,Common,Pokémon
+50,Holo Rare V,Pokémon
+51,Holo Rare VMAX,Pokémon
+52,Common,Pokémon
+53,Holo Rare V,Pokémon
+54,Holo Rare V,Pokémon
+55,Holo Rare VMAX,Pokémon
+56,Rare Holo,Pokémon
+57,Uncommon,Trainer
+58,Rare,Trainer
+59,Uncommon,Trainer
+60,Rare,Trainer
+61,Uncommon,Trainer
+62,Uncommon,Trainer
+63,Uncommon,Trainer
+64,Ultra Rare,Pokémon
+65,Ultra Rare,Trainer
+66,Ultra Rare,Trainer
+67,Ultra Rare,Trainer
+68,Ultra Rare,Trainer
+69,Ultra Rare,Trainer
+70,Ultra Rare,Trainer
+71,Ultra Rare,Trainer
+72,Ultra Rare,Trainer
+73,Rainbow Rare,Pokémon
+74,Shiny Rare,Pokémon
+75,Shiny Rare,Pokémon
+76,Shiny Rare,Pokémon
+77,Shiny Rare,Pokémon
+78,Shiny Rare,Pokémon
+79,Shiny Rare,Pokémon
+80,Shiny Rare,Pokémon
+81,Shiny Rare,Pokémon
+82,Shiny Rare,Pokémon
+83,Shiny Rare,Pokémon
+84,Shiny Rare,Pokémon
+85,Shiny Rare,Pokémon
+86,Shiny Rare,Pokémon
+87,Shiny Rare,Pokémon
+88,Shiny Rare,Pokémon
+89,Shiny Rare,Pokémon
+90,Shiny Rare,Pokémon
+91,Shiny Rare,Pokémon
+92,Shiny Rare,Pokémon
+93,Shiny Rare,Pokémon
+94,Shiny Rare,Pokémon
+95,Shiny Rare,Pokémon
+96,Shiny Rare,Pokémon
+97,Shiny Rare,Pokémon
+98,Shiny Rare,Pokémon
+99,Shiny Rare,Pokémon
+100,Shiny Rare,Pokémon
+101,Shiny Rare,Pokémon
+102,Shiny Rare,Pokémon
+103,Shiny Rare,Pokémon
+104,Shiny Rare,Pokémon
+105,Shiny Rare,Pokémon
+106,Shiny Rare,Pokémon
+107,Shiny Rare,Pokémon
+108,Shiny Rare,Pokémon
+109,Shiny Rare,Pokémon
+110,Shiny Rare,Pokémon
+111,Shiny Rare,Pokémon
+112,Shiny Rare,Pokémon
+113,Shiny Rare,Pokémon
+114,Shiny Rare,Pokémon
+115,Shiny Rare,Pokémon
+116,Shiny Rare,Pokémon
+117,Shiny Rare,Pokémon
+118,Shiny Rare,Pokémon
+119,Shiny Rare,Pokémon
+120,Shiny Rare,Pokémon
+121,Shiny Rare,Pokémon
+122,Shiny Rare,Pokémon
+123,Shiny Rare,Pokémon
+124,Shiny Rare,Pokémon
+125,Shiny Rare,Pokémon
+126,Shiny Rare,Pokémon
+127,Shiny Rare,Pokémon
+128,Shiny Rare,Pokémon
+129,Shiny Rare,Pokémon
+130,Shiny Rare,Pokémon
+131,Shiny Rare,Pokémon
+132,Shiny Rare,Pokémon
+133,Shiny Rare,Pokémon
+134,Shiny Rare,Pokémon
+135,Shiny Rare,Pokémon
+136,Shiny Rare,Pokémon
+137,Shiny Rare,Pokémon
+138,Shiny Rare,Pokémon
+139,Shiny Rare,Pokémon
+140,Shiny Rare,Pokémon
+141,Shiny Rare,Pokémon
+142,Shiny Rare,Pokémon
+143,Shiny Rare,Pokémon
+144,Shiny Rare,Pokémon
+145,Shiny Rare,Pokémon
+146,Shiny Rare,Pokémon
+147,Shiny Rare,Pokémon
+148,Shiny Rare,Pokémon
+149,Shiny Rare,Pokémon
+150,Shiny Rare,Pokémon
+151,Shiny Rare,Pokémon
+152,Shiny Rare,Pokémon
+153,Shiny Rare,Pokémon
+154,Shiny Rare,Pokémon
+155,Shiny Rare,Pokémon
+156,Shiny Rare,Pokémon
+157,Shiny Rare,Pokémon
+158,Shiny Rare,Pokémon
+159,Shiny Rare,Pokémon
+160,Shiny Rare,Pokémon
+161,Shiny Rare,Pokémon
+162,Shiny Rare,Pokémon
+163,Shiny Rare,Pokémon
+164,Shiny Rare,Pokémon
+165,Shiny Rare,Pokémon
+166,Shiny Rare,Pokémon
+167,Shiny Rare,Pokémon
+168,Shiny Rare,Pokémon
+169,Shiny Rare,Pokémon
+170,Shiny Rare,Pokémon
+171,Shiny Rare,Pokémon
+172,Shiny Rare,Pokémon
+173,Shiny Rare,Pokémon
+174,Shiny Rare,Pokémon
+175,Shiny Rare,Pokémon
+176,Shiny Rare,Pokémon
+177,Shiny Rare,Pokémon
+178,Shiny Rare V or VMAX,Pokémon
+179,Shiny Rare V or VMAX,Pokémon
+180,Shiny Rare V or VMAX,Pokémon
+181,Shiny Rare V or VMAX,Pokémon
+182,Shiny Rare V or VMAX,Pokémon
+183,Shiny Rare V or VMAX,Pokémon
+184,Shiny Rare V or VMAX,Pokémon
+185,Shiny Rare V or VMAX,Pokémon
+186,Shiny Rare V or VMAX,Pokémon
+187,Shiny Rare V or VMAX,Pokémon
+188,Shiny Rare V or VMAX,Pokémon
+189,Shiny Rare V or VMAX,Pokémon
+190,Shiny Rare V or VMAX,Pokémon
+191,Shiny Rare V or VMAX,Pokémon
+192,Shiny Rare V or VMAX,Pokémon
+193,Shiny Rare V or VMAX,Pokémon
+194,Rare Secret,Pokémon
+195,Rare Secret,Pokémon

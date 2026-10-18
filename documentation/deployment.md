@@ -17,7 +17,7 @@ make prod                  # docker compose -f docker-compose.prod.yml up --buil
 make prod-seed-user ADMIN_EMAIL=… ADMIN_PASSWORD=… [ADMIN_PSEUDO=…]   # admin account
 ```
 
-Volumes: `pgdata` (the database) and `cards_data` (cards' downloaded images, ~2 GB, not in the database: back it up separately or rebuild it from the catalog image export).
+Volumes: `pgdata` (the database) and `cards_data` (cards' downloaded images, ~2 GB, not in the database: back it up separately or rebuild it from the catalog image export). Cards' **Import images** (Catalog Management) uploads the ~2 GB zip into `cards_data` before restoring it, so that volume's disk needs about twice the archive's size free during an import; the edge accepts up to 4 GB on that one route (`snippets/app.conf`).
 
 Migrations run automatically (`alembic upgrade head`) on backend start. The backend refuses to start if `SECRET_KEY` (≥ 32 chars) or `REGISTER_SECRET` (≥ 16 chars) is missing or too short. Changing `SECRET_KEY` logs everyone out. Without `TMDB_READ_ACCESS_TOKEN` the backend still starts, but media's film and series search answers 502 (books use Open Library, no key).
 

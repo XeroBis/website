@@ -1,0 +1,192 @@
+id,rarity,supertype
+001,Common,Pokémon
+002,Common,Pokémon
+003,Common,Pokémon
+004,Common,Pokémon
+005,Common,Pokémon
+006,Common,Pokémon
+007,Common,Pokémon
+008,Common,Pokémon
+009,Common,Pokémon
+010,Common,Pokémon
+011,Common,Pokémon
+012,Rare,Pokémon
+013,Common,Pokémon
+014,Rare,Pokémon
+015,Double Rare,Pokémon
+016,Common,Pokémon
+017,Common,Pokémon
+018,Common,Pokémon
+019,Rare,Pokémon
+020,Rare,Pokémon
+021,Double Rare,Pokémon
+022,Common,Pokémon
+023,Pikachu rare,Pokémon
+024,Pikachu rare,Pokémon
+025,Pikachu rare,Pokémon
+026,Pikachu rare,Pokémon
+027,Pikachu rare,Pokémon
+028,Pikachu rare,Pokémon
+029,Pikachu rare,Pokémon
+030,Pikachu rare,Pokémon
+031,Pikachu rare,Pokémon
+032,Pikachu rare,Pokémon
+033,Pikachu rare,Pokémon
+034,Pikachu rare,Pokémon
+035,Pikachu rare,Pokémon
+036,Pikachu rare,Pokémon
+037,Pikachu rare,Pokémon
+038,Pikachu rare,Pokémon
+039,Pikachu rare,Pokémon
+040,Pikachu rare,Pokémon
+041,Pikachu rare,Pokémon
+042,Pikachu rare,Pokémon
+043,Pikachu rare,Pokémon
+044,Pikachu rare,Pokémon
+045,Pikachu rare,Pokémon
+046,Pikachu rare,Pokémon
+047,Pikachu rare,Pokémon
+048,Pikachu rare,Pokémon
+049,Pikachu rare,Pokémon
+050,Pikachu rare,Pokémon
+051,Pikachu rare,Pokémon
+052,Pikachu rare,Pokémon
+053,Double Rare,Pokémon
+054,Double Rare,Pokémon
+055,Common,Pokémon
+056,Rare,Pokémon
+057,Common,Pokémon
+058,Common,Pokémon
+059,Common,Pokémon
+060,Common,Pokémon
+061,Common,Pokémon
+062,Rare,Pokémon
+063,Rare,Pokémon
+064,Double Rare,Pokémon
+065,Rare,Pokémon
+066,Double Rare,Pokémon
+067,Common,Pokémon
+068,Common,Pokémon
+069,Common,Pokémon
+070,Double Rare,Pokémon
+071,Double Rare,Pokémon
+072,Common,Pokémon
+073,Common,Pokémon
+074,Common,Pokémon
+075,Common,Pokémon
+076,Rare,Pokémon
+077,Common,Pokémon
+078,Common,Pokémon
+079,Common,Pokémon
+080,Rare,Pokémon
+081,Common,Pokémon
+082,Rare,Pokémon
+083,Common,Pokémon
+084,Common,Pokémon
+085,Common,Pokémon
+086,Rare,Pokémon
+087,Common,Pokémon
+088,Common,Pokémon
+089,Common,Pokémon
+090,Double Rare,Pokémon
+091,Common,Pokémon
+092,Double Rare,Pokémon
+093,Common,Pokémon
+094,Common,Pokémon
+095,Common,Pokémon
+096,Common,Pokémon
+097,Common,Pokémon
+098,Common,Pokémon
+099,Common,Pokémon
+100,Rare,Pokémon
+101,Common,Pokémon
+102,Double Rare,Pokémon
+103,Rare,Pokémon
+104,Common,Pokémon
+105,Rare,Pokémon
+106,Rare,Pokémon
+107,Rare,Pokémon
+108,Common,Pokémon
+109,Double Rare,Pokémon
+110,Common,Pokémon
+111,Common,Pokémon
+112,Common,Pokémon
+113,Common,Pokémon
+114,Common,Pokémon
+115,Common,Pokémon
+116,Common,Pokémon
+117,Common,Pokémon
+118,Common,Pokémon
+119,Common,Pokémon
+120,Common,Pokémon
+121,Rare,Pokémon
+122,Common,Pokémon
+123,Common,Pokémon
+124,Common,Pokémon
+125,Common,Pokémon
+126,Common,Trainer
+127,Common,Trainer
+128,Common,Trainer
+129,Illustration Rare,Pokémon
+130,Illustration Rare,Pokémon
+131,Illustration Rare,Pokémon
+132,Illustration Rare,Pokémon
+133,Illustration Rare,Pokémon
+134,Illustration Rare,Pokémon
+135,Illustration Rare,Pokémon
+136,Illustration Rare,Pokémon
+137,Illustration Rare,Pokémon
+138,Illustration Rare,Pokémon
+139,Illustration Rare,Pokémon
+140,Illustration Rare,Pokémon
+141,Illustration Rare,Pokémon
+142,Illustration Rare,Pokémon
+143,Illustration Rare,Pokémon
+144,Illustration Rare,Pokémon
+145,Illustration Rare,Pokémon
+146,Illustration Rare,Pokémon
+147,Special Illustration Rare,Pokémon
+148,Special Illustration Rare,Pokémon
+149,Special Illustration Rare,Pokémon
+150,Special Illustration Rare,Pokémon
+151,Special Illustration Rare,Pokémon
+152,Special Illustration Rare,Pokémon
+153,Special Illustration Rare,Pokémon
+154,Special Illustration Rare,Pokémon
+155,Special Illustration Rare,Pokémon
+156,Special Illustration Rare,Pokémon
+157,Futuriste Rare,Pokémon
+158,Futuriste Rare,Pokémon
+159,Secrète,Pokémon
+160,Secrète,Pokémon
+161,Secrète,Trainer
+162,Secrète,Pokémon
+163,Secrète,Pokémon
+164,Secrète,Pokémon
+165,Secrète,Pokémon
+166,Secrète,Pokémon
+167,Secrète,Pokémon
+168,Secrète,Pokémon
+169,Secrète,Pokémon
+170,Secrète,Pokémon
+171,Secrète,Pokémon
+172,Secrète,Pokémon
+173,Secrète,Pokémon
+174,Secrète,Pokémon
+175,Secrète,Pokémon
+176,Secrète,Trainer
+177,Secrète,Pokémon
+178,Secrète,Pokémon
+179,Secrète,Pokémon
+180,Secrète,Pokémon
+181,Secrète,Pokémon
+182,Secrète,Pokémon
+183,Secrète,Pokémon
+184,Secrète,Pokémon
+185,Secrète,Pokémon
+186,Secrète,Pokémon
+187,Secrète,Pokémon
+188,Secrète,Pokémon
+189,RGB,Pokémon
+190,RGB,Pokémon
+191,RGB,Pokémon

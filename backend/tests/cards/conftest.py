@@ -1,6 +1,8 @@
 """Fixtures for the cards tests: logged-in clients with the `cards` app, a
-temporary CARDS_DATA_DIR, and a small catalog."""
+temporary CARDS_DATA_DIR and CARDS_SOURCE_DIR, a small catalog, a fake web
+(no test reaches the network) and catalog jobs run inline."""
 
+import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,7 +10,10 @@ import app
 from core import database
 from core.config import settings
 from core.security import CSRF_COOKIE
+from domains.cards import display
 from domains.cards import models as m
+from domains.cards.refresh import http as refresh_http
+from domains.cards.refresh import jobs
 from tests.conftest import login, make_user
 
 URL = "/api/cards"
@@ -21,6 +26,55 @@ def data_dir(tmp_path, monkeypatch):
     path.mkdir()
     monkeypatch.setattr(settings, "cards_data_dir", str(path))
     return path
+
+
+@pytest.fixture(autouse=True)
+def source_dir(tmp_path, monkeypatch):
+    """An empty CARDS_SOURCE_DIR (see write_set)."""
+    path = tmp_path / "cards-source"
+    path.mkdir()
+    monkeypatch.setattr(settings, "cards_source_dir", str(path))
+    display._series_names_fr.cache_clear()
+    yield path
+    display._series_names_fr.cache_clear()
+
+
+class FakeWeb:
+    """Stands in for the pokecardex CDN and TCGdex: tests register responses
+    by full URL. Any other request fails the test."""
+
+    def __init__(self):
+        self.routes: dict[str, httpx2.Response] = {}
+        self.requests: list[str] = []
+
+    def add(self, url: str, content: bytes = b"\xff\xd8jpeg", status: int = 200):
+        self.routes[url] = httpx2.Response(status, content=content)
+
+    def json(self, url: str, data) -> None:
+        self.routes[url] = httpx2.Response(200, json=data)
+
+    def handle(self, request: httpx2.Request) -> httpx2.Response:
+        url = str(request.url)
+        self.requests.append(url)
+        if url not in self.routes:
+            raise AssertionError(f"Unexpected external request: {url}")
+        return self.routes[url]
+
+
+@pytest.fixture(autouse=True)
+def web(monkeypatch):
+    fake = FakeWeb()
+    monkeypatch.setattr(refresh_http, "transport", httpx2.MockTransport(fake.handle))
+    return fake
+
+
+@pytest.fixture(autouse=True)
+def inline_jobs(monkeypatch):
+    """Catalog jobs run inside the request, so it returns once they're done."""
+    jobs.reset()
+    monkeypatch.setattr(jobs, "spawn", lambda target, *args: target(*args))
+    yield
+    jobs.reset()
 
 
 @pytest.fixture

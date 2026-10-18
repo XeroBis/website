@@ -1,0 +1,100 @@
+id,rarity,supertype
+001,Common,Pokémon
+002,Uncommon,Pokémon
+003,Common,Pokémon
+004,Common,Pokémon
+005,Uncommon,Pokémon
+006,Rare,Pokémon
+007,Common,Pokémon
+008,Common,Pokémon
+009,Uncommon,Pokémon
+010,Common,Pokémon
+011,Common,Pokémon
+012,Double Rare,Pokémon
+013,Common,Pokémon
+014,Uncommon,Pokémon
+015,Double Rare,Pokémon
+016,Common,Pokémon
+017,Uncommon,Pokémon
+018,Common,Pokémon
+019,Common,Pokémon
+020,Rare,Pokémon
+021,Rare,Pokémon
+022,Uncommon,Pokémon
+023,Common,Pokémon
+024,Common,Pokémon
+025,Rare,Pokémon
+026,Uncommon,Pokémon
+027,Common,Pokémon
+028,Common,Pokémon
+029,Uncommon,Pokémon
+030,Common,Pokémon
+031,Common,Pokémon
+032,Rare,Pokémon
+033,Common,Pokémon
+034,Uncommon,Pokémon
+035,Uncommon,Pokémon
+036,Double Rare,Pokémon
+037,Double Rare,Pokémon
+038,Double Rare,Pokémon
+039,Double Rare,Pokémon
+040,Uncommon,Pokémon
+041,Common,Pokémon
+042,Rare,Pokémon
+043,Common,Pokémon
+044,Common,Pokémon
+045,Common,Pokémon
+046,Rare,Pokémon
+047,Uncommon,Pokémon
+048,Common,Pokémon
+049,Common,Pokémon
+050,Common,Pokémon
+051,Common,Pokémon
+052,Common,Pokémon
+053,Common,Pokémon
+054,Uncommon,Pokémon
+055,Uncommon,Pokémon
+056,Uncommon,Pokémon
+057,Uncommon,Pokémon
+058,ACE SPEC Rare,Trainer
+059,Uncommon,Pokémon
+060,ACE SPEC Rare,Trainer
+061,Uncommon,Trainer
+062,ACE SPEC Rare,Trainer
+063,Uncommon,Pokémon
+064,Uncommon,Pokémon
+065,Illustration Rare,Pokémon
+066,Illustration Rare,Pokémon
+067,Illustration Rare,Pokémon
+068,Illustration Rare,Pokémon
+069,Illustration Rare,Pokémon
+070,Illustration Rare,Pokémon
+071,Illustration Rare,Pokémon
+072,Illustration Rare,Pokémon
+073,Illustration Rare,Pokémon
+074,Illustration Rare,Pokémon
+075,Illustration Rare,Pokémon
+076,Illustration Rare,Pokémon
+077,Illustration Rare,Pokémon
+078,Illustration Rare,Pokémon
+079,Illustration Rare,Pokémon
+080,Ultra Rare,Pokémon
+081,Ultra Rare,Pokémon
+082,Ultra Rare,Pokémon
+083,Ultra Rare,Pokémon
+084,Ultra Rare,Pokémon
+085,Ultra Rare,Pokémon
+086,Ultra Rare,Pokémon
+087,Ultra Rare,Pokémon
+088,Ultra Rare,Pokémon
+089,Ultra Rare,Pokémon
+090,Special Illustration Rare,Pokémon
+091,Special Illustration Rare,Pokémon
+092,Special Illustration Rare,Pokémon
+093,Special Illustration Rare,Pokémon
+094,Special Illustration Rare,Pokémon
+095,Hyper Rare,Pokémon
+096,Hyper Rare,Pokémon
+097,Hyper Rare,Pokémon
+098,Hyper Rare,Pokémon
+099,Hyper Rare,Pokémon

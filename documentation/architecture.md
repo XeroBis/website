@@ -34,7 +34,11 @@ website/
 │   │   ├── cards/              #   /api/cards (being ported, migration-plan step 6): `cards` schema models,
 │   │   │                       #   variant_order.py (print variants + display order), access.py, names.py (name
 │   │   │                       #   normalization), display.py (FR/EN display fields), search.py (name match + sorts),
-│   │   │                       #   routers/: catalog, images
+│   │   │                       #   routers/ (catalog, catalog_admin, images, collection, decks, …),
+│   │   │                       #   refresh/ (catalog jobs: source.py parses the saved HTML, html_import, scans,
+│   │   │                       #   thumbnails, set_assets, variant_icons, card_details via http.py (httpx2), jobs.py
+│   │   │                       #   = in-memory job state + runner, archive.py = images zip, metadata.py = catalog file),
+│   │   │                       #   source/ (saved pokecardex HTML, CARDS_SOURCE_DIR)
 │   │   └── workout/            #   /api/workout routes (routers/: catalog, workouts, templates, circuits, session,
 │   │                           #   stats, transfer = import/export, admin), `workout` schema models, muscles.py,
 │   │                           #   entries.py (shared build/serialize of workout/template/circuit entries), stats.py, transfer.py
@@ -82,11 +86,16 @@ website/
 
 **Prod.** Browser → `edge` (nginx, 443) → by `Host`:
 - `/api/...` → `backend:8000`, URI unchanged. Same-origin on every host; the backend checks the session cookie itself (no `auth_request`, no `X-User-*` headers).
+  It's a `location ^~ /api/`, so the static-asset regex never catches an API path ending in `.jpg`/`.png`/`.svg` (card images, variant badges). 20 MB body limit, except two exact-match locations for cards' images archive: `POST /api/cards/catalog/import/images` (4 GB body, passed on unbuffered as it arrives) and `GET /api/cards/catalog/export/images` (response unbuffered).
 - anything else → static files from `/usr/share/nginx/html/<app>`, with unknown paths falling back to `index.html` (Angular routing). Hashed assets are cached for a year, `index.html` is `no-cache`.
 
 **Dev.** Browser → `ng serve` for that app (`localhost:460x`) → its dev-server proxy sends `/api` to the backend (`API_TARGET`, `http://backend:8000` inside compose). Same-origin as in prod. Cookies aren't scoped by port, so a session cookie set on `localhost:4604` (auth) is also sent to `localhost:4602` (cards).
 
-**Outbound calls.** Only the backend talks to TMDB (films, series; Bearer `TMDB_READ_ACCESS_TOKEN`) and Open Library (books), for media's search and details, and it downloads covers into `media.covers` when an item is added. The one exception: search result thumbnails on media's Add page are `<img>`s pointing at those CDNs, since nothing is stored before an item is added. Stored covers are always served by `/api/media/items/{id}/cover`.
+**Outbound calls.** Only the backend talks to TMDB (films, series; Bearer `TMDB_READ_ACCESS_TOKEN`) and Open Library (books), for media's search and details, and it downloads covers into `media.covers` when an item is added. The one exception: search result thumbnails on media's Add page are `<img>`s pointing at those CDNs, since nothing is stored before an item is added. Stored covers are always served by `/api/media/items/{id}/cover`. Cards' catalog refresh (admin-triggered only, never while browsing) downloads scans, set logos/symbols and variant badges from pokecardex's CDN and card text from TCGdex (`api.tcgdex.net`) into `CARDS_DATA_DIR`.
+
+### Background jobs
+
+Cards' catalog jobs (refresh steps, the full refresh, the images import's restore) run in a daemon thread started by the request, which answers 202; the page polls a status route. Their state lives in a module-level dict (`domains/cards/refresh/jobs.py`), which works because the backend runs one process; it is lost on restart (a job interrupted that way can just be run again: every step only fills what's missing). One catalog job at a time.
 
 ### Session
 
@@ -116,7 +125,7 @@ One login for every app. The cookies are set by `/api/auth/login` (or `/register
 
 Both stacks run `alembic upgrade head` before starting uvicorn, so migrations apply on every start.
 
-`CARDS_DATA_DIR` holds cards' downloaded files (scans, thumbnails, set logos/symbols, variant badges, ~2 GB), laid out as `<series>/<set_code>/{cards,thumbnails}/…`. It is a named volume in both stacks, outside the `./backend` bind mount, so it survives rebuilds and stays out of the image; `docker compose down -v` deletes it. The saved pokecardex HTML the catalog is imported from is tracked in the repo (`CARDS_SOURCE_DIR`, default `domains/cards/source`, copied in at step 6.6).
+`CARDS_DATA_DIR` holds cards' downloaded files (~2 GB), the old app's layout: `<series>/<set_code>/{cards,thumbnails}/…` (scans, thumbnails), `<series>/<set_code>/<set_code>_{logo_EN,logo_FR,symbol}.png`, `variant-icons/` (badges), `card-details/` (TCGdex response cache), plus a `.upload-*.zip` while an images import is being received. It is a named volume in both stacks, outside the `./backend` bind mount, so it survives rebuilds and stays out of the image; `docker compose down -v` deletes it. The saved pokecardex HTML the catalog is imported from is tracked in the repo (`CARDS_SOURCE_DIR`, default `domains/cards/source`: one folder per series with its `name.txt`, one per set with `{code}_{en,fr}{,_header}.html` and `{code}_rarity.txt`, 41 MB) and baked into the backend image.
 
 ### Local dev ports
 

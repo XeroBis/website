@@ -1,0 +1,231 @@
+id,rarity,supertype
+1,Common,Pokémon
+2,Uncommon,Pokémon
+3,Rare,Pokémon
+4,Common,Pokémon
+5,Rare,Pokémon
+6,Common,Pokémon
+7,Common,Pokémon
+8,Common,Pokémon
+9,Rare,Pokémon
+10,Common,Pokémon
+11,Common,Pokémon
+12,Uncommon,Pokémon
+13,Holo Rare V,Pokémon
+14,Holo Rare VSTAR,Pokémon
+15,Common,Pokémon
+16,Rare Holo,Pokémon
+17,Rare Holo,Pokémon
+18,Holo Rare V,Pokémon
+19,Holo Rare VSTAR,Pokémon
+20,Radiant Rare,Pokémon
+21,Rare Holo,Pokémon
+22,Holo Rare V,Pokémon
+23,Holo Rare VSTAR,Pokémon
+24,Common,Pokémon
+25,Rare,Pokémon
+26,Rare Holo,Pokémon
+27,Common,Pokémon
+28,Uncommon,Pokémon
+29,Common,Pokémon
+30,Common,Pokémon
+31,Common,Pokémon
+32,Rare,Pokémon
+33,Common,Pokémon
+34,Common,Pokémon
+35,Common,Pokémon
+36,Rare Holo,Pokémon
+37,Holo Rare V,Pokémon
+38,Holo Rare V,Pokémon
+39,Common,Pokémon
+40,Common,Pokémon
+41,Uncommon,Pokémon
+42,Uncommon,Pokémon
+43,Rare,Pokémon
+44,Rare,Pokémon
+45,Holo Rare V,Pokémon
+46,Holo Rare VSTAR,Pokémon
+47,Common,Pokémon
+48,Uncommon,Pokémon
+49,Common,Pokémon
+50,Rare,Pokémon
+51,Radiant Rare,Pokémon
+52,Rare,Pokémon
+53,Holo Rare V,Pokémon
+54,Holo Rare VMAX,Pokémon
+55,Holo Rare VSTAR,Pokémon
+56,Uncommon,Pokémon
+57,Common,Pokémon
+58,Rare,Pokémon
+59,Rare Holo,Pokémon
+60,Holo Rare V,Pokémon
+61,Uncommon,Pokémon
+62,Uncommon,Pokémon
+63,Uncommon,Pokémon
+64,Rare Holo,Pokémon
+65,Holo Rare V,Pokémon
+66,Holo Rare VMAX,Pokémon
+67,Rare,Pokémon
+68,Uncommon,Pokémon
+69,Uncommon,Pokémon
+70,Common,Pokémon
+71,Common,Pokémon
+72,Common,Pokémon
+73,Common,Pokémon
+74,Rare,Pokémon
+75,Common,Pokémon
+76,Rare Holo,Pokémon
+77,Common,Pokémon
+78,Rare,Pokémon
+79,Uncommon,Pokémon
+80,Rare,Pokémon
+81,Common,Pokémon
+82,Rare,Pokémon
+83,Rare Holo,Pokémon
+84,Common,Pokémon
+85,Rare,Pokémon
+86,Rare,Pokémon
+87,Common,Pokémon
+88,Uncommon,Pokémon
+89,Rare Holo,Pokémon
+90,Uncommon,Pokémon
+91,Common,Pokémon
+92,Common,Pokémon
+93,Uncommon,Pokémon
+94,Rare Holo,Pokémon
+95,Holo Rare V,Pokémon
+96,Holo Rare VSTAR,Pokémon
+97,Rare Holo,Pokémon
+98,Holo Rare V,Pokémon
+99,Holo Rare VSTAR,Pokémon
+100,Holo Rare V,Pokémon
+101,Holo Rare VMAX,Pokémon
+102,Holo Rare VMAX,Pokémon
+103,Holo Rare V,Pokémon
+104,Holo Rare VMAX,Pokémon
+105,Radiant Rare,Pokémon
+106,Rare,Pokémon
+107,Rare Holo,Pokémon
+108,Holo Rare V,Pokémon
+109,Rare,Pokémon
+110,Common,Pokémon
+111,Common,Pokémon
+112,Common,Pokémon
+113,Holo Rare V,Pokémon
+114,Holo Rare VSTAR,Pokémon
+115,Uncommon,Pokémon
+116,Holo Rare V,Pokémon
+117,Common,Pokémon
+118,Rare,Pokémon
+119,Rare,Pokémon
+120,Holo Rare V,Pokémon
+121,Common,Pokémon
+122,Rare,Pokémon
+123,Rare Holo,Trainer
+124,Rare Holo,Trainer
+125,Uncommon,Trainer
+126,Uncommon,Trainer
+127,Common,Trainer
+128,Common,Trainer
+129,Uncommon,Trainer
+130,Uncommon,Trainer
+131,Uncommon,Trainer
+132,Uncommon,Trainer
+133,Rare Holo,Trainer
+134,Rare Holo,Trainer
+135,Uncommon,Trainer
+136,Rare Holo,Trainer
+137,Common,Trainer
+138,Uncommon,Trainer
+139,Common,Trainer
+140,Rare Holo,Trainer
+141,Uncommon,Trainer
+142,Uncommon,Trainer
+143,Rare Holo,Trainer
+144,Common,Trainer
+145,Uncommon,Trainer
+146,Uncommon,Trainer
+147,Ultra Rare,Trainer
+148,Ultra Rare,Trainer
+149,Ultra Rare,Trainer
+150,Ultra Rare,Trainer
+151,Ultra Rare,Trainer
+152,Ultra Rare,Energy
+153,Ultra Rare,Energy
+154,Ultra Rare,Energy
+155,Ultra Rare,Energy
+156,Ultra Rare,Energy
+157,Ultra Rare,Energy
+158,Ultra Rare,Energy
+159,Ultra Rare,Energy
+160,Rare Secret,Pokémon
+161,Trainer Gallery Holo Rare,Pokémon
+162,Trainer Gallery Holo Rare,Pokémon
+163,Trainer Gallery Holo Rare,Pokémon
+164,Trainer Gallery Holo Rare,Pokémon
+165,Trainer Gallery Holo Rare,Pokémon
+166,Trainer Gallery Holo Rare,Pokémon
+167,Trainer Gallery Holo Rare,Pokémon
+168,Trainer Gallery Holo Rare,Pokémon
+169,Trainer Gallery Holo Rare,Pokémon
+170,Trainer Gallery Holo Rare,Pokémon
+171,Trainer Gallery Holo Rare,Pokémon
+172,Trainer Gallery Holo Rare,Pokémon
+173,Trainer Gallery Holo Rare,Pokémon
+174,Trainer Gallery Holo Rare,Pokémon
+175,Trainer Gallery Holo Rare,Pokémon
+176,Trainer Gallery Holo Rare,Pokémon
+177,Trainer Gallery Holo Rare,Pokémon
+178,Trainer Gallery Holo Rare,Pokémon
+179,Trainer Gallery Holo Rare,Pokémon
+180,Trainer Gallery Holo Rare,Pokémon
+181,Trainer Gallery Holo Rare,Pokémon
+182,Trainer Gallery Holo Rare,Pokémon
+183,Trainer Gallery Holo Rare,Pokémon
+184,Trainer Gallery Holo Rare,Pokémon
+185,Trainer Gallery Holo Rare,Pokémon
+186,Trainer Gallery Holo Rare,Pokémon
+187,Trainer Gallery Holo Rare,Pokémon
+188,Trainer Gallery Holo Rare,Pokémon
+189,Trainer Gallery Holo Rare,Pokémon
+190,Trainer Gallery Holo Rare,Pokémon
+191,Trainer Gallery Holo Rare,Pokémon
+192,Trainer Gallery Holo Rare,Pokémon
+193,Trainer Gallery Holo Rare,Pokémon
+194,Trainer Gallery Holo Rare,Pokémon
+195,Trainer Gallery Holo Rare V,Pokémon
+196,Trainer Gallery Holo Rare V,Pokémon
+197,Trainer Gallery Holo Rare V,Pokémon
+198,Trainer Gallery Holo Rare V,Pokémon
+199,Trainer Gallery Holo Rare V,Pokémon
+200,Trainer Gallery Holo Rare V,Pokémon
+201,Trainer Gallery Holo Rare V,Pokémon
+202,Trainer Gallery Holo Rare V,Pokémon
+203,Trainer Gallery Holo Rare V,Pokémon
+204,Trainer Gallery Holo Rare V,Pokémon
+205,Trainer Gallery Holo Rare V,Pokémon
+206,Trainer Gallery Holo Rare V,Pokémon
+207,Trainer Gallery Holo Rare V,Pokémon
+208,Trainer Gallery Holo Rare V,Pokémon
+209,Trainer Gallery Holo Rare V,Pokémon
+210,Trainer Gallery Holo Rare V,Pokémon
+211,Trainer Gallery Holo Rare V,Pokémon
+212,Trainer Gallery Holo Rare V,Pokémon
+213,Trainer Gallery Holo Rare V,Pokémon
+214,Trainer Gallery Holo Rare V,Pokémon
+215,Trainer Gallery Holo Rare V,Pokémon
+216,Trainer Gallery Holo Rare V,Pokémon
+217,Trainer Gallery Ultra Rare,Trainer
+218,Trainer Gallery Ultra Rare,Trainer
+219,Trainer Gallery Ultra Rare,Trainer
+220,Trainer Gallery Ultra Rare,Trainer
+221,Trainer Gallery Ultra Rare,Trainer
+222,Trainer Gallery Ultra Rare,Trainer
+223,Trainer Gallery Ultra Rare,Trainer
+224,Trainer Gallery Ultra Rare,Trainer
+225,Trainer Gallery Ultra Rare,Trainer
+226,Trainer Gallery Ultra Rare,Trainer
+227,Trainer Gallery Secret Rare,Pokémon
+228,Trainer Gallery Secret Rare,Pokémon
+229,Trainer Gallery Secret Rare,Pokémon
+230,Trainer Gallery Secret Rare,Pokémon

@@ -1,0 +1,25 @@
+id,rarity,supertype
+001,No Rarity,Energy
+002,No Rarity,Energy
+003,No Rarity,Energy
+004,No Rarity,Energy
+005,No Rarity,Energy
+006,No Rarity,Energy
+007,No Rarity,Energy
+008,No Rarity,Energy
+009,No Rarity,Energy
+010,No Rarity,Energy
+011,No Rarity,Energy
+012,No Rarity,Energy
+013,No Rarity,Energy
+014,No Rarity,Energy
+015,No Rarity,Energy
+016,No Rarity,Energy
+017,No Rarity,Energy
+018,No Rarity,Energy
+019,No Rarity,Energy
+020,No Rarity,Energy
+021,No Rarity,Energy
+022,No Rarity,Energy
+023,No Rarity,Energy
+024,No Rarity,Energy

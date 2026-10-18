@@ -32,7 +32,7 @@ Decisions are in decisions.md "Cards: port plan". Done as one step: every part o
 | 6.3 | **Collection**: owned cards + variant quantities, search/filter-options, add (incl. add-to-deck in one batch), edit/delete, history, import/export, delete-all | ✅ 2026-10-18 |
 | 6.4 | **Decks**: normal + phantom decks, deck cards, posters, history, copy, start hand (frontend only), upgrade drafts (single + combined export), decklist converter, text/JSON exports, import / import-all; the set missing-cards text exports (`/catalog/sets/{code}/missing/text`, `POST /catalog/sets/missing/text`), which render through the converter | ✅ 2026-10-18 |
 | 6.5 | **Combats, purchases, shopping lists, shares**: combat log with snapshots + import/export, What I Paid, shopping lists, share links + public token-scoped routes | ✅ 2026-10-18 |
-| 6.6 | **Catalog management** (admin): copy `../pokemon_cards/DATA/` into `backend/domains/cards/source/`, port the refresh steps (HTML import, scan download, thumbnails, logos/symbols, variant icons, TCGdex details; no embeddings step), job state + polling, stats, metadata and images import/export, `GET /public/variant-icons/{file}` (needs the import's variant mapping) | |
+| 6.6 | **Catalog management** (admin): copy `../pokemon_cards/DATA/` into `backend/domains/cards/source/`, port the refresh steps (HTML import, scan download, thumbnails, logos/symbols, variant icons, TCGdex details; no embeddings step), job state + polling, stats, metadata and images import/export, `GET /public/variant-icons/{file}` (needs the import's variant mapping) | ✅ 2026-10-18 |
 | 6.7 | **Frontend**: `projects/cards` rewritten zoneless with signals, every page above, `@shared` auth/i18n/header/icons, FR/EN JSON, web manifest + Poké Ball icons | |
 | 6.8 | **Look**: "collector's binder" (see features.md Cards) | |
 | 6.9 | **Import rehearsal** in dev with the old app's exports (below), then docs: architecture.md, data-model.md, features.md, deployment.md | |
@@ -51,7 +51,7 @@ Decisions are in decisions.md "Cards: port plan". Done as one step: every part o
 | `/api/scan/identify`, `/api/catalog/{import,export}/embeddings`, refresh step `update_embeddings` | dropped (ideas.md) |
 
 **Data load** (rehearsed in dev at 6.9, repeated at cutover, step 7). From the old prod, in this order:
-1. Admin, Catalog Management: **Import catalog** (`cards_metadata.json` from the old `GET /api/catalog/export`), then **Import images** (zip from the old `GET /api/catalog/export/images`). The image paths keep the old layout, so collection exports still match by `image_path`.
+1. Admin, Catalog Management: **Import catalog** (`cards_metadata.json` from the old `GET /api/catalog/export`), then **Import images** (zip from the old `GET /api/catalog/export/images`; the volume needs room for the uploaded zip on top of the restored files, ~4 GB at peak), then the **Import HTML** refresh step (the old export has no variant scan URLs, which later scan downloads need). The image paths keep the old layout, so collection exports still match by `image_path`.
 2. Each user, Gestion: collection (`collection.json`), decks (`decks.json`, incl. drafts), purchases (`purchases.json`).
 3. Combats (`combats.json`): matched by deck name + owner email and player email, so every account must exist and have cards access first.
 4. Not carried over: shopping lists (the old app has no export for them), share links (short-lived), collection/deck history (rebuilt from the imports onward).
