@@ -2,10 +2,13 @@ import os
 
 # Must happen before `core.*`/`app` are imported anywhere: settings and the
 # engine are built from the environment at import time.
+# Under pytest-xdist every worker gets its own database (website_test_gw0,
+# ...), since `_clean_tables` wipes every table after each test.
+_worker = os.environ.get("PYTEST_XDIST_WORKER")
 os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL",
     "postgresql+psycopg://website:website@localhost:5440/website_test",
-)
+) + (f"_{_worker}" if _worker else "")
 os.environ["SECRET_KEY"] = "test-secret-key-at-least-32-characters"
 os.environ["REGISTER_SECRET"] = "test-register-secret"
 os.environ["COOKIE_SECURE"] = "false"
@@ -54,10 +57,20 @@ def _reset_schemas() -> None:
 _create_test_database()
 _reset_schemas()
 
+from pwdlib import PasswordHash  # noqa: E402
+from pwdlib.hashers.argon2 import Argon2Hasher  # noqa: E402
+
 import app  # noqa: E402 -- safe to import now that the schema exists
+from core import security  # noqa: E402
 from core.models import User, UserApp  # noqa: E402
 from core.rate_limit import limiter  # noqa: E402
 from core.security import CSRF_COOKIE, hash_password  # noqa: E402
+
+# Cheap argon2 for tests: the recommended params cost ~60 ms per user
+# (hash + login), nearly half the suite's time.
+security._password_hash = PasswordHash(
+    (Argon2Hasher(time_cost=1, memory_cost=1024, parallelism=1),)
+)
 
 REGISTER_SECRET = os.environ["REGISTER_SECRET"]
 PASSWORD = "correct-horse-battery"

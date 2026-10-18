@@ -31,10 +31,12 @@ target-version = ["py314"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+addopts = "-n auto"
 
 [dependency-groups]
 dev = [
     "black>=26.10.1",
     "pytest>=9.1.1",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.17.1",
 ]
