@@ -15,7 +15,7 @@ from core.models import User
 from domains.cards import deck_rules, decklists, display
 from domains.cards import models as m
 from domains.cards import schemas as s
-from domains.cards.access import cards_user, not_found, owned
+from domains.cards.access import cards_user, is_cards_user, not_found, owned
 
 logger = logging.getLogger(__name__)
 
@@ -293,6 +293,29 @@ def delete_all_decks(user: User = Depends(cards_user), db: Session = Depends(get
     db.commit()
     logger.warning("cards decks wiped (user %s): %d decks", user.id, deleted)
     return s.DeckWipeResult(deleted_decks=deleted)
+
+
+@router.get("/combat-options", response_model=list[s.CombatDeckOption])
+def combat_deck_options(_: User = Depends(cards_user), db: Session = Depends(get_db)):
+    """Every cards user's normal decks, for the combat deck pickers: name,
+    tag and owner only, never their cards. By name, then owner."""
+    rows = db.execute(
+        select(m.Deck, User)
+        .join(User, User.id == m.Deck.user_id)
+        .where(m.Deck.deck_type == "normal", is_cards_user())
+        .order_by(func.lower(m.Deck.name), func.lower(User.pseudo), m.Deck.id)
+    ).all()
+    return [
+        s.CombatDeckOption(
+            id=deck.id,
+            name=deck.name,
+            deck_type=deck.deck_type,
+            has_wdc_cards=deck.has_wdc_cards,
+            owner_id=owner.id,
+            owner_label=owner.pseudo,
+        )
+        for deck, owner in rows
+    ]
 
 
 # ── export / import ──────────────────────────────────────────────────────────

@@ -1,9 +1,42 @@
 """Request and response bodies for `/api/cards`."""
 
-from datetime import date, datetime
-from typing import Literal
+from datetime import UTC, date, datetime, time
+from decimal import Decimal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serializer
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_serializer,
+)
+
+
+def midnight_utc(value: date | datetime) -> datetime:
+    """A day stored as midnight UTC; a datetime keeps its UTC date."""
+    if isinstance(value, datetime):
+        value = (value.astimezone(UTC) if value.tzinfo else value).date()
+    return datetime.combine(value, time(), UTC)
+
+
+def _trimmed(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("must not be blank")
+    return value
+
+
+def _trimmed_or_none(value: str | None) -> str | None:
+    return (value or "").strip() or None
+
+
+# A date (or a datetime, as in old export files), stored at midnight UTC.
+Day = Annotated[datetime | date, AfterValidator(midnight_utc)]
+Name = Annotated[str, AfterValidator(_trimmed)]
+OptionalText = Annotated[str | None, AfterValidator(_trimmed_or_none)]
 
 # ── catalog ──────────────────────────────────────────────────────────────────
 
@@ -539,3 +572,289 @@ class DecklistConvertOut(BaseModel):
     detected_format: Literal["tcgplayer", "cardmarket"] | None
     converted_text: str
     entries: list[DecklistConvertEntry]
+
+
+# ── users ────────────────────────────────────────────────────────────────────
+
+
+class CardsUser(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    pseudo: str
+
+
+# ── combats ──────────────────────────────────────────────────────────────────
+
+
+class CombatDeckOption(BaseModel):
+    """Any cards user's normal deck, for the combat deck pickers: name, tag
+    and owner only, never its cards."""
+
+    id: int
+    name: str
+    deck_type: str
+    has_wdc_cards: bool
+    owner_id: int
+    owner_label: str
+
+
+class CombatSnapshotCard(BaseModel):
+    """One row of a side's deck when it was set, English values (`card_id`
+    is the owned card then; it means nothing after an import)."""
+
+    card_id: int | None = None
+    variant_type: str = "standard"
+    quantity_in_deck: int
+    name: str
+    set_name: str
+    image_path: str
+    supertype: str | None = None
+
+
+class CombatCreate(BaseModel):
+    deck_a_id: int
+    player_a_id: int
+    deck_b_id: int
+    player_b_id: int
+    winner: Literal["a", "b"]
+    loser_score: int = Field(ge=1, le=6)
+    # Today when left out.
+    played_at: Day | None = None
+
+
+class CombatUpdate(BaseModel):
+    """Every field. A side keeps its snapshot while its deck is unchanged; a
+    null deck is only allowed for a side whose deck was deleted."""
+
+    deck_a_id: int | None
+    player_a_id: int
+    deck_b_id: int | None
+    player_b_id: int
+    winner: Literal["a", "b"]
+    loser_score: int = Field(ge=1, le=6)
+    played_at: Day
+
+
+class CombatOut(BaseModel):
+    """`deck_*_name`: the deck's current name, or the snapshot's once it is
+    deleted. Snapshot cards are in the viewer's language."""
+
+    id: int
+    deck_a_id: int | None
+    deck_a_name: str
+    player_a_id: int
+    player_a_pseudo: str
+    deck_b_id: int | None
+    deck_b_name: str
+    player_b_id: int
+    player_b_pseudo: str
+    winner: Literal["a", "b"]
+    loser_score: int
+    played_at: datetime
+    created_at: datetime
+    deck_a_snapshot: list[CombatSnapshotCard]
+    deck_b_snapshot: list[CombatSnapshotCard]
+
+
+class CombatFileEntry(BaseModel):
+    """One combat of `combats.json`. Decks are matched by name and owner
+    email (name only when the email is missing), players by email; the
+    pseudos are informational. A missing snapshot is taken from the matched
+    deck."""
+
+    deck_a_name: str = Field(min_length=1)
+    deck_a_owner_email: str | None = None
+    player_a_email: str = Field(min_length=1)
+    player_a_pseudo: str | None = None
+    deck_b_name: str = Field(min_length=1)
+    deck_b_owner_email: str | None = None
+    player_b_email: str = Field(min_length=1)
+    player_b_pseudo: str | None = None
+    winner: Literal["a", "b"]
+    loser_score: int = Field(ge=1, le=6)
+    played_at: Day
+    deck_a_snapshot: list[CombatSnapshotCard] | None = None
+    deck_b_snapshot: list[CombatSnapshotCard] | None = None
+
+
+class CombatsFile(BaseModel):
+    combats: list[CombatFileEntry]
+
+
+class CombatWipeResult(BaseModel):
+    deleted_combats: int
+
+
+# ── purchases ────────────────────────────────────────────────────────────────
+
+
+class PurchaseIn(BaseModel):
+    product_name: Name
+    # The entry's total, not a unit price.
+    price: Decimal = Field(ge=0, max_digits=10, decimal_places=2)
+    # Informational.
+    quantity: int = Field(1, ge=1)
+    # Today when left out.
+    purchased_at: Day | None = None
+    source: OptionalText = None
+    description: OptionalText = None
+    # Set codes, informational (not checked against the catalog).
+    sets: list[str] = []
+
+    @field_validator("sets")
+    @classmethod
+    def _clean_sets(cls, sets: list[str]) -> list[str]:
+        """Trimmed, blanks and repeats dropped, order kept."""
+        return list(dict.fromkeys(code.strip() for code in sets if code.strip()))
+
+
+class PurchaseUpdate(PurchaseIn):
+    quantity: int = Field(ge=1)
+    purchased_at: Day
+
+
+class PurchaseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    product_name: str
+    price: Decimal
+    quantity: int
+    purchased_at: datetime
+    source: str | None
+    description: str | None
+    sets: list[str]
+    created_at: datetime
+
+
+class PurchaseFileEntry(PurchaseIn):
+    purchased_at: Day
+
+
+class PurchasesFile(BaseModel):
+    purchases: list[PurchaseFileEntry]
+
+
+class PurchaseWipeResult(BaseModel):
+    deleted_purchases: int
+
+
+# ── shopping lists ───────────────────────────────────────────────────────────
+
+
+class ShoppingListCreate(BaseModel):
+    name: Name
+    # TCGplayer/PTCGL or Cardmarket; matched lines only.
+    decklist_text: str | None = None
+
+
+class ShoppingListRename(BaseModel):
+    name: Name
+
+
+class ShoppingListCardUpdate(BaseModel):
+    quantity_owned: int = Field(ge=0)
+
+
+class ShoppingListCardOut(BaseModel):
+    """`name`, `set_name` and `image_path` in the viewer's language, plus
+    both names for the page's own EN/FR toggle."""
+
+    id: int
+    catalog_id: int
+    name: str
+    name_en: str
+    name_fr: str
+    set_name: str
+    set_code: str
+    card_number: str
+    image_path: str
+    supertype: str | None
+    quantity_needed: int
+    quantity_owned: int
+
+
+class ShoppingListOut(BaseModel):
+    """`total_cards`: distinct cards; `fully_got_cards`: those whose tally
+    reached what's needed."""
+
+    id: int
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    total_cards: int
+    total_quantity_needed: int
+    fully_got_cards: int
+
+
+class ShoppingListDetailOut(ShoppingListOut):
+    cards: list[ShoppingListCardOut]
+
+
+class ShoppingListPasteResult(BaseModel):
+    """`lines_added`: distinct matched cards; `lines_skipped`: parsed lines
+    that matched no catalog card (dropped)."""
+
+    shopping_list: ShoppingListDetailOut
+    lines_added: int
+    lines_skipped: int
+
+
+# ── shares ───────────────────────────────────────────────────────────────────
+
+
+class ShareCreate(BaseModel):
+    set_code: str
+    duration_days: Literal[1, 3, 7, 30]
+
+
+class ShareOut(BaseModel):
+    """`set_name` in the viewer's language."""
+
+    id: int
+    set_code: str
+    set_name: str | None
+    token: str
+    created_at: datetime
+    expires_at: datetime
+    revoked_at: datetime | None
+
+    @computed_field
+    @property
+    def status(self) -> Literal["active", "expired", "revoked"]:
+        if self.revoked_at is not None:
+            return "revoked"
+        if self.expires_at <= datetime.now(UTC):
+            return "expired"
+        return "active"
+
+
+class SharedSetCardOut(BaseModel):
+    """English values. `variants`: the owner's copies per print;
+    `print_variants`: every print the card comes in."""
+
+    id: int
+    name: str
+    set_code: str
+    set_name: str
+    card_number: str
+    image_path: str
+    rarity: str | None
+    supertype: str | None
+    quantity_owned: int
+    variants: list[OwnedVariantOut]
+    print_variants: list[CatalogVariantOut]
+
+
+class SharedSetOut(BaseModel):
+    """The public page of a share: one set, nothing about its owner. Images
+    go through the share's own `/images/`, `/logo` and `/symbol` routes."""
+
+    set_code: str
+    set_name: str
+    series: str | None
+    card_count: int | None
+    release_date: date | None
+    expires_at: datetime
+    cards: list[SharedSetCardOut]

@@ -124,7 +124,7 @@ Offset from the old per-app repos (5432–5435 / 8000–8300 / 4200–4500) so b
 
 | Service | Host port |
 |---|---|
-| Postgres | 5440 (tests use DB `website_test` on the same server) |
+| Postgres | 5440 (tests use DB `website_test` on the same server, `website_test_gw0`, `_gw1`, … one per pytest-xdist worker) |
 | Backend | 8400 |
 | portfolio / workout / cards / media / auth | 4600 / 4601 / 4602 / 4603 / 4604 |
 

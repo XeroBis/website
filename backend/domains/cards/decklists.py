@@ -199,8 +199,13 @@ def parse(db: Session, text: str) -> tuple[Format | None, list[Entry]]:
 def matched_cards(db: Session, text: str) -> dict[int, tuple[m.CardCatalog, int]]:
     """catalog id → (card, total quantity) over the matched lines of a pasted
     decklist; unmatched lines are dropped, repeats add up."""
+    return tally(parse(db, text)[1])
+
+
+def tally(lines: list[Entry]) -> dict[int, tuple[m.CardCatalog, int]]:
+    """matched_cards() over already parsed lines."""
     totals: dict[int, tuple[m.CardCatalog, int]] = {}
-    for line in parse(db, text)[1]:
+    for line in lines:
         if line.card is not None:
             previous = totals.get(line.card.id, (line.card, 0))[1]
             totals[line.card.id] = (line.card, previous + line.quantity)
