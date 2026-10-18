@@ -5,10 +5,23 @@
     <title>Compte · alanbignon.com</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#2f3cff" />
+    <meta name="theme-color" content="#2f3cff" data-scheme="light" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#10135a" data-scheme="dark" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script>
+      // The theme cookie (see @shared ThemeService), applied before Angular boots so
+      // the page never flashes the wrong theme. Same steps as @shared applyTheme.
+      (function () {
+        var theme = (document.cookie.match(/(?:^|; )theme=(light|dark)(?:;|$)/) || [])[1];
+        if (!theme) return;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.querySelectorAll('meta[name="theme-color"][data-scheme]').forEach(function (meta) {
+          meta.media = meta.getAttribute('data-scheme') === theme ? 'all' : 'not all';
+        });
+      })();
+    </script>
   </head>
   <body>
     <ab-root></ab-root>

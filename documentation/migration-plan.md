@@ -13,7 +13,7 @@ biggest app (cards) last.
 | 4 | **Media**: port `../media` (already on the target stack) | ✅ done 2026-10-17 |
 | 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | ✅ done 2026-10-17 |
 | 6 | **Cards**: port `../pokemon_cards` (one fresh migration instead of its 43, card images now auth-checked by the backend instead of nginx, Card Scan left out) incl. its import | ✅ done 2026-10-18, plan below |
-| 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | ⏳ in progress, plan below |
+| 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | ⏳ live since 2026-10-18, cleanup (7.6) left, plan below |
 
 Step 2 notes: `auth-service`'s `/internal/validate` (nginx `auth_request`) and its CORS setup are dropped. Its `revoked_tokens` and pseudo/language features are kept. See decisions.md for what changed (libraries, cookie names and lifetimes, rate limits).
 
@@ -67,10 +67,11 @@ The runbook is deployment.md "Cutover"; decisions in decisions.md "Cutover tooli
 | # | Part | Status |
 |---|---|---|
 | 7.1 | **Repo**: `infra/backups/` (`backup.sh`, `restore.sh`, `msmtprc.template`, `make prod-backup` / `prod-restore`), `infra/certbot/deploy-hook.sh`, `.github/workflows/ci.yml` (lint, backend, frontend, deploy), deployment.md runbook | ✅ 2026-10-18 |
-| 7.2 | **GitHub**: `VPS_HOST` / `VPS_USER` / `VPS_SSH_KEY` secrets on `XeroBis/website` | |
-| 7.3 | **VPS prep**, old stacks still serving: DNS check, cert expanded through the old webroot, clone + `.env`, cert copied, images pre-built, disk/memory checked | |
-| 7.4 | **Cutover day**: exports from the old apps, last old backup, old stacks stopped, `make prod`, accounts + app grants, cards and workout re-imported | |
-| 7.5 | **After**: cert hook installed + dry-run, backup cron + first run, first CI deploy, old repos' deploy workflows disabled; a week later old volumes removed and repos archived | |
+| 7.2 | **GitHub**: `VPS_HOST` / `VPS_USER` / `VPS_SSH_KEY` secrets on `XeroBis/website` | ✅ 2026-10-18 |
+| 7.3 | **VPS prep**, old stacks still serving: DNS check, cert expanded through the old webroot, clone + `.env`, cert copied, images pre-built, disk/memory checked | ✅ 2026-10-18 |
+| 7.4 | **Cutover day**: exports from the old apps, last old backup, old stacks stopped, `make prod`, accounts + app grants, cards and workout re-imported | ✅ 2026-10-18 |
+| 7.5 | **After**: cert hook installed + dry-run, backup cron + first run, first CI deploy, old repos' deploy workflows disabled | ✅ 2026-10-18 |
+| 7.6 | **Cleanup**, a week later if nothing is wrong: old stacks `down -v`, their clones deleted, the five old GitHub repos archived | |
 
 ## Per-app port checklist
 

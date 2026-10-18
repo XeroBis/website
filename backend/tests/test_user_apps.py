@@ -47,6 +47,7 @@ def test_list_users_oldest_first(admin, user):
         "email": "user@example.com",
         "pseudo": "Testy",
         "language": "fr",
+        "theme": "system",
         "is_admin": False,
         "apps": [],
         "created_at": users[1]["created_at"],

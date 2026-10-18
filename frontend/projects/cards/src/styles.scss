@@ -2,7 +2,7 @@
  * Cards: the old app's grey and Poké Ball red, modernised. White cards with
  * soft shadows, pill buttons, inputs and navigation, Fredoka headings over
  * Figtree, card numbers in JetBrains Mono, a neutral dark mode following the
- * system theme. Card tiles get a random holo foil on hover. The `--ab-*`
+ * shared theme switch. Card tiles get a random holo foil on hover. The `--ab-*`
  * tokens at the end are read by @shared's header.
  */
 
@@ -61,37 +61,45 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+@mixin dark {
+  color-scheme: dark;
+
+  --color-primary: #dc3135;
+  --color-primary-hover: #c42a2e;
+  --color-primary-dark: #ff7a7d;
+  --color-primary-light: rgb(255 122 125 / 14%);
+
+  --color-bg: #121316;
+  --color-surface: #1c1d21;
+  --color-surface-alt: #25272c;
+  --color-border: #2f3137;
+  --color-text: #eceef1;
+  --color-text-muted: #a1a5ae;
+  --color-text-faint: #6f737c;
+
+  --color-success: #6fd08e;
+  --color-success-bg: rgb(111 208 142 / 13%);
+  --color-error: #d6453a;
+  --color-error-hover: #bb3a30;
+  --color-error-bg: rgb(240 106 100 / 14%);
+  --color-warning: #e6b450;
+  --color-warning-bg: rgb(230 180 80 / 14%);
+
+  --badge-bg: rgb(0 0 0 / 72%);
+  --header-bg: #18191c;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 35%), 0 10px 24px -14px rgb(0 0 0 / 70%);
+  --shadow-lg: 0 18px 34px -12px rgb(0 0 0 / 85%);
+}
+
+:root[data-theme='dark'] {
+  @include dark;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --color-primary: #dc3135;
-    --color-primary-hover: #c42a2e;
-    --color-primary-dark: #ff7a7d;
-    --color-primary-light: rgb(255 122 125 / 14%);
-
-    --color-bg: #121316;
-    --color-surface: #1c1d21;
-    --color-surface-alt: #25272c;
-    --color-border: #2f3137;
-    --color-text: #eceef1;
-    --color-text-muted: #a1a5ae;
-    --color-text-faint: #6f737c;
-
-    --color-success: #6fd08e;
-    --color-success-bg: rgb(111 208 142 / 13%);
-    --color-error: #d6453a;
-    --color-error-hover: #bb3a30;
-    --color-error-bg: rgb(240 106 100 / 14%);
-    --color-warning: #e6b450;
-    --color-warning-bg: rgb(230 180 80 / 14%);
-
-    --badge-bg: rgb(0 0 0 / 72%);
-    --header-bg: #18191c;
-
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
-    --shadow-md: 0 1px 2px rgb(0 0 0 / 35%), 0 10px 24px -14px rgb(0 0 0 / 70%);
-    --shadow-lg: 0 18px 34px -12px rgb(0 0 0 / 85%);
+  :root:not([data-theme='light']) {
+    @include dark;
   }
 }
 
@@ -646,13 +654,21 @@ textarea.input {
   --ab-muted: var(--color-text-muted);
 }
 .page {
+  width: 100%;
   max-width: 1440px;
-  margin: auto;
+  margin: 0 auto;
   padding: var(--space-5);
 }
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
+}
+
+// A flex column blockifies ab-header: as an inline custom element, sticky misplaces it.
+ab-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 // The old app's navbar, as pills: top links, then dropdown menus (Manage set apart).
@@ -763,6 +779,7 @@ ab-header {
 @media (max-width: 720px) {
   ab-header {
     .menu > .links {
+      align-items: stretch;
       gap: 0;
       margin: 0;
       > a,

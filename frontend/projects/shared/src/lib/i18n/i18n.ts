@@ -19,6 +19,7 @@ import {
 import { Observable, of } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
+import { ThemeService } from '../theme/theme.service';
 import { DEFAULT_LANGUAGE, Language, resolveLanguage } from './language';
 import { SHARED_TRANSLATIONS } from './shared-translations';
 
@@ -91,7 +92,8 @@ export class LanguageService {
 
 /**
  * ngx-translate with this app's FR/EN strings, following the user's
- * language. Also starts loading the session (`AuthService.load()`).
+ * language. Also starts the theme (`ThemeService`) and loading the session
+ * (`AuthService.load()`).
  */
 export function provideI18n(translations: Translations): (Provider | EnvironmentProviders)[] {
   return [
@@ -101,6 +103,7 @@ export function provideI18n(translations: Translations): (Provider | Environment
     }),
     provideAppInitializer(() => {
       inject(LanguageService);
+      inject(ThemeService);
       inject(AuthService)
         .load()
         .catch(() => undefined); // backend down: stay anonymous

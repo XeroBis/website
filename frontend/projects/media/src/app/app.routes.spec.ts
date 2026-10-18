@@ -22,6 +22,7 @@ describe('routes', () => {
         provide: ENVIRONMENT,
         useValue: {
           production: false,
+          cookieDomain: null,
           appUrls: {
             portfolio: 'http://localhost:4600',
             workout: 'http://localhost:4601',

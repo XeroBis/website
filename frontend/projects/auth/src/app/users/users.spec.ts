@@ -14,6 +14,7 @@ const ADMIN: AdminUser = {
   email: 'admin@example.com',
   pseudo: 'Boss',
   language: 'fr',
+  theme: 'system',
   is_admin: true,
   apps: ['portfolio', 'workout', 'cards', 'media'],
   created_at: '2026-10-01T10:00:00Z',

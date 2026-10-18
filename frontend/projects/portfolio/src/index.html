@@ -5,7 +5,8 @@
     <title>Alan Bignon — Software Engineer</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0d0f0e" />
+    <meta name="theme-color" content="#f6f6f1" data-scheme="light" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0f0e" data-scheme="dark" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="Alan Bignon, software engineer: projects I've built, from machine learning pipelines to full-stack web apps." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://alanbignon.com/" />
@@ -15,6 +16,18 @@
     <link rel="icon" href="favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script>
+      // The theme cookie (see @shared ThemeService), applied before Angular boots so
+      // the page never flashes the wrong theme. Same steps as @shared applyTheme.
+      (function () {
+        var theme = (document.cookie.match(/(?:^|; )theme=(light|dark)(?:;|$)/) || [])[1];
+        if (!theme) return;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.querySelectorAll('meta[name="theme-color"][data-scheme]').forEach(function (meta) {
+          meta.media = meta.getAttribute('data-scheme') === theme ? 'all' : 'not all';
+        });
+      })();
+    </script>
   </head>
   <body>
     <ab-root></ab-root>

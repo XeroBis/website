@@ -22,6 +22,7 @@ export const USER: User = {
   email: 'user@example.com',
   pseudo: 'Testy',
   language: 'fr',
+  theme: 'system',
   is_admin: false,
   apps: ['media'],
 };

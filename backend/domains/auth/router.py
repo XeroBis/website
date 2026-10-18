@@ -28,6 +28,7 @@ from domains.auth.schemas import (
     LoginIn,
     PseudoUpdate,
     RegisterIn,
+    ThemeUpdate,
     UserOut,
 )
 
@@ -133,6 +134,17 @@ def update_language(
     db: Session = Depends(get_db),
 ):
     user.language = payload.language
+    db.commit()
+    return user
+
+
+@router.patch("/me/theme", response_model=UserOut)
+def update_theme(
+    payload: ThemeUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user.theme = payload.theme
     db.commit()
     return user
 

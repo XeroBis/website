@@ -5,8 +5,8 @@
     <title>Workout</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f1f0eb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#171413" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f1f0eb" data-scheme="light" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#171413" data-scheme="dark" media="(prefers-color-scheme: dark)" />
     <meta name="robots" content="noindex" />
     <link rel="icon" href="favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -19,6 +19,18 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
     />
+    <script>
+      // The theme cookie (see @shared ThemeService), applied before Angular boots so
+      // the page never flashes the wrong theme. Same steps as @shared applyTheme.
+      (function () {
+        var theme = (document.cookie.match(/(?:^|; )theme=(light|dark)(?:;|$)/) || [])[1];
+        if (!theme) return;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.querySelectorAll('meta[name="theme-color"][data-scheme]').forEach(function (meta) {
+          meta.media = meta.getAttribute('data-scheme') === theme ? 'all' : 'not all';
+        });
+      })();
+    </script>
   </head>
   <body>
     <ab-root></ab-root>

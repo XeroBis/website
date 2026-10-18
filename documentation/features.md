@@ -10,8 +10,9 @@ placeholder page (its name and whether `/api/health` answers) — see
 - **One login for every app** (see architecture.md "Session"). A page behind `authGuard` sends a logged-out visitor to the auth app's login page, and they come back to that page afterwards. `adminGuard` does the same, and sends a logged-in non-admin to the app's root. `appGuard(app)` does the same, and sends a logged-in user without access to that app to the auth app's account page.
 - **App access**: a new account can use no app. An admin grants apps per user (auth app, `/admin/users`). Admins can use every app. Workout, cards and media are entirely behind their grant (pages and API). The portfolio is public; its grant only allows editing projects.
 - **Language**: the logged-in user's saved language (FR/EN). Logged out: the last language used on that site, then the browser's language if it's French or English, then French.
+- **Theme**: System (follows the device), Light or Dark, one choice for every app. The logged-in user's saved theme; logged out, the last one picked on any `*.alanbignon.com` site (a cookie), else System. Every app has both a light and a dark look.
 - Placeholder pages show who is logged in (pseudo and email) or a "Log in" link.
-- **Header** (`ab-header`, used by portfolio, media, workout and cards): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page). On phones (≤ 720px) only the title and a menu button stay in the bar; the button opens a panel with the links (one per line), the FR/EN switch and the session. Tapping a link, the title or Escape closes it.
+- **Header** (`ab-header`, used by portfolio, media, workout and cards): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; a theme button cycling System → Light → Dark (monitor, sun, moon icons; its label names the current theme), saved on the account when logged in and in a cookie for every site either way; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page). On phones (≤ 720px) only the title and a menu button stay in the bar; the button opens a panel with the links (one per line), the FR/EN switch, the theme button and the session. Tapping a link, the title or Escape closes it.
 
 ## Auth — `auth.alanbignon.com`
 
@@ -19,7 +20,7 @@ placeholder page (its name and whether `/api/health` answers) — see
 
 - `/login`: email + password. On success, goes to `?redirect=` if it is allowed, otherwise to the portfolio (`alanbignon.com`). Allowed in prod: `https://alanbignon.com` or `https://<anything>.alanbignon.com`, no port, no credentials in the URL. Allowed in dev: `http://localhost:4600`–`4604`. A visitor who is already logged in is sent on right away. Errors: invalid credentials, too many attempts, generic.
 - `/signup` (invite-only): email, password (12+ chars), pseudo (required, ≤ 50), sign-up code. Success logs the user in and follows the same redirect rule. Errors: wrong code, email taken, invalid fields, too many attempts. `?redirect=` is kept when switching between login and sign-up.
-- `/` (account, logged in only, otherwise `/login?redirect=` back here): pseudo and email, inline pseudo editing, language picker (Français/English, applied at once), links to the portfolio (always) and to the workout/cards/media apps the user has access to ("No other app yet" when none), a "Users" link for admins, log out (then `/login`).
+- `/` (account, logged in only, otherwise `/login?redirect=` back here): pseudo and email, inline pseudo editing, language picker (Français/English, applied at once), theme picker (System/Light/Dark, applied at once), links to the portfolio (always) and to the workout/cards/media apps the user has access to ("No other app yet" when none), a "Users" link for admins, log out (then `/login`).
 - `/admin/users` (behind `appGuard('portfolio')`: logged out → login, not an editor → auth app's account page): every user, oldest first, with pseudo, email and sign-up date. Each non-admin row has one checkbox per app (Portfolio (edit), Workout, Cards, Media); a click saves at once (the box is disabled while saving, and reverts with an error if the save fails). Admin rows show "Admin: all apps" instead of checkboxes.
 - Any other path → `/`.
 
@@ -34,10 +35,11 @@ placeholder page (its name and whether `/api/health` answers) — see
 | `GET /me` | session | → user | 401 |
 | `PATCH /me` | session + CSRF | `{pseudo}` → user | 401, 403, 422 |
 | `PATCH /me/language` | session + CSRF | `{language: "en"\|"fr"}` → user | 401, 403, 422 |
+| `PATCH /me/theme` | session + CSRF | `{theme: "system"\|"light"\|"dark"}` → user | 401, 403, 422 |
 | `GET /users` | admin | → every user (with `created_at`), oldest first | 401, 403 |
 | `PUT /users/{id}/apps` | admin + CSRF | `{apps: string[]}` (full replace) → user (with `created_at`) | 401, 403, 404, 422 |
 
-A user is `{id, email, pseudo, language, is_admin, apps}`. `apps` is what the user can use, sorted: their grants, or every app for an admin.
+A user is `{id, email, pseudo, language, theme, is_admin, apps}`. `apps` is what the user can use, sorted: their grants, or every app for an admin.
 
 ### Validation
 
@@ -45,6 +47,7 @@ A user is `{id, email, pseudo, language, is_admin, apps}`. `apps` is what the us
 - Password: at least 12 characters (sign-up, `make seed-user` and `make seed-basic-user`; not re-checked at login).
 - Pseudo: trimmed, 1–50 characters, required.
 - Language: `en` or `fr`.
+- Theme: `system`, `light` or `dark`.
 - Apps: each one of `portfolio`, `workout`, `cards`, `media`; repeats are dropped. Setting an admin's apps is allowed but changes nothing they can use.
 - CSRF: every unsafe request with a session needs `x-csrf-token` equal to the `csrf` cookie. The `@shared` interceptor adds it.
 
@@ -89,7 +92,7 @@ A workout log: workouts made of exercises with their sets (and circuits), a shar
 
 ### Look
 
-"Old style, modernised": the old app's warm grey background and rose-brown accent, with white cards, soft warm shadows and rounded corners. Buttons, period pickers, badges and header links are pills, and calendar days are round. Manrope everywhere, with tabular digits so numbers line up. Dashboard totals are centred, in rose. Follows the system theme: light (warm grey, white cards) or dark (warm near-black, lighter rose accent). Strength is rose-brown, cardio sage green, circuits plum, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker.
+"Old style, modernised": the old app's warm grey background and rose-brown accent, with white cards, soft warm shadows and rounded corners. Buttons, period pickers, badges and header links are pills, and calendar days are round. Manrope everywhere, with tabular digits so numbers line up. Dashboard totals are centred, in rose. Light (warm grey, white cards) or dark, per the shared theme switch (warm near-black, lighter rose accent). Strength is rose-brown, cardio sage green, circuits plum, on their badges and charts. Big tap targets on the session page. Installable to the phone's home screen (web manifest, the old app's "AB" icons), without a service worker.
 
 ### Shared parts
 
@@ -199,7 +202,7 @@ A private card collection and deck tracker, ported from `../pokemon_cards`. Pers
 
 ### Look
 
-"Old red, modernised": the old app's light grey and Poké Ball red (`#d6262a`), made more polished, following the system light/dark setting (dark: neutral near-black, lighter red for text). White cards with soft shadows and rounded corners; buttons, inputs, view toggles and header links are pills. Fredoka for headings and the header title (with the Poké Ball beside it), Figtree for text, JetBrains Mono for card numbers. On hover a card tile lifts and a holo foil sweeps over the scan, different on each hover: a random pattern (rainbow band, light glare, rainbow stripes, prism or glitter), angle, colour shift and direction (no movement with reduced motion). Cards not owned are dimmed and greyed. A set page's grid view uses bigger cards than Browse and Collection (110px): up to 150px wide, the same whether only the standard print is selected or several prints show side by side in each card's group. The binder view shows three pages a row, sharing the page's full width (two below 1000px, one on phones). The Poké Ball favicon and icons are kept.
+"Old red, modernised": the old app's light grey and Poké Ball red (`#d6262a`), made more polished, light or dark per the shared theme switch (dark: neutral near-black, lighter red for text). White cards with soft shadows and rounded corners; buttons, inputs, view toggles and header links are pills. Fredoka for headings and the header title (with the Poké Ball beside it), Figtree for text, JetBrains Mono for card numbers. On hover a card tile lifts and a holo foil sweeps over the scan, different on each hover: a random pattern (rainbow band, light glare, rainbow stripes, prism or glitter), angle, colour shift and direction (no movement with reduced motion). Cards not owned are dimmed and greyed. A set page's grid view uses bigger cards than Browse and Collection (110px): up to 150px wide, the same whether only the standard print is selected or several prints show side by side in each card's group. The binder view shows three pages a row, sharing the page's full width (two below 1000px, one on phones). The Poké Ball favicon and icons are kept.
 
 ### API (`/api/cards`)
 
@@ -311,7 +314,7 @@ A personal tracker for books, films and series: what I own, what I've read/watch
 
 ### Look
 
-"Library paper": cream paper background, ink text, Fraunces serif headings, Inter for the UI, an oxblood accent. Each type has its own accent (books oxblood, films teal, series ochre) on its chips, type pill and the placeholder covers. Posters are 2:3 with a soft shadow; without a cover, a placeholder in the item's own hue (stable per item) shows the type icon, title and creators. Icons are inline SVGs (`ab-icon` from `@shared`). The footer credits TMDB ("This product uses the TMDB API but is not endorsed or certified by TMDB", required by TMDB's terms) and Open Library.
+"Library paper": cream paper background, ink text, Fraunces serif headings, Inter for the UI, an oxblood accent. Dark ("library at night"): ink-brown paper, cream text, lighter oxblood, teal and ochre. Each type has its own accent (books oxblood, films teal, series ochre) on its chips, type pill and the placeholder covers. Posters are 2:3 with a soft shadow; without a cover, a placeholder in the item's own hue (stable per item) shows the type icon, title and creators. Icons are inline SVGs (`ab-icon` from `@shared`). The footer credits TMDB ("This product uses the TMDB API but is not endorsed or certified by TMDB", required by TMDB's terms) and Open Library.
 
 ### Language
 

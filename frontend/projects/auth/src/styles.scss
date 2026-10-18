@@ -1,23 +1,60 @@
 /*
  * Auth app: neo-brutalist (unlike portfolio's dark editorial look): cobalt
  * grid background, white card with thick black borders and hard shadows,
- * yellow buttons that press into their shadow.
+ * yellow buttons that press into their shadow. Dark: a midnight-blue grid,
+ * a near-black card outlined in off-white, the same black shadows and yellow.
+ * `--ink` is text, `--line` borders, `--drop` the hard shadows.
  */
 
 :root {
+  color-scheme: light;
+
   --bg: #2f3cff;
   --grid: rgb(255 255 255 / 9%);
   --ink: #0b0b0f;
+  --line: #0b0b0f;
+  --drop: #0b0b0f;
   --paper: #fff;
   --soft: #f3f3ee;
   --muted: #5d5d66;
+  --placeholder: #9a9aa3;
   --accent: #ffd23f;
   --accent-hover: #ffdb66;
+  --on-accent: #0b0b0f;
   --blue: #2f3cff;
+  --on-blue: #fff;
   --danger: #e5322d;
-  --border: 2px solid var(--ink);
-  --shadow: 6px 6px 0 var(--ink);
-  --shadow-sm: 3px 3px 0 var(--ink);
+  --danger-soft: #ffe3e1;
+  --border: 2px solid var(--line);
+  --shadow: 6px 6px 0 var(--drop);
+  --shadow-sm: 3px 3px 0 var(--drop);
+}
+
+@mixin dark {
+  color-scheme: dark;
+
+  --bg: #10135a;
+  --grid: rgb(255 255 255 / 6%);
+  --ink: #f2f1ea;
+  --line: #f2f1ea;
+  --drop: #000;
+  --paper: #17181f;
+  --soft: #23242e;
+  --muted: #a3a3ad;
+  --placeholder: #6e6e78;
+  --blue: #8d95ff;
+  --on-blue: #0b0b0f;
+  --danger-soft: #4a1c1b;
+}
+
+:root[data-theme='dark'] {
+  @include dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark;
+  }
 }
 
 * {
@@ -48,17 +85,17 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: var(--ink);
+  color: var(--on-accent);
 }
 
 .card {
   position: relative;
   width: min(380px, 100%);
   padding: 2.5rem 2.25rem 2.25rem;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   border-radius: 4px;
   background: var(--paper);
-  box-shadow: 10px 10px 0 var(--ink);
+  box-shadow: 10px 10px 0 var(--drop);
   animation: drop 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
 
   /* Little tab sticking out of the top edge. */
@@ -70,6 +107,7 @@ body {
     padding: 0.15rem 0.6rem;
     border: var(--border);
     background: var(--accent);
+    color: var(--on-accent);
     font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
     font-size: 0.7rem;
     font-weight: 700;
@@ -81,7 +119,7 @@ body {
   from {
     opacity: 0;
     transform: translate(-6px, -6px);
-    box-shadow: 16px 16px 0 var(--ink);
+    box-shadow: 16px 16px 0 var(--drop);
   }
   to {
     opacity: 1;
@@ -155,7 +193,7 @@ input {
     background 0.1s ease;
 
   &::placeholder {
-    color: #9a9aa3;
+    color: var(--placeholder);
   }
   &:focus {
     background: var(--paper);
@@ -169,7 +207,7 @@ button {
   border: var(--border);
   border-radius: 4px;
   background: var(--accent);
-  color: var(--ink);
+  color: var(--on-accent);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 800;
@@ -187,7 +225,7 @@ button {
   }
   &:active {
     transform: translate(3px, 3px);
-    box-shadow: 0 0 0 var(--ink);
+    box-shadow: 0 0 0 var(--drop);
   }
   &:focus-visible {
     outline: 3px solid var(--blue);
@@ -207,7 +245,7 @@ button {
   padding: 0.55rem 0.7rem;
   border: var(--border);
   border-radius: 4px;
-  background: #ffe3e1;
+  background: var(--danger-soft);
   color: var(--ink);
   font-size: 0.85rem;
   font-weight: 600;
@@ -303,15 +341,16 @@ button {
   margin: 0;
   padding: 0.3rem 0.65rem;
   background: var(--paper);
+  color: var(--ink);
   font-size: 0.75rem;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: 2px 2px 0 var(--drop);
 
   &:hover {
     background: var(--soft);
   }
   &.active {
     background: var(--blue);
-    color: var(--paper);
+    color: var(--on-blue);
   }
 }
 
@@ -338,6 +377,7 @@ button {
 
   &:hover {
     background: var(--accent);
+    color: var(--on-accent);
     box-shadow: var(--shadow-sm);
     transform: translate(-2px, -2px);
   }
@@ -361,16 +401,17 @@ button {
 }
 
 .app-link:hover .app-description {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 
 .logout {
   width: 100%;
   margin-top: 1.75rem;
   background: var(--paper);
+  color: var(--ink);
 
   &:hover {
-    background: #ffe3e1;
+    background: var(--danger-soft);
   }
 }
 
@@ -456,6 +497,7 @@ button {
 
   &:has(input:checked) {
     background: var(--accent);
+    color: var(--on-accent);
   }
   &:has(input:disabled) {
     opacity: 0.6;
@@ -467,6 +509,6 @@ button {
     height: 1rem;
     margin: 0;
     padding: 0;
-    accent-color: var(--ink);
+    accent-color: var(--on-accent);
   }
 }

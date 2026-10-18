@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -7,17 +7,21 @@ import { BrowserLocation } from '../auth/browser-location';
 import { ENVIRONMENT } from '../environment/environment.token';
 import { LanguageService } from '../i18n/i18n';
 import { LANGUAGES, Language } from '../i18n/language';
+import { Icon, IconName } from '../icon/icon';
+import { THEMES, Theme } from '../theme/theme';
+import { ThemeService } from '../theme/theme.service';
 
 /**
  * Top bar for every app: the app's title (link home), the app's own links
- * (projected content), a FR/EN switch, and the session: pseudo + a link to
+ * (projected content), a FR/EN switch, a theme button cycling System →
+ * Light → Dark, and the session: pseudo + a link to
  * the auth app's account page (where logging out happens), or a log in link
  * coming back to the current page. On phones (≤ 720px) everything but the
  * title folds into a menu opened by a button. Needs `provideI18n`.
  */
 @Component({
   selector: 'ab-header',
-  imports: [RouterLink, TranslatePipe],
+  imports: [Icon, RouterLink, TranslatePipe],
   host: { '(document:keydown.escape)': 'open.set(false)' },
   template: `
     <header [class.open]="open()">
@@ -63,6 +67,17 @@ import { LANGUAGES, Language } from '../i18n/language';
             </button>
           }
         </div>
+        @let themeLabel = 'SHARED.THEME' | translate: { name: themeName() | translate };
+        <button
+          type="button"
+          class="theme"
+          [attr.aria-label]="themeLabel"
+          [title]="themeLabel"
+          [disabled]="themeBusy()"
+          (click)="cycleTheme()"
+        >
+          <ab-icon [name]="themeIcon()" />
+        </button>
         <div class="session">
           @if (auth.user(); as user) {
             <span class="pseudo" data-testid="pseudo">{{ user.pseudo }}</span>
@@ -141,6 +156,20 @@ import { LANGUAGES, Language } from '../i18n/language';
     .languages .active {
       border-color: var(--ab-border, #eceae4);
       font-weight: 700;
+    }
+    .theme {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      color: var(--ab-muted, #8a8a80);
+      font-size: 16px;
+    }
+    .theme:hover:not(:disabled) {
+      color: var(--ab-text, #1c1c1e);
+      border-color: var(--ab-border, #eceae4);
     }
     .session {
       display: flex;
@@ -230,8 +259,13 @@ export class Header {
   private readonly location = inject(BrowserLocation);
   protected readonly accountUrl = `${inject(ENVIRONMENT).appUrls.auth}/`;
 
+  protected readonly theme = inject(ThemeService);
+
   protected readonly languages = LANGUAGES;
   protected readonly busy = signal(false);
+  protected readonly themeBusy = signal(false);
+  protected readonly themeIcon = computed(() => THEME_ICONS[this.theme.current()]);
+  protected readonly themeName = computed(() => `SHARED.THEME_${this.theme.current().toUpperCase()}`);
   /** The phone menu. */
   protected readonly open = signal(false);
 
@@ -255,4 +289,18 @@ export class Header {
       this.busy.set(false);
     }
   }
+
+  protected async cycleTheme(): Promise<void> {
+    const next = THEMES[(THEMES.indexOf(this.theme.current()) + 1) % THEMES.length];
+    this.themeBusy.set(true);
+    try {
+      await this.theme.change(next);
+    } catch {
+      // Not saved: the account keeps its old theme.
+    } finally {
+      this.themeBusy.set(false);
+    }
+  }
 }
+
+const THEME_ICONS: Record<Theme, IconName> = { system: 'monitor', light: 'sun', dark: 'moon' };

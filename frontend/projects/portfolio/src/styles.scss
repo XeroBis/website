@@ -1,6 +1,8 @@
 /*
  * Portfolio: dark, editorial look (deliberately unlike the auth app's warm
- * light cards). The `--ab-*` tokens are also read by @shared's header.
+ * light cards). Light: off-white paper, ink text, the lime darkened to an
+ * olive green that reads on white. The `--ab-*` tokens are also read by
+ * @shared's header.
  */
 
 :root {
@@ -15,9 +17,43 @@
   --ab-accent: #c8f169;
   --ab-on-accent: #0d0f0e;
   --ab-danger: #ff6b5e;
+  --text-soft: #c9cec7;
+  --placeholder: #4f5652;
+  --border-strong: #3a413e;
+  --header-bg: rgb(13 15 14 / 80%);
+  --glow: rgb(200 241 105 / 7%);
 
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+@mixin light {
+  color-scheme: light;
+
+  --ab-bg: #f6f6f1;
+  --ab-surface: #ffffff;
+  --ab-surface-raised: #efefe8;
+  --ab-border: #dcdcd3;
+  --ab-text: #141716;
+  --ab-muted: #63695f;
+  --ab-accent: #4b7a0e;
+  --ab-on-accent: #ffffff;
+  --ab-danger: #c8321f;
+  --text-soft: #3b403c;
+  --placeholder: #a1a69d;
+  --border-strong: #b9bdb2;
+  --header-bg: rgb(246 246 241 / 85%);
+  --glow: rgb(140 190 40 / 12%);
+}
+
+:root[data-theme='light'] {
+  @include light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    @include light;
+  }
 }
 
 * {
@@ -29,7 +65,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-sans);
   background:
-    radial-gradient(60rem 30rem at 85% -10%, rgb(200 241 105 / 7%), transparent 70%),
+    radial-gradient(60rem 30rem at 85% -10%, var(--glow), transparent 70%),
     var(--ab-bg);
   color: var(--ab-text);
   -webkit-font-smoothing: antialiased;
@@ -48,7 +84,7 @@ ab-header {
   backdrop-filter: blur(8px);
 
   header {
-    background: rgb(13 15 14 / 80%) !important;
+    background: var(--header-bg) !important;
   }
 }
 
@@ -124,7 +160,7 @@ a {
     margin: 0;
     font-size: 1.15rem;
     line-height: 1.65;
-    color: #c9cec7;
+    color: var(--text-soft);
   }
 }
 
@@ -251,7 +287,7 @@ a {
   .description {
     flex: 1;
     margin: 0;
-    color: #c9cec7;
+    color: var(--text-soft);
     line-height: 1.6;
     white-space: pre-line;
   }
@@ -365,10 +401,10 @@ a {
     transition: border-color 0.15s;
 
     &::placeholder {
-      color: #4f5652;
+      color: var(--placeholder);
     }
     &:hover {
-      border-color: #3a413e;
+      border-color: var(--border-strong);
     }
     &:focus {
       outline: none;

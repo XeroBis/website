@@ -34,6 +34,7 @@ def test_register_creates_user_and_logs_in(client):
         "email": "new@example.com",
         "pseudo": "Newbie",
         "language": "fr",
+        "theme": "system",
         "is_admin": False,
         "apps": [],
     }
@@ -123,6 +124,7 @@ def test_me_returns_current_user(client, user):
         "email": "user@example.com",
         "pseudo": "Testy",
         "language": "fr",
+        "theme": "system",
         "is_admin": False,
         "apps": [],
     }
@@ -180,6 +182,28 @@ def test_update_language_only_accepts_en_fr(client, user):
 def test_update_language_needs_csrf(client, user):
     login(client)
     r = client.patch("/api/auth/me/language", json={"language": "en"})
+    assert r.status_code == 403
+
+
+def test_update_theme(client, user):
+    login(client)
+    r = client.patch("/api/auth/me/theme", json={"theme": "dark"}, headers=csrf(client))
+    assert r.status_code == 200
+    assert r.json()["theme"] == "dark"
+    assert client.get("/api/auth/me").json()["theme"] == "dark"
+
+
+def test_update_theme_only_accepts_known_themes(client, user):
+    login(client)
+    r = client.patch(
+        "/api/auth/me/theme", json={"theme": "sepia"}, headers=csrf(client)
+    )
+    assert r.status_code == 422
+
+
+def test_update_theme_needs_csrf(client, user):
+    login(client)
+    r = client.patch("/api/auth/me/theme", json={"theme": "dark"})
     assert r.status_code == 403
 
 

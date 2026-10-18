@@ -36,11 +36,13 @@
     "SAVE": "Save",
     "CANCEL": "Cancel",
     "LANGUAGE": "Language",
+    "THEME": "Theme",
     "WHERE_TO": "Where to?",
     "LOGOUT": "Log out",
     "ERROR_SESSION_EXPIRED": "Session expired, please log in again.",
     "ERROR_PSEUDO_SAVE": "Could not save pseudo.",
     "ERROR_LANGUAGE_SAVE": "Could not save language.",
+    "ERROR_THEME_SAVE": "Could not save theme.",
     "NO_OTHER_APP": "No other app yet: ask Alan for access.",
     "USERS": "Users",
     "USERS_DESC": "Who can use which app"

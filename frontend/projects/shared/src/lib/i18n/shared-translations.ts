@@ -11,6 +11,10 @@ export const SHARED_TRANSLATIONS: Translations = {
       ACCOUNT: 'Mon compte',
       LANGUAGE: 'Langue',
       MENU: 'Menu',
+      THEME: 'Thème : {{name}}',
+      THEME_SYSTEM: 'Système',
+      THEME_LIGHT: 'Clair',
+      THEME_DARK: 'Sombre',
     },
   },
   en: {
@@ -19,6 +23,10 @@ export const SHARED_TRANSLATIONS: Translations = {
       ACCOUNT: 'My account',
       LANGUAGE: 'Language',
       MENU: 'Menu',
+      THEME: 'Theme: {{name}}',
+      THEME_SYSTEM: 'System',
+      THEME_LIGHT: 'Light',
+      THEME_DARK: 'Dark',
     },
   },
 };

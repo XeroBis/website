@@ -36,11 +36,13 @@
     "SAVE": "Enregistrer",
     "CANCEL": "Annuler",
     "LANGUAGE": "Langue",
+    "THEME": "Thème",
     "WHERE_TO": "Où aller ?",
     "LOGOUT": "Se déconnecter",
     "ERROR_SESSION_EXPIRED": "Session expirée, veuillez vous reconnecter.",
     "ERROR_PSEUDO_SAVE": "Impossible d'enregistrer le pseudo.",
     "ERROR_LANGUAGE_SAVE": "Impossible d'enregistrer la langue.",
+    "ERROR_THEME_SAVE": "Impossible d'enregistrer le thème.",
     "NO_OTHER_APP": "Aucune autre application pour l'instant : demandez l'accès à Alan.",
     "USERS": "Utilisateurs",
     "USERS_DESC": "Qui peut utiliser quelle application"

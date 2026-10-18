@@ -9,6 +9,8 @@ from core.database import Base
 
 LANGUAGES = ("en", "fr")
 DEFAULT_LANGUAGE = "fr"
+THEMES = ("system", "light", "dark")
+DEFAULT_THEME = "system"
 # Apps access is granted to, per user (`core.user_apps`). The auth app is
 # open to any logged-in user; the portfolio is public and its grant only
 # allows editing projects.
@@ -19,6 +21,7 @@ class User(Base):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint(f"language IN {LANGUAGES}", name="language"),
+        CheckConstraint(f"theme IN {THEMES}", name="theme"),
         {"schema": "core"},
     )
 
@@ -30,6 +33,9 @@ class User(Base):
     pseudo: Mapped[str] = mapped_column(Text)
     language: Mapped[str] = mapped_column(
         Text, default=DEFAULT_LANGUAGE, server_default=DEFAULT_LANGUAGE
+    )
+    theme: Mapped[str] = mapped_column(
+        Text, default=DEFAULT_THEME, server_default=DEFAULT_THEME
     )
     is_admin: Mapped[bool] = mapped_column(default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(

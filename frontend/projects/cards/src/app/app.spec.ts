@@ -27,6 +27,7 @@ const user: User = {
   email: 'test@example.com',
   pseudo: 'Player',
   language: 'en',
+  theme: 'system',
   is_admin: true,
   apps: ['cards'],
 };

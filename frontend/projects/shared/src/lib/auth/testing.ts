@@ -5,6 +5,7 @@ import { User } from './user';
 
 export const TEST_ENV: Environment = {
   production: false,
+  cookieDomain: null,
   appUrls: {
     portfolio: 'http://localhost:4600',
     workout: 'http://localhost:4601',
@@ -19,6 +20,7 @@ export const TEST_USER: User = {
   email: 'user@example.com',
   pseudo: 'Testy',
   language: 'fr',
+  theme: 'system',
   is_admin: false,
   apps: [],
 };

@@ -2,7 +2,7 @@
  * Workout: "old style, modernised". The old app's warm grey and rose-brown,
  * made softer and more polished: Manrope everywhere (tabular digits), white
  * cards with warm shadows, pill buttons and navigation, round calendar days.
- * Follows the system theme, with a warm dark mode. Strength, cardio and
+ * Light or dark (the shared theme switch, System by default), warm in dark. Strength, cardio and
  * circuits are rose-brown, sage and plum. The `--ab-*` tokens are also read by
  * @shared's header. Page styles live here, scoped by class (component styles
  * have a small budget).
@@ -56,47 +56,55 @@
   --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
+@mixin dark {
+  color-scheme: dark;
+
+  --ab-bg: #171413;
+  --ab-surface: #211d1c;
+  --ab-border: #342e2c;
+  --ab-text: #efe8e5;
+  --ab-muted: #a59995;
+  --ab-accent: #c9a29b;
+  --ab-on-accent: #1d1514;
+
+  --wk-raised: #2a2524;
+  --wk-line: #3d3634;
+  --wk-faint: #8a7e7a;
+  --wk-num: #d8b3ac;
+  --wk-ok: #7fbf95;
+  --wk-ok-bg: rgb(127 191 149 / 14%);
+  --wk-on-ok: #13201a;
+  --wk-danger: #f08a7e;
+  --wk-danger-bg: rgb(240 138 126 / 14%);
+  --wk-warn: #e0b45a;
+  --wk-warn-bg: rgb(224 180 90 / 12%);
+
+  --wk-chart-1: #c9a29b;
+  --wk-chart-2: #8fa6b8;
+  --wk-strength: #d4ada6;
+  --wk-cardio: #8fbf9d;
+  --wk-cardio-bg: rgb(143 191 157 / 14%);
+  --wk-circuit: #bb9cc4;
+
+  --wk-muscle-0: #3a3331;
+  --wk-muscle-1: #5a4542;
+  --wk-muscle-2: #8f6f69;
+  --wk-muscle-3: #c9a29b;
+  --wk-body-line: #6a5f5c;
+
+  --wk-shadow: inset 0 1px 0 rgb(255 255 255 / 3%), 0 14px 32px -20px rgb(0 0 0 / 80%);
+  --wk-shadow-sm: 0 1px 3px rgb(0 0 0 / 50%);
+  --wk-shadow-pop: 0 18px 44px -12px rgb(0 0 0 / 70%);
+  --wk-backdrop: rgb(0 0 0 / 60%);
+}
+
+:root[data-theme='dark'] {
+  @include dark;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --ab-bg: #171413;
-    --ab-surface: #211d1c;
-    --ab-border: #342e2c;
-    --ab-text: #efe8e5;
-    --ab-muted: #a59995;
-    --ab-accent: #c9a29b;
-    --ab-on-accent: #1d1514;
-
-    --wk-raised: #2a2524;
-    --wk-line: #3d3634;
-    --wk-faint: #8a7e7a;
-    --wk-num: #d8b3ac;
-    --wk-ok: #7fbf95;
-    --wk-ok-bg: rgb(127 191 149 / 14%);
-    --wk-on-ok: #13201a;
-    --wk-danger: #f08a7e;
-    --wk-danger-bg: rgb(240 138 126 / 14%);
-    --wk-warn: #e0b45a;
-    --wk-warn-bg: rgb(224 180 90 / 12%);
-
-    --wk-chart-1: #c9a29b;
-    --wk-chart-2: #8fa6b8;
-    --wk-strength: #d4ada6;
-    --wk-cardio: #8fbf9d;
-    --wk-cardio-bg: rgb(143 191 157 / 14%);
-    --wk-circuit: #bb9cc4;
-
-    --wk-muscle-0: #3a3331;
-    --wk-muscle-1: #5a4542;
-    --wk-muscle-2: #8f6f69;
-    --wk-muscle-3: #c9a29b;
-    --wk-body-line: #6a5f5c;
-
-    --wk-shadow: inset 0 1px 0 rgb(255 255 255 / 3%), 0 14px 32px -20px rgb(0 0 0 / 80%);
-    --wk-shadow-sm: 0 1px 3px rgb(0 0 0 / 50%);
-    --wk-shadow-pop: 0 18px 44px -12px rgb(0 0 0 / 70%);
-    --wk-backdrop: rgb(0 0 0 / 60%);
+  :root:not([data-theme='light']) {
+    @include dark;
   }
 }
 

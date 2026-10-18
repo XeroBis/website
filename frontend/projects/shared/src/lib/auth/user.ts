@@ -1,4 +1,5 @@
 import { Language } from '../i18n/language';
+import { Theme } from '../theme/theme';
 
 /** Apps access is granted to, per user (`core.user_apps`), in display order. */
 export const GRANTABLE_APPS = ['portfolio', 'workout', 'cards', 'media'] as const;
@@ -10,6 +11,7 @@ export interface User {
   email: string;
   pseudo: string;
   language: Language;
+  theme: Theme;
   is_admin: boolean;
   /** What the user can use: their grants, or every app for an admin. */
   apps: GrantableApp[];

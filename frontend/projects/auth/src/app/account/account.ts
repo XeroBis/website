@@ -3,10 +3,19 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { AuthService, ENVIRONMENT, GRANTABLE_APPS, httpStatus, Language } from '@shared';
+import {
+  AuthService,
+  ENVIRONMENT,
+  GRANTABLE_APPS,
+  httpStatus,
+  Language,
+  THEMES,
+  Theme,
+  ThemeService,
+} from '@shared';
 
 /**
- * `/` (behind authGuard): pseudo, language, links to the apps the user can
+ * `/` (behind authGuard): pseudo, language, theme, links to the apps the user can
  * use (the portfolio is public, so always), a link to `/admin/users` for
  * admins, logout.
  */
@@ -68,6 +77,24 @@ import { AuthService, ENVIRONMENT, GRANTABLE_APPS, httpStatus, Language } from '
           @if (languageError()) {
             <p class="error" role="alert">{{ languageError() | translate }}</p>
           }
+
+          <div class="language-picker">
+            <span>{{ 'ACCOUNT.THEME' | translate }}</span>
+            @for (theme of themes; track theme) {
+              <button
+                type="button"
+                class="lang-btn"
+                [class.active]="user.theme === theme"
+                [disabled]="saving()"
+                (click)="setTheme(theme)"
+              >
+                {{ 'SHARED.THEME_' + theme.toUpperCase() | translate }}
+              </button>
+            }
+          </div>
+          @if (themeError()) {
+            <p class="error" role="alert">{{ themeError() | translate }}</p>
+          }
         </section>
 
         <p class="subtitle">{{ 'ACCOUNT.WHERE_TO' | translate }}</p>
@@ -100,11 +127,13 @@ export class Account {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly env = inject(ENVIRONMENT);
+  private readonly theme = inject(ThemeService);
 
   protected readonly languages: { code: Language; label: string }[] = [
     { code: 'fr', label: 'Français' },
     { code: 'en', label: 'English' },
   ];
+  protected readonly themes = THEMES;
   protected readonly apps = computed(() =>
     GRANTABLE_APPS.filter((app) => app === 'portfolio' || this.auth.canUse(app)).map((app) => ({
       key: app.toUpperCase(),
@@ -119,6 +148,7 @@ export class Account {
   protected readonly saving = signal(false);
   protected readonly pseudoError = signal('');
   protected readonly languageError = signal('');
+  protected readonly themeError = signal('');
 
   protected startEditing(): void {
     this.pseudoForm.setValue({ pseudo: this.auth.user()?.pseudo ?? '' });
@@ -138,6 +168,11 @@ export class Account {
     await this.save(this.languageError, 'ACCOUNT.ERROR_LANGUAGE_SAVE', () =>
       this.auth.updateLanguage(language),
     );
+  }
+
+  protected async setTheme(theme: Theme): Promise<void> {
+    if (theme === this.auth.user()?.theme) return;
+    await this.save(this.themeError, 'ACCOUNT.ERROR_THEME_SAVE', () => this.theme.change(theme));
   }
 
   protected async logout(): Promise<void> {

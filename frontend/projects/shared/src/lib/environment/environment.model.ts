@@ -10,4 +10,6 @@ export interface Environment {
   production: boolean;
   /** Origin of each app; `auth` hosts the login page. */
   appUrls: Record<AppName, string>;
+  /** Domain of the cookies shared by every app (`theme`); null: host-only. */
+  cookieDomain: string | null;
 }

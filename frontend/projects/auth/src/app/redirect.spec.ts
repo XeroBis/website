@@ -4,6 +4,7 @@ import { redirectTarget } from './redirect';
 
 const prod: Environment = {
   production: true,
+  cookieDomain: '.alanbignon.com',
   appUrls: {
     portfolio: 'https://alanbignon.com',
     workout: 'https://workout.alanbignon.com',

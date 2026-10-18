@@ -6,7 +6,7 @@ import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
 import { BrowserLocation } from '../auth/browser-location';
-import { TEST_ENV, TEST_USER } from '../auth/testing';
+import { TEST_ENV, TEST_USER, clearCookie } from '../auth/testing';
 import { ENVIRONMENT } from '../environment/environment.token';
 import { provideI18n } from '../i18n/i18n';
 import { Header } from './header';
@@ -22,6 +22,8 @@ describe('Header', () => {
 
   beforeEach(() => {
     localStorage.setItem('language', 'fr'); // jsdom's navigator is en-US
+    clearCookie('theme');
+    document.documentElement.removeAttribute('data-theme');
     TestBed.configureTestingModule({
       imports: [Header],
       providers: [
@@ -94,6 +96,41 @@ describe('Header', () => {
     await new Promise((r) => setTimeout(r));
     TestBed.tick();
     expect(TestBed.inject(TranslateService).getCurrentLang()).toBe('en');
+  });
+
+  it('cycles the theme System → Light → Dark in a cookie when logged out', async () => {
+    const el = await render(null);
+    const theme = el.querySelector<HTMLButtonElement>('button.theme')!;
+    expect(theme.getAttribute('aria-label')).toBe('Thème : Système');
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+    theme.click();
+    await new Promise((r) => setTimeout(r)); // the button is disabled while saving
+    TestBed.tick();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(document.cookie).toContain('theme=light');
+    theme.click();
+    await new Promise((r) => setTimeout(r)); // the button is disabled while saving
+    TestBed.tick();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(theme.getAttribute('aria-label')).toBe('Thème : Sombre');
+    theme.click();
+    await new Promise((r) => setTimeout(r)); // the button is disabled while saving
+    TestBed.tick();
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+    http.expectNone('/api/auth/me/theme');
+  });
+
+  it("uses and saves the theme on the user's account when logged in", async () => {
+    const el = await render({ ...TEST_USER, theme: 'dark' });
+    TestBed.tick();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    el.querySelector<HTMLButtonElement>('button.theme')!.click();
+    const req = http.expectOne({ method: 'PATCH', url: '/api/auth/me/theme' });
+    expect(req.request.body).toEqual({ theme: 'system' });
+    req.flush({ ...TEST_USER, theme: 'system' });
+    await new Promise((r) => setTimeout(r));
+    TestBed.tick();
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
   });
 
   it('opens and closes the phone menu, closing it when a link is tapped', async () => {

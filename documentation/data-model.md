@@ -26,6 +26,7 @@ Models in `backend/core/models.py`.
 | `hashed_password` | text, not null | argon2id (pwdlib). |
 | `pseudo` | text, not null | Display name, 1–50 chars after trimming. Required at sign-up. |
 | `language` | text, not null, default `'fr'` | `'en'` or `'fr'` (`ck_users_language`). |
+| `theme` | text, not null, default `'system'` | `'system'`, `'light'` or `'dark'` (`ck_users_theme`). Shared by every app. |
 | `is_admin` | boolean, not null, default `false` | Set only by `make seed-user`; read by `require_admin`. |
 | `created_at` | timestamptz, not null, default `now()` | |
 

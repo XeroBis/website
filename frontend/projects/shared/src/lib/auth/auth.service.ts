@@ -4,6 +4,7 @@ import { Observable, finalize, firstValueFrom, shareReplay } from 'rxjs';
 
 import { ENVIRONMENT } from '../environment/environment.token';
 import { Language } from '../i18n/language';
+import { Theme } from '../theme/theme';
 import { Credentials, GrantableApp, Registration, User } from './user';
 
 /**
@@ -72,6 +73,10 @@ export class AuthService {
     return this.set(
       await firstValueFrom(this.http.patch<User>('/api/auth/me/language', { language })),
     );
+  }
+
+  async updateTheme(theme: Theme): Promise<User> {
+    return this.set(await firstValueFrom(this.http.patch<User>('/api/auth/me/theme', { theme })));
   }
 
   /** Rotates the session; concurrent callers share one request. */

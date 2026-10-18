@@ -8,6 +8,7 @@ Pseudo = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)
 ]
 Language = Literal["en", "fr"]
+Theme = Literal["system", "light", "dark"]  # core.models.THEMES
 App = Literal["portfolio", "workout", "cards", "media"]  # core.models.APPS
 
 PASSWORD_MIN_LENGTH = 12
@@ -33,6 +34,10 @@ class LanguageUpdate(BaseModel):
     language: Language
 
 
+class ThemeUpdate(BaseModel):
+    theme: Theme
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -40,6 +45,7 @@ class UserOut(BaseModel):
     email: str
     pseudo: str
     language: Language
+    theme: Theme
     is_admin: bool
     # Effective access: every app for an admin (see User.apps).
     apps: list[App]

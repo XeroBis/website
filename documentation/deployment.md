@@ -1,8 +1,7 @@
 # Deployment
 
-> Not deployed yet. The old repos still serve production until cutover
-> (`migration-plan.md` step 7). This is the target runbook; "Cutover" below is
-> the one-time switch.
+> Live since the cutover on 2026-10-18. The old stacks are stopped but their
+> volumes are kept as the rollback until the cleanup (`migration-plan.md` 7.6).
 
 ## Stack
 

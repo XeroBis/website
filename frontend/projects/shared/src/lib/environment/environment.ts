@@ -2,6 +2,7 @@ import { Environment } from './environment.model';
 
 export const environment: Environment = {
   production: true,
+  cookieDomain: '.alanbignon.com',
   appUrls: {
     portfolio: 'https://alanbignon.com',
     workout: 'https://workout.alanbignon.com',

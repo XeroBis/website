@@ -2,9 +2,9 @@
  * Media: "library paper". Cream paper, ink text, Fraunces headings, an
  * oxblood accent, and one accent per type (books oxblood, films teal, series
  * ochre) so films and series don't read as an afterthought. Deliberately
- * unlike portfolio (dark/lime) and auth (neo-brutalist). The `--ab-*` tokens
- * are also read by @shared's header. Page styles live here too (like
- * portfolio), scoped by each page's root class.
+ * unlike portfolio (dark/lime) and auth (neo-brutalist). Dark: "library at
+ * night", below. The `--ab-*` tokens are also read by @shared's header. Page
+ * styles live here too (like portfolio), scoped by each page's root class.
  */
 
 :root {
@@ -37,6 +37,55 @@
 
   --font-serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --selection: #ecd6c4;
+  --wash: rgb(120 90 50 / 8%);
+  --grain: rgb(120 90 50 / 2.5%);
+  --paper-glow: #fbf6ec;
+}
+
+/* "Library at night": ink-brown paper, cream text, lighter type accents. */
+@mixin dark {
+  color-scheme: dark;
+
+  --ab-bg: #1a1511;
+  --ab-surface: #231c17;
+  --ab-border: #3a2f26;
+  --ab-text: #efe6d6;
+  --ab-muted: #a8998a;
+  --ab-accent: #e07a68;
+  --ab-on-accent: #1a1511;
+
+  --media-line: #33291f;
+  --media-faint: #7a6c5d;
+  --media-star: #e0a83a;
+  --media-ok: #93c278;
+  --media-ok-bg: #25301d;
+  --media-danger: #ec7b62;
+  --media-danger-bg: #3a1d17;
+
+  --media-book: #e07a68;
+  --media-film: #57b8b1;
+  --media-series: #dba543;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-book: 0 1px 1px rgb(0 0 0 / 35%), 0 6px 14px -4px rgb(0 0 0 / 55%);
+  --shadow-lift: 0 2px 2px rgb(0 0 0 / 35%), 0 14px 26px -8px rgb(0 0 0 / 65%);
+
+  --selection: #5a2c24;
+  --wash: rgb(255 230 200 / 7%);
+  --grain: rgb(255 240 220 / 2%);
+  --paper-glow: #261e18;
+}
+
+:root[data-theme='dark'] {
+  @include dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark;
+  }
 }
 
 /* The accent of whatever type an element is about. */
@@ -68,8 +117,8 @@ body {
   color: var(--ab-text);
   /* Paper: a warm ground with a faint grain of horizontal fibres. */
   background:
-    repeating-linear-gradient(0deg, rgb(120 90 50 / 2.5%) 0 1px, transparent 1px 4px),
-    radial-gradient(70rem 40rem at 10% -10%, #fbf6ec, transparent 70%), var(--ab-bg);
+    repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 4px),
+    radial-gradient(70rem 40rem at 10% -10%, var(--paper-glow), transparent 70%), var(--ab-bg);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -127,7 +176,7 @@ textarea {
 }
 
 ::selection {
-  background: #ecd6c4;
+  background: var(--selection);
 }
 
 :focus-visible {
@@ -269,7 +318,7 @@ h1.display {
     color: var(--ab-muted);
 
     &:hover:not(:disabled) {
-      background: rgb(120 90 50 / 8%);
+      background: var(--wash);
       color: var(--ab-text);
       filter: none;
     }
@@ -365,7 +414,7 @@ h1.display {
   }
   &:focus {
     border-color: var(--ab-accent);
-    box-shadow: 0 0 0 3px rgb(143 45 34 / 14%);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ab-accent) 14%, transparent);
   }
   &::placeholder {
     color: var(--media-faint);
@@ -605,7 +654,7 @@ a.poster:hover {
 
       &.open {
         border-color: var(--ab-accent);
-        box-shadow: 0 0 0 3px rgb(143 45 34 / 12%);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ab-accent) 12%, transparent);
       }
     }
   }
@@ -776,7 +825,7 @@ a.poster:hover {
   .state {
     padding: 0.3rem 0.8rem;
     border-radius: 999px;
-    background: rgb(120 90 50 / 8%);
+    background: var(--wash);
     color: var(--ab-muted);
     font-size: 0.85rem;
     font-weight: 600;
