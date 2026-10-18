@@ -9,8 +9,9 @@ decision, move it to the right file and delete it here.
 - **Portfolio extras**, left out of step 3: screenshots (an image URL field or uploads, which would need storage on a volume and backups), a live-site URL, start/end years, a status badge, a per-project detail page (slug + long write-up), tag colours or a managed tag list, per-route `<title>`s, and an email link in the footer (dropped for now to avoid scrapers).
 - **`api.alanbignon.com`** as an extra API entry point if a non-browser client (mobile app) ever needs it — see decisions "API exposed as `/api` on every host".
 - **Nx**, if builds or tests ever get slow enough that affected-only runs matter.
-- **CI**: lint + backend tests + frontend tests on push, then SSH deploy (the old repos each had their own `lint.yml`/`deploy.yml`).
-- **DB backups**: port `vps-edge/backups/backup.sh`/`restore.sh` (weekly `pg_dump`, emailed via msmtp). Now one database instead of three, and per-schema restore with `pg_dump -n <schema>`.
+- **Offsite backups**: the weekly dump stays on the VPS and is emailed only while under 20 MB (`infra/backups/backup.sh`). If it outgrows that, or for the `cards_data` images, an S3-compatible bucket through `rclone`.
+- **Building images in CI** (push to GHCR, the VPS only pulls) if building the five Angular apps on the VPS runs out of memory or gets too slow.
+- **Redirecting the old workout URLs**: workout lived at `alanbignon.com` before cutover; its paths (`/workouts`, `/stats`, …) now land on the portfolio. Ruled out at cutover (2026-10-18): its few users are told the new address instead.
 - **Password reset** (by email). For now, `make prod-seed-user` resets the admin's password, `make seed-basic-user EMAIL=… PASSWORD=…` resets any dev account's, and other prod accounts need a manual DB update.
 - **Language picker on the login page** for logged-out visitors (`LanguageService.set` already exists).
 - **Shared rate-limit storage** (Redis, via slowapi's `storage_uri`) if the backend ever runs several workers or replicas. Limits are per process today.

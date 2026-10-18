@@ -181,7 +181,7 @@ Stats: `{date_from, date_to` (the range used: the query's, else first and last w
 
 ## Cards — `cards.alanbignon.com`
 
-A private card collection and deck tracker, ported from `../pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The web manifest and Poké Ball icons support home-screen installation, with no service worker. Part 6.7 is complete; the collector look and data-import rehearsal remain 6.8/6.9.
+A private card collection and deck tracker, ported from `../pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The web manifest and Poké Ball icons support home-screen installation, with no service worker.
 
 ### Pages
 

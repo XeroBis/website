@@ -1,4 +1,4 @@
-.PHONY: help up build down logs ps seed-user seed-basic-user media-refresh hooks lint test b-test f-test prod prod-down prod-seed-user prod-media-refresh
+.PHONY: help up build down logs ps seed-user seed-basic-user media-refresh hooks lint test b-test f-test prod prod-down prod-seed-user prod-media-refresh prod-backup prod-restore
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -69,3 +69,12 @@ prod-seed-user: ## Create or update the prod admin: make prod-seed-user ADMIN_EM
 
 prod-media-refresh: ## Re-fetch every TMDB / Open Library catalog row (prod)
 	docker compose -f docker-compose.prod.yml exec backend /opt/venv/bin/python -m domains.media.refresh
+
+# Dumps go to infra/backups/dumps/ (newest 7 kept); cron runs the script
+# directly, see documentation/deployment.md "Backups".
+prod-backup: ## Dump the prod database now (no email)
+	NO_EMAIL=1 infra/backups/backup.sh
+
+prod-restore: ## Restore prod from a dump (destructive, asks first): make prod-restore SCHEMA=all|portfolio|workout|cards|media [DUMP=…]
+	@test -n "$(SCHEMA)" || { echo "SCHEMA is required (all, portfolio, workout, cards or media)"; exit 1; }
+	infra/backups/restore.sh $(SCHEMA) $(DUMP)

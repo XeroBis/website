@@ -1,0 +1,91 @@
+# Lint + backend tests + frontend tests on every push and PR. A push to main
+# then deploys to the VPS, only once all three pass (documentation/deployment.md
+# "CI and deploy").
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run black --check .
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      # Same credentials and host port as the dev `db`, so the tests' default
+      # TEST_DATABASE_URL works unchanged.
+      db:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: website
+          POSTGRES_PASSWORD: website
+          POSTGRES_DB: website
+        ports:
+          - 5440:5432
+        options: >-
+          --health-cmd "pg_isready -U website -d website"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    needs: [lint, backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # One deploy at a time; a newer push waits for the running one.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
+            cd website/
+            git pull --ff-only origin main
+            make prod
+            # Each build leaves the previous images dangling (~1 GB with the
+            # five Angular bundles); drop them so the disk doesn't fill up.
+            docker image prune -f
+          EOF

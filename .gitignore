@@ -21,3 +21,6 @@ infra/ssl/*/*.pem
 !.vscode/extensions.json
 .idea/
 .DS_Store
+
+# DB dumps written by infra/backups/backup.sh
+infra/backups/dumps/

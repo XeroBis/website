@@ -1,0 +1,15 @@
+# Template for /etc/msmtprc on the VPS — this file is NOT read by backup.sh directly,
+# it's copied there manually (see documentation/deployment.md "Backups").
+# Real file must be chmod 600, owned by whichever user's crontab runs backup.sh.
+
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+
+account        default
+host           smtp.gmail.com
+port           587
+from           alanbignon2@gmail.com
+user           alanbignon2@gmail.com
+password       <GMAIL_APP_PASSWORD>

@@ -12,8 +12,8 @@ biggest app (cards) last.
 | 3 | **Portfolio**: `portfolio` schema (projects, tags), public list, admin CRUD, `portfolio` app | ✅ done 2026-10-17 |
 | 4 | **Media**: port `../media` (already on the target stack) | ✅ done 2026-10-17 |
 | 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | ✅ done 2026-10-17 |
-| 6 | **Cards**: port `../pokemon_cards` (one fresh migration instead of its 43, card images now auth-checked by the backend instead of nginx, Card Scan left out) incl. its import | ⏳ in progress, plan below |
-| 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | |
+| 6 | **Cards**: port `../pokemon_cards` (one fresh migration instead of its 43, card images now auth-checked by the backend instead of nginx, Card Scan left out) incl. its import | ✅ done 2026-10-18, plan below |
+| 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | ⏳ in progress, plan below |
 
 Step 2 notes: `auth-service`'s `/internal/validate` (nginx `auth_request`) and its CORS setup are dropped. Its `revoked_tokens` and pseudo/language features are kept. See decisions.md for what changed (libraries, cookie names and lifetimes, rate limits).
 
@@ -35,8 +35,9 @@ Decisions are in decisions.md "Cards: port plan". Done as one step: every part o
 | 6.6 | **Catalog management** (admin): copy `../pokemon_cards/DATA/` into `backend/domains/cards/source/`, port the refresh steps (HTML import, scan download, thumbnails, logos/symbols, variant icons, TCGdex details; no embeddings step), job state + polling, stats, metadata and images import/export, `GET /public/variant-icons/{file}` (needs the import's variant mapping) | ✅ 2026-10-18 |
 | 6.7 | **Frontend**: `projects/cards` rewritten zoneless with signals, every page above, `@shared` auth/i18n/header/icons, FR/EN JSON, web manifest + Poké Ball icons | ✅ 2026-10-18 |
 | 6.8 | **Look**: "old red, modernised" (see features.md Cards) | ✅ 2026-10-18 |
+| 6.9 | **Data-load rehearsal**: the "Data load" below, run in dev from the old prod's exports | ✅ 2026-10-18 (by hand) |
 
-6.7 notes: every old page except Scan and `/design` is available through lazy routes. Component and staging-queue state use signals; HTTP wrappers and debounced input events use RxJS only for I/O. Shared auth, language, header and icons replace the old app wiring. JSON files are read on the page; image archives upload as raw ZIPs with XHR progress and poll through restoration, while export is a streaming anchor download. Catalog Management reattaches to active jobs; public shares use token-scoped images outside the app guard. Neutral CSS tokens leave the collector look for 6.8. No production data has been imported; rehearsal remains 6.9.
+6.7 notes: every old page except Scan and `/design` is available through lazy routes. Component and staging-queue state use signals; HTTP wrappers and debounced input events use RxJS only for I/O. Shared auth, language, header and icons replace the old app wiring. JSON files are read on the page; image archives upload as raw ZIPs with XHR progress and poll through restoration, while export is a streaming anchor download. Catalog Management reattaches to active jobs; public shares use token-scoped images outside the app guard. Neutral CSS tokens left the look for 6.8.
 
 6.8 notes: styling only, no behaviour change. Global tokens in `projects/cards/src/styles.scss` (light + `prefers-color-scheme: dark`), pill buttons, inputs, toggles and nav links, white shadowed card tiles with a random holo foil on hover (`util/foil.util.ts` + the global `.card-tile`), Fredoka header title with the Poké Ball. Google Fonts loaded from `index.html`, as in workout and media. The "collector's binder" look first planned here was built, then swapped for this one the same day.
 
@@ -53,11 +54,23 @@ Decisions are in decisions.md "Cards: port plan". Done as one step: every part o
 | `/api/users` (shadow table) | `/api/cards/users` (users with cards access, for the combat player pickers) |
 | `/api/scan/identify`, `/api/catalog/{import,export}/embeddings`, refresh step `update_embeddings` | dropped (ideas.md) |
 
-**Data load** (rehearsed in dev at 6.9, repeated at cutover, step 7). From the old prod, in this order:
+**Data load** (rehearsed in dev at 6.9, repeated at cutover, step 7.4). From the old prod, in this order:
 1. Admin, Catalog Management: **Import catalog** (`cards_metadata.json` from the old `GET /api/catalog/export`), then **Import images** (zip from the old `GET /api/catalog/export/images`; the volume needs room for the uploaded zip on top of the restored files, ~4 GB at peak), then the **Import HTML** refresh step (the old export has no variant scan URLs, which later scan downloads need). The image paths keep the old layout, so collection exports still match by `image_path`.
 2. Each user, Gestion: collection (`collection.json`), decks (`decks.json`, incl. drafts), purchases (`purchases.json`).
 3. Combats (`combats.json`): matched by deck name + owner email and player email, so every account must exist and have cards access first.
 4. Not carried over: shopping lists (the old app has no export for them), share links (short-lived), collection/deck history (rebuilt from the imports onward).
+
+## Step 7 plan: cutover
+
+The runbook is deployment.md "Cutover"; decisions in decisions.md "Cutover tooling".
+
+| # | Part | Status |
+|---|---|---|
+| 7.1 | **Repo**: `infra/backups/` (`backup.sh`, `restore.sh`, `msmtprc.template`, `make prod-backup` / `prod-restore`), `infra/certbot/deploy-hook.sh`, `.github/workflows/ci.yml` (lint, backend, frontend, deploy), deployment.md runbook | ✅ 2026-10-18 |
+| 7.2 | **GitHub**: `VPS_HOST` / `VPS_USER` / `VPS_SSH_KEY` secrets on `XeroBis/website` | |
+| 7.3 | **VPS prep**, old stacks still serving: DNS check, cert expanded through the old webroot, clone + `.env`, cert copied, images pre-built, disk/memory checked | |
+| 7.4 | **Cutover day**: exports from the old apps, last old backup, old stacks stopped, `make prod`, accounts + app grants, cards and workout re-imported | |
+| 7.5 | **After**: cert hook installed + dry-run, backup cron + first run, first CI deploy, old repos' deploy workflows disabled; a week later old volumes removed and repos archived | |
 
 ## Per-app port checklist
 

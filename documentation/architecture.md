@@ -56,7 +56,11 @@ website/
 ├── infra/
 │   ├── nginx/                  # the edge: nginx.conf, snippets/, Dockerfile (builds the frontend into the image)
 │   ├── ssl/alanbignon.com/     # prod cert (gitignored *.pem)
-│   └── certbot-webroot/        # ACME HTTP-01 webroot
+│   ├── certbot-webroot/        # ACME HTTP-01 webroot
+│   ├── certbot/deploy-hook.sh  # prod: copies a renewed cert into ssl/, reloads the edge
+│   └── backups/                # prod: backup.sh (weekly pg_dump + email), restore.sh (whole DB or one schema),
+│                               #   msmtprc.template, dumps/ (gitignored)
+├── .github/workflows/ci.yml    # lint + backend + frontend tests; on main, then SSH deploy
 ├── docker-compose.yml          # dev
 ├── docker-compose.prod.yml     # prod
 ├── Makefile
@@ -97,7 +101,7 @@ website/
 
 `projects/cards` uses standalone zoneless Angular 22, OnPush views, lazy routes, and signals for page and staging-queue state. The API wrappers live in `services/`; models, set/variant/rarity/sort/deck-visual helpers stay local. All URLs are relative `/api/cards/...`. Collection and deck image helpers use `/images/` (thumbnails replace the `/cards/` folder); `/shared/:token` uses public token-scoped image/logo/symbol routes and sits outside `appGuard('cards')`. Catalog Management has `adminGuard` in addition to the app guard; name edits are admin-only in the UI too.
 
-The shared language switch saves the account then explicitly reloads the current route so its API display fields follow the new language. Route recreation also handles set/deck/list id changes; ordinary same-URL navigation is ignored to preserve draft-modal back-button behavior. `readJson`/`downloadBlob` in `@shared` serve browser file transfers, and `httpErrorMessage` formats backend validation details. JSON imports send the parsed value. Cards opts into HttpClient's XHR backend for image-upload progress: ZIP import sends the File as `application/zip`, receives 202 after upload and polls restoration/linking. ZIP export is an anchor download, never an in-memory Blob. The admin page probes every job status on entry and polls while mounted, with teardown on navigation. Styling exposes `--color-*` and header `--ab-*` variables; the collector treatment is deferred to 6.8.
+The shared language switch saves the account then explicitly reloads the current route so its API display fields follow the new language. Route recreation also handles set/deck/list id changes; ordinary same-URL navigation is ignored to preserve draft-modal back-button behavior. `readJson`/`downloadBlob` in `@shared` serve browser file transfers, and `httpErrorMessage` formats backend validation details. JSON imports send the parsed value. Cards opts into HttpClient's XHR backend for image-upload progress: ZIP import sends the File as `application/zip`, receives 202 after upload and polls restoration/linking. ZIP export is an anchor download, never an in-memory Blob. The admin page probes every job status on entry and polls while mounted, with teardown on navigation. Styling exposes `--color-*` and header `--ab-*` variables, which the 6.8 look sets.
 
 ### Background jobs
 
