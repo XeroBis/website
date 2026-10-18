@@ -28,6 +28,10 @@ services:
       COOKIE_DOMAIN: .alanbignon.com
       COOKIE_SECURE: "true"
       TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
+      CARDS_DATA_DIR: /data/cards
+    volumes:
+      # Cards: downloaded scans, thumbnails, logos, variant badges (~2 GB).
+      - cards_data:/data/cards
     depends_on:
       db:
         condition: service_healthy
@@ -49,3 +53,4 @@ services:
 
 volumes:
   pgdata:
+  cards_data:

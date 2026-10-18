@@ -12,7 +12,7 @@ biggest app (cards) last.
 | 3 | **Portfolio**: `portfolio` schema (projects, tags), public list, admin CRUD, `portfolio` app | ✅ done 2026-10-17 |
 | 4 | **Media**: port `../media` (already on the target stack) | ✅ done 2026-10-17 |
 | 5 | **Workout**: port `../workout` (FastAPI 0.115 → current, flat → `domains/`, Angular 21 → 22) incl. its import | ✅ done 2026-10-17 |
-| 6 | **Cards**: port `../pokemon_cards` (43 migrations squashed into this history, scanning, card images now auth-checked by the backend instead of nginx) incl. its import | |
+| 6 | **Cards**: port `../pokemon_cards` (one fresh migration instead of its 43, card images now auth-checked by the backend instead of nginx, Card Scan left out) incl. its import | ⏳ in progress, plan below |
 | 7 | **Cutover**: cert expanded with `workout.alanbignon.com`, prod `.env`, stop old stacks, start this one, re-import data, port backups, CI | |
 
 Step 2 notes: `auth-service`'s `/internal/validate` (nginx `auth_request`) and its CORS setup are dropped. Its `revoked_tokens` and pseudo/language features are kept. See decisions.md for what changed (libraries, cookie names and lifetimes, rate limits).
@@ -20,6 +20,41 @@ Step 2 notes: `auth-service`'s `/internal/validate` (nginx `auth_request`) and i
 Step 3 notes: written from scratch rather than ported, with workout's `projects` feature as the reference. No rows imported. Changes from workout are in decisions.md ("Portfolio: hand-written projects…"). The shared header `ab-header` and `httpStatus` were added to `@shared`.
 
 Step 4 notes: `domains/media` adapted rather than rewritten (models in the `media` schema with FKs to `core.users`, `require_app("media")` instead of `X-User-*` headers, no shadow `users` table, no CORS, no dev auth bypass), one fresh migration (`0005`), routes under `/api/media`. `/api/dashboard` and `/api/users/me` dropped; share links weren't built in `../media` and stay in ideas.md. Tests ported to `tests/media/` (own conftest with a fake TMDB / Open Library). `ab-icon` added to `@shared`. No rows imported. See decisions.md "Media: ported from `../media`…".
+
+## Step 6 plan: cards
+
+Decisions are in decisions.md "Cards: port plan". Done as one step: every part of `../pokemon_cards` except Card Scan (and its CLIP embeddings), the `/design` page and the service worker. Worked in this order, each part landing with its tests:
+
+| # | Part | Status |
+|---|---|---|
+| 6.1 | **Foundation**: `domains/cards` package, every model in the `cards` schema (user FKs to `core.users`), one fresh migration (also `CREATE EXTENSION pg_trgm` and the trigram name index), settings `CARDS_SOURCE_DIR` / `CARDS_DATA_DIR`, `cards_data` volume in both compose files, `tests/cards/` conftest | ✅ 2026-10-18 |
+| 6.2 | **Catalog + images**: browse/search/sort, card detail + name fix (admin), sets + completion, set detail, missing intervals, variant types, deck usage, `GET /api/cards/images/{path}` | |
+| 6.3 | **Collection**: owned cards + variant quantities, search/filter-options, add (incl. add-to-deck in one batch), edit/delete, history, import/export, delete-all | |
+| 6.4 | **Decks**: normal + phantom decks, deck cards, posters, history, copy, start hand (frontend only), upgrade drafts (single + combined export), decklist converter, text/JSON exports, import / import-all | |
+| 6.5 | **Combats, purchases, shopping lists, shares**: combat log with snapshots + import/export, What I Paid, shopping lists, share links + public token-scoped routes | |
+| 6.6 | **Catalog management** (admin): copy `../pokemon_cards/DATA/` into `backend/domains/cards/source/`, port the refresh steps (HTML import, scan download, thumbnails, logos/symbols, variant icons, TCGdex details; no embeddings step), job state + polling, stats, metadata and images import/export | |
+| 6.7 | **Frontend**: `projects/cards` rewritten zoneless with signals, every page above, `@shared` auth/i18n/header/icons, FR/EN JSON, web manifest + Poké Ball icons | |
+| 6.8 | **Look**: "collector's binder" (see features.md Cards) | |
+| 6.9 | **Import rehearsal** in dev with the old app's exports (below), then docs: architecture.md, data-model.md, features.md, deployment.md | |
+
+**Route mapping** (everything under `/api/cards`):
+
+| Old | New |
+|---|---|
+| `/api/catalog/...` | `/api/cards/catalog/...` |
+| `/api/cards/...` (collection) | `/api/cards/collection/...` |
+| `/api/decks/...`, `/api/drafts/...`, `/api/convert/...` | `/api/cards/decks/...`, `/api/cards/drafts/...`, `/api/cards/convert/...` |
+| `/api/combats`, `/api/purchases`, `/api/shopping-lists`, `/api/shares` | same names under `/api/cards/` |
+| `/api/public/shares/{token}...`, `/api/public/variant-icons/{file}` | `/api/cards/public/shares/{token}...`, `/api/cards/public/variant-icons/{file}` (no auth dependency) |
+| `/card-images/{path}` (static mount, nginx-gated) | `/api/cards/images/{path}` (`require_app("cards")`) |
+| `/api/users` (shadow table) | `/api/cards/users` (users with cards access, for the combat player pickers) |
+| `/api/scan/identify`, `/api/catalog/{import,export}/embeddings`, refresh step `update_embeddings` | dropped (ideas.md) |
+
+**Data load** (rehearsed in dev at 6.9, repeated at cutover, step 7). From the old prod, in this order:
+1. Admin, Catalog Management: **Import catalog** (`cards_metadata.json` from the old `GET /api/catalog/export`), then **Import images** (zip from the old `GET /api/catalog/export/images`). The image paths keep the old layout, so collection exports still match by `image_path`.
+2. Each user, Gestion: collection (`collection.json`), decks (`decks.json`, incl. drafts), purchases (`purchases.json`).
+3. Combats (`combats.json`): matched by deck name + owner email and player email, so every account must exist and have cards access first.
+4. Not carried over: shopping lists (the old app has no export for them), share links (short-lived), collection/deck history (rebuilt from the imports onward).
 
 ## Per-app port checklist
 

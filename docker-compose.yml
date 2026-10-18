@@ -36,10 +36,13 @@ services:
       # Media: real TMDB token from the gitignored root .env; empty = film and
       # series search answer 502 (books need no key).
       TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
+      # Cards: downloaded scans, thumbnails, logos, variant badges (~2 GB).
+      CARDS_DATA_DIR: /data/cards
     ports:
       - "8400:8000"
     volumes:
       - ./backend:/app
+      - cards_data:/data/cards
     depends_on:
       db:
         condition: service_healthy
@@ -70,3 +73,4 @@ services:
 
 volumes:
   pgdata:
+  cards_data:

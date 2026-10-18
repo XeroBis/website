@@ -174,7 +174,128 @@ Same shape as workouts, per user:
 
 ## `cards`
 
-No tables yet.
+Pokémon cards (ported from `../pokemon_cards`, migration-plan.md step 6). One shared catalog of every card and the print variants it comes in, imported from saved pokecardex HTML. Everything else belongs to a user: the collection (a quantity per owned print), decks and upgrade drafts, purchases, share links and shopping lists. Combats are the one log shared between cards users. Models in `backend/domains/cards/models.py`, migration `0007` (it also enables the `pg_trgm` extension). Image paths are relative to `CARDS_DATA_DIR` (architecture.md).
+
+### `cards.card_catalog`
+
+One card slot of a set. Reference data, written by the catalog import; only `name` can be corrected (admin).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `name` | text, not null, indexed | English name. `Basic <X> Energy` is stored as the generic `X Energy`; prints in the dedicated `Energies` set keep a dated name (`Water Energy (2022) /104`). |
+| `display_name` | text, not null, indexed | French name; equals `name` when the French page has none. |
+| `series` | text, null | The source folder the set came from (`Scarlet & Violet`, `World Championships`, …): the Sets page grouping and the first segment of the set's image paths. A French label may come from the folder's `name.txt`. |
+| `set_name` / `set_name_fr` | text, not null / null | Set titles. |
+| `set_code` | text, not null, indexed | The set folder name (`SVI`, `MEW`). |
+| `card_number` | text, not null | Number within the set, from the scan URL (`Energies`: position on the page). Not unique within a set. |
+| `details` | json, null | TCGdex text, `{"en": {...}, "fr": {...}}`: HP, types, stage, evolveFrom, attacks, abilities, effect, weaknesses, resistances, retreat, illustrator, regulationMark. |
+| `image_path` | text, not null, unique | English scan, e.g. `Scarlet & Violet/SVI/cards/001_sprigatito_standard_EN.jpg`; `__pending__/<set>/<slot>_<number>` until downloaded. Its thumbnail is the same path with `/thumbnails/` instead of `/cards/`. The identity collection export/import matches by. |
+| `image_path_fr` | text, null | French scan. |
+| `supertype` | text, null, indexed | `Pokémon` / `Trainer` / `Energy`, from the set's `rarity.txt`. |
+| `source_url` | text, null | CDN URL of the English standard scan; also how the HTML import recognises a row whose number changed. |
+| `rarity` | text, null, indexed | Raw value from `rarity.txt` (grouped into categories by the frontend). |
+| `card_count` / `release_date` | integer / date, null | Set-level, copied on each card of the set. |
+| `created_at` | timestamptz, default `now()` | |
+
+GIN trigram index `ix_card_catalog_stripped_name_trgm` on `name` without `’ ' . :`, for the leading-wildcard name search. Logos and symbols have no column: `<series>/<set_code>/<set_code>_logo_EN.png` / `_logo_FR.png` / `_symbol.png`.
+
+### `cards.card_catalog_variants`
+
+A print a catalog card comes in: `standard` always, plus `reverse`, the ball patterns (`reverse_pokeball` … `reverse_masterball`) and special prints (stamps, staff, holo finishes, …). The full list and display order is `domains/cards/variant_order.py` (unknown types sort last).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `card_catalog_id` | integer, FK → `card_catalog.id` `ON DELETE CASCADE` | |
+| `variant_type` | text, not null | Unique with `card_catalog_id`. |
+| `source_url_en` / `source_url_fr` | text, null | Scan URLs from the English / French page. |
+| `image_path_us` / `image_path_fr` | text, null | Downloaded scans. Always null for `standard` (its scans are on `card_catalog`). |
+
+### `cards.cards`, `cards.card_variant_quantities`
+
+A catalog card in a user's collection (unique `(user_id, catalog_id)`), and how many copies of each print they own (unique `(card_id, variant_type)`, `quantity ≥ 1`).
+
+| Column | Type | Notes |
+|---|---|---|
+| `cards.id` | integer, PK | |
+| `cards.user_id` | integer, FK → `core.users.id` `ON DELETE CASCADE` | |
+| `cards.catalog_id` | integer, FK → `card_catalog.id` | |
+| `card_variant_quantities.card_id` | integer, FK → `cards.id` `ON DELETE CASCADE`, indexed | |
+| `card_variant_quantities.variant_type` | text, not null | Must be one of the card's catalog variants. |
+| `card_variant_quantities.quantity` | integer, not null | ≥ 1; a print going to 0 deletes its row. |
+| `created_at` | timestamptz, default `now()` | Both tables. |
+
+### `cards.collection_history`
+
+Audit log of ownership changes, one row per (card, print) change, never edited or deleted. Indexed on `(user_id, created_at)`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `user_id` | integer, FK → `core.users.id` `ON DELETE CASCADE` | |
+| `catalog_id` | integer, FK → `card_catalog.id` | |
+| `variant_type` | text, not null, default `standard` | |
+| `action` | text, not null | `added` / `increased` / `decreased` / `removed`. |
+| `source` | text, not null | `manual` / `import`. |
+| `old_quantity` / `new_quantity` | integer, null | Null for `added` / `removed` respectively. |
+| `created_at` | timestamptz, default `now()` | |
+
+### `cards.decks`, `cards.deck_cards`, `cards.deck_history`
+
+| Column | Type | Notes |
+|---|---|---|
+| `decks.id` | integer, PK | |
+| `decks.user_id` | integer, FK → `core.users.id` `ON DELETE CASCADE` | Name unique per owner. |
+| `decks.name` / `decks.description` | text, not null / null | |
+| `decks.deck_type` | text, not null, default `normal` | `normal` or `phantom` (a want-list); set at creation only. |
+| `decks.has_wdc_cards` | boolean, default false | Display tag: some card is from a `World Championships` set. Recomputed after every card change. |
+| `deck_cards.deck_id` | integer, FK → `decks.id` `ON DELETE CASCADE` | |
+| `deck_cards.card_id` | integer, null, FK → `cards.id` `ON DELETE CASCADE`, indexed | Normal decks: the owned copy. |
+| `deck_cards.catalog_id` | integer, null, FK → `card_catalog.id` | Phantom decks: the catalog card (may be owned 0 times). Exactly one of `card_id` / `catalog_id` is set. |
+| `deck_cards.variant_type` | text, not null, default `standard` | The print allocated. Unique per `(deck_id, card_id, variant_type)` and `(deck_id, catalog_id, variant_type)` (partial indexes). |
+| `deck_cards.quantity_in_deck` | integer, not null | ≥ 1 (wanted count for phantom rows). |
+| `deck_cards.poster_slot` | smallint, null | 0–2 for the deck's up to 3 poster cards; unique per deck. |
+| `deck_history` | | `deck_id` (`ON DELETE CASCADE`), `action` (`created`, `renamed`, `description_changed`, `copied`, `card_added`, `card_quantity_changed`, `card_removed`), `detail`, `old_value`, `new_value`, `variant_type`, `created_at`. |
+
+### `cards.deck_upgrade_drafts`, `cards.deck_upgrade_draft_cards`
+
+A named "what if" diff against a normal deck (unique name per deck, `ON DELETE CASCADE` with it, deleted once applied), and its lines: `(draft_id, catalog_id, variant_type)` unique, `quantity_delta` a nonzero signed change on the deck's current quantity of that print. `updated_at` moves on every change.
+
+### `cards.combats`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `deck_a_id` / `deck_b_id` | integer, null, FK → `decks.id` `ON DELETE SET NULL` | Any user's normal decks, may be the same. |
+| `player_a_id` / `player_b_id` | integer, FK → `core.users.id` `ON DELETE CASCADE` | Need not own the deck, may be the same. |
+| `winner` | text, not null | `a` or `b`. |
+| `loser_score` | integer, not null | Prizes the loser still had, 1–6. |
+| `played_at` | timestamptz, not null | Date only (midnight UTC); the list order. |
+| `deck_a_snapshot` / `deck_b_snapshot` | json, not null | Each side's card list when the deck was set: `[{card_id, quantity_in_deck, name, set_name, image_path, supertype}]`. |
+| `deck_a_name_snapshot` / `deck_b_name_snapshot` | text, not null | The deck names then. |
+| `created_at` | timestamptz, default `now()` | |
+
+### `cards.purchases`
+
+"What I Paid": `user_id` (`ON DELETE CASCADE`, indexed), `product_name`, `price` numeric(10,2) ≥ 0 (the entry's total, one currency), `quantity` ≥ 1 (informational), `purchased_at` (date only), `source` and `description` (free text, null), `sets` text[] of set codes (default `{}`, not FKs), `created_at`.
+
+### `cards.set_shares`
+
+A public read-only link to one set of a user's collection: `user_id` (`ON DELETE CASCADE`, indexed), `set_code`, `token` (unique, `secrets.token_urlsafe(24)`), `expires_at`, `revoked_at` (null until revoked), `created_at`. Active = not revoked and not expired. Ownership is recomputed on each read.
+
+### `cards.shopping_lists`, `cards.shopping_list_cards`
+
+A shopping-round checklist (name unique per owner, `updated_at` moves on every change) and its cards: unique `(shopping_list_id, catalog_id)`, `quantity_needed` (from the pasted decklist), `quantity_owned` (a manual tally, 0…`quantity_needed`, default 0). Not linked to the collection.
+
+### Rules
+
+- **Scoping**: every route needs the `cards` app (grant or admin), except the public share routes. Collection, decks, drafts, purchases, shares and shopping lists only see the current user's rows (anyone else's is a 404). The catalog is shared. Combats are shared between cards users, and their deck pickers list every cards user's normal decks. Catalog administration (import, refresh, name fix) needs `core.users.is_admin`.
+- **Totals**: owned = Σ the card's variant quantities; allocated = Σ `quantity_in_deck` over normal decks; available = owned − allocated (also per print). Phantom rows never count as allocated.
+- **Deck building** (normal decks): ≤ 60 cards, ≤ 4 copies per card except Basic Energy (recognised by name), allocated ≤ owned per print. A card in a deck can't be deleted, and its quantity can't go below what decks use. Phantom decks skip all three limits. Drafts are normal-only; a draft line's result (current + delta) stays within 0–4 (Basic Energy unlimited); applying re-checks everything and consumes the draft.
+- **Logging**: every ownership change writes `collection_history`, every deck change `deck_history`, in the same transaction.
+- **Language**: display responses use `display_name`, `set_name_fr` and `image_path_fr` for French users (`core.users.language`) when set; exports and share pages always use the English values.
+- Deleting an account deletes all its cards data and the combats it played.
 
 ## `media`
 

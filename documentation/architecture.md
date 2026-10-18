@@ -31,6 +31,8 @@ website/
 │   │   ├── portfolio/          #   /api/portfolio routes, `portfolio` schema models
 │   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
 │   │   │                       #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)
+│   │   ├── cards/              #   /api/cards (being ported, migration-plan step 6): `cards` schema models,
+│   │   │                       #   variant_order.py (print variants + display order), access.py
 │   │   └── workout/            #   /api/workout routes (routers/: catalog, workouts, templates, circuits, session,
 │   │                           #   stats, transfer = import/export, admin), `workout` schema models, muscles.py,
 │   │                           #   entries.py (shared build/serialize of workout/template/circuit entries), stats.py, transfer.py
@@ -105,11 +107,14 @@ One login for every app. The cookies are set by `/api/auth/login` (or `/register
 |---|---|---|
 | `db` | Postgres 18, password `website`, published on 5440 | Postgres 18, `POSTGRES_PASSWORD` from `.env`, not published |
 | `backend` | `./backend` bind-mounted, `uvicorn --reload`, published on 8400 | baked image, no reload, not published |
+| cards files | `cards_data` volume at `/data/cards` (`CARDS_DATA_DIR`) | same |
 | auth env | fixed fake `SECRET_KEY`/`REGISTER_SECRET`, no `COOKIE_DOMAIN`, `COOKIE_SECURE=false`, `ADMIN_*` defaults for `make seed-user`; `TMDB_READ_ACCESS_TOKEN` from the root `.env` (optional) | `SECRET_KEY`/`REGISTER_SECRET` from `.env` (required), `COOKIE_DOMAIN=.alanbignon.com`, `COOKIE_SECURE=true`, `TMDB_READ_ACCESS_TOKEN` from `.env` |
 | frontend | `frontend` container: one `ng serve` per app (4600–4604), `./frontend` bind-mounted, `--poll 2000` | built into the `edge` image |
 | proxy | none (dev servers proxy `/api`) | `edge`: only container publishing 80/443 |
 
 Both stacks run `alembic upgrade head` before starting uvicorn, so migrations apply on every start.
+
+`CARDS_DATA_DIR` holds cards' downloaded files (scans, thumbnails, set logos/symbols, variant badges, ~2 GB), laid out as `<series>/<set_code>/{cards,thumbnails}/…`. It is a named volume in both stacks, outside the `./backend` bind mount, so it survives rebuilds and stays out of the image; `docker compose down -v` deletes it. The saved pokecardex HTML the catalog is imported from is tracked in the repo (`CARDS_SOURCE_DIR`, default `domains/cards/source`, copied in at step 6.6).
 
 ### Local dev ports
 

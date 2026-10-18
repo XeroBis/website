@@ -7,6 +7,7 @@ from slowapi.errors import RateLimitExceeded
 from core.config import settings
 from core.rate_limit import limiter
 from domains.auth import router as auth
+from domains.cards import router as cards
 from domains.health import router as health
 from domains.media import router as media
 from domains.portfolio import router as portfolio
@@ -33,3 +34,4 @@ app.include_router(auth.router)
 app.include_router(portfolio.router)
 app.include_router(media.router)
 app.include_router(workout.router)
+app.include_router(cards.router)

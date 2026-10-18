@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     # Media: TMDB API Read Access Token (v4), sent as a Bearer header. Empty =
     # film and series search unavailable (books use Open Library, no key).
     tmdb_read_access_token: str = ""
+    # Cards: the saved pokecardex HTML the catalog is imported from (tracked
+    # in the repo), and the writable folder for downloaded scans, thumbnails,
+    # logos and variant badges (a volume; see architecture.md).
+    cards_source_dir: str = "domains/cards/source"
+    cards_data_dir: str = "/data/cards"
 
 
 settings = Settings()

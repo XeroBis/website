@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 # Importing the models registers their tables on Base.metadata for
 # create_all below.
 from core import database, models  # noqa: E402, F401
+from domains.cards import models as cards_models  # noqa: E402, F401
 from domains.media import models as media_models  # noqa: E402, F401
 from domains.portfolio import models as portfolio_models  # noqa: E402, F401
 from domains.workout import models as workout_models  # noqa: E402, F401
@@ -42,6 +43,8 @@ def _create_test_database() -> None:
 
 def _reset_schemas() -> None:
     with database.engine.begin() as conn:
+        # Cards' trigram name index needs it (the migration creates it too).
+        conn.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS pg_trgm")
         for schema in database.SCHEMAS:
             conn.exec_driver_sql(f"DROP SCHEMA IF EXISTS {schema} CASCADE")
             conn.exec_driver_sql(f"CREATE SCHEMA {schema}")

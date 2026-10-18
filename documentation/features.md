@@ -181,7 +181,11 @@ Stats: `{date_from, date_to` (the range used: the query's, else first and last w
 
 ## Cards — `cards.alanbignon.com`
 
-Placeholder, behind `appGuard`.
+Placeholder, behind `appGuard`. Being ported from `../pokemon_cards` (migration-plan.md step 6). Until then its behaviour is described in `../pokemon_cards/documentation/features.md`, minus Card Scan, the `/design` page and the service worker.
+
+### Look (planned)
+
+"Collector's binder": a deep binder-blue/near-black page, card tiles drawn as sleeves with a faint holo-foil sheen on hover, Poké Ball red as the accent, a rounded display font for headings. The Poké Ball favicon is kept.
 
 ## Media — `media.alanbignon.com`
 
