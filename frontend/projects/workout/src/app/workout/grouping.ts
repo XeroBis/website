@@ -19,12 +19,11 @@ function isoWeek(d: Date): { monday: Date; year: number; week: number } {
   return { monday, year: thursday.getFullYear(), week };
 }
 
-export function groupKey(date: string, level: Level, lang: string): { key: string; label: string } {
-  const d = parseDate(date);
+export function groupKey(d: Date, level: Level, lang: string): { key: string; label: string } {
   if (level === 'year') return { key: String(d.getFullYear()), label: String(d.getFullYear()) };
   if (level === 'month') {
     return {
-      key: date.slice(0, 7),
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: d.toLocaleDateString(lang, { month: 'long', year: 'numeric' }),
     };
   }
@@ -40,7 +39,9 @@ export function groupKey(date: string, level: Level, lang: string): { key: strin
 /**
  * Flat rows to render: a header per group (nested by the active levels, in
  * year → month → week order) followed by its workouts, unless collapsed.
- * Workouts come newest first and keep that order.
+ * Workouts come newest first and keep that order. With weeks on, a workout
+ * goes under the year and month its week starts in (its Monday), so a week
+ * spanning two months only shows once.
  */
 export function listRows(
   workouts: Workout[],
@@ -49,6 +50,10 @@ export function listRows(
   lang: string,
 ): ListRow[] {
   const active = LEVELS.filter((l) => levels.has(l));
+  const anchor = (w: Workout) => {
+    const d = parseDate(w.date!);
+    return levels.has('week') ? isoWeek(d).monday : d;
+  };
   const rows: ListRow[] = [];
   const walk = (items: Workout[], depth: number, prefix: string) => {
     const level = active[depth];
@@ -58,7 +63,7 @@ export function listRows(
     }
     const groups = new Map<string, { label: string; items: Workout[] }>();
     for (const w of items) {
-      const { key, label } = groupKey(w.date!, level, lang);
+      const { key, label } = groupKey(anchor(w), level, lang);
       const full = `${prefix}${key}`;
       if (!groups.has(full)) groups.set(full, { label, items: [] });
       groups.get(full)!.items.push(w);
