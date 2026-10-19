@@ -20,7 +20,6 @@ import { DeckDetailComponent } from './components/deck/deck-detail/deck-detail.c
 import { CombatsComponent } from './components/combats/combats.component';
 import { By } from '@angular/platform-browser';
 import { BrowseComponent } from './components/browse/browse.component';
-import { ShoppingListDetailComponent } from './components/shopping-lists/shopping-list-detail/shopping-list-detail.component';
 
 const user: User = {
   id: 1,
@@ -100,30 +99,6 @@ const set = {
   logo_path_fr: null,
   symbol_path: null,
   completion_percent: 1,
-};
-const listCard = {
-  id: 1,
-  catalog_id: 1,
-  name: 'Pikachu',
-  name_en: 'Pikachu',
-  name_fr: 'Pikachu FR',
-  set_name: 'Base',
-  set_code: 'BS',
-  card_number: '1',
-  image_path: card.image_path,
-  supertype: 'Pokémon',
-  quantity_needed: 2,
-  quantity_owned: 1,
-};
-const list = {
-  id: 7,
-  name: 'Wanted',
-  created_at: '2026-01-01',
-  updated_at: '2026-01-01',
-  total_cards: 1,
-  total_quantity_needed: 2,
-  fully_got_cards: 0,
-  cards: [listCard],
 };
 const status = {
   status: 'idle',
@@ -207,13 +182,6 @@ const backend: HttpInterceptorFn = (request) => {
       },
     ];
   else if (path === '/users') body = [{ id: 1, pseudo: 'Player' }];
-  else if (path === '/shopping-lists') body = [list];
-  else if (path === '/shopping-lists/7') body = list;
-  else if (path === '/shopping-lists/7/cards/1')
-    body = {
-      ...listCard,
-      quantity_owned: request.body && (request.body as { quantity_owned: number }).quantity_owned,
-    };
   else if (path === '/public/shares/token')
     body = {
       set_code: 'BS',
@@ -288,8 +256,6 @@ describe('Cards standalone zoneless pages', () => {
     ['/decks/5', 'Lightning'],
     ['/combats', 'Player'],
     ['/purchases', 'Booster'],
-    ['/shopping-lists', 'Wanted'],
-    ['/shopping-lists/7', 'Wanted'],
     ['/shares', 'Shares'],
     ['/convert', 'Convert'],
     ['/gestion', 'Collection'],
@@ -315,18 +281,6 @@ describe('Cards standalone zoneless pages', () => {
     page.openDetail(card);
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement?.querySelector('app-card-detail')).toBeTruthy();
-  });
-
-  it('uses both shopping-list names and updates the tally from the response', async () => {
-    const harness = await setup();
-    const page = await harness.navigateByUrl('/shopping-lists/7', ShoppingListDetailComponent);
-    expect(page.displayName(listCard)).toBe('Pikachu');
-    page.nameLanguage.set('fr');
-    expect(page.displayName(listCard)).toBe('Pikachu FR');
-    page.changeQuantityOwned(listCard, 1);
-    await harness.fixture.whenStable();
-    expect(page.shoppingList()?.fully_got_cards).toBe(1);
-    expect(page.shoppingList()?.cards[0].quantity_owned).toBe(2);
   });
 
   it('keeps the public shared set outside appGuard and uses only public data routes', async () => {

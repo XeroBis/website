@@ -2,8 +2,8 @@
 
 A shared catalog (`card_catalog` + the print variants each card comes in),
 then everything personal: the collection (`cards` + a quantity per owned
-variant), decks, upgrade drafts, purchases, purchase lists, share links
-and shopping lists, each scoped to a `core.users` row. Combats are the one
+variant), decks, upgrade drafts, purchases, purchase lists and share
+links, each scoped to a `core.users` row. Combats are the one
 shared log between users.
 """
 
@@ -408,7 +408,7 @@ class Combat(Base):
     player_b: Mapped[User] = relationship(foreign_keys=[player_b_id])
 
 
-# ── purchases, shares, shopping lists ────────────────────────────────────────
+# ── purchases, shares ────────────────────────────────────────────────────────
 
 
 class Purchase(Base):
@@ -457,54 +457,6 @@ class SetShare(Base):
     created_at: Mapped[datetime] = _created_at()
 
     owner: Mapped[User] = relationship()
-
-
-class ShoppingList(Base):
-    """A shopping-round checklist from a pasted decklist, deliberately not
-    linked to the real collection."""
-
-    __tablename__ = "shopping_lists"
-    __table_args__ = (UniqueConstraint("user_id", "name"), SCHEMA)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = _user_fk()
-    name: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = _created_at()
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
-
-    cards: Mapped[list[ShoppingListCard]] = relationship(
-        back_populates="shopping_list",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-        order_by="ShoppingListCard.id",
-    )
-
-
-class ShoppingListCard(Base):
-    """`quantity_owned` is a manual "secured so far" tally."""
-
-    __tablename__ = "shopping_list_cards"
-    __table_args__ = (
-        UniqueConstraint("shopping_list_id", "catalog_id"),
-        CheckConstraint(
-            "quantity_owned BETWEEN 0 AND quantity_needed", name="quantity_owned"
-        ),
-        SCHEMA,
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    shopping_list_id: Mapped[int] = mapped_column(
-        ForeignKey("cards.shopping_lists.id", ondelete="CASCADE")
-    )
-    catalog_id: Mapped[int] = mapped_column(ForeignKey("cards.card_catalog.id"))
-    quantity_needed: Mapped[int]
-    quantity_owned: Mapped[int] = mapped_column(default=0, server_default="0")
-    created_at: Mapped[datetime] = _created_at()
-
-    shopping_list: Mapped[ShoppingList] = relationship(back_populates="cards")
-    catalog_card: Mapped[CardCatalog] = relationship()
 
 
 # ── purchase lists ───────────────────────────────────────────────────────────

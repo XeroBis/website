@@ -1,20 +1,84 @@
 <div class="top-bar">
   <h1 class="page-title">{{ 'purchaseLists.title' | translate }}</h1>
-  <label class="btn btn-primary import-btn" [class.disabled]="reading()">
-    <ab-icon name="upload" />
-    {{
-      reading() ? ('purchaseLists.reading' | translate) : ('purchaseLists.importOrder' | translate)
-    }}
-    <input
-      type="file"
-      accept=".html,.htm,text/html"
-      hidden
-      [disabled]="reading()"
-      (change)="onFileSelected($event)"
-    />
-  </label>
+  <div class="top-actions">
+    <button type="button" class="btn btn-secondary" (click)="openCreate()">
+      <ab-icon name="plus" />
+      {{ 'purchaseLists.newList' | translate }}
+    </button>
+    <label class="btn btn-primary import-btn" [class.disabled]="reading()">
+      <ab-icon name="upload" />
+      {{
+        reading()
+          ? ('purchaseLists.reading' | translate)
+          : ('purchaseLists.importOrder' | translate)
+      }}
+      <input
+        type="file"
+        accept=".html,.htm,text/html"
+        hidden
+        [disabled]="reading()"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+  </div>
 </div>
 <p class="page-hint">{{ 'purchaseLists.hint' | translate }}</p>
+
+@if (createForm(); as form) {
+  <app-modal [title]="'purchaseLists.newTitle' | translate" (closed)="closeCreate()">
+    <div class="import-form">
+      <label>
+        {{ 'purchaseLists.name' | translate }}
+        <input
+          type="text"
+          class="input"
+          [ngModel]="form.name"
+          (ngModelChange)="updateCreateForm({ name: $event })"
+        />
+      </label>
+      <div class="form-row">
+        <label>
+          {{ 'purchaseLists.date' | translate }}
+          <input
+            type="date"
+            class="input"
+            [ngModel]="form.purchased_at"
+            (ngModelChange)="updateCreateForm({ purchased_at: $event })"
+          />
+        </label>
+        <label>
+          {{ 'purchaseLists.totalOptional' | translate }}
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="input"
+            [ngModel]="form.price"
+            (ngModelChange)="updateCreateForm({ price: $event })"
+          />
+        </label>
+      </div>
+      <p class="field-hint">{{ 'purchaseLists.totalOptionalHint' | translate }}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeCreate()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="creating()"
+          (click)="submitCreate()"
+        >
+          {{
+            creating()
+              ? ('purchaseLists.creating' | translate)
+              : ('purchaseLists.create' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
 
 @if (preview(); as order) {
   <app-modal [title]="'purchaseLists.importTitle' | translate" (closed)="closeImport()">

@@ -740,67 +740,6 @@ class PurchaseWipeResult(BaseModel):
     deleted_purchases: int
 
 
-# ── shopping lists ───────────────────────────────────────────────────────────
-
-
-class ShoppingListCreate(BaseModel):
-    name: Name
-    # TCGplayer/PTCGL or Cardmarket; matched lines only.
-    decklist_text: str | None = None
-
-
-class ShoppingListRename(BaseModel):
-    name: Name
-
-
-class ShoppingListCardUpdate(BaseModel):
-    quantity_owned: int = Field(ge=0)
-
-
-class ShoppingListCardOut(BaseModel):
-    """`name`, `set_name` and `image_path` in the viewer's language, plus
-    both names for the page's own EN/FR toggle."""
-
-    id: int
-    catalog_id: int
-    name: str
-    name_en: str
-    name_fr: str
-    set_name: str
-    set_code: str
-    card_number: str
-    image_path: str
-    supertype: str | None
-    quantity_needed: int
-    quantity_owned: int
-
-
-class ShoppingListOut(BaseModel):
-    """`total_cards`: distinct cards; `fully_got_cards`: those whose tally
-    reached what's needed."""
-
-    id: int
-    name: str
-    created_at: datetime
-    updated_at: datetime
-    total_cards: int
-    total_quantity_needed: int
-    fully_got_cards: int
-
-
-class ShoppingListDetailOut(ShoppingListOut):
-    cards: list[ShoppingListCardOut]
-
-
-class ShoppingListPasteResult(BaseModel):
-    """`lines_added`: distinct matched cards; `lines_skipped`: parsed lines
-    that matched no catalog card (dropped)."""
-
-    shopping_list: ShoppingListDetailOut
-    lines_added: int
-    lines_skipped: int
-
-
 # ── purchase lists ───────────────────────────────────────────────────────────
 
 
@@ -838,6 +777,15 @@ class CardmarketPreview(BaseModel):
     total_price: Decimal
     set_codes: list[str]
     lines: list[CardmarketLineOut]
+
+
+class PurchaseListCreate(BaseModel):
+    """An empty list; with a `price`, also its What I Paid entry."""
+
+    name: Name
+    price: Decimal | None = Field(None, ge=0, max_digits=10, decimal_places=2)
+    # Today when left out.
+    purchased_at: Day | None = None
 
 
 class PurchaseListRename(BaseModel):

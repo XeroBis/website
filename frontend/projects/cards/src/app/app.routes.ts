@@ -97,22 +97,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'shopping-lists',
-        title: 'nav.shoppingLists',
-        loadComponent: () =>
-          import('./components/shopping-lists/shopping-list-list/shopping-list-list.component').then(
-            (m) => m.ShoppingListListComponent,
-          ),
-      },
-      {
-        path: 'shopping-lists/:id',
-        title: 'nav.shoppingLists',
-        loadComponent: () =>
-          import('./components/shopping-lists/shopping-list-detail/shopping-list-detail.component').then(
-            (m) => m.ShoppingListDetailComponent,
-          ),
-      },
-      {
         path: 'convert',
         title: 'nav.convert',
         loadComponent: () =>

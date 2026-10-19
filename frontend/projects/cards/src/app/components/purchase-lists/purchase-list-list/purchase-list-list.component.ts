@@ -17,6 +17,13 @@ interface ImportForm {
   price: number;
 }
 
+interface CreateForm {
+  name: string;
+  purchased_at: string;
+  /** Blank: no What I Paid entry. */
+  price: number | null;
+}
+
 @Component({
   selector: 'app-purchase-list-list',
   imports: [Icon, CommonModule, FormsModule, ModalComponent, TranslatePipe],
@@ -36,6 +43,8 @@ export class PurchaseListListComponent implements OnInit {
   matchedLineCount = computed(
     () => this.preview()?.lines.filter((line) => line.matched).length ?? 0,
   );
+  createForm = signal<CreateForm | null>(null);
+  creating = signal(false);
   renameTarget = signal<PurchaseList | null>(null);
   renameValue = signal('');
   renaming = signal(false);
@@ -66,6 +75,52 @@ export class PurchaseListListComponent implements OnInit {
         this.toastService.show(this.translate.instant('purchaseLists.loadFailed'), 'error');
       },
     });
+  }
+
+  openCreate(): void {
+    this.createForm.set({ name: '', purchased_at: toDateInputValue(new Date()), price: null });
+  }
+
+  closeCreate(): void {
+    if (!this.creating()) {
+      this.createForm.set(null);
+    }
+  }
+
+  updateCreateForm(patch: Partial<CreateForm>): void {
+    this.createForm.update((form) => (form ? { ...form, ...patch } : form));
+  }
+
+  submitCreate(): void {
+    const form = this.createForm();
+    if (!form) {
+      return;
+    }
+    if (!form.name.trim()) {
+      this.toastService.show(this.translate.instant('purchaseLists.missingName'), 'error');
+      return;
+    }
+    // A cleared number input gives null or ''.
+    const price =
+      form.price === null || String(form.price) === '' ? null : Number(form.price).toFixed(2);
+    this.creating.set(true);
+    this.purchaseListsService
+      .create({ name: form.name.trim(), purchased_at: form.purchased_at, price })
+      .subscribe({
+        next: (created) => {
+          this.creating.set(false);
+          this.createForm.set(null);
+          this.toastService.show(this.translate.instant('purchaseLists.created'));
+          this.router.navigate(['/purchase-lists', created.id]);
+        },
+        error: (err) => {
+          this.creating.set(false);
+          this.toastService.show(
+            err?.error?.detail ?? this.translate.instant('purchaseLists.createFailed'),
+            'error',
+          );
+        },
+      });
   }
 
   /** Reads the picked file and asks the backend what it would import. */

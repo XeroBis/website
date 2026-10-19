@@ -16,6 +16,7 @@ import { CardSet, VARIANT_LABELS, VariantType } from '../../../models/card.model
 import { supertypeKey as supertypeKeyFor } from '../../../util/card-type-translate.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { SORT_OPTIONS, SortOption } from '../../../util/sort.util';
+import { isMainVariant } from '../../../util/variant-display.util';
 import { variantIconUrl } from '../../../util/variant-icons.util';
 
 const MOBILE_BREAKPOINT_PX = 900;
@@ -23,12 +24,6 @@ const MOBILE_BREAKPOINT_PX = 900;
 /** Fixed, always-shown card-type toggle buttons -- a closed set in
  * card_catalog.supertype. */
 const CARD_TYPES = ['Pokémon', 'Trainer', 'Energy'];
-
-/** Reverse and the ball reverses (Poké, Friend, Love, Dusk, Quick, Rocket,
- * Master Ball): the prints a collapsed variant filter keeps in view. */
-function isMainVariant(value: VariantType): boolean {
-  return value === 'reverse' || /^reverse_\w+ball$/.test(value);
-}
 
 @Component({
   selector: 'app-filters-panel',

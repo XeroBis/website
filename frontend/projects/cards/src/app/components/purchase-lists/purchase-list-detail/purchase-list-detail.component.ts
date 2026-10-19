@@ -4,11 +4,12 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime, switchMap } from 'rxjs/operators';
+import { Subject, Subscription, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Icon, IconName } from '@shared';
 import {
   CardCatalogEntry,
+  CardSet,
   VARIANT_BADGES,
   VARIANT_LABELS,
   VariantType,
@@ -17,11 +18,20 @@ import { PurchaseListCard, PurchaseListDetail } from '../../../models/purchase-l
 import { CatalogService } from '../../../services/catalog.service';
 import { PurchaseListsService } from '../../../services/purchase-lists.service';
 import { ToastService } from '../../../services/toast.service';
-import { rarityCategory, sortRarityCategories } from '../../../util/rarity-category.util';
+import {
+  rarityCategories,
+  rarityCategory,
+  rawRaritiesForCategory,
+  sortRarityCategories,
+} from '../../../util/rarity-category.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
-import { togglePrintSelection } from '../../../util/variant-display.util';
+import { isMainVariant, togglePrintSelection } from '../../../util/variant-display.util';
 import { variantIconUrl } from '../../../util/variant-icons.util';
 import { ModalComponent } from '../../shared/modal/modal.component';
+import {
+  SearchableSelectComponent,
+  SearchableSelectItem,
+} from '../../shared/searchable-select/searchable-select.component';
 
 type ListView = 'grid' | 'list' | 'sets';
 const VIEW_STORAGE_KEY = 'purchaseListView';
@@ -46,9 +56,25 @@ interface PurchaseTile {
   prints: { variant_type: VariantType; quantity: number }[];
 }
 
+interface AddQuery {
+  active: boolean;
+  term: string;
+  setCode: string;
+  rarities: string[];
+  prints: VariantType[];
+}
+
 @Component({
   selector: 'app-purchase-list-detail',
-  imports: [Icon, CommonModule, FormsModule, RouterModule, ModalComponent, TranslatePipe],
+  imports: [
+    Icon,
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    ModalComponent,
+    SearchableSelectComponent,
+    TranslatePipe,
+  ],
   templateUrl: './purchase-list-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './purchase-list-detail.component.scss',
@@ -169,7 +195,40 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
   addVariant = signal<VariantType>('standard');
   addQuantity = signal(1);
   adding = signal(false);
-  private readonly addSearch$ = new Subject<string>();
+  /** The add modal's catalog filters; any of them (or a 2+ letter name)
+   * starts a search. */
+  addSetCode = signal('');
+  addRarities = signal<string[]>([]);
+  addPrints = signal<VariantType[]>([]);
+  addRarityOptions = signal<string[]>([]);
+  addPrintOptions = signal<VariantType[]>([]);
+  /** The other prints (stamps, holos, staff…) stay behind a "+N" button. */
+  addShowAllPrints = signal(false);
+  addShownPrints = computed(() =>
+    this.addShowAllPrints()
+      ? this.addPrintOptions()
+      : this.addPrintOptions().filter((v) => isMainVariant(v) || this.addPrints().includes(v)),
+  );
+  addHiddenPrintCount = computed(
+    () => this.addPrintOptions().length - this.addShownPrints().length,
+  );
+  catalogSets = signal<CardSet[]>([]);
+  addSetItems = computed<SearchableSelectItem[]>(() =>
+    this.catalogSets().map((set, index) => ({
+      id: index,
+      label: `${set.set_name} (${set.set_code})`,
+    })),
+  );
+  addSetIndex = computed(() => {
+    const index = this.catalogSets().findIndex((set) => set.set_code === this.addSetCode());
+    return index < 0 ? null : index;
+  });
+  addHasFilters = computed(
+    () => !!this.addSetCode() || this.addRarities().length > 0 || this.addPrints().length > 0,
+  );
+  addActive = computed(() => this.addSearch().trim().length >= 2 || this.addHasFilters());
+  private addOptionsLoaded = false;
+  private readonly addSearch$ = new Subject<AddQuery>();
   private addSearchSubscription?: Subscription;
   private listId!: number;
 
@@ -186,6 +245,7 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     this.listId = Number(this.route.snapshot.paramMap.get('id'));
     this.load();
     this.catalogService.listSets().subscribe((sets) => {
+      this.catalogSets.set(sets);
       this.setSymbols.set(
         new Map(
           sets.flatMap((set) =>
@@ -199,17 +259,29 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     this.addSearchSubscription = this.addSearch$
       .pipe(
         debounceTime(250),
-        switchMap((term) => {
-          this.addSearching.set(true);
-          return this.catalogService.browse({ search: term, pageSize: 20 });
-        }),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        // An inactive query cancels the request in flight; a failed one keeps
+        // the stream alive for the next change.
+        switchMap((query) =>
+          !query.active
+            ? of(null)
+            : this.catalogService
+                .browse({
+                  search: query.term || undefined,
+                  setCode: query.setCode || undefined,
+                  rarity: query.rarities.length
+                    ? query.rarities.flatMap(rawRaritiesForCategory)
+                    : undefined,
+                  variantType: query.prints.length ? query.prints : undefined,
+                  sort: query.setCode ? 'card_number_asc' : 'name_asc',
+                  pageSize: 60,
+                })
+                .pipe(catchError(() => of(null))),
+        ),
       )
-      .subscribe({
-        next: (page) => {
-          this.addSearching.set(false);
-          this.addResults.set(page.items);
-        },
-        error: () => this.addSearching.set(false),
+      .subscribe((page) => {
+        this.addSearching.set(false);
+        this.addResults.set(page?.items ?? []);
       });
   }
 
@@ -377,7 +449,22 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     this.addResults.set([]);
     this.addPicked.set(null);
     this.addQuantity.set(1);
+    this.addSetCode.set('');
+    this.addRarities.set([]);
+    this.addPrints.set([]);
+    this.addShowAllPrints.set(false);
+    this.addSearching.set(false);
+    this.addSearch$.next(this.addQuery());
     this.addOpen.set(true);
+    if (!this.addOptionsLoaded) {
+      this.addOptionsLoaded = true;
+      this.catalogService
+        .listRarities()
+        .subscribe((rarities) => this.addRarityOptions.set(rarityCategories(rarities)));
+      this.catalogService
+        .listVariantTypes()
+        .subscribe((types) => this.addPrintOptions.set(['standard', ...types]));
+    }
   }
 
   closeAdd(): void {
@@ -388,16 +475,63 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
 
   onAddSearchChange(term: string): void {
     this.addSearch.set(term);
-    if (term.trim().length >= 2) {
-      this.addSearch$.next(term.trim());
-    } else {
-      this.addResults.set([]);
-    }
+    this.runAddSearch();
+  }
+
+  setAddSet(index: number | null): void {
+    this.addSetCode.set(index === null ? '' : (this.catalogSets()[index]?.set_code ?? ''));
+    this.runAddSearch();
+  }
+
+  toggleAddRarity(category: string): void {
+    this.addRarities.update((selected) =>
+      selected.includes(category)
+        ? selected.filter((value) => value !== category)
+        : [...selected, category],
+    );
+    this.runAddSearch();
+  }
+
+  toggleAddPrint(variant: VariantType): void {
+    this.addPrints.update((selected) =>
+      selected.includes(variant)
+        ? selected.filter((value) => value !== variant)
+        : [...selected, variant],
+    );
+    this.runAddSearch();
+  }
+
+  clearAddFilters(): void {
+    this.addSetCode.set('');
+    this.addRarities.set([]);
+    this.addPrints.set([]);
+    this.runAddSearch();
+  }
+
+  private addQuery(): AddQuery {
+    return {
+      active: this.addActive(),
+      term: this.addSearch().trim(),
+      setCode: this.addSetCode(),
+      rarities: this.addRarities(),
+      prints: this.addPrints(),
+    };
+  }
+
+  private runAddSearch(): void {
+    // The previous results stay (dimmed) until the new ones arrive, so the
+    // list doesn't empty and refill on every change.
+    this.addSearching.set(this.addActive());
+    this.addSearch$.next(this.addQuery());
   }
 
   pickCard(card: CardCatalogEntry): void {
     this.addPicked.set(card);
-    this.addVariant.set('standard');
+    // The one print filtered on, when the card comes in it.
+    const [print] = this.addPrints();
+    const preselect =
+      this.addPrints().length === 1 && card.variants?.some((v) => v.variant_type === print);
+    this.addVariant.set(preselect ? print : 'standard');
   }
 
   submitAdd(): void {

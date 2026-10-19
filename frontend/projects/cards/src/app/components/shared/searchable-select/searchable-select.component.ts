@@ -65,8 +65,10 @@ export class SearchableSelectComponent implements OnChanges {
       this.valueChange.emit(item.id);
     }
   }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
+  // pointerdown, not click: a modal panel stops its clicks from reaching the
+  // document, which would keep the list open on a click elsewhere in it.
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: PointerEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target as Node)) {
       this.open.set(false);
       this.query.set(this.selectedLabel);

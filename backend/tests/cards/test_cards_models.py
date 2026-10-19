@@ -93,20 +93,6 @@ def test_combat_score_and_winner_checked(owner):
             _commit(combat(**bad))
 
 
-def test_shopping_owned_tally_stays_within_needed(owner):
-    catalog_id = add_catalog_card()
-    (list_id,) = _commit(m.ShoppingList(user_id=owner.id, name="Round 1"))
-    with pytest.raises(IntegrityError):
-        _commit(
-            m.ShoppingListCard(
-                shopping_list_id=list_id,
-                catalog_id=catalog_id,
-                quantity_needed=2,
-                quantity_owned=3,
-            )
-        )
-
-
 def test_deleting_a_user_removes_their_cards_data(owner):
     catalog_id = add_catalog_card()
     card_id, deck_id = _commit(

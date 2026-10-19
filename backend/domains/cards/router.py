@@ -15,7 +15,6 @@ from domains.cards.routers import (
     purchase_lists,
     purchases,
     shares,
-    shopping_lists,
     users,
 )
 
@@ -34,7 +33,6 @@ for module in (
     combats,
     purchases,
     purchase_lists,
-    shopping_lists,
     shares,
     users,
 ):

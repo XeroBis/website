@@ -175,7 +175,7 @@ Same shape as workouts, per user:
 
 ## `cards`
 
-Pokémon cards (ported from `pokemon_cards`). One shared catalog of every card and the print variants it comes in, imported from saved pokecardex HTML. Everything else belongs to a user: the collection (a quantity per owned print), decks and upgrade drafts, purchases, purchase lists (incoming orders), share links and shopping lists. Combats are the one log shared between cards users. Models in `backend/domains/cards/models.py`, migrations `0007` (it also enables the `pg_trgm` extension) and `0009` (purchase lists). Image paths are relative to `CARDS_DATA_DIR` (architecture.md).
+Pokémon cards (ported from `pokemon_cards`). One shared catalog of every card and the print variants it comes in, imported from saved pokecardex HTML. Everything else belongs to a user: the collection (a quantity per owned print), decks and upgrade drafts, purchases, purchase lists (incoming orders) and share links. Combats are the one log shared between cards users. Models in `backend/domains/cards/models.py`, migrations `0007` (it also enables the `pg_trgm` extension) `0009` (purchase lists) and `0010` (drops the old shopping lists). Image paths are relative to `CARDS_DATA_DIR` (architecture.md).
 
 ### `cards.card_catalog`
 
@@ -285,20 +285,16 @@ A named "what if" diff against a normal deck (unique name per deck, `ON DELETE C
 
 A public read-only link to one set of a user's collection: `user_id` (`ON DELETE CASCADE`, indexed), `set_code`, `token` (unique, `secrets.token_urlsafe(24)`), `expires_at`, `revoked_at` (null until revoked), `created_at`. Active = not revoked and not expired. Ownership is recomputed on each read.
 
-### `cards.shopping_lists`, `cards.shopping_list_cards`
-
-A shopping-round checklist (name unique per owner, `updated_at` moves on every change) and its cards: unique `(shopping_list_id, catalog_id)`, `quantity_needed` (from the pasted decklist), `quantity_owned` (a manual tally, 0…`quantity_needed`, default 0). Not linked to the collection.
-
 ### `cards.purchase_lists`, `cards.purchase_list_cards`
 
-A bought order not yet arrived ("Liste d'achat"), one list per imported Cardmarket order, and its cards.
+A bought order not yet arrived ("Liste d'achat"), created empty or one per imported Cardmarket order, and its cards.
 
 | Column | Type | Notes |
 |---|---|---|
 | `purchase_lists.id` | integer, PK | |
 | `purchase_lists.user_id` | integer, FK → `core.users.id` `ON DELETE CASCADE`, indexed | |
 | `purchase_lists.name` | text, not null | Unique per owner. |
-| `purchase_lists.purchase_id` | integer, null, FK → `purchases.id` `ON DELETE SET NULL` | The What I Paid entry created by the import. |
+| `purchase_lists.purchase_id` | integer, null, FK → `purchases.id` `ON DELETE SET NULL` | The What I Paid entry created with the list (always by an import, with a price by a manual create). |
 | `purchase_lists.received_at` | timestamptz, null | Null while incoming; set by Mark received, after which the list is read-only. |
 | `purchase_lists.created_at` / `updated_at` | timestamptz, default `now()` | `updated_at` moves on every change, also of its cards. |
 | `purchase_list_cards.id` | integer, PK | |
@@ -310,15 +306,15 @@ A bought order not yet arrived ("Liste d'achat"), one list per imported Cardmark
 
 ### Rules
 
-- **Scoping**: every route needs the `cards` app (grant or admin), except the public share routes. Collection, decks, drafts, purchases, purchase lists, shares and shopping lists only see the current user's rows (anyone else's is a 404). The catalog is shared. Combats are shared between cards users, and their deck pickers list every cards user's normal decks. Catalog administration (import, refresh, name fix) needs `core.users.is_admin`.
+- **Scoping**: every route needs the `cards` app (grant or admin), except the public share routes. Collection, decks, drafts, purchases, purchase lists and shares only see the current user's rows (anyone else's is a 404). The catalog is shared. Combats are shared between cards users, and their deck pickers list every cards user's normal decks. Catalog administration (import, refresh, name fix) needs `core.users.is_admin`.
 - **Totals**: owned = Σ the card's variant quantities; allocated = Σ `quantity_in_deck` over normal decks; available = owned − allocated (also per print). Phantom rows never count as allocated. Computed in grouped queries over a whole page of cards (no per-card query).
 - **Deck building** (normal decks): ≤ 60 cards, ≤ 4 copies per card over its prints except Basic Energy (recognised by name), allocated ≤ owned per print. The first two are checked when a change raises them. A card in a deck can't be deleted, and its quantity can't go below what decks use. Phantom decks skip all three limits; their owned/available counts are computed live per print. Deck names are unique per owner and the type is fixed at creation (a copy keeps it).
 - **Drafts**: normal decks only. A line is a nonzero signed change to one (catalog card, print); its result (deck quantity of that print + delta) stays within 0–4 (Basic Energy unlimited). A pasted decklist diffs against the deck's standard prints. Every proposed addition keeps one owned copy back for the binder (shown `available`, `can_apply`, apply, the `reserve_singles` export). Applying re-checks every rule against the deck as it is, all or nothing, logs each change and deletes the draft. The combined export pools demand per print over the drafts before comparing with owned copies.
 - **Deleting decks**: a deck's cards, history and drafts go with it; combats keep their snapshots (`deck_*_id` set to null). Only the collection's delete-all also deletes the combats.
 - **Combats**: decks are any cards user's normal decks (the same one twice is fine), players any cards users (not necessarily the owners). A side's snapshot and deck name are taken when its deck is set, at creation or when an edit changes that side's deck; an edit leaving it unchanged keeps the snapshot. A side whose deck was deleted can stay without one. Any cards user may edit or delete any combat. Delete-all removes the combats the user played (either side); for an admin, every combat. Import matches players by email and decks by name + owner email among cards users (the oldest deck of that name when the file has no email); a side whose deck isn't found keeps its snapshot with no deck. Snapshot cards with an `image_path` missing from the catalog are relinked to a current catalog card on import (features.md). `played_at` / `purchased_at` are stored at midnight UTC of the given day (a datetime keeps its UTC date).
 - **Shares**: active = not revoked and not expired; the public routes answer an unknown, expired or revoked token with the same 404. They only expose the shared set (English values, ownership recomputed per read, nothing about the owner), and their image route only serves scans and thumbnails of that set's cards and prints, plus its logo and symbol, inside `CARDS_DATA_DIR`, uncached. Revoking keeps the row.
-- **Shopping lists**: filled from pasted decklists matched like the converter (unmatched lines dropped; a paste matching nothing is refused). A paste adds onto `quantity_needed` of a card already listed (its tally untouched) or adds it at 0 owned, so nothing is ever lowered. The tally is set by hand within 0…`quantity_needed`; removing a card or deleting the list is the only way down.
 - **Purchase lists**:
+  - *Create*: an empty list (name unique per owner), its cards added by hand. With a price it also creates a `purchases` row in the same transaction: `product_name` = the list name, `price`, `quantity` 1, `purchased_at` = the date entered (today if none), no source or sets. Without one, no purchase.
   - *Import*: a Cardmarket order's article table, saved as HTML (the `<tr data-article-id>` rows). Each row gives a quantity, a card matched by the set code and number in its name (`Gyarados ex (SVI 045)` → `SVI` / `45`, padding and case ignored), a print (the reverse extra, `Reverse Holo` on the English site and `Reverse` on the French one → `reverse`, else `standard`) and a unit price. Repeated lines add up. A row with no catalog match, or a print the card doesn't come in, is left out and reported once in the import result. An import matching nothing is refused. In the same transaction it creates a `purchases` row: `product_name` = the list name, `price` = the total entered (pre-filled with Σ quantity × unit price; shipping isn't in the table), `quantity` = cards on the list, `purchased_at` = the date entered, `source` `Cardmarket`, `sets` = the matched set codes.
   - *Incoming* copies of a (catalog card, print) = Σ `quantity` over the user's lists not received. The missing views (set page missing filter, missing text exports, `/missing` intervals) count them as owned unless told not to (`include_incoming=false`). Completion percentages, the collection and decks never count them.
   - *Editing* (incoming lists only): a line's quantity (≥ 1) or print (one the card comes in; merged into an existing line of that print), removing a line, adding a card by hand (onto an existing line of that print). The linked purchase is never changed by these edits.

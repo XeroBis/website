@@ -25,6 +25,15 @@ export class PurchaseListsService {
     return this.http.get<PurchaseListDetail>(`${this.baseUrl}/${id}`);
   }
 
+  /** An empty list; with a price, also its What I Paid entry. */
+  create(body: {
+    name: string;
+    purchased_at: string;
+    price: string | null;
+  }): Observable<PurchaseListDetail> {
+    return this.http.post<PurchaseListDetail>(this.baseUrl, body);
+  }
+
   /** Copies per print on incoming lists, for one set or all. */
   incoming(setCode?: string): Observable<IncomingPrint[]> {
     const params = setCode ? new HttpParams().set('set_code', setCode) : undefined;

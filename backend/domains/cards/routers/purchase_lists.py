@@ -1,7 +1,9 @@
 """`/api/cards/purchase-lists`: bought orders not yet arrived ("Liste
-d'achat"), imported from saved Cardmarket order pages. Their cards count as
+d'achat"), created empty or imported from saved Cardmarket order pages. Their cards count as
 owned in the missing views until the list is received, which adds them to
 the collection (see data-model.md `cards` "Rules")."""
+
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import exists, func, select
@@ -203,6 +205,31 @@ def list_purchase_lists(
         )
     ).all()
     return [s.PurchaseListOut(**_summary(purchase_list)) for purchase_list in lists]
+
+
+@router.post(
+    "", response_model=s.PurchaseListDetailOut, status_code=status.HTTP_201_CREATED
+)
+def create_purchase_list(
+    body: s.PurchaseListCreate,
+    user: User = Depends(cards_user),
+    db: Session = Depends(get_db),
+):
+    """An empty list, its cards added by hand; with a price, its What I Paid
+    entry in the same transaction."""
+    _check_name(db, user.id, body.name)
+    purchase = None
+    if body.price is not None:
+        purchase = m.Purchase(
+            user_id=user.id,
+            product_name=body.name,
+            price=body.price,
+            purchased_at=body.purchased_at or s.midnight_utc(datetime.now(UTC)),
+        )
+    purchase_list = m.PurchaseList(user_id=user.id, name=body.name, purchase=purchase)
+    db.add(purchase_list)
+    db.commit()
+    return detail_out(db, purchase_list.id, user)
 
 
 @router.get("/incoming", response_model=list[s.IncomingPrint])

@@ -204,3 +204,10 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **The What I Paid total is entered at import**, pre-filled with Σ article prices: the table has neither shipping nor the order total.
 - **Incoming counts as owned only where something is missing** (set page filter, missing exports, `/missing`), with a toggle; completion, the collection and decks stay on real ownership, so nothing claims cards that haven't arrived.
 - **Received lists are kept** (read-only) as a record of what came in, over deleting them on receipt.
+
+## Cards: shopping lists folded into purchase lists (2026-10-19)
+
+- **What**: the Shopping Lists pages, routes and tables (`cards.shopping_lists`, `shopping_list_cards`, dropped with their rows by migration `0010`) are removed. A purchase list can now also be created empty ("New list"), its cards added by hand, instead of only from a saved Cardmarket order page.
+- **Over keeping both**: a manual checklist with its own "secured" tally, unlinked to the collection, overlapped with a purchase list whose cards already count in the missing views and land in the collection on receipt.
+- **Empty, over a pasted decklist**: cards are added one by one with the list's catalog search; the paste matching stayed with the converter and drafts.
+- **The What I Paid entry is optional** on a manual list (created only when a total is entered, quantity 1, no source): a list made ahead of buying, or for cards already logged, shouldn't add a spend.

@@ -171,6 +171,48 @@ def test_import_refusals(client, imported):
     assert len(client.get(f"{URL}/purchases").json()) == 1
 
 
+def test_create_an_empty_list(client, pika):
+    response = client.post(LISTS, json={"name": " Shop "})
+    assert response.status_code == 201, response.text
+    detail = response.json()
+    assert (detail["name"], detail["cards"], detail["purchase_id"]) == (
+        "Shop",
+        [],
+        None,
+    )
+    assert client.get(f"{URL}/purchases").json() == []
+    # Filled by hand.
+    added = client.post(
+        f"{LISTS}/{detail['id']}/cards", json={"catalog_id": pika, "quantity": 2}
+    )
+    assert added.status_code == 201, added.text
+    assert lines(added.json()) == {(pika, "standard"): 2}
+
+
+def test_create_with_its_purchase(client):
+    response = client.post(
+        LISTS, json={"name": "Store", "price": "12.50", "purchased_at": "2026-10-11"}
+    )
+    assert response.status_code == 201, response.text
+    detail = response.json()
+    assert detail["purchase_price"] == "12.50"
+    [purchase] = client.get(f"{URL}/purchases").json()
+    assert purchase["id"] == detail["purchase_id"]
+    assert (purchase["product_name"], purchase["quantity"], purchase["source"]) == (
+        "Store",
+        1,
+        None,
+    )
+    assert purchase["purchased_at"].startswith("2026-10-11")
+
+
+def test_create_refusals(client, imported):
+    assert client.post(LISTS, json={"name": "Order 1"}).status_code == 409
+    assert client.post(LISTS, json={"name": " "}).status_code == 422
+    assert client.post(LISTS, json={"name": "X", "price": "-1"}).status_code == 422
+    assert len(client.get(LISTS).json()) == 1
+
+
 def test_lists_are_private(client, other_client, imported):
     list_id = imported["purchase_list"]["id"]
     assert other_client.get(LISTS).json() == []

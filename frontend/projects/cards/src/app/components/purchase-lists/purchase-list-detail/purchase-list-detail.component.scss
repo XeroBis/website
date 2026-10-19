@@ -138,7 +138,9 @@
 
 .card-thumb {
   width: 40px;
-  height: auto;
+  // Reserves the scan's height before it loads, so rows don't jump.
+  aspect-ratio: 245 / 342;
+  object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
 }
@@ -205,6 +207,37 @@
   }
 }
 
+// One fixed height for searching and for the picked card, so the modal
+// never resizes while typing or picking.
+.add-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: min(40rem, 70vh);
+}
+
+.add-search-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(12rem, 18rem) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+// Full height, never scrolled: the results list takes what's left.
+.add-filters {
+  flex-shrink: 0;
+
+  .filter-chip {
+    min-height: 34px;
+    min-width: 34px;
+  }
+}
+
+.search-status {
+  min-height: 1.5em;
+  font-size: 0.9rem;
+}
+
 .picked {
   display: flex;
   align-items: center;
@@ -223,10 +256,18 @@
 }
 
 .search-results {
-  display: flex;
-  flex-direction: column;
-  max-height: 20rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  align-content: start;
+  gap: var(--space-1);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  transition: opacity 0.15s ease;
+
+  &.stale {
+    opacity: 0.5;
+  }
 }
 
 .search-result {
@@ -268,7 +309,8 @@
     max-width: none;
   }
 
-  .form-row {
+  .form-row,
+  .add-search-row {
     grid-template-columns: 1fr;
   }
 }
