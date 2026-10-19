@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Icon } from '@shared';
 import { TranslatePipe } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import {
@@ -10,6 +11,7 @@ import {
   VARIANT_LABELS,
 } from '../../models/card.model';
 import { CatalogService } from '../../services/catalog.service';
+import { CountIncomingService } from '../../services/count-incoming.service';
 import { rarityCategories, rawRaritiesForCategory } from '../../util/rarity-category.util';
 import { rarityIconUrl } from '../../util/rarity-icons.util';
 import { variantIconUrl } from '../../util/variant-icons.util';
@@ -20,7 +22,7 @@ interface MissingSetGroup {
 }
 @Component({
   selector: 'app-missing-intervals',
-  imports: [TranslatePipe],
+  imports: [Icon, TranslatePipe],
   templateUrl: './missing-intervals.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './missing-intervals.component.scss',
@@ -60,7 +62,10 @@ export class MissingIntervalsComponent implements OnInit {
    * owns only its compact ID data, not a second asset-path convention. */
   private readonly setsByCode = new Map<string, CardSet>();
   private catalogSetOrder: CardSet[] = [];
-  constructor(private readonly catalogService: CatalogService) {}
+  constructor(
+    private readonly catalogService: CatalogService,
+    readonly countIncoming: CountIncomingService,
+  ) {}
   ngOnInit(): void {
     forkJoin({
       rarities: this.catalogService.listRarities(),
@@ -86,13 +91,15 @@ export class MissingIntervalsComponent implements OnInit {
     this.loading.set(true);
     const requestId = ++this.requestId;
     const rarities = [...this.selectedRarityCategories()].flatMap(rawRaritiesForCategory);
-    this.catalogService.listMissingIntervals(rarities, this.selectedVariant()).subscribe((sets) => {
-      if (requestId !== this.requestId) {
-        return;
-      }
-      this.sets.set(sets);
-      this.loading.set(false);
-    });
+    this.catalogService
+      .listMissingIntervals(rarities, this.selectedVariant(), this.countIncoming.enabled())
+      .subscribe((sets) => {
+        if (requestId !== this.requestId) {
+          return;
+        }
+        this.sets.set(sets);
+        this.loading.set(false);
+      });
   }
   toggleRarity(category: string): void {
     if (this.selectedRarityCategories().has(category)) {
@@ -115,6 +122,10 @@ export class MissingIntervalsComponent implements OnInit {
       return;
     }
     this.selectedRarityCategories.set(new Set());
+    this.reload();
+  }
+  toggleCountIncoming(): void {
+    this.countIncoming.toggle();
     this.reload();
   }
   toggleVariant(variant: VariantType): void {

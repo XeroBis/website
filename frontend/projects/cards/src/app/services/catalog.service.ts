@@ -137,12 +137,14 @@ export class CatalogService {
     return this.http.get<CardSet[]>(`${this.baseUrl}/sets`, { params });
   }
 
-  /** Missing numeric IDs for any owned print, or one specific reverse type. */
+  /** Missing numeric IDs for any owned print, or one specific reverse type.
+   * `includeIncoming`: cards on incoming purchase lists count as owned. */
   listMissingIntervals(
     rarities: string[] = [],
     variant: VariantType | null = null,
+    includeIncoming = true,
   ): Observable<MissingSetIntervals[]> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('include_incoming', String(includeIncoming));
     for (const rarity of rarities) {
       params = params.append('rarity', rarity);
     }
@@ -168,12 +170,14 @@ export class CatalogService {
     format: 'tcgplayer' | 'cardmarket',
     language: 'en' | 'fr',
     excludeDeckAllocated: boolean,
+    includeIncoming: boolean,
     variantType: VariantType | '' = '',
   ): Observable<string> {
     let params = new HttpParams()
       .set('format', format)
       .set('language', language)
-      .set('exclude_deck_allocated', String(excludeDeckAllocated));
+      .set('exclude_deck_allocated', String(excludeDeckAllocated))
+      .set('include_incoming', String(includeIncoming));
     if (variantType) params = params.set('variant_type', variantType);
     for (const rarity of rarities) {
       params = params.append('rarity', rarity);
@@ -196,11 +200,13 @@ export class CatalogService {
     format: 'tcgplayer' | 'cardmarket',
     language: 'en' | 'fr',
     excludeDeckAllocated: boolean,
+    includeIncoming: boolean,
   ): Observable<string> {
     let params = new HttpParams()
       .set('format', format)
       .set('language', language)
-      .set('exclude_deck_allocated', String(excludeDeckAllocated));
+      .set('exclude_deck_allocated', String(excludeDeckAllocated))
+      .set('include_incoming', String(includeIncoming));
     for (const rarity of rarities) {
       params = params.append('rarity', rarity);
     }

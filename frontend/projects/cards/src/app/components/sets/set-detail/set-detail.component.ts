@@ -19,6 +19,8 @@ import {
   VariantType,
 } from '../../../models/card.model';
 import { CardsService } from '../../../services/cards.service';
+import { CountIncomingService } from '../../../services/count-incoming.service';
+import { PurchaseListsService } from '../../../services/purchase-lists.service';
 import { CatalogService } from '../../../services/catalog.service';
 import { SharesService } from '../../../services/shares.service';
 import { ToastService } from '../../../services/toast.service';
@@ -74,6 +76,8 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   setName = signal('');
   cards = signal<CardCatalogEntry[]>([]);
   ownedCards = signal(new Map<number, Card>());
+  /** Copies on incoming purchase lists, by catalog id then print. */
+  incoming = signal(new Map<number, Map<VariantType, number>>());
   pendingIds = signal(new Set<number>());
   loading = signal(true);
   detailCard = signal<CardCatalogEntry | null>(null);
@@ -137,6 +141,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     quantity: (card, variant) =>
       variant ? this.variantTileOwnedQuantity(card, variant) : this.quantityOwned(card),
     reverse: (card) => this.reverseQuantity(card),
+    incoming: (card, variant) => this.incomingQuantity(card, variant?.variant_type ?? 'standard'),
     open: (card, variant) => this.openDetail(card, variant),
   };
   constructor(
@@ -144,6 +149,8 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     private readonly catalogService: CatalogService,
     private readonly cardsService: CardsService,
     private readonly sharesService: SharesService,
+    private readonly purchaseListsService: PurchaseListsService,
+    readonly countIncoming: CountIncomingService,
     private readonly toastService: ToastService,
     private readonly translate: TranslateService,
   ) {}
@@ -152,10 +159,18 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     forkJoin({
       cards: this.catalogService.getSetCards(this.setCode()),
       owned: this.cardsService.list(this.setCode()),
-    }).subscribe(({ cards, owned }) => {
+      incoming: this.purchaseListsService.incoming(this.setCode()),
+    }).subscribe(({ cards, owned, incoming }) => {
       this.cards.set(cards);
       this.setName.set(cards[0]?.set_name ?? this.setCode());
       this.ownedCards.set(new Map(owned.map((card) => [card.catalog_id, card])));
+      const byCard = new Map<number, Map<VariantType, number>>();
+      for (const line of incoming) {
+        const prints = byCard.get(line.catalog_id) ?? new Map<VariantType, number>();
+        prints.set(line.variant_type, line.quantity);
+        byCard.set(line.catalog_id, prints);
+      }
+      this.incoming.set(byCard);
       this.loading.set(false);
       this.recomputeFilteredCards();
     });
@@ -189,6 +204,14 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   }
   toggleDuplicatesOnly(): void {
     this.duplicatesOnly.set(!this.duplicatesOnly());
+    this.recomputeFilteredCards();
+  }
+  /** Copies of one print on incoming purchase lists. */
+  incomingQuantity(entry: CardCatalogEntry, variantType: VariantType): number {
+    return this.incoming().get(entry.id)?.get(variantType) ?? 0;
+  }
+  toggleCountIncoming(): void {
+    this.countIncoming.toggle();
     this.recomputeFilteredCards();
   }
   toggleMissingOnly(): void {
@@ -273,13 +296,17 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       this.selectedVariants(),
       this.duplicatesOnly(),
       (variant) => this.ownedVariantQuantity(entry, variant),
-    ).filter(
-      (variant) =>
-        !this.missingOnly() ||
-        (!this.countsVariants
-          ? this.quantityOwned(entry)
-          : this.variantTileOwnedQuantity(entry, variant)) <= 0,
-    );
+    ).filter((variant) => {
+      if (!this.missingOnly()) {
+        return true;
+      }
+      const shown = this.countsVariants ? variant.variant_type : 'standard';
+      const owned = this.countsVariants
+        ? this.variantTileOwnedQuantity(entry, variant)
+        : this.quantityOwned(entry);
+      const incoming = this.countIncoming.enabled() ? this.incomingQuantity(entry, shown) : 0;
+      return owned + incoming <= 0;
+    });
   }
   variantTileOwnedQuantity(entry: CardCatalogEntry, variant: CardCatalogVariant): number {
     const card = this.ownedCards().get(entry.id);
@@ -683,6 +710,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
         this.exportFormat(),
         this.exportLanguage(),
         this.exportExcludeInDeck(),
+        this.countIncoming.enabled(),
         this.exportVariantType(),
       )
       .subscribe({

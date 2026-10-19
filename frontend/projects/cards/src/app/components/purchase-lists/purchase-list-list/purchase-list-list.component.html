@@ -1,0 +1,186 @@
+<div class="top-bar">
+  <h1 class="page-title">{{ 'purchaseLists.title' | translate }}</h1>
+  <label class="btn btn-primary import-btn" [class.disabled]="reading()">
+    <ab-icon name="upload" />
+    {{
+      reading() ? ('purchaseLists.reading' | translate) : ('purchaseLists.importOrder' | translate)
+    }}
+    <input
+      type="file"
+      accept=".html,.htm,text/html"
+      hidden
+      [disabled]="reading()"
+      (change)="onFileSelected($event)"
+    />
+  </label>
+</div>
+<p class="page-hint">{{ 'purchaseLists.hint' | translate }}</p>
+
+@if (preview(); as order) {
+  <app-modal [title]="'purchaseLists.importTitle' | translate" (closed)="closeImport()">
+    <div class="import-form">
+      <p class="import-summary">
+        {{
+          'purchaseLists.importSummary'
+            | translate: { cards: order.total_quantity, lines: matchedLineCount() }
+        }}
+      </p>
+      @if (unmatchedLines().length > 0) {
+        <div class="unmatched">
+          <strong>{{
+            'purchaseLists.unmatchedTitle' | translate: { count: unmatchedLines().length }
+          }}</strong>
+          <ul>
+            @for (line of unmatchedLines(); track $index) {
+              <li>
+                {{ line.quantity }}× {{ line.label }} <span>({{ line.reason }})</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      <label>
+        {{ 'purchaseLists.name' | translate }}
+        <input
+          type="text"
+          class="input"
+          [ngModel]="importForm().name"
+          (ngModelChange)="updateImportForm({ name: $event })"
+        />
+      </label>
+      <div class="form-row">
+        <label>
+          {{ 'purchaseLists.date' | translate }}
+          <input
+            type="date"
+            class="input"
+            [ngModel]="importForm().purchased_at"
+            (ngModelChange)="updateImportForm({ purchased_at: $event })"
+          />
+        </label>
+        <label>
+          {{ 'purchaseLists.total' | translate }}
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="input"
+            [ngModel]="importForm().price"
+            (ngModelChange)="updateImportForm({ price: $event })"
+          />
+        </label>
+      </div>
+      <p class="field-hint">
+        {{
+          'purchaseLists.totalHint' | translate: { total: (order.total_price | number: '1.2-2') }
+        }}
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeImport()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="importing() || matchedLineCount() === 0"
+          (click)="submitImport()"
+        >
+          {{
+            importing()
+              ? ('purchaseLists.importing' | translate)
+              : ('purchaseLists.import' | translate)
+          }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (loading()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (purchaseLists().length === 0) {
+  <p>{{ 'purchaseLists.noneYet' | translate }}</p>
+} @else {
+  <div class="purchase-list-grid">
+    @for (list of purchaseLists(); track list.id) {
+      <div class="purchase-list-card" [class.received]="list.received_at" (click)="openList(list)">
+        <div class="purchase-list-card-head">
+          <span class="purchase-list-card-name">{{ list.name }}</span>
+          @if (list.received_at) {
+            <span class="status-badge received">{{
+              'purchaseLists.receivedOn'
+                | translate: { date: (list.received_at | date: 'dd/MM/yyyy') }
+            }}</span>
+          } @else {
+            <span class="status-badge incoming">{{ 'purchaseLists.incoming' | translate }}</span>
+          }
+        </div>
+        <div class="purchase-list-card-count">
+          {{
+            'decklistPreview.uniqueTotal'
+              | translate: { unique: list.total_cards, total: list.total_quantity }
+          }}
+        </div>
+        <div class="purchase-list-card-meta">
+          <span>{{ list.created_at | date: 'dd/MM/yyyy' }}</span>
+          @if (list.purchase_price !== null) {
+            <span>{{ list.purchase_price | number: '1.2-2' }} €</span>
+          }
+        </div>
+        <div class="row-actions">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="openRename(list, $event)">
+            {{ 'common.rename' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            (click)="openDeleteConfirm(list, $event)"
+          >
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (renameTarget(); as target) {
+  <app-modal [title]="'purchaseLists.renameTitle' | translate" (closed)="closeRename()">
+    <label class="rename-field">
+      {{ 'purchaseLists.name' | translate }}
+      <input type="text" class="input" [(ngModel)]="renameValue" />
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeRename()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="renaming()"
+        (click)="submitRename()"
+      >
+        {{ renaming() ? ('common.saving' | translate) : ('common.save' | translate) }}
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (deleteTarget(); as target) {
+  <app-modal [title]="'purchaseLists.deleteTitle' | translate" (closed)="closeDeleteConfirm()">
+    <p>{{ 'purchaseLists.deleteBody' | translate }}</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="deleting()"
+        (click)="confirmDelete()"
+      >
+        {{ deleting() ? ('common.deleting' | translate) : ('common.delete' | translate) }}
+      </button>
+    </div>
+  </app-modal>
+}

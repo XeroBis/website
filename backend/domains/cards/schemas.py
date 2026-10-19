@@ -801,6 +801,114 @@ class ShoppingListPasteResult(BaseModel):
     lines_skipped: int
 
 
+# ── purchase lists ───────────────────────────────────────────────────────────
+
+
+class CardmarketOrder(BaseModel):
+    # The saved order page (its article table), as text.
+    html: str
+
+
+class CardmarketImport(CardmarketOrder):
+    name: Name
+    purchased_at: Day
+    # The What I Paid total (shipping included if wanted).
+    price: Decimal = Field(ge=0, max_digits=10, decimal_places=2)
+
+
+class CardmarketLineOut(BaseModel):
+    """One article row; the catalog fields only when `matched`. `label` is
+    Cardmarket's name, `name` the catalog's in the viewer's language."""
+
+    quantity: int
+    unit_price: Decimal
+    label: str
+    matched: bool
+    reason: str | None = None
+    catalog_id: int | None = None
+    variant_type: str | None = None
+    name: str | None = None
+    set_code: str | None = None
+    card_number: str | None = None
+    image_path: str | None = None
+
+
+class CardmarketPreview(BaseModel):
+    total_quantity: int
+    total_price: Decimal
+    set_codes: list[str]
+    lines: list[CardmarketLineOut]
+
+
+class PurchaseListRename(BaseModel):
+    name: Name
+
+
+class PurchaseListCardAdd(BaseModel):
+    catalog_id: int
+    variant_type: str = "standard"
+    quantity: int = Field(1, ge=1)
+
+
+class PurchaseListCardUpdate(BaseModel):
+    variant_type: str
+    quantity: int = Field(ge=1)
+
+
+class PurchaseListCardOut(BaseModel):
+    """`name`, `set_name` and `image_path` in the viewer's language;
+    `variants`: the prints the card comes in."""
+
+    id: int
+    catalog_id: int
+    variant_type: str
+    quantity: int
+    name: str
+    set_name: str
+    set_code: str
+    card_number: str
+    image_path: str
+    supertype: str | None
+    rarity: str | None
+    variants: list[str]
+
+
+class PurchaseListOut(BaseModel):
+    """`total_cards`: lines; `purchase_price`: the linked What I Paid
+    entry's, null once it's deleted."""
+
+    id: int
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    received_at: datetime | None
+    purchase_id: int | None
+    purchase_price: Decimal | None
+    total_cards: int
+    total_quantity: int
+
+
+class PurchaseListDetailOut(PurchaseListOut):
+    cards: list[PurchaseListCardOut]
+
+
+class UnmatchedArticle(BaseModel):
+    quantity: int
+    label: str
+    reason: str
+
+
+class CardmarketImportResult(BaseModel):
+    purchase_list: PurchaseListDetailOut
+    unmatched: list[UnmatchedArticle]
+
+
+class IncomingPrint(BaseModel):
+    catalog_id: int
+    variant_type: str
+    quantity: int
+
+
 # ── shares ───────────────────────────────────────────────────────────────────
 
 

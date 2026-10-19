@@ -88,6 +88,18 @@
         {{ variantsOpen() ? '−' : '+' }}
       </button>
     </div>
+    <div class="incoming-filter">
+      <button
+        type="button"
+        class="rarity-toggle-btn incoming-toggle"
+        [class.active]="countIncoming.enabled()"
+        [attr.aria-pressed]="countIncoming.enabled()"
+        (click)="toggleCountIncoming()"
+      >
+        <ab-icon name="truck" />
+        {{ 'sets.countIncoming' | translate }}
+      </button>
+    </div>
   </section>
 
   @if (loading()) {

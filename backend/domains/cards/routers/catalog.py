@@ -15,6 +15,7 @@ from domains.cards import decklists, display, search
 from domains.cards import models as m
 from domains.cards import schemas as s
 from domains.cards.access import cards_user, not_found
+from domains.cards.routers.purchase_lists import incoming_copies
 from domains.cards.variant_order import ALL_VARIANT_TYPES, variant_sort_key
 
 router = APIRouter(prefix="/catalog", tags=["cards"])
@@ -214,12 +215,14 @@ def _missing_cards(
     set_codes: list[str],
     rarity: list[str] | None,
     exclude_deck_allocated: bool,
+    include_incoming: bool,
     variant_type: str | None = None,
 ) -> list[m.CardCatalog]:
     """Cards of `set_codes` the user owns no copy of, by set then number.
     With `variant_type`, only cards printed in it and owned 0 times in that
     exact print; `exclude_deck_allocated` doesn't count copies (of that
-    print) in normal decks."""
+    print) in normal decks; `include_incoming` counts copies on incoming
+    purchase lists as owned."""
     vq = m.CardVariantQuantity
     owned_copies = select(vq.card_id, func.sum(vq.quantity).label("copies"))
     in_decks = select(
@@ -240,6 +243,10 @@ def _missing_cards(
     if exclude_deck_allocated:
         query = query.outerjoin(in_decks, in_decks.c.card_id == m.Card.id)
         have = have - func.coalesce(in_decks.c.copies, 0)
+    if include_incoming:
+        incoming = incoming_copies(user_id, variant_type)
+        query = query.outerjoin(incoming, incoming.c.catalog_id == m.CardCatalog.id)
+        have = have + func.coalesce(incoming.c.copies, 0)
     query = query.where(have <= 0)
     if rarity:
         query = query.where(m.CardCatalog.rarity.in_(rarity))
@@ -276,6 +283,9 @@ def export_set_missing_text(
         False, description="Copies in normal decks don't count as owned"
     ),
     variant_type: str | None = Query(None, description="One exact print"),
+    include_incoming: bool = Query(
+        True, description="Copies on incoming purchase lists count as owned"
+    ),
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
@@ -286,7 +296,13 @@ def export_set_missing_text(
     if variant_type is not None:
         _check_variant_types([variant_type])
     cards = _missing_cards(
-        db, user.id, [set_code], rarity, exclude_deck_allocated, variant_type
+        db,
+        user.id,
+        [set_code],
+        rarity,
+        exclude_deck_allocated,
+        include_incoming,
+        variant_type,
     )
     return _missing_text(cards, format, language)
 
@@ -299,6 +315,9 @@ def export_sets_missing_text(
     language: Literal["en", "fr"] = "en",
     exclude_deck_allocated: bool = Query(
         False, description="Copies in normal decks don't count as owned"
+    ),
+    include_incoming: bool = Query(
+        True, description="Copies on incoming purchase lists count as owned"
     ),
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
@@ -314,7 +333,9 @@ def export_sets_missing_text(
     unknown = sorted(set(body.set_codes) - known)
     if unknown:
         raise not_found(f"Set {', '.join(unknown)}")
-    cards = _missing_cards(db, user.id, list(known), rarity, exclude_deck_allocated)
+    cards = _missing_cards(
+        db, user.id, list(known), rarity, exclude_deck_allocated, include_incoming
+    )
     return _missing_text(cards, format, language)
 
 
@@ -357,12 +378,16 @@ def list_missing_intervals(
     rarity: list[str] | None = Query(None, description="Raw rarity values"),
     variant_type: str | None = Query(None, description="One exact print"),
     reverse: bool = Query(False, description="Same as variant_type=reverse"),
+    include_incoming: bool = Query(
+        True, description="Copies on incoming purchase lists count as owned"
+    ),
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
     """The user's missing numeric card numbers per set, as ranges. Only sets
     with at least one missing selected card. A number shared by several
-    selected cards stays missing until all of them are owned."""
+    selected cards stays missing until all of them are owned (or incoming,
+    with `include_incoming`)."""
     requested = variant_type or ("reverse" if reverse else None)
     if requested is not None:
         _check_variant_types([requested])
@@ -399,11 +424,19 @@ def list_missing_intervals(
             )
         )
 
+    if include_incoming:
+        incoming = incoming_copies(user.id, requested)
+        query = query.add_columns(incoming.c.copies.label("incoming")).outerjoin(
+            incoming, incoming.c.catalog_id == m.CardCatalog.id
+        )
+
     grouped: dict[tuple[str, str, str | None], dict[int, str]] = {}
     for row in db.execute(query):
         owned = row.owned_card_id is not None
         if requested:
             owned = owned and (row.variant_quantity or 0) > 0
+        if include_incoming:
+            owned = owned or (row.incoming or 0) > 0
         selected = not rarity or row.rarity in rarity
         name = display.set_name(row.set_name, row.set_name_fr, user.language)
         states = grouped.setdefault((row.set_code, name, row.series), {})

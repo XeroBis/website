@@ -150,6 +150,14 @@
           <input type="checkbox" [(ngModel)]="exportExcludeInDeck" />
           {{ 'sets.excludeInDeck' | translate }}
         </label>
+        <label class="export-missing-checkbox">
+          <input
+            type="checkbox"
+            [checked]="countIncoming.enabled()"
+            (change)="countIncoming.toggle()"
+          />
+          {{ 'sets.countIncoming' | translate }}
+        </label>
       </div>
       <div class="deck-actions-form-buttons">
         <button

@@ -44,18 +44,7 @@ def _log(db, user_id, catalog_id, variant_type, action, source, old, new) -> Non
     )
 
 
-def _quantity(card: m.Card, variant_type: str) -> int:
-    return next(
-        (
-            vq.quantity
-            for vq in card.variant_quantities
-            if vq.variant_type == variant_type
-        ),
-        0,
-    )
-
-
-def _set_quantity(
+def set_quantity(
     db: Session, card: m.Card, variant_type: str, quantity: int, source: str
 ) -> None:
     """Set the copies owned of one print (0 removes it) and log the change.
@@ -97,7 +86,7 @@ def _with_details(query):
     )
 
 
-def _cards_for(
+def cards_for(
     db: Session, user_id: int, catalog_cards: dict[int, m.CardCatalog]
 ) -> dict[int, m.Card]:
     """The user's card row for each catalog card, by catalog id, creating the
@@ -530,7 +519,7 @@ def import_collection(
             ] = variant.quantity
 
     catalog_by_id = {card.id: card for card in catalog.values() if card.id in wanted}
-    cards = _cards_for(db, user.id, catalog_by_id)
+    cards = cards_for(db, user.id, catalog_by_id)
     allocated = deck_rules.allocated_by_print(
         db, [card.id for card in cards.values() if card.id is not None]
     )
@@ -545,7 +534,7 @@ def import_collection(
                         f"{in_decks} copies are in decks"
                     )
                 )
-            _set_quantity(db, card, variant, quantity, "import")
+            set_quantity(db, card, variant, quantity, "import")
     db.commit()
     return s.CollectionImportResult(
         imported=len(wanted),
@@ -565,10 +554,14 @@ def add_card(
     if catalog_card is None:
         raise not_found("Card")
     prints = _prints_to_add(catalog_card, body)
-    card = _cards_for(db, user.id, {catalog_card.id: catalog_card})[catalog_card.id]
+    card = cards_for(db, user.id, {catalog_card.id: catalog_card})[catalog_card.id]
     for variant in prints:
-        _set_quantity(
-            db, card, variant, _quantity(card, variant) + body.quantity, "manual"
+        set_quantity(
+            db,
+            card,
+            variant,
+            deck_rules.owned_quantity(card, variant) + body.quantity,
+            "manual",
         )
     db.commit()
     return _cards_out(db, _reloaded(db, [card]), user.language)[0]
@@ -607,10 +600,16 @@ def bulk_add_cards(
             key = (item.catalog_id, variant)
             added[key] = added.get(key, 0) + item.quantity
 
-    cards = _cards_for(db, user.id, catalog)
+    cards = cards_for(db, user.id, catalog)
     for (catalog_id, variant), copies in added.items():
         card = cards[catalog_id]
-        _set_quantity(db, card, variant, _quantity(card, variant) + copies, "manual")
+        set_quantity(
+            db,
+            card,
+            variant,
+            deck_rules.owned_quantity(card, variant) + copies,
+            "manual",
+        )
     if deck is not None:
         db.flush()
         deck_rules.add_owned_cards(
@@ -706,7 +705,7 @@ def set_card_quantity(
         raise deck_rules.refused(
             f"{in_decks} copies of this print are in decks; remove them first"
         )
-    _set_quantity(db, card, variant, body.quantity, "manual")
+    set_quantity(db, card, variant, body.quantity, "manual")
     if not card.variant_quantities:
         db.delete(card)
         db.commit()

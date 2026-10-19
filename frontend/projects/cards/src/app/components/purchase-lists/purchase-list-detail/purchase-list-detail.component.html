@@ -1,0 +1,409 @@
+@if (loading() && !purchaseList()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (purchaseList(); as list) {
+  <div class="detail-header">
+    <a routerLink="/purchase-lists" class="back-link"
+      >&larr; {{ 'purchaseLists.detail.back' | translate }}</a
+    >
+    <h1 class="page-title">{{ list.name }}</h1>
+    @if (list.received_at) {
+      <span class="status-badge received">{{
+        'purchaseLists.receivedOn' | translate: { date: (list.received_at | date: 'dd/MM/yyyy') }
+      }}</span>
+    } @else {
+      <span class="status-badge incoming">{{ 'purchaseLists.incoming' | translate }}</span>
+    }
+    <span class="count-badge">
+      {{
+        'decklistPreview.uniqueTotal'
+          | translate: { unique: list.total_cards, total: list.total_quantity }
+      }}
+      @if (list.purchase_price !== null) {
+        · {{ list.purchase_price | number: '1.2-2' }} €
+      }
+    </span>
+    @if (editable()) {
+      <button type="button" class="btn btn-secondary" (click)="openAdd()">
+        <ab-icon name="plus" /> {{ 'purchaseLists.detail.addCard' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="list.cards.length === 0"
+        (click)="receiveOpen.set(true)"
+      >
+        <ab-icon name="check" /> {{ 'purchaseLists.detail.markReceived' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (list.cards.length > 0) {
+    <div class="toolbar">
+      <section class="surface filter-panel">
+        <div class="filter-row">
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="rarityFilter().size === 0"
+            [attr.aria-pressed]="rarityFilter().size === 0"
+            [attr.aria-label]="'sets.allRarities' | translate"
+            [title]="'sets.allRarities' | translate"
+            (click)="clearRarities()"
+          >
+            <ab-icon name="layers" />
+          </button>
+          @for (rarity of rarityOptions(); track rarity) {
+            <button
+              type="button"
+              class="filter-chip"
+              [class.active]="rarityFilter().has(rarity)"
+              [attr.aria-pressed]="rarityFilter().has(rarity)"
+              [attr.aria-label]="rarity"
+              [title]="rarity"
+              (click)="toggleRarity(rarity)"
+            >
+              <img [src]="rarityIcon(rarity)" [alt]="rarity" (error)="onIconError($event)" />
+              <span class="chip-fallback">{{ rarity }}</span>
+            </button>
+          }
+          <input
+            type="text"
+            class="input card-search"
+            [placeholder]="'purchaseLists.detail.searchPlaceholder' | translate"
+            [attr.aria-label]="'purchaseLists.detail.searchPlaceholder' | translate"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+          />
+        </div>
+        <div class="filter-row" [attr.aria-label]="'filters.printVariant' | translate">
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="printFilter().length === 0"
+            [attr.aria-pressed]="printFilter().length === 0"
+            [attr.aria-label]="'sets.allVariants' | translate"
+            [title]="'sets.allVariants' | translate"
+            (click)="togglePrint('all')"
+          >
+            <ab-icon name="layers" />
+          </button>
+          @for (variant of printOptions(); track variant) {
+            <button
+              type="button"
+              class="filter-chip"
+              [class.active]="printFilter().includes(variant)"
+              [attr.aria-pressed]="printFilter().includes(variant)"
+              [attr.aria-label]="variantLabels[variant]"
+              [title]="variantLabels[variant]"
+              (click)="togglePrint(variant)"
+            >
+              <img [src]="variantIcon(variant)" [alt]="variantLabels[variant]" />
+            </button>
+          }
+        </div>
+        @if (setOptions().length > 1) {
+          <div class="filter-row" [attr.aria-label]="'purchaseLists.detail.filterSet' | translate">
+            <button
+              type="button"
+              class="filter-chip"
+              [class.active]="setFilter().size === 0"
+              [attr.aria-pressed]="setFilter().size === 0"
+              [attr.aria-label]="'purchaseLists.detail.allSets' | translate"
+              [title]="'purchaseLists.detail.allSets' | translate"
+              (click)="clearSets()"
+            >
+              <ab-icon name="layers" />
+            </button>
+            @for (set of setOptions(); track set.set_code) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.active]="setFilter().has(set.set_code)"
+                [attr.aria-pressed]="setFilter().has(set.set_code)"
+                [attr.aria-label]="set.set_name"
+                [title]="set.set_name"
+                (click)="toggleSet(set.set_code)"
+              >
+                @if (setSymbols().get(set.set_code); as symbol) {
+                  <img [src]="symbol" [alt]="set.set_name" />
+                } @else {
+                  <span>{{ set.set_code }}</span>
+                }
+              </button>
+            }
+          </div>
+        }
+      </section>
+      <div class="view-toggle">
+        @for (option of viewOptions; track option.view) {
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === option.view"
+            [attr.aria-pressed]="view() === option.view"
+            [attr.aria-label]="option.label | translate"
+            [title]="option.label | translate"
+            (click)="setView(option.view)"
+          >
+            <ab-icon [name]="option.icon" />
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (list.cards.length === 0) {
+    <p>{{ 'purchaseLists.detail.empty' | translate }}</p>
+  } @else if (filteredCards().length === 0) {
+    <p>{{ 'purchaseLists.detail.noMatches' | translate }}</p>
+  } @else if (view() === 'grid') {
+    <div class="tile-grid">
+      @for (tile of tiles(); track tile.catalog_id) {
+        <div class="card-tile purchase-tile">
+          <img [src]="imageUrl(tile.image_path)" [alt]="tile.name" loading="lazy" />
+          <span class="number-chip">{{ tile.card_number }}</span>
+          <span class="print-badges">
+            @for (print of tile.prints; track print.variant_type) {
+              <span
+                class="print-badge"
+                [class.standard]="print.variant_type === 'standard'"
+                [title]="variantLabels[print.variant_type]"
+                >{{ printBadge(print.variant_type) }}×{{ print.quantity }}</span
+              >
+            }
+          </span>
+          <div class="card-info">
+            <strong>{{ tile.name }}</strong>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (view() === 'sets') {
+    @for (group of setGroups(); track group.set_code) {
+      <section class="set-group">
+        <h2 class="set-group-title">
+          {{ group.set_name }}
+          <span class="set-group-count">{{
+            'decklistPreview.uniqueTotal'
+              | translate: { unique: group.tiles.length, total: group.quantity }
+          }}</span>
+        </h2>
+        <div class="tile-grid">
+          @for (tile of group.tiles; track tile.catalog_id) {
+            <div class="card-tile purchase-tile">
+              <img [src]="imageUrl(tile.image_path)" [alt]="tile.name" loading="lazy" />
+              <span class="number-chip">{{ tile.card_number }}</span>
+              <span class="print-badges">
+                @for (print of tile.prints; track print.variant_type) {
+                  <span
+                    class="print-badge"
+                    [class.standard]="print.variant_type === 'standard'"
+                    [title]="variantLabels[print.variant_type]"
+                    >{{ printBadge(print.variant_type) }}×{{ print.quantity }}</span
+                  >
+                }
+              </span>
+              <div class="card-info">
+                <strong>{{ tile.name }}</strong>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  } @else {
+    <section class="surface card-list">
+      @for (card of filteredCards(); track card.id) {
+        <div class="card-row" [class.pending]="pendingRows().has(card.id)">
+          <img
+            [src]="imageUrl(card.image_path)"
+            [alt]="card.name"
+            class="card-thumb"
+            loading="lazy"
+          />
+          <div class="card-info">
+            <div class="card-name">{{ card.name }}</div>
+            <div class="card-set">
+              {{ card.set_name }} · <span class="card-number">{{ card.card_number }}</span>
+            </div>
+          </div>
+          @if (editable()) {
+            <select
+              class="select variant-select"
+              [attr.aria-label]="'purchaseLists.detail.print' | translate"
+              [disabled]="pendingRows().has(card.id)"
+              [ngModel]="card.variant_type"
+              (ngModelChange)="changeVariant(card, $event)"
+            >
+              @for (variant of card.variants; track variant) {
+                <option [value]="variant">{{ variantLabels[variant] }}</option>
+              }
+            </select>
+            <div class="stepper">
+              <button
+                type="button"
+                class="btn btn-sm btn-secondary"
+                [attr.aria-label]="'purchaseLists.detail.decrease' | translate"
+                [disabled]="card.quantity <= 1 || pendingRows().has(card.id)"
+                (click)="changeQuantity(card, -1)"
+              >
+                −
+              </button>
+              <span class="quantity">{{ card.quantity }}</span>
+              <button
+                type="button"
+                class="btn btn-sm btn-secondary"
+                [attr.aria-label]="'purchaseLists.detail.increase' | translate"
+                [disabled]="pendingRows().has(card.id)"
+                (click)="changeQuantity(card, 1)"
+              >
+                +
+              </button>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-icon"
+              [attr.aria-label]="'purchaseLists.detail.removeCard' | translate"
+              [title]="'purchaseLists.detail.removeCard' | translate"
+              (click)="openRemoveConfirm(card)"
+            >
+              <ab-icon name="trash" />
+            </button>
+          } @else {
+            <span class="variant-label">{{ variantLabels[card.variant_type] }}</span>
+            <span class="quantity">×{{ card.quantity }}</span>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (addOpen()) {
+    <app-modal [title]="'purchaseLists.detail.addCard' | translate" (closed)="closeAdd()">
+      <div class="add-form">
+        @if (addPicked(); as picked) {
+          <div class="picked">
+            <img [src]="imageUrl(picked.image_path)" [alt]="picked.name" class="card-thumb" />
+            <div class="card-info">
+              <div class="card-name">{{ picked.name }}</div>
+              <div class="card-set">{{ picked.set_name }} · {{ picked.card_number }}</div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="addPicked.set(null)">
+              {{ 'purchaseLists.detail.changeCard' | translate }}
+            </button>
+          </div>
+          <div class="form-row">
+            <label>
+              {{ 'purchaseLists.detail.print' | translate }}
+              <select
+                class="select"
+                [ngModel]="addVariant()"
+                (ngModelChange)="addVariant.set($event)"
+              >
+                @for (variant of picked.variants; track variant.variant_type) {
+                  <option [value]="variant.variant_type">
+                    {{ variantLabels[variant.variant_type] }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label>
+              {{ 'purchaseLists.detail.quantity' | translate }}
+              <input
+                type="number"
+                min="1"
+                class="input"
+                [ngModel]="addQuantity()"
+                (ngModelChange)="addQuantity.set($event)"
+              />
+            </label>
+          </div>
+        } @else {
+          <input
+            type="text"
+            class="input"
+            [placeholder]="'purchaseLists.detail.addSearchPlaceholder' | translate"
+            [ngModel]="addSearch()"
+            (ngModelChange)="onAddSearchChange($event)"
+          />
+          @if (addSearching()) {
+            <p class="muted">{{ 'common.loading' | translate }}</p>
+          } @else if (addSearch().trim().length >= 2 && addResults().length === 0) {
+            <p class="muted">{{ 'purchaseLists.detail.addNoResults' | translate }}</p>
+          }
+          <div class="search-results">
+            @for (result of addResults(); track result.id) {
+              <button type="button" class="search-result" (click)="pickCard(result)">
+                <img [src]="imageUrl(result.image_path)" [alt]="result.name" class="card-thumb" />
+                <span class="card-info">
+                  <span class="card-name">{{ result.name }}</span>
+                  <span class="card-set">
+                    {{ result.set_name }} · {{ result.set_code }} {{ result.card_number }}
+                  </span>
+                </span>
+              </button>
+            }
+          </div>
+        }
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeAdd()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="!addPicked() || adding()"
+            (click)="submitAdd()"
+          >
+            {{ 'purchaseLists.detail.add' | translate }}
+          </button>
+        </div>
+      </div>
+    </app-modal>
+  }
+
+  @if (receiveOpen()) {
+    <app-modal [title]="'purchaseLists.detail.receiveTitle' | translate" (closed)="closeReceive()">
+      <p>
+        {{ 'purchaseLists.detail.receiveBody' | translate: { cards: list.total_quantity } }}
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeReceive()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="receiving()"
+          (click)="confirmReceive()"
+        >
+          {{ 'purchaseLists.detail.markReceived' | translate }}
+        </button>
+      </div>
+    </app-modal>
+  }
+
+  @if (removeTarget(); as target) {
+    <app-modal
+      [title]="'purchaseLists.detail.removeTitle' | translate"
+      (closed)="closeRemoveConfirm()"
+    >
+      <p>
+        {{ 'purchaseLists.detail.removeBody' | translate: { name: target.name } }}
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeRemoveConfirm()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="removing()"
+          (click)="confirmRemove()"
+        >
+          {{ 'purchaseLists.detail.removeCard' | translate }}
+        </button>
+      </div>
+    </app-modal>
+  }
+}

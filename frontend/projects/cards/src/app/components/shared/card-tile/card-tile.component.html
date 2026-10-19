@@ -14,6 +14,14 @@
       <span class="reverse-badge">R×{{ reverseQty }}</span>
     }
   }
+  @if (incomingQty > 0) {
+    <span
+      class="incoming-badge"
+      [class.below-owned]="ownedQty > 0"
+      [class.below-reverse]="ownedQty > 0 && reverseQty > 0"
+      >{{ 'sets.incomingBadge' | translate: { count: incomingQty } }}</span
+    >
+  }
   <div class="card-info">
     <strong>{{ title }}</strong>
     <span>{{ subLabel }}</span>

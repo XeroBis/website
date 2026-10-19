@@ -2,9 +2,9 @@
 
 A shared catalog (`card_catalog` + the print variants each card comes in),
 then everything personal: the collection (`cards` + a quantity per owned
-variant), decks, upgrade drafts, purchases, share links and shopping lists,
-each scoped to a `core.users` row. Combats are the one shared log between
-users.
+variant), decks, upgrade drafts, purchases, purchase lists, share links
+and shopping lists, each scoped to a `core.users` row. Combats are the one
+shared log between users.
 """
 
 from datetime import date, datetime
@@ -34,7 +34,7 @@ from domains.cards.variant_order import variant_order_expr
 SCHEMA = {"schema": "cards"}
 DECK_TYPES = ("normal", "phantom")
 COLLECTION_ACTIONS = ("added", "increased", "decreased", "removed")
-COLLECTION_SOURCES = ("manual", "import")
+COLLECTION_SOURCES = ("manual", "import", "purchase")
 COMBAT_SIDES = ("a", "b")
 
 
@@ -504,4 +504,62 @@ class ShoppingListCard(Base):
     created_at: Mapped[datetime] = _created_at()
 
     shopping_list: Mapped[ShoppingList] = relationship(back_populates="cards")
+    catalog_card: Mapped[CardCatalog] = relationship()
+
+
+# ── purchase lists ───────────────────────────────────────────────────────────
+
+
+class PurchaseList(Base):
+    """A bought order not yet arrived ("Liste d'achat"): its cards count as
+    owned in the missing views until it is received (`received_at` set),
+    which adds them to the collection."""
+
+    __tablename__ = "purchase_lists"
+    __table_args__ = (UniqueConstraint("user_id", "name"), SCHEMA)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = _user_fk(index=True)
+    name: Mapped[str] = mapped_column(Text)
+    # The What I Paid entry made by the import; kept when the list goes.
+    purchase_id: Mapped[int | None] = mapped_column(
+        ForeignKey("cards.purchases.id", ondelete="SET NULL")
+    )
+    received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    purchase: Mapped[Purchase | None] = relationship()
+    cards: Mapped[list[PurchaseListCard]] = relationship(
+        back_populates="purchase_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="PurchaseListCard.id",
+    )
+
+
+class PurchaseListCard(Base):
+    """Copies of one print on a purchase list."""
+
+    __tablename__ = "purchase_list_cards"
+    __table_args__ = (
+        UniqueConstraint("purchase_list_id", "catalog_id", "variant_type"),
+        CheckConstraint("quantity >= 1", name="quantity"),
+        SCHEMA,
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    purchase_list_id: Mapped[int] = mapped_column(
+        ForeignKey("cards.purchase_lists.id", ondelete="CASCADE"), index=True
+    )
+    catalog_id: Mapped[int] = mapped_column(ForeignKey("cards.card_catalog.id"))
+    variant_type: Mapped[str] = mapped_column(
+        Text, default="standard", server_default="standard"
+    )
+    quantity: Mapped[int]
+    created_at: Mapped[datetime] = _created_at()
+
+    purchase_list: Mapped[PurchaseList] = relationship(back_populates="cards")
     catalog_card: Mapped[CardCatalog] = relationship()

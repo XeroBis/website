@@ -9,6 +9,7 @@ import { ToastService } from '../../../services/toast.service';
 import { rawRaritiesForCategory } from '../../../util/rarity-category.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { ModalComponent } from '../../shared/modal/modal.component';
+import { CountIncomingService } from '../../../services/count-incoming.service';
 /** "Combine sets export" -- lets the user pick several sets on the Sets
  * page and export one combined "missing cards" decklist, with a single
  * rarity/format/language/exclude-in-deck selection applying across every
@@ -50,6 +51,7 @@ export class CombineSetsExportComponent {
     private readonly catalogService: CatalogService,
     private readonly toastService: ToastService,
     private readonly translate: TranslateService,
+    readonly countIncoming: CountIncomingService,
   ) {}
   openPicker(): void {
     this.pickerOpen.set(true);
@@ -169,6 +171,7 @@ export class CombineSetsExportComponent {
         this.exportFormat(),
         this.exportLanguage(),
         this.exportExcludeInDeck(),
+        this.countIncoming.enabled(),
       )
       .subscribe({
         next: (text) => {

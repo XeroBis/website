@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /** The chrome shared by every card grid tile in the app (set detail's
  * standard/exploded-variant grids and the public shared-set page's
@@ -10,7 +11,7 @@ import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from 
 @Component({
   selector: 'app-card-tile',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './card-tile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './card-tile.component.scss',
@@ -23,6 +24,8 @@ export class CardTileComponent {
   @Input() ownedQty = 0;
   @Input() reverseQty = 0;
   @Input() notOwned = false;
+  /** Copies on incoming purchase lists: an "Incoming ×N" badge. */
+  @Input() incomingQty = 0;
   /** Printed-style card number (e.g. "012/191") chipped onto the image's
    * top-left corner -- omitted when empty. `secretNumber` highlights a
    * number past the set's official count (see features.md's "Sets"). */

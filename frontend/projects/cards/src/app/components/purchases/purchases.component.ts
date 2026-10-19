@@ -10,6 +10,7 @@ import { CatalogService } from '../../services/catalog.service';
 import { PurchasesService } from '../../services/purchases.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
+import { toDateInputValue } from '../../util/date-input.util';
 interface PurchaseFormState {
   product_name: string;
   price: number;
@@ -18,11 +19,6 @@ interface PurchaseFormState {
   source: string;
   description: string;
   sets: string[];
-}
-/** `<input type="date">` wants "yyyy-MM-dd" -- only the day matters, no time. */
-function toDateInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 function emptyForm(): PurchaseFormState {
   return {

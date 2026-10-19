@@ -25,6 +25,7 @@ import {
   SearchableSelectComponent,
   SearchableSelectItem,
 } from '../shared/searchable-select/searchable-select.component';
+import { toDateInputValue } from '../../util/date-input.util';
 interface CombatFormState {
   deck_a_id: number | null;
   player_a_id: number | null;
@@ -33,11 +34,6 @@ interface CombatFormState {
   winner: CombatWinner | null;
   loser_score: number;
   played_at: string;
-}
-/** `<input type="date">` wants "yyyy-MM-dd" — only the day matters for played_at, no time. */
-function toDateInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 function emptyForm(): CombatFormState {
   return {

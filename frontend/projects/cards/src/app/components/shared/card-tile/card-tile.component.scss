@@ -61,6 +61,29 @@
     border-radius: var(--radius-sm);
   }
 
+  .incoming-badge {
+    position: absolute;
+    z-index: 2;
+    top: var(--space-2);
+    right: var(--space-2);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border: 1px dashed var(--color-primary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    white-space: nowrap;
+
+    &.below-owned {
+      top: calc(var(--space-2) + 1.4rem);
+    }
+
+    &.below-reverse {
+      top: calc(var(--space-2) + 2.8rem);
+    }
+  }
+
   .qty-controls-group {
     position: absolute;
     bottom: calc(-1 * var(--space-2));

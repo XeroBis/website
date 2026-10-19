@@ -66,6 +66,17 @@
         <button
           type="button"
           class="btn btn-secondary btn-icon"
+          [class.active]="countIncoming.enabled()"
+          [attr.aria-label]="'sets.countIncoming' | translate"
+          [title]="'sets.countIncoming' | translate"
+          [attr.aria-pressed]="countIncoming.enabled()"
+          (click)="toggleCountIncoming()"
+        >
+          <ab-icon name="truck" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
           [class.active]="excludeInDeck()"
           [attr.aria-label]="'sets.excludeInDeck' | translate"
           [title]="'sets.excludeInDeck' | translate"
@@ -327,6 +338,14 @@
         <label class="export-missing-checkbox">
           <input type="checkbox" [(ngModel)]="exportExcludeInDeck" />
           {{ 'sets.excludeInDeck' | translate }}
+        </label>
+        <label class="export-missing-checkbox">
+          <input
+            type="checkbox"
+            [checked]="countIncoming.enabled()"
+            (change)="countIncoming.toggle()"
+          />
+          {{ 'sets.countIncoming' | translate }}
         </label>
       </div>
       <button

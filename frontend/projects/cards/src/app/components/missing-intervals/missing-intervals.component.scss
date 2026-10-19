@@ -63,6 +63,15 @@
   padding-top: 0.65rem;
   border-top: 1px solid var(--color-border);
 }
+.incoming-filter {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--color-border);
+}
+.incoming-toggle {
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+}
 .more-rarities {
   font-size: 1.25rem;
 }

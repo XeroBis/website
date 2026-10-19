@@ -133,7 +133,7 @@ def move_names(card: m.CardCatalog) -> list[str]:
     ]
 
 
-def _number_key(card_number: str) -> str:
+def number_key(card_number: str) -> str:
     """Catalog numbers are often zero-padded ("016") but pasted ones aren't:
     compare numeric numbers as integers, others case-insensitively."""
     stripped_number = card_number.strip()
@@ -152,7 +152,7 @@ def cardmarket_identifiers(
     if replacement:
         return list(replacement)
     if set_code == "30C":
-        rule = _CARDMARKET_30C_IDENTIFIERS.get(_number_key(card_number or ""))
+        rule = _CARDMARKET_30C_IDENTIFIERS.get(number_key(card_number or ""))
         if rule and tuple(moves) == rule[0]:
             return list(rule[1])
     return moves
@@ -229,11 +229,11 @@ def _parse_tcgplayer(db: Session, text: str) -> list[Entry]:
             .where(func.lower(m.CardCatalog.set_code).in_(codes))
             .order_by(m.CardCatalog.id)
         ):
-            key = (card.set_code.lower(), _number_key(card.card_number))
+            key = (card.set_code.lower(), number_key(card.card_number))
             by_number.setdefault(key, card)
     entries = []
     for match in parsed:
-        card = by_number.get((match["set_code"].lower(), _number_key(match["number"])))
+        card = by_number.get((match["set_code"].lower(), number_key(match["number"])))
         quantity = int(match["qty"])
         entries.append(
             Entry(quantity, card.name, card)

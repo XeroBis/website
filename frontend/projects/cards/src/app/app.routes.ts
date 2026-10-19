@@ -81,6 +81,22 @@ export const routes: Routes = [
           import('./components/purchases/purchases.component').then((m) => m.PurchasesComponent),
       },
       {
+        path: 'purchase-lists',
+        title: 'nav.purchaseLists',
+        loadComponent: () =>
+          import('./components/purchase-lists/purchase-list-list/purchase-list-list.component').then(
+            (m) => m.PurchaseListListComponent,
+          ),
+      },
+      {
+        path: 'purchase-lists/:id',
+        title: 'nav.purchaseLists',
+        loadComponent: () =>
+          import('./components/purchase-lists/purchase-list-detail/purchase-list-detail.component').then(
+            (m) => m.PurchaseListDetailComponent,
+          ),
+      },
+      {
         path: 'shopping-lists',
         title: 'nav.shoppingLists',
         loadComponent: () =>

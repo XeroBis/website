@@ -26,6 +26,8 @@ export interface SetGridAdapter<T> {
   image: (card: T, variant?: CardCatalogVariant) => string;
   quantity: (card: T, variant?: CardCatalogVariant) => number;
   reverse: (card: T) => number;
+  /** Copies on incoming purchase lists (the owner's set page only). */
+  incoming?: (card: T, variant?: CardCatalogVariant) => number;
   open: (card: T, variant?: CardCatalogVariant) => void;
 }
 /** Shared layout; each page supplies ownership and image access for its context. */
@@ -109,6 +111,9 @@ export class SetCardGridComponent<T extends SetGridCard> implements OnChanges {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
     img.nextElementSibling?.classList.add('visible');
+  }
+  incomingQty(card: T, variant?: CardCatalogVariant): number {
+    return this.adapter.incoming?.(card, variant) ?? 0;
   }
   variantLabel(variant: CardCatalogVariant): string {
     return VARIANT_LABELS[variant.variant_type];
