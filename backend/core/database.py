@@ -18,7 +18,10 @@ NAMING_CONVENTION = {
     "pk": "pk_%(table_name)s",
 }
 
-engine = create_engine(settings.database_url)
+# Up to 40 connections (SQLAlchemy's default is 5 + 10): one per thread of
+# Starlette's 40 running sync endpoints, more would never be used. Well under
+# Postgres' 100, leaving room for migrations, backups and psql.
+engine = create_engine(settings.database_url, pool_size=10, max_overflow=30)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

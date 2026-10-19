@@ -29,8 +29,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/shares", tags=["cards"])
 public_router = APIRouter(prefix="/public/shares", tags=["cards"])
 
-# Not cached, so a revoked or expired link stops showing its images.
-NO_STORE = {"Cache-Control": "private, no-store"}
+# Cached briefly only, so a revoked or expired link stops showing its images
+# within 5 minutes (the set itself, `get_shared_set`, is never cached).
+SHORT_CACHE = {"Cache-Control": "private, max-age=300"}
+
+# The file routes close their session when the endpoint returns, before the
+# file is streamed: the default "request" scope would hold a pooled
+# connection for the whole download, and a share page's grid of thumbnails
+# then drains the pool for every app.
+file_db = Depends(get_db, scope="function")
 
 
 def _set_names(db: Session, set_codes) -> dict[str, tuple[str, str | None]]:
@@ -196,7 +203,7 @@ def get_shared_set(token: str, db: Session = Depends(get_db)):
 
 
 @public_router.get("/{token}/images/{relative_path:path}")
-def get_shared_image(token: str, relative_path: str, db: Session = Depends(get_db)):
+def get_shared_image(token: str, relative_path: str, db: Session = file_db):
     """A scan (or its thumbnail) of a card or print of the shared set."""
     share = _active_share(db, token)
     # A thumbnail has no column: it is its scan's path with /thumbnails/.
@@ -218,7 +225,7 @@ def get_shared_image(token: str, relative_path: str, db: Session = Depends(get_d
     )
     if not in_set:
         raise not_found("Image")
-    return FileResponse(data_file(relative_path), headers=NO_STORE)
+    return FileResponse(data_file(relative_path), headers=SHORT_CACHE)
 
 
 def _set_asset(db: Session, share: m.SetShare) -> dict[str, str | None]:
@@ -231,7 +238,7 @@ def _set_asset(db: Session, share: m.SetShare) -> dict[str, str | None]:
 
 
 @public_router.get("/{token}/logo")
-def get_shared_logo(token: str, db: Session = Depends(get_db)):
+def get_shared_logo(token: str, db: Session = file_db):
     """The English logo, else the French one (a few sets only have that)."""
     paths = _set_asset(db, _active_share(db, token))
     for path in (paths["logo_path"], paths["logo_path_fr"]):
@@ -240,13 +247,13 @@ def get_shared_logo(token: str, db: Session = Depends(get_db)):
                 file = data_file(path)
             except HTTPException:
                 continue
-            return FileResponse(file, headers=NO_STORE)
+            return FileResponse(file, headers=SHORT_CACHE)
     raise not_found("Image")
 
 
 @public_router.get("/{token}/symbol")
-def get_shared_symbol(token: str, db: Session = Depends(get_db)):
+def get_shared_symbol(token: str, db: Session = file_db):
     path = _set_asset(db, _active_share(db, token))["symbol_path"]
     if path is None:
         raise not_found("Image")
-    return FileResponse(data_file(path), headers=NO_STORE)
+    return FileResponse(data_file(path), headers=SHORT_CACHE)

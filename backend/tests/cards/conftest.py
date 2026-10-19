@@ -4,6 +4,7 @@ temporary CARDS_DATA_DIR and CARDS_SOURCE_DIR, a small catalog, a fake web
 
 import httpx2
 import pytest
+from fastapi.responses import FileResponse
 from fastapi.testclient import TestClient
 
 import app
@@ -37,6 +38,21 @@ def source_dir(tmp_path, monkeypatch):
     display._series_names_fr.cache_clear()
     yield path
     display._series_names_fr.cache_clear()
+
+
+@pytest.fixture
+def connections_while_streaming(monkeypatch):
+    """Pooled connections checked out as each FileResponse starts sending
+    (should be 0: a slow download must not hold one)."""
+    counts = []
+    send = FileResponse.__call__
+
+    async def counting(self, scope, receive, send_):
+        counts.append(database.engine.pool.checkedout())
+        await send(self, scope, receive, send_)
+
+    monkeypatch.setattr(FileResponse, "__call__", counting)
+    return counts
 
 
 class FakeWeb:

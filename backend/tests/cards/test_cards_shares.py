@@ -169,7 +169,9 @@ def test_expired_revoked_and_unknown_are_the_same_404(anon, client, link, data_d
 # ── public images ────────────────────────────────────────────────────────────
 
 
-def test_serves_the_sets_scans_thumbnails_and_variant_scans(anon, link, data_dir):
+def test_serves_the_sets_scans_thumbnails_and_variant_scans(
+    anon, link, data_dir, connections_while_streaming
+):
     base = f"{PUBLIC}/{link['token']}/images"
     for path in (
         "Scarlet & Violet/SVI/cards/1_sprigatito_standard_EN.jpg",
@@ -181,7 +183,8 @@ def test_serves_the_sets_scans_thumbnails_and_variant_scans(anon, link, data_dir
         response = anon.get(f"{base}/{path}")
         assert response.status_code == 200, path
         assert response.content == path.encode()
-        assert response.headers["cache-control"] == "private, no-store"
+        assert response.headers["cache-control"] == "private, max-age=300"
+    assert connections_while_streaming == [0] * 4
 
 
 def test_refuses_files_of_other_sets_and_escapes(anon, cards, link, data_dir):
@@ -202,7 +205,9 @@ def test_refuses_files_of_other_sets_and_escapes(anon, cards, link, data_dir):
     assert anon.get(f"{base}/..%2Fsecret.txt").status_code == 404
 
 
-def test_logo_falls_back_to_french_and_symbol(anon, link, data_dir):
+def test_logo_falls_back_to_french_and_symbol(
+    anon, link, data_dir, connections_while_streaming
+):
     token = link["token"]
     assert anon.get(f"{PUBLIC}/{token}/logo").status_code == 404
     write(data_dir, "Scarlet & Violet/SVI/SVI_logo_FR.png", b"fr")
@@ -210,7 +215,8 @@ def test_logo_falls_back_to_french_and_symbol(anon, link, data_dir):
     write(data_dir, "Scarlet & Violet/SVI/SVI_logo_EN.png", b"en")
     logo = anon.get(f"{PUBLIC}/{token}/logo")
     assert logo.content == b"en"
-    assert logo.headers["cache-control"] == "private, no-store"
+    assert logo.headers["cache-control"] == "private, max-age=300"
     assert anon.get(f"{PUBLIC}/{token}/symbol").status_code == 404
     write(data_dir, "Scarlet & Violet/SVI/SVI_symbol.png", b"sym")
     assert anon.get(f"{PUBLIC}/{token}/symbol").content == b"sym"
+    assert connections_while_streaming == [0] * 3

@@ -3,7 +3,9 @@
 from tests.cards.conftest import URL
 
 
-def test_serves_a_file_with_long_private_caching(client, data_dir):
+def test_serves_a_file_with_long_private_caching(
+    client, data_dir, connections_while_streaming
+):
     scan = data_dir / "Scarlet & Violet" / "SVI" / "cards" / "001_a_standard_EN.jpg"
     scan.parent.mkdir(parents=True)
     scan.write_bytes(b"\xff\xd8jpeg")
@@ -14,6 +16,7 @@ def test_serves_a_file_with_long_private_caching(client, data_dir):
     assert response.content == b"\xff\xd8jpeg"
     assert response.headers["content-type"] == "image/jpeg"
     assert response.headers["cache-control"] == "private, max-age=31536000, immutable"
+    assert connections_while_streaming == [0]
 
 
 def test_needs_the_cards_app(anon, cards_client, data_dir):

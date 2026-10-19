@@ -6,8 +6,10 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
 
 from core.config import settings
+from core.database import get_db
 from core.models import User
 from domains.cards.access import cards_user, not_found
 
@@ -29,7 +31,12 @@ def data_file(relative_path: str) -> Path:
 
 
 @router.get("/images/{relative_path:path}")
-def get_image(relative_path: str, _: User = Depends(cards_user)):
+def get_image(
+    relative_path: str, _: User = Depends(cards_user), db: Session = Depends(get_db)
+):
+    # The session checking the user (the same one, dependencies are cached)
+    # would otherwise keep its pooled connection while the file streams.
+    db.close()
     return FileResponse(
         data_file(relative_path), headers={"Cache-Control": CACHE_CONTROL}
     )
