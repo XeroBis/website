@@ -22,8 +22,8 @@ export interface PurchaseList {
   created_at: string;
   updated_at: string;
   received_at: string | null;
-  purchase_id: number | null;
-  purchase_price: string | null;
+  /** The total entered, if any. */
+  price: string | null;
   total_cards: number;
   total_quantity: number;
 }

@@ -74,10 +74,9 @@ def eevee():
     return add_catalog_card(card_number="27", name="Eevee", variants=("standard",))
 
 
-def create(client, html=ORDER, name="Order 1", price="2.40", day="2026-10-10"):
+def create(client, html=ORDER, name="Order 1", price="2.40"):
     return client.post(
-        f"{LISTS}/cardmarket",
-        json={"html": html, "name": name, "price": price, "purchased_at": day},
+        f"{LISTS}/cardmarket", json={"html": html, "name": name, "price": price}
     )
 
 
@@ -136,28 +135,21 @@ def test_reverse_label_of_the_french_site(client, rai):
     ]
 
 
-def test_import_creates_the_list_and_its_purchase(client, imported, pika, rai):
+def test_import_creates_the_list(client, imported, pika, rai):
     detail = imported["purchase_list"]
     assert detail["name"] == "Order 1"
     assert detail["received_at"] is None
     # Repeated lines add up.
     assert lines(detail) == {(pika, "standard"): 3, (rai, "reverse"): 1}
     assert (detail["total_cards"], detail["total_quantity"]) == (2, 4)
-    assert detail["purchase_price"] == "2.40"
+    assert detail["price"] == "2.40"
     assert {c["rarity"] for c in detail["cards"]} == {"Common"}
     assert [u["label"] for u in imported["unmatched"]] == [
         "Nobody (SVI 999)",
         "Eevee (SVI 027)",
     ]
-    [purchase] = client.get(f"{URL}/purchases").json()
-    assert purchase["id"] == detail["purchase_id"]
-    assert (purchase["product_name"], purchase["price"], purchase["quantity"]) == (
-        "Order 1",
-        "2.40",
-        4,
-    )
-    assert (purchase["source"], purchase["sets"]) == ("Cardmarket", ["SVI"])
-    assert purchase["purchased_at"].startswith("2026-10-10")
+    # No What I Paid entry.
+    assert client.get(f"{URL}/purchases").json() == []
 
 
 def test_import_refusals(client, imported):
@@ -168,14 +160,14 @@ def test_import_refusals(client, imported):
     assert create(client, name="Other", html=unmatched).status_code == 422
     assert create(client, name="Other", price="-1").status_code == 422
     # Nothing written by a refusal.
-    assert len(client.get(f"{URL}/purchases").json()) == 1
+    assert len(client.get(LISTS).json()) == 1
 
 
 def test_create_an_empty_list(client, pika):
     response = client.post(LISTS, json={"name": " Shop "})
     assert response.status_code == 201, response.text
     detail = response.json()
-    assert (detail["name"], detail["cards"], detail["purchase_id"]) == (
+    assert (detail["name"], detail["cards"], detail["price"]) == (
         "Shop",
         [],
         None,
@@ -189,21 +181,12 @@ def test_create_an_empty_list(client, pika):
     assert lines(added.json()) == {(pika, "standard"): 2}
 
 
-def test_create_with_its_purchase(client):
-    response = client.post(
-        LISTS, json={"name": "Store", "price": "12.50", "purchased_at": "2026-10-11"}
-    )
+def test_create_with_a_price(client):
+    response = client.post(LISTS, json={"name": "Store", "price": "12.50"})
     assert response.status_code == 201, response.text
-    detail = response.json()
-    assert detail["purchase_price"] == "12.50"
-    [purchase] = client.get(f"{URL}/purchases").json()
-    assert purchase["id"] == detail["purchase_id"]
-    assert (purchase["product_name"], purchase["quantity"], purchase["source"]) == (
-        "Store",
-        1,
-        None,
-    )
-    assert purchase["purchased_at"].startswith("2026-10-11")
+    assert response.json()["price"] == "12.50"
+    # No What I Paid entry.
+    assert client.get(f"{URL}/purchases").json() == []
 
 
 def test_create_refusals(client, imported):
@@ -275,8 +258,8 @@ def test_edit_lines_before_receiving(client, imported, pika, rai, eevee):
     assert client.delete(f"{LISTS}/{list_id}/cards/{pika_row}").status_code == 204
     detail = client.get(f"{LISTS}/{list_id}").json()
     assert lines(detail) == {(rai, "reverse"): 3}
-    # The purchase isn't touched by edits.
-    assert client.get(f"{URL}/purchases").json()[0]["quantity"] == 4
+    # The price isn't touched by edits.
+    assert detail["price"] == "2.40"
 
 
 def test_receive_adds_to_the_collection_and_closes(client, imported, pika, rai):
@@ -294,6 +277,7 @@ def test_receive_adds_to_the_collection_and_closes(client, imported, pika, rai):
     with database.SessionLocal() as session:
         sources = {row.source for row in session.query(m.CollectionHistory)}
     assert sources == {"purchase"}
+    assert client.get(f"{URL}/purchases").json() == []
 
     # Read-only once received.
     assert client.post(f"{LISTS}/{list_id}/receive").status_code == 409
@@ -318,13 +302,8 @@ def test_rename_delete_and_listing_order(client, imported, pika):
     # Incoming first, then received, each newest first.
     assert [row["id"] for row in client.get(LISTS).json()] == [third, first, second]
 
-    # The purchase stays; deleting it unlinks the list.
     assert client.delete(f"{LISTS}/{first}").status_code == 204
-    assert len(client.get(f"{URL}/purchases").json()) == 3
-    purchase_id = client.get(f"{LISTS}/{third}").json()["purchase_id"]
-    client.delete(f"{URL}/purchases/{purchase_id}")
-    detail = client.get(f"{LISTS}/{third}").json()
-    assert (detail["purchase_id"], detail["purchase_price"]) == (None, None)
+    assert [row["id"] for row in client.get(LISTS).json()] == [third, second]
 
 
 def test_incoming_per_print(client, imported, pika, rai):

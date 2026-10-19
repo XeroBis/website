@@ -750,8 +750,7 @@ class CardmarketOrder(BaseModel):
 
 class CardmarketImport(CardmarketOrder):
     name: Name
-    purchased_at: Day
-    # The What I Paid total (shipping included if wanted).
+    # The order's total (shipping included if wanted).
     price: Decimal = Field(ge=0, max_digits=10, decimal_places=2)
 
 
@@ -780,12 +779,10 @@ class CardmarketPreview(BaseModel):
 
 
 class PurchaseListCreate(BaseModel):
-    """An empty list; with a `price`, also its What I Paid entry."""
+    """An empty list, its total optional."""
 
     name: Name
     price: Decimal | None = Field(None, ge=0, max_digits=10, decimal_places=2)
-    # Today when left out.
-    purchased_at: Day | None = None
 
 
 class PurchaseListRename(BaseModel):
@@ -822,16 +819,14 @@ class PurchaseListCardOut(BaseModel):
 
 
 class PurchaseListOut(BaseModel):
-    """`total_cards`: lines; `purchase_price`: the linked What I Paid
-    entry's, null once it's deleted."""
+    """`total_cards`: lines; `price`: the total entered, if any."""
 
     id: int
     name: str
     created_at: datetime
     updated_at: datetime
     received_at: datetime | None
-    purchase_id: int | None
-    purchase_price: Decimal | None
+    price: Decimal | None
     total_cards: int
     total_quantity: int
 

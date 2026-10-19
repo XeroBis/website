@@ -473,17 +473,14 @@ class PurchaseList(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = _user_fk(index=True)
     name: Mapped[str] = mapped_column(Text)
-    # The What I Paid entry made by the import; kept when the list goes.
-    purchase_id: Mapped[int | None] = mapped_column(
-        ForeignKey("cards.purchases.id", ondelete="SET NULL")
-    )
+    # What the order cost, as entered; not a What I Paid entry.
+    price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    purchase: Mapped[Purchase | None] = relationship()
     cards: Mapped[list[PurchaseListCard]] = relationship(
         back_populates="purchase_list",
         cascade="all, delete-orphan",

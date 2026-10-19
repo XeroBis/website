@@ -3,8 +3,6 @@ d'achat"), created empty or imported from saved Cardmarket order pages. Their ca
 owned in the missing views until the list is received, which adds them to
 the collection (see data-model.md `cards` "Rules")."""
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session, selectinload
@@ -48,7 +46,6 @@ def _purchase_list(db: Session, list_id: int, user_id: int) -> m.PurchaseList:
         select(m.PurchaseList)
         .where(m.PurchaseList.id == list_id, m.PurchaseList.user_id == user_id)
         .options(
-            selectinload(m.PurchaseList.purchase),
             selectinload(m.PurchaseList.cards)
             .selectinload(m.PurchaseListCard.catalog_card)
             .selectinload(m.CardCatalog.variants),
@@ -118,15 +115,13 @@ def _card_out(row: m.PurchaseListCard, language: str | None) -> s.PurchaseListCa
 
 
 def _summary(purchase_list: m.PurchaseList) -> dict:
-    purchase = purchase_list.purchase
     return {
         "id": purchase_list.id,
         "name": purchase_list.name,
         "created_at": purchase_list.created_at,
         "updated_at": purchase_list.updated_at,
         "received_at": purchase_list.received_at,
-        "purchase_id": purchase_list.purchase_id,
-        "purchase_price": purchase.price if purchase else None,
+        "price": purchase_list.price,
         "total_cards": len(purchase_list.cards),
         "total_quantity": sum(row.quantity for row in purchase_list.cards),
     }
@@ -195,7 +190,6 @@ def list_purchase_lists(
         select(m.PurchaseList)
         .where(m.PurchaseList.user_id == user.id)
         .options(
-            selectinload(m.PurchaseList.purchase),
             selectinload(m.PurchaseList.cards),
         )
         .order_by(
@@ -215,18 +209,9 @@ def create_purchase_list(
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
-    """An empty list, its cards added by hand; with a price, its What I Paid
-    entry in the same transaction."""
+    """An empty list, its cards added by hand."""
     _check_name(db, user.id, body.name)
-    purchase = None
-    if body.price is not None:
-        purchase = m.Purchase(
-            user_id=user.id,
-            product_name=body.name,
-            price=body.price,
-            purchased_at=body.purchased_at or s.midnight_utc(datetime.now(UTC)),
-        )
-    purchase_list = m.PurchaseList(user_id=user.id, name=body.name, purchase=purchase)
+    purchase_list = m.PurchaseList(user_id=user.id, name=body.name, price=body.price)
     db.add(purchase_list)
     db.commit()
     return detail_out(db, purchase_list.id, user)
@@ -309,24 +294,14 @@ def import_cardmarket_order(
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
-    """A new list from the order's matched articles (repeats add up), and
-    its What I Paid entry, in one transaction."""
+    """A new list from the order's matched articles (repeats add up)."""
     articles = _read_order(db, body.html)
     matched = [a for a in articles if a.card is not None]
     if not matched:
         raise invalid("No article of the order matched the catalog")
     _check_name(db, user.id, body.name)
-    purchase = m.Purchase(
-        user_id=user.id,
-        product_name=body.name,
-        price=body.price,
-        quantity=sum(a.quantity for a in matched),
-        purchased_at=body.purchased_at,
-        source="Cardmarket",
-        sets=list(dict.fromkeys(sorted(a.card.set_code for a in matched))),
-    )
     purchase_list = m.PurchaseList(
-        user_id=user.id, name=body.name, purchase=purchase, cards=[]
+        user_id=user.id, name=body.name, price=body.price, cards=[]
     )
     for article in matched:
         _add(purchase_list, article.card.id, article.variant_type, article.quantity)
@@ -370,7 +345,7 @@ def rename_purchase_list(
 def delete_purchase_list(
     list_id: int, user: User = Depends(cards_user), db: Session = Depends(get_db)
 ):
-    """Its cards follow; the purchase stays."""
+    """Its cards follow."""
     db.delete(_purchase_list(db, list_id, user.id))
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

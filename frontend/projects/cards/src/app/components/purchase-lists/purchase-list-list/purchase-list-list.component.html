@@ -36,28 +36,17 @@
           (ngModelChange)="updateCreateForm({ name: $event })"
         />
       </label>
-      <div class="form-row">
-        <label>
-          {{ 'purchaseLists.date' | translate }}
-          <input
-            type="date"
-            class="input"
-            [ngModel]="form.purchased_at"
-            (ngModelChange)="updateCreateForm({ purchased_at: $event })"
-          />
-        </label>
-        <label>
-          {{ 'purchaseLists.totalOptional' | translate }}
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            class="input"
-            [ngModel]="form.price"
-            (ngModelChange)="updateCreateForm({ price: $event })"
-          />
-        </label>
-      </div>
+      <label>
+        {{ 'purchaseLists.totalOptional' | translate }}
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          class="input"
+          [ngModel]="form.price"
+          (ngModelChange)="updateCreateForm({ price: $event })"
+        />
+      </label>
       <p class="field-hint">{{ 'purchaseLists.totalOptionalHint' | translate }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" (click)="closeCreate()">
@@ -112,28 +101,17 @@
           (ngModelChange)="updateImportForm({ name: $event })"
         />
       </label>
-      <div class="form-row">
-        <label>
-          {{ 'purchaseLists.date' | translate }}
-          <input
-            type="date"
-            class="input"
-            [ngModel]="importForm().purchased_at"
-            (ngModelChange)="updateImportForm({ purchased_at: $event })"
-          />
-        </label>
-        <label>
-          {{ 'purchaseLists.total' | translate }}
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            class="input"
-            [ngModel]="importForm().price"
-            (ngModelChange)="updateImportForm({ price: $event })"
-          />
-        </label>
-      </div>
+      <label>
+        {{ 'purchaseLists.total' | translate }}
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          class="input"
+          [ngModel]="importForm().price"
+          (ngModelChange)="updateImportForm({ price: $event })"
+        />
+      </label>
       <p class="field-hint">
         {{
           'purchaseLists.totalHint' | translate: { total: (order.total_price | number: '1.2-2') }
@@ -187,8 +165,8 @@
         </div>
         <div class="purchase-list-card-meta">
           <span>{{ list.created_at | date: 'dd/MM/yyyy' }}</span>
-          @if (list.purchase_price !== null) {
-            <span>{{ list.purchase_price | number: '1.2-2' }} €</span>
+          @if (list.price !== null) {
+            <span>{{ list.price | number: '1.2-2' }} €</span>
           }
         </div>
         <div class="row-actions">

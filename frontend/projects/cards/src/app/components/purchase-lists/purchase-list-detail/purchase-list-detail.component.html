@@ -18,8 +18,8 @@
         'decklistPreview.uniqueTotal'
           | translate: { unique: list.total_cards, total: list.total_quantity }
       }}
-      @if (list.purchase_price !== null) {
-        · {{ list.purchase_price | number: '1.2-2' }} €
+      @if (list.price !== null) {
+        · {{ list.price | number: '1.2-2' }} €
       }
     </span>
     @if (editable()) {

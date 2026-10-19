@@ -211,3 +211,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Over keeping both**: a manual checklist with its own "secured" tally, unlinked to the collection, overlapped with a purchase list whose cards already count in the missing views and land in the collection on receipt.
 - **Empty, over a pasted decklist**: cards are added one by one with the list's catalog search; the paste matching stayed with the converter and drafts.
 - **The What I Paid entry is optional** on a manual list (created only when a total is entered, quantity 1, no source): a list made ahead of buying, or for cards already logged, shouldn't add a spend.
+
+## Cards: purchase lists no longer create What I Paid entries (2026-10-19)
+
+- **What**: creating a purchase list, by hand or from a Cardmarket order, no longer adds a What I Paid entry (nor does receiving it). The total entered is kept on the list (`purchase_lists.price`, migration `0011`), replacing the `purchase_id` link; the date field, which only dated that entry, is gone from both dialogs. Existing lists keep their linked entry's price; the entries themselves stay in What I Paid.
+- **Over creating the entry with the list, or on Mark received**: What I Paid stays a log kept by hand; a list only tracks cards on their way, with its total for reference.
+- Supersedes "The What I Paid total is entered at import" and "The What I Paid entry is optional" above.

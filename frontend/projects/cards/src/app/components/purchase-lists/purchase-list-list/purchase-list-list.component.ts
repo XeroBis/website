@@ -13,14 +13,12 @@ import { ModalComponent } from '../../shared/modal/modal.component';
 
 interface ImportForm {
   name: string;
-  purchased_at: string;
   price: number;
 }
 
 interface CreateForm {
   name: string;
-  purchased_at: string;
-  /** Blank: no What I Paid entry. */
+  /** Blank: no total. */
   price: number | null;
 }
 
@@ -37,7 +35,7 @@ export class PurchaseListListComponent implements OnInit {
   /** The picked order page, read but not imported yet. */
   reading = signal(false);
   preview = signal<CardmarketPreview | null>(null);
-  importForm = signal<ImportForm>({ name: '', purchased_at: '', price: 0 });
+  importForm = signal<ImportForm>({ name: '', price: 0 });
   importing = signal(false);
   unmatchedLines = computed(() => this.preview()?.lines.filter((line) => !line.matched) ?? []);
   matchedLineCount = computed(
@@ -78,7 +76,7 @@ export class PurchaseListListComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.createForm.set({ name: '', purchased_at: toDateInputValue(new Date()), price: null });
+    this.createForm.set({ name: '', price: null });
   }
 
   closeCreate(): void {
@@ -104,23 +102,21 @@ export class PurchaseListListComponent implements OnInit {
     const price =
       form.price === null || String(form.price) === '' ? null : Number(form.price).toFixed(2);
     this.creating.set(true);
-    this.purchaseListsService
-      .create({ name: form.name.trim(), purchased_at: form.purchased_at, price })
-      .subscribe({
-        next: (created) => {
-          this.creating.set(false);
-          this.createForm.set(null);
-          this.toastService.show(this.translate.instant('purchaseLists.created'));
-          this.router.navigate(['/purchase-lists', created.id]);
-        },
-        error: (err) => {
-          this.creating.set(false);
-          this.toastService.show(
-            err?.error?.detail ?? this.translate.instant('purchaseLists.createFailed'),
-            'error',
-          );
-        },
-      });
+    this.purchaseListsService.create({ name: form.name.trim(), price }).subscribe({
+      next: (created) => {
+        this.creating.set(false);
+        this.createForm.set(null);
+        this.toastService.show(this.translate.instant('purchaseLists.created'));
+        this.router.navigate(['/purchase-lists', created.id]);
+      },
+      error: (err) => {
+        this.creating.set(false);
+        this.toastService.show(
+          err?.error?.detail ?? this.translate.instant('purchaseLists.createFailed'),
+          'error',
+        );
+      },
+    });
   }
 
   /** Reads the picked file and asks the backend what it would import. */
@@ -138,10 +134,8 @@ export class PurchaseListListComponent implements OnInit {
         this.purchaseListsService.previewCardmarket(html).subscribe({
           next: (preview) => {
             this.reading.set(false);
-            const today = toDateInputValue(new Date());
             this.importForm.set({
-              name: `Cardmarket ${today}`,
-              purchased_at: today,
+              name: `Cardmarket ${toDateInputValue(new Date())}`,
               price: Number(preview.total_price),
             });
             this.preview.set(preview);
@@ -184,7 +178,6 @@ export class PurchaseListListComponent implements OnInit {
       .importCardmarket({
         html: this.orderHtml,
         name: form.name.trim(),
-        purchased_at: form.purchased_at,
         price: Number(form.price || 0).toFixed(2),
       })
       .subscribe({

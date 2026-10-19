@@ -25,12 +25,8 @@ export class PurchaseListsService {
     return this.http.get<PurchaseListDetail>(`${this.baseUrl}/${id}`);
   }
 
-  /** An empty list; with a price, also its What I Paid entry. */
-  create(body: {
-    name: string;
-    purchased_at: string;
-    price: string | null;
-  }): Observable<PurchaseListDetail> {
+  /** An empty list, its total optional. */
+  create(body: { name: string; price: string | null }): Observable<PurchaseListDetail> {
     return this.http.post<PurchaseListDetail>(this.baseUrl, body);
   }
 
@@ -47,7 +43,6 @@ export class PurchaseListsService {
   importCardmarket(body: {
     html: string;
     name: string;
-    purchased_at: string;
     price: string;
   }): Observable<CardmarketImportResult> {
     return this.http.post<CardmarketImportResult>(`${this.baseUrl}/cardmarket`, body);
