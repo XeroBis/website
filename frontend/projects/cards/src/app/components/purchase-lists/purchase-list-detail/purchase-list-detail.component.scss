@@ -134,6 +134,10 @@
   &.pending {
     opacity: 0.6;
   }
+
+  .card-thumb {
+    width: 72px;
+  }
 }
 
 .card-thumb {
@@ -301,7 +305,7 @@
   }
 
   .card-info {
-    flex-basis: calc(100% - 40px - var(--space-3));
+    flex-basis: calc(100% - 72px - var(--space-3));
   }
 
   .variant-select {
