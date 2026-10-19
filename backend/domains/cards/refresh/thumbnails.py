@@ -56,6 +56,8 @@ def generate_thumbnails(
             if path and not is_pending(path)
         }
     )
+    # Resizing takes minutes; no pooled connection is held meanwhile.
+    db.close()
     generated = 0
     for index, path in enumerate(paths, 1):
         scan = data_dir / path

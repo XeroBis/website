@@ -260,6 +260,7 @@ def test_scrape_images_downloads_missing_scans_and_keeps_failed_ones_pending(
         )
 
     assert result == {"images_downloaded": 1}
+    assert web.connections == [0] * 6  # none held while downloading
     assert progress[0] == (0, 6) and progress[-1] == (6, 6)
     sprigatito, mime = catalog()
     base = f"{SV}/SVI/cards/1_sprigatito"
@@ -329,7 +330,15 @@ def test_link_existing_files_fills_only_pending_or_missing_paths(source_dir, dat
 # ── thumbnails ───────────────────────────────────────────────────────────────
 
 
-def test_thumbnails_for_downloaded_standard_scans_only(data_dir):
+def test_thumbnails_for_downloaded_standard_scans_only(data_dir, monkeypatch):
+    connections = []
+    make = thumbnails.make_thumbnail
+
+    def counting(scan):
+        connections.append(database.engine.pool.checkedout())
+        return make(scan)
+
+    monkeypatch.setattr(thumbnails, "make_thumbnail", counting)
     scan = data_dir / SV / "SVI" / "cards" / "1_a_standard_EN.jpg"
     scan.parent.mkdir(parents=True)
     scan.write_bytes(jpeg(600, 840))
@@ -341,6 +350,7 @@ def test_thumbnails_for_downloaded_standard_scans_only(data_dir):
         assert thumbnails.generate_thumbnails(db, data_dir) == {
             "thumbnails_generated": 1
         }
+    assert connections == [0]  # none held while resizing
     thumb = data_dir / SV / "SVI" / "thumbnails" / "1_a_standard_EN.jpg"
     with Image.open(thumb) as img:
         assert img.size == (300, 420)
@@ -443,6 +453,7 @@ def test_details_match_main_sets_by_name_and_number(data_dir, web):
         )
 
     assert result == dict(matched=1, unmatched=1, skipped=3, failed=0, french_missing=1)
+    assert set(web.connections) == {0}  # none held while downloading
     assert progress[-1] == (5, 5)
     with database.SessionLocal() as db:
         assert db.get(m.CardCatalog, sprigatito).details == {"en": {"hp": 70}}

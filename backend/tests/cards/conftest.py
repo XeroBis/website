@@ -4,7 +4,7 @@ temporary CARDS_DATA_DIR and CARDS_SOURCE_DIR, a small catalog, a fake web
 
 import httpx2
 import pytest
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.testclient import TestClient
 
 import app
@@ -42,16 +42,17 @@ def source_dir(tmp_path, monkeypatch):
 
 @pytest.fixture
 def connections_while_streaming(monkeypatch):
-    """Pooled connections checked out as each FileResponse starts sending
-    (should be 0: a slow download must not hold one)."""
+    """Pooled connections checked out as each file or streamed response
+    starts sending (should be 0: a slow download must not hold one)."""
     counts = []
-    send = FileResponse.__call__
+    for response_class in (FileResponse, StreamingResponse):
+        send = response_class.__call__
 
-    async def counting(self, scope, receive, send_):
-        counts.append(database.engine.pool.checkedout())
-        await send(self, scope, receive, send_)
+        async def counting(self, scope, receive, send_, send=send):
+            counts.append(database.engine.pool.checkedout())
+            await send(self, scope, receive, send_)
 
-    monkeypatch.setattr(FileResponse, "__call__", counting)
+        monkeypatch.setattr(response_class, "__call__", counting)
     return counts
 
 
@@ -62,6 +63,8 @@ class FakeWeb:
     def __init__(self):
         self.routes: dict[str, httpx2.Response] = {}
         self.requests: list[str] = []
+        # Pooled connections checked out during each request (should be 0).
+        self.connections: list[int] = []
 
     def add(self, url: str, content: bytes = b"\xff\xd8jpeg", status: int = 200):
         self.routes[url] = httpx2.Response(status, content=content)
@@ -72,6 +75,7 @@ class FakeWeb:
     def handle(self, request: httpx2.Request) -> httpx2.Response:
         url = str(request.url)
         self.requests.append(url)
+        self.connections.append(database.engine.pool.checkedout())
         if url not in self.routes:
             raise AssertionError(f"Unexpected external request: {url}")
         return self.routes[url]

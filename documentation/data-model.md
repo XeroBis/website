@@ -92,7 +92,7 @@ The projects shown on `alanbignon.com`, written by hand by its editors. No user 
 
 ## `workout`
 
-Workout tracker (ported from `../workout`). One shared catalog of exercises and equipments; everything else belongs to a user (`core.users.id`): logged workouts, templates and saved circuits. Workouts, templates and saved circuits share one shape: an ordered list of **entries**, each either one exercise with its sets, or a circuit (name, duration, rounds) holding exercises with their sets. Models in `backend/domains/workout/models.py`.
+Workout tracker (ported from `workout`). One shared catalog of exercises and equipments; everything else belongs to a user (`core.users.id`): logged workouts, templates and saved circuits. Workouts, templates and saved circuits share one shape: an ordered list of **entries**, each either one exercise with its sets, or a circuit (name, duration, rounds) holding exercises with their sets. Models in `backend/domains/workout/models.py`.
 
 ### Catalog
 
@@ -175,7 +175,7 @@ Same shape as workouts, per user:
 
 ## `cards`
 
-Pokémon cards (ported from `../pokemon_cards`, migration-plan.md step 6). One shared catalog of every card and the print variants it comes in, imported from saved pokecardex HTML. Everything else belongs to a user: the collection (a quantity per owned print), decks and upgrade drafts, purchases, share links and shopping lists. Combats are the one log shared between cards users. Models in `backend/domains/cards/models.py`, migration `0007` (it also enables the `pg_trgm` extension). Image paths are relative to `CARDS_DATA_DIR` (architecture.md).
+Pokémon cards (ported from `pokemon_cards`). One shared catalog of every card and the print variants it comes in, imported from saved pokecardex HTML. Everything else belongs to a user: the collection (a quantity per owned print), decks and upgrade drafts, purchases, share links and shopping lists. Combats are the one log shared between cards users. Models in `backend/domains/cards/models.py`, migration `0007` (it also enables the `pg_trgm` extension). Image paths are relative to `CARDS_DATA_DIR` (architecture.md).
 
 ### `cards.card_catalog`
 
@@ -312,7 +312,7 @@ A shopping-round checklist (name unique per owner, `updated_at` moves on every c
 
 ## `media`
 
-Books, films and series (ported from `../media`). Metadata lives once in a shared catalog (`media_items`), whoever added it. Everything personal (status, rating, notes, ownership, progress) is in a per-user `library_entries` row, and each read/watch is a `reading_sessions` row. Models in `backend/domains/media/models.py`. Enum types (`media.media_type`, `media.media_source`, `media.entry_status`) live in the schema too.
+Books, films and series (ported from `media`). Metadata lives once in a shared catalog (`media_items`), whoever added it. Everything personal (status, rating, notes, ownership, progress) is in a per-user `library_entries` row, and each read/watch is a `reading_sessions` row. Models in `backend/domains/media/models.py`. Enum types (`media.media_type`, `media.media_source`, `media.entry_status`) live in the schema too.
 
 ### `media.media_items`
 

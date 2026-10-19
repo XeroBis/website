@@ -17,7 +17,6 @@ export * from './lib/i18n/i18n';
 export * from './lib/i18n/language';
 export * from './lib/icon/icon';
 export * from './lib/layout/header';
-export * from './lib/placeholder/placeholder';
 export * from './lib/theme/theme';
 export * from './lib/theme/theme.service';
 export * from './lib/files/files';

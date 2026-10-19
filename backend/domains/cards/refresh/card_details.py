@@ -89,6 +89,9 @@ def import_details(
     rows = db.scalars(
         select(m.CardCatalog).order_by(m.CardCatalog.set_code, m.CardCatalog.id)
     ).all()
+    # The downloads take minutes: release the pooled connection. The rows stay
+    # readable (detached); updates go by id, one short transaction per batch.
+    db.close()
     total = len(rows)
     result = dict(matched=0, unmatched=0, skipped=0, failed=0, french_missing=0)
     done = 0
@@ -160,6 +163,7 @@ def import_details(
                     pool.submit(fetch, item): item
                     for item in work[offset : offset + BATCH]
                 }
+                updates = []
                 for future in as_completed(pending):
                     try:
                         row_id, details, missing = future.result()
@@ -171,13 +175,17 @@ def import_details(
                         continue
                     result["french_missing"] += missing
                     if details.get("en"):
-                        db.execute(
-                            update(m.CardCatalog)
-                            .where(m.CardCatalog.id == row_id)
-                            .values(details=details)
-                        )
+                        updates.append((row_id, details))
                         tick("matched")
                     else:
                         tick("unmatched")
+                # Written once the batch is downloaded, so the transaction
+                # doesn't wait on the network.
+                for row_id, details in updates:
+                    db.execute(
+                        update(m.CardCatalog)
+                        .where(m.CardCatalog.id == row_id)
+                        .values(details=details)
+                    )
                 db.commit()
     return result

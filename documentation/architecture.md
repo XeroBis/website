@@ -31,7 +31,7 @@ website/
 │   │   ├── portfolio/          #   /api/portfolio routes, `portfolio` schema models
 │   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
 │   │   │                       #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)
-│   │   ├── cards/              #   /api/cards (being ported, migration-plan step 6): `cards` schema models,
+│   │   ├── cards/              #   /api/cards routes, `cards` schema models,
 │   │   │                       #   variant_order.py (print variants + display order), access.py, names.py (name
 │   │   │                       #   normalization), display.py (FR/EN display fields), search.py (name match + sorts),
 │   │   │                       #   routers/ (catalog, catalog_admin, images, collection, decks, …),
@@ -51,7 +51,7 @@ website/
 │   └── projects/
 │       ├── shared/             # library, imported as `@shared` (from source, never built on its own):
 │       │                       #   auth (AuthService, guards, interceptor), i18n, environment, http (httpStatus),
-│       │                       #   layout (`ab-header`), icon (`ab-icon`), placeholder;
+│       │                       #   layout (`ab-header`), icon (`ab-icon`);
 │       │                       #   public/ngsw-worker.js: safety worker copied into cards' and workout's builds
 │       └── portfolio/ workout/ cards/ media/ auth/   # one application per site
 ├── infra/
@@ -70,7 +70,7 @@ website/
 
 ### Backend conventions
 
-- Every route is under `/api/<domain>/...` (`/api/health`, later `/api/auth`, `/api/cards`, …), so any host can proxy `/api` to the same backend without collisions.
+- Every route is under `/api/<domain>/...` (`/api/health`, `/api/auth`, `/api/cards`, …), so any host can proxy `/api` to the same backend without collisions.
 - Every model sets `__table_args__ = {"schema": "<schema>"}` with one of `core.database.SCHEMAS`. A domain may reference `core` tables (e.g. `core.users`) but never another app's schema.
 - `core` tables' models live in `core/models.py`, not in `domains/auth`, because `core/deps.py` needs `User` and `core` never imports from `domains`.
 - Protected routes take `Depends(get_current_user)` (or `get_optional_user` for public routes that change with the viewer, `require_admin` for admin-only ones, `require_app("<app>")` for an app's users) from `core/deps.py`. They return the `core.users` row, and also enforce CSRF on unsafe methods.
@@ -79,7 +79,7 @@ website/
 ### Frontend: projects, library, bundles
 
 - Each application has its own `main.ts`, `index.html`, routes, `public/` assets (and optionally a web manifest), and builds to `frontend/dist/<app>/browser/`.
-- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; each also has a `favicon.svg`, which browsers that support it use instead. Cards keeps the old repo's Poké Ball. Portfolio, workout, media and auth have new ones matching their look: workout a white dumbbell on its rose-brown, portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, rasterized from the same dumbbell, plus a maskable one with the dumbbell shrunk into the safe zone) so it can be installed to a phone's home screen. Cards likewise keeps the Poké Ball manifest, regular/maskable icons and a 180px Apple touch icon. No app has a real service worker. Cards and workout serve `/ngsw-worker.js` only as a safety worker that removes their old repos' Angular service worker (`projects/shared/public/ngsw-worker.js`, added to their `assets` in `angular.json`; see decisions.md "Safety worker"). Workout's body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
+- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; each also has a `favicon.svg`, which browsers that support it use instead. Cards keeps its original Poké Ball. Portfolio, workout, media and auth have new ones matching their look: workout a white dumbbell on its rose-brown, portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, rasterized from the same dumbbell, plus a maskable one with the dumbbell shrunk into the safe zone) so it can be installed to a phone's home screen. Cards likewise keeps the Poké Ball manifest, regular/maskable icons and a 180px Apple touch icon. No app has a real service worker. Cards and workout serve `/ngsw-worker.js` only as a safety worker that removes their old repos' Angular service worker (`projects/shared/public/ngsw-worker.js`, added to their `assets` in `angular.json`; see decisions.md "Safety worker"). Workout's body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
 - `shared` holds what more than one app needs (HTTP services, auth, i18n, layout pieces). Apps import it as `@shared`, which `tsconfig.json` maps to `projects/shared/src/public-api.ts`: the library's source is compiled into each app's bundle at build time, and tree-shaking keeps only the parts that app uses. Nothing is shared at runtime.
 - One `package.json`, so the Angular version is the same for every app.
 - **Environment**: `projects/shared/src/lib/environment/environment.ts` is the prod build's (`production: true`, the `https://*.alanbignon.com` app URLs). Each app's `development` build configuration (`ng serve`) swaps in `environment.development.ts` (the `http://localhost:460x` URLs) through `fileReplacements` in `angular.json`. Code reads it through the `ENVIRONMENT` injection token, which tests override.
@@ -103,7 +103,7 @@ website/
 
 `projects/cards` uses standalone zoneless Angular 22, OnPush views, lazy routes, and signals for page and staging-queue state. The API wrappers live in `services/`; models, set/variant/rarity/sort/deck-visual helpers stay local. All URLs are relative `/api/cards/...`. Collection and deck image helpers use `/images/` (thumbnails replace the `/cards/` folder); `/shared/:token` uses public token-scoped image/logo/symbol routes and sits outside `appGuard('cards')`. Catalog Management has `adminGuard` in addition to the app guard; name edits are admin-only in the UI too.
 
-The shared language switch saves the account then explicitly reloads the current route so its API display fields follow the new language. Route recreation also handles set/deck/list id changes; ordinary same-URL navigation is ignored to preserve draft-modal back-button behavior. `readJson`/`downloadBlob` in `@shared` serve browser file transfers, and `httpErrorMessage` formats backend validation details. JSON imports send the parsed value. Cards opts into HttpClient's XHR backend for image-upload progress: ZIP import sends the File as `application/zip`, receives 202 after upload and polls restoration/linking. ZIP export is an anchor download, never an in-memory Blob. The admin page probes every job status on entry and polls while mounted, with teardown on navigation. Styling exposes `--color-*` and header `--ab-*` variables, which the 6.8 look sets.
+The shared language switch saves the account then explicitly reloads the current route so its API display fields follow the new language. Route recreation also handles set/deck/list id changes; ordinary same-URL navigation is ignored to preserve draft-modal back-button behavior. `readJson`/`downloadBlob` in `@shared` serve browser file transfers, and `httpErrorMessage` formats backend validation details. JSON imports send the parsed value. Cards opts into HttpClient's XHR backend for image-upload progress: ZIP import sends the File as `application/zip`, receives 202 after upload and polls restoration/linking. ZIP export is an anchor download, never an in-memory Blob. The admin page probes every job status on entry and polls while mounted, with teardown on navigation. Styling exposes `--color-*` and header `--ab-*` variables, which the cards look sets (features.md "Cards").
 
 ### Background jobs
 
@@ -140,8 +140,6 @@ Both stacks run `alembic upgrade head` before starting uvicorn, so migrations ap
 `CARDS_DATA_DIR` holds cards' downloaded files (~2 GB), the old app's layout: `<series>/<set_code>/{cards,thumbnails}/…` (scans, thumbnails), `<series>/<set_code>/<set_code>_{logo_EN,logo_FR,symbol}.png`, `variant-icons/` (badges), `card-details/` (TCGdex response cache), plus a `.upload-*.zip` while an images import is being received. It is a named volume in both stacks, outside the `./backend` bind mount, so it survives rebuilds and stays out of the image; `docker compose down -v` deletes it. The saved pokecardex HTML the catalog is imported from is tracked in the repo (`CARDS_SOURCE_DIR`, default `domains/cards/source`: one folder per series with its `name.txt`, one per set with `{code}_{en,fr}{,_header}.html` and `{code}_rarity.txt`, 41 MB) and baked into the backend image.
 
 ### Local dev ports
-
-Offset from the old per-app repos (5432–5435 / 8000–8300 / 4200–4500) so both can run during the migration.
 
 | Service | Host port |
 |---|---|

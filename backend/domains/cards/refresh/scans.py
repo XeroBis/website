@@ -158,6 +158,11 @@ def scrape_images(
         .order_by(m.CardCatalog.set_code, m.CardCatalog.id)
     ).all()
     by_set = {code: list(group) for code, group in groupby(rows, lambda r: r.set_code)}
+    # End the read transaction: downloading a set takes minutes and must not
+    # hold a pooled connection. The rows stay loaded and tracked, and each
+    # set's commit below flushes its changes in a short transaction.
+    db.expire_on_commit = False
+    db.commit()
     work = {
         code: [d for row in group for d in _missing(row)]
         for code, group in by_set.items()

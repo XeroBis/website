@@ -1,6 +1,6 @@
 # alanbignon.com monorepo
 
-One FastAPI backend, one Angular 22 workspace (one app per site), one Postgres database (one schema per app) and one edge nginx, serving `alanbignon.com` (portfolio), `workout.`, `cards.`, `media.` and `auth.alanbignon.com`. It replaces the sibling repos `../auth-service`, `../vps-edge`, `../pokemon_cards`, `../workout`, `../media`. They are read-only references while porting, see `documentation/migration-plan.md`.
+One FastAPI backend, one Angular 22 workspace (one app per site), one Postgres database (one schema per app) and one edge nginx, serving `alanbignon.com` (portfolio), `workout.`, `cards.`, `media.` and `auth.alanbignon.com`.
 
 Start with `documentation/architecture.md`.
 
@@ -12,19 +12,24 @@ Start with `documentation/architecture.md`.
 |---|---|
 | Folder structure, environments, ports, request flow | `architecture.md` |
 | DB schemas, tables, columns, relationships, business rules | `data-model.md` (section of that schema) |
-| Tech stack, library or architecture choice | `decisions.md` (what, over what, why) |
+| Tech stack, library or architecture choice | `decisions.md` (dated entry at the bottom: what, over what, why) |
 | User-facing behaviour, validation rules | `features.md` (section of that app) |
 | Deferred / undecided / ruled-out possibilities | `ideas.md` |
-| Progress porting an old repo | `migration-plan.md` |
 | Prod runbook (cert, `.env`, bring-up) | `deployment.md` |
 
+This table is the only copy of the routing; `documentation/README.md` and the `plan-and-document` skill point here.
+
 For any change in how something works, is built or is structured, use the `plan-and-document` skill: ask first, then document.
+
+## Commits
+
+Conventional commits, scoped by app: `feat(cards): …`, `fix(workout): …`, `style(media): …`. Scopes are the app names plus `infra` and `backend`; no scope for a change spanning several apps.
 
 ## Python Tooling Rule
 
 **Always use `uv` inside `backend/`** (`uv run`, `uv add`, `uv sync`), never `pip`/`python` directly.
 
-- Tests / lint: `make b-test`, `make lint` (tests need the dev `db` up, on `localhost:5440`)
+- Tests / lint: `make b-test`, `make lint` (tests need the dev `db` up, on `localhost:5440`: `docker compose up -d db`)
 - New migration: `cd backend && uv run alembic revision --autogenerate -m "..."` (dev `db` up). Every model must set `__table_args__ = {"schema": ...}` and be imported in `alembic/env.py`.
 
 The app itself runs in Docker (`make up`). The backend container runs `alembic upgrade head` and then `uvicorn --reload` on every start.

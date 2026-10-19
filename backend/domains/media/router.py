@@ -131,10 +131,14 @@ def _item_from_source(
     if existing is not None:
         return existing
 
+    # The source calls can take seconds each: release the pooled connection
+    # first (`user` stays readable, detached), and only write afterwards.
+    db.close()
     try:
         details = sources.details(body.source, body.type, body.external_id)
     except sources.SourceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    cover = sources.download_cover(details.cover_url) if details.cover_url else None
 
     item = MediaItem(
         type=body.type,
@@ -157,12 +161,10 @@ def _item_from_source(
             .one()
         )
 
-    if details.cover_url:
-        cover = sources.download_cover(details.cover_url)
-        if cover is not None:
-            db.add(Cover(media_item_id=item.id, content_type=cover[0], data=cover[1]))
-        else:
-            logger.info("No cover stored for %s %s", body.source, body.external_id)
+    if cover is not None:
+        db.add(Cover(media_item_id=item.id, content_type=cover[0], data=cover[1]))
+    elif details.cover_url:
+        logger.info("No cover stored for %s %s", body.source, body.external_id)
     return item
 
 
@@ -176,8 +178,11 @@ def search(
     user: User = Depends(media_user),
     db: Session = Depends(get_db),
 ):
+    language = sources.language(user.language)
+    # Not held while the source answers (see _item_from_source).
+    db.close()
     try:
-        hits = sources.search(type, q.strip(), sources.language(user.language))
+        hits = sources.search(type, q.strip(), language)
     except sources.SourceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 

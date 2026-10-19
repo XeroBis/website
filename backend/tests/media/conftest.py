@@ -68,6 +68,8 @@ class FakeWeb:
     def __init__(self):
         self.routes: dict[str, httpx2.Response] = {}
         self.requests: list[httpx2.Request] = []
+        # Pooled connections checked out during each request (should be 0).
+        self.connections: list[int] = []
 
     def json(self, url: str, data) -> None:
         self.routes[url] = httpx2.Response(200, json=data)
@@ -80,6 +82,7 @@ class FakeWeb:
     def handle(self, request: httpx2.Request) -> httpx2.Response:
         """Routes are `host/path`, optionally with `?language=` (TMDB) or
         `?lang=` (Open Library) to answer per language."""
+        self.connections.append(database.engine.pool.checkedout())
         self.requests.append(request)
         key = f"{request.url.host}{request.url.path}"
         params = request.url.params

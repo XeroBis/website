@@ -1,8 +1,6 @@
 # Features
 
-User-facing behaviour per app. An app that isn't migrated yet shows a
-placeholder page (its name and whether `/api/health` answers) — see
-`migration-plan.md`.
+User-facing behaviour per app.
 
 ## Shared
 
@@ -88,7 +86,7 @@ A project is `{id, name, description_fr, description_en, repo_url, featured, pos
 
 ## Workout — `workout.alanbignon.com`
 
-A workout log: workouts made of exercises with their sets (and circuits), a shared exercise catalog, templates, saved circuits, a live session mode for the gym, a stats dashboard, and import/export. Ported from `../workout` (see decisions.md for what changed). Every page is behind `appGuard('workout')` (logged out → portfolio; no workout access → the auth app's account page). FR/EN. Tables and rules: data-model.md `workout`.
+A workout log: workouts made of exercises with their sets (and circuits), a shared exercise catalog, templates, saved circuits, a live session mode for the gym, a stats dashboard, and import/export. Ported from `workout` (see decisions.md for what changed). Every page is behind `appGuard('workout')` (logged out → portfolio; no workout access → the auth app's account page). FR/EN. Tables and rules: data-model.md `workout`.
 
 ### Look
 
@@ -185,7 +183,7 @@ Stats: `{date_from, date_to` (the range used: the query's, else first and last w
 
 ## Cards — `cards.alanbignon.com`
 
-A private card collection and deck tracker, ported from `../pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The web manifest and Poké Ball icons support home-screen installation, with no service worker. A browser still running the old app's cached copy switches to this one on its next visit, with one automatic reload; before, it looped between cards and the login page.
+A private card collection and deck tracker, ported from `pokemon_cards`. Personal pages require `appGuard('cards')`; catalog management also requires `adminGuard`. FR/EN interface and server-localized names/images follow the account's language. The web manifest and Poké Ball icons support home-screen installation, with no service worker. A browser still running the old app's cached copy switches to this one on its next visit, with one automatic reload; before, it looped between cards and the login page.
 
 ### Pages
 
@@ -311,7 +309,7 @@ A deck row (`DeckCardOut`) is `{id, card_id, catalog_id, variant_type, quantity_
 
 ## Media — `media.alanbignon.com`
 
-A personal tracker for books, films and series: what I own, what I've read/watched, what's next. Ported from `../media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → portfolio; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
+A personal tracker for books, films and series: what I own, what I've read/watched, what's next. Ported from `media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → portfolio; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
 
 ### Look
 

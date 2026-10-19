@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from core import database
 from domains.cards import models as m
-from domains.cards.refresh import jobs
+from domains.cards.refresh import archive, jobs
 from domains.cards.refresh import variant_icons as icons
 from tests.cards.conftest import URL, add_catalog_card
 from tests.cards.source_files import (
@@ -325,7 +325,9 @@ def exported_names(admin, query: str = "") -> list[str]:
         return names
 
 
-def test_images_export_streams_every_image_by_default(admin, image_tree):
+def test_images_export_streams_every_image_by_default(
+    admin, image_tree, connections_while_streaming
+):
     assert exported_names(admin) == [
         f"{SV}/MEW/cards/1_b_standard_EN.jpg",
         f"{SV}/SVI/SVI_logo_EN.png",
@@ -336,6 +338,7 @@ def test_images_export_streams_every_image_by_default(admin, image_tree):
         f"{SV}/SVI/cards/1_a_standard_FR.jpg",
         f"{SV}/SVI/thumbnails/1_a_standard_EN.jpg",
     ]
+    assert connections_while_streaming == [0]
 
 
 @pytest.mark.parametrize(
@@ -385,7 +388,7 @@ def post_zip(admin, body: bytes, query: str = ""):
 
 
 def test_images_import_restores_selected_files_and_links_pending_scans(
-    admin, data_dir, source_dir
+    admin, data_dir, source_dir, monkeypatch
 ):
     write_set(source_dir, SV, "SVI", [card("Bulbasaur", "1")])
     admin.post(f"{CATALOG}/refresh/steps/import_html")
@@ -401,8 +404,18 @@ def test_images_import_restores_selected_files_and_links_pending_scans(
         }
     )
 
+    # Checked right after the upload: no connection held while receiving it.
+    connections = []
+    is_zip = archive.is_zip
+    monkeypatch.setattr(
+        archive,
+        "is_zip",
+        lambda path: connections.append(database.engine.pool.checkedout())
+        or is_zip(path),
+    )
     response = post_zip(admin, body, "?french=true&logos=false")
     assert response.status_code == 202
+    assert connections == [0]
 
     state = admin.get(f"{CATALOG}/import/images/status").json()
     assert state["status"] == "done", state

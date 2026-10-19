@@ -19,12 +19,15 @@ logger = logging.getLogger(__name__)
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    with SessionLocal() as db:
+    # Items stay loaded across commits, so no transaction (and no pooled
+    # connection) stays open while a source answers.
+    with SessionLocal(expire_on_commit=False) as db:
         items = db.scalars(
             select(MediaItem)
             .where(MediaItem.source != MediaSource.manual)
             .order_by(MediaItem.id)
         ).all()
+        db.commit()
         refreshed = 0
         for item in items:
             try:

@@ -162,8 +162,12 @@ def _selection(
 def export_images(
     selection: archive.Selection = Depends(_selection),
     _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     """The selected files as `card_images.zip`, streamed."""
+    # The admin check's session (the same one, dependencies are cached) would
+    # otherwise keep its pooled connection for the whole download.
+    db.close()
     files = archive.selected_files(_data_dir(), selection)
     if not files:
         raise not_found("Image")
@@ -181,10 +185,13 @@ async def import_images(
     request: Request,
     selection: archive.Selection = Depends(_selection),
     _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     """The zip as the raw body. It is saved inside CARDS_DATA_DIR, then the
     selected entries are restored in the background (files already there
     kept) and pending catalog scans linked; poll /import/images/status."""
+    # Not held for the whole upload (see export_images).
+    await run_in_threadpool(db.close)
     key = jobs.IMPORT_IMAGES
     if not jobs.try_start(key, total_steps=len(archive.IMPORT_STEPS)):
         raise _busy()

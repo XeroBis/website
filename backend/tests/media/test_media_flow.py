@@ -38,6 +38,8 @@ def test_add_progress_and_isolation(media_client, anon, web):
         f"{URL}/library/from-search",
         json={"source": "tmdb", "external_id": "603", "type": "film"},
     ).json()
+    # No connection held while the sources answer.
+    assert web.connections and set(web.connections) == {0}
 
     # Update progress.
     assert (
