@@ -87,13 +87,60 @@
   font-size: 0.8rem;
 }
 
-@media (hover: none) {
-  :host ::ng-deep .binder-pocket .card-tile .qty-controls-group {
-    position: absolute;
-    bottom: 1.3rem;
-    left: 50%;
-    transform: translateX(-50%);
-    margin: 0;
+// In a pocket the stepper flanks the card: − on its left edge, + on its right,
+// vertically centred on the scan (the ×N badge already shows the count).
+// `.binder-pages` outranks card-tile's own touch rule (`position: static`),
+// which would otherwise push the controls out of the fixed-size pocket.
+:host ::ng-deep .binder-pages .binder-pocket .card-tile .qty-controls-group {
+  position: absolute;
+  top: calc((100% - 1.25rem) / 2);
+  bottom: auto;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  align-items: stretch;
+  margin: 0;
+  pointer-events: none;
+
+  .qty-controls {
+    justify-content: space-between;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .qty-controls-value {
+    display: none;
+  }
+
+  // Alone (card not owned yet), + still sits on the right.
+  .qty-controls-btn:last-child {
+    margin-left: auto;
+  }
+
+  // White in both themes, so they stand out on any scan.
+  .qty-controls-btn {
+    pointer-events: auto;
+    background: #fff;
+    color: #1a1a1a;
+    box-shadow: var(--shadow-md);
+
+    &:hover:not(:disabled) {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast, #fff);
+    }
+  }
+}
+
+@media (hover: hover) {
+  :host
+    ::ng-deep
+    .binder-pages
+    .binder-pocket
+    .card-tile:not(:hover, :focus-within)
+    .qty-controls-btn {
+    pointer-events: none;
   }
 }
 /* "Show variants: both" -- one framed group per card (number + name header,
