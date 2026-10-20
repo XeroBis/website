@@ -4,7 +4,7 @@
   [class.not-clickable]="!clickable"
   (click)="onClick()"
 >
-  <img [src]="imageUrl" [alt]="alt" loading="lazy" />
+  <img [src]="imageUrl" [alt]="alt" loading="lazy" (error)="onImageError($event)" />
   @if (numberBadge) {
     <span class="number-badge" [class.secret]="secretNumber">{{ numberBadge }}</span>
   }

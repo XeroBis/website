@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 /** The chrome shared by every card grid tile in the app (set detail's
@@ -16,7 +24,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './card-tile.component.scss',
 })
-export class CardTileComponent {
+export class CardTileComponent implements OnChanges {
   @Input({ required: true }) imageUrl!: string;
   @Input({ required: true }) alt!: string;
   @Input({ required: true }) title!: string;
@@ -33,6 +41,31 @@ export class CardTileComponent {
   @Input() secretNumber = false;
   @Input() clickable = true;
   @Output() readonly tileClick = new EventEmitter<void>();
+
+  /** Image requests a dropped connection killed so far (a failed <img>
+   * never retries on its own, so the tile stayed blank until a reload). */
+  private imageRetries = 0;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['imageUrl']) {
+      this.imageRetries = 0;
+    }
+  }
+
+  /** Reloads a failed image up to twice, waiting a little longer each time. */
+  onImageError(event: Event): void {
+    if (this.imageRetries >= 2) {
+      return;
+    }
+    this.imageRetries++;
+    const img = event.target as HTMLImageElement;
+    const url = this.imageUrl;
+    setTimeout(() => {
+      if (url === this.imageUrl) {
+        img.src = url;
+      }
+    }, 1000 * this.imageRetries);
+  }
 
   onClick(): void {
     if (this.clickable) {
