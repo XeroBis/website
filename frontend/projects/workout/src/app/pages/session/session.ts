@@ -360,7 +360,7 @@ export class SessionPage {
     return this.attempt(async () => {
       this.busy.set(true);
       try {
-        this.open(await this.api.startSession(templateId));
+        this.open(await this.api.startSession({ template_id: templateId }));
       } finally {
         this.busy.set(false);
       }

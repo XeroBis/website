@@ -135,7 +135,7 @@ export class Templates {
 
   protected async start(t: Template): Promise<void> {
     try {
-      await this.api.startSession(t.id);
+      await this.api.startSession({ template_id: t.id });
       await this.router.navigateByUrl('/session');
     } catch (e) {
       this.message.set({ ok: false, text: errorMessage(e) });

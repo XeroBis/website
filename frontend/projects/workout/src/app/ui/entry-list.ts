@@ -34,7 +34,7 @@ import { SetLines } from './set-lines';
       }
     }
     <ng-template #row let-ex>
-      <div class="exercise-row">
+      <div class="exercise-row" [class.highlight]="ex.exercise_id === highlight()">
         <div class="exercise-top">
           <button type="button" class="link" (click)="exerciseClicked.emit(ex.exercise)">{{ ex.exercise.name }}</button>
           <span class="badge" [attr.data-type]="ex.exercise.type">{{ 'type.' + ex.exercise.type | translate }}</span>
@@ -46,5 +46,7 @@ import { SetLines } from './set-lines';
 })
 export class EntryList {
   readonly entries = input.required<Entry[]>();
+  /** An exercise to highlight (the workouts list's exercise filter). */
+  readonly highlight = input<number | null>(null);
   readonly exerciseClicked = output<Exercise>();
 }

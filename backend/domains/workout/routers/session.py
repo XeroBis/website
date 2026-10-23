@@ -1,5 +1,6 @@
-"""The live session: one `in_progress` workout per user, edited set by set,
-then finished (keeping only checked sets) or discarded."""
+"""The live session: one `in_progress` workout per user (blank, or planned
+from a template or a past workout), edited set by set, then finished
+(keeping only checked sets) or discarded."""
 
 from datetime import UTC, datetime
 
@@ -13,7 +14,7 @@ from core.models import User
 from domains.workout import entries
 from domains.workout import models as m
 from domains.workout import schemas as s
-from domains.workout.access import not_found, owned, workout_user
+from domains.workout.access import not_found, owned, viewed_user_id, workout_user
 
 router = APIRouter(prefix="/session", tags=["workout"])
 
@@ -77,8 +78,15 @@ def start_session(
     session = m.Workout(
         user_id=user.id, status="in_progress", started_at=datetime.now(UTC)
     )
+    source = None
     if body.template_id is not None:
-        template = owned(db, m.Template, body.template_id, user.id, "Template")
+        source = owned(db, m.Template, body.template_id, user.id, "Template")
+    elif body.workout_id is not None:
+        source = db.get(m.Workout, body.workout_id)
+        owner = viewed_user_id(db, user, body.user_id)
+        if source is None or source.user_id != owner or source.status != "completed":
+            raise not_found("Workout")
+    if source is not None:
         # Exercises keep their planned sets; circuit members start without
         # sets, so the round counter starts at round 1.
         planned = [
@@ -94,7 +102,7 @@ def start_session(
                 if entry.type == "circuit"
                 else entry
             )
-            for entry in entries.entries_out(template)
+            for entry in entries.entries_out(source)
         ]
         entries.build(session, entries.WORKOUT, planned)
     db.add(session)

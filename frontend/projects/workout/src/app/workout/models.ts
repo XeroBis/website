@@ -121,6 +121,13 @@ export interface SavedCircuitInput {
   exercises: MemberInput[];
 }
 
+/** What a live session starts from: nothing, one of your templates, or a completed workout ("Repeat"). */
+export interface SessionSource {
+  template_id?: number | null;
+  workout_id?: number;
+  user_id?: number | null;
+}
+
 export interface WorkoutUser {
   id: number;
   pseudo: string;

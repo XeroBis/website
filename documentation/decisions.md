@@ -217,3 +217,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **What**: creating a purchase list, by hand or from a Cardmarket order, no longer adds a What I Paid entry (nor does receiving it). The total entered is kept on the list (`purchase_lists.price`, migration `0011`), replacing the `purchase_id` link; the date field, which only dated that entry, is gone from both dialogs. Existing lists keep their linked entry's price; the entries themselves stay in What I Paid.
 - **Over creating the entry with the list, or on Mark received**: What I Paid stays a log kept by hand; a list only tracks cards on their way, with its total for reference.
 - Supersedes "The What I Paid total is entered at import" and "The What I Paid entry is optional" above.
+
+## Workout: undoable delete and Repeat on the workouts list (2026-10-23)
+
+- **What**: deleting a workout on `/workouts` hides the card and shows an Undo bar for 6 s; the `DELETE` is sent when the bar goes away or the page is left.
+- **Over a soft delete** (`deleted_at` column, restore endpoint, purge job): no schema or API change; the only way to lose the undo is closing the tab within those seconds, which then deletes as asked.
+- **Repeat** reuses `POST /session` with a `workout_id` (over copying the entries in the browser and adding them one by one), so a session from a workout is built exactly like one from a template.

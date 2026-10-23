@@ -53,6 +53,21 @@ export function flatExercises(entries: Entry[]): ExerciseEntry[] {
   return entries.flatMap((e) => (e.type === 'circuit' ? e.exercises : [e]));
 }
 
+/**
+ * A workout's one-line summary: each top-level exercise or circuit (`name`
+ * null for an unnamed circuit), `hit` when it is or contains `exerciseId`.
+ */
+export function entryNames(
+  entries: Entry[],
+  exerciseId: number | null,
+): { name: string | null; hit: boolean }[] {
+  return entries.map((e) =>
+    e.type === 'circuit'
+      ? { name: e.name, hit: e.exercises.some((x) => x.exercise_id === exerciseId) }
+      : { name: e.exercise.name, hit: e.exercise_id === exerciseId },
+  );
+}
+
 /** Summed muscle intensities, capped at 3, strongest first. */
 export function aggregateMuscles(exercises: ExerciseEntry[]): MuscleIntensity[] {
   const totals = new Map<string, number>();

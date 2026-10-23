@@ -378,6 +378,11 @@ form.inline {
     padding: 0.25rem 0.6rem;
     font-size: 0.82rem;
   }
+  /* Icon only: a circle the toolbar's height. */
+  &.round {
+    width: 2.4rem;
+    padding: 0;
+  }
   &.big {
     min-height: 3.25rem;
     padding: 0.6rem 1.4rem;
@@ -408,6 +413,9 @@ form.inline {
   }
   &:disabled {
     opacity: 0.35;
+  }
+  &.accent {
+    color: var(--ab-accent);
   }
 }
 .link {
@@ -650,6 +658,27 @@ form.inline {
 .workout-head.collapsed {
   margin-bottom: 0;
 }
+/* Title on the left (wrapping inside itself), actions pinned top right on one row. */
+.workout-head.split {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+.head-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex: none;
+  margin-left: auto;
+}
 input.search {
   flex: 1 1 14rem;
   max-width: 24rem;
@@ -725,6 +754,156 @@ input.search {
     color: var(--ab-muted);
     font-size: 0.8rem;
     font-weight: 500;
+  }
+}
+
+/* ── workouts list ── */
+
+/* Desktop: one row, actions on the right. Phone: actions first, side by
+   side; then the viewed user; then grouping + filter toggle on one line. */
+.list-toolbar {
+  .view-controls,
+  .list-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .list-actions {
+    margin-left: auto;
+  }
+  @media (max-width: 560px) {
+    .list-actions {
+      order: -1;
+      flex: 1 1 100%;
+      .btn {
+        flex: 1;
+        padding-inline: 0.6rem;
+      }
+    }
+    .view-controls {
+      flex: 1 1 100%;
+    }
+    .segmented {
+      flex: 1;
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+.filters {
+  .filter-exercise {
+    flex: 1 1 14rem;
+    max-width: 22rem;
+  }
+}
+.workout-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0 0 0 1.4rem;
+  border: none;
+  background: none;
+  color: var(--ab-muted);
+  font: 0.88rem var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  &.open {
+    margin-bottom: 0.6rem;
+  }
+  .workout-duration {
+    flex: none;
+  }
+  .summary-names {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .name + .name::before {
+    content: ', ';
+    color: var(--ab-muted);
+    font-weight: 400;
+  }
+  .hit {
+    color: var(--ab-accent);
+    font-weight: 700;
+  }
+}
+.exercise-row.highlight {
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ab-accent) 10%, transparent);
+}
+.menu {
+  position: relative;
+  display: inline-flex;
+}
+.menu-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 10;
+  min-width: 12rem;
+  padding: 0.3rem;
+  background: var(--ab-surface);
+  border: 1px solid var(--ab-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--wk-shadow);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.7rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ab-text);
+  font: 600 0.88rem var(--font-sans);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  &:hover {
+    background: var(--wk-raised);
+  }
+  &.danger {
+    color: var(--wk-danger);
+  }
+}
+.snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: 0.5rem 0.5rem 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: var(--ab-text);
+  color: var(--ab-surface);
+  font-size: 0.9rem;
+  box-shadow: var(--wk-shadow);
+  .btn {
+    background: var(--ab-surface);
+    color: var(--ab-text);
+    border-color: transparent;
+  }
+  &.error-bar {
+    background: var(--wk-danger);
+    color: #fff;
+    .icon-btn {
+      color: inherit;
+    }
   }
 }
 

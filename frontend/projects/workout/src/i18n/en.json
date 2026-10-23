@@ -30,7 +30,8 @@
     "sure": "Sure?",
     "loading": "Loading…",
     "close": "Close",
-    "none": "None"
+    "none": "None",
+    "more": "More actions"
   },
   "viewing": {
     "label": "Viewing"
@@ -157,7 +158,14 @@
     "addFirst": "Log the first one",
     "saveAsTemplate": "Save as template",
     "minutes": "{{n}} min",
-    "rounds": "{{n}} rounds"
+    "rounds": "{{n}} rounds",
+    "repeat": "Repeat",
+    "filterExercise": "Exercise",
+    "clearFilters": "Clear",
+    "noMatch": "No workout matches these filters.",
+    "deleted": "Workout deleted",
+    "undo": "Undo",
+    "filters": "Filters"
   },
   "saveTemplate": {
     "title": "Save as template",

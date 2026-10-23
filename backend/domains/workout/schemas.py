@@ -216,7 +216,18 @@ class WorkoutUser(ORM):
 
 
 class SessionStart(BaseModel):
+    """Blank, from one of your templates, or from a completed workout (yours
+    or `user_id`'s: "Repeat")."""
+
     template_id: int | None = None
+    workout_id: int | None = None
+    user_id: int | None = None
+
+    @model_validator(mode="after")
+    def _one_source(self):
+        if self.template_id is not None and self.workout_id is not None:
+            raise ValueError("Give a template or a workout, not both")
+        return self
 
 
 class SessionAddExercise(BaseModel):

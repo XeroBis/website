@@ -2,6 +2,8 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 
+import { CSRF_COOKIE, CSRF_HEADER, readCookie } from '@shared';
+
 import {
   CircuitEntry,
   Equipment,
@@ -11,6 +13,7 @@ import {
   ImportResult,
   SavedCircuit,
   SavedCircuitInput,
+  SessionSource,
   SetValues,
   Stats,
   Template,
@@ -93,6 +96,15 @@ export class WorkoutApi {
   createWorkout = (body: WorkoutInput) => this.post<Workout>('/workouts', body);
   updateWorkout = (id: number, body: WorkoutInput) => this.put<Workout>(`/workouts/${id}`, body);
   deleteWorkout = (id: number) => this.delete(`/workouts/${id}`);
+  /** For a page being closed: `keepalive` lets the request outlive it. */
+  deleteWorkoutOnUnload = (id: number) => {
+    const csrf = readCookie(CSRF_COOKIE);
+    fetch(`${API}/workouts/${id}`, {
+      method: 'DELETE',
+      keepalive: true,
+      headers: csrf ? { [CSRF_HEADER]: csrf } : {},
+    }).catch(() => undefined);
+  };
   stats = (query: { user_id?: number | null; date_from?: string | null; date_to?: string | null }) =>
     this.get<Stats>('/stats', query);
 
@@ -113,8 +125,7 @@ export class WorkoutApi {
 
   // ── live session ──
   session = () => this.get<Workout | null>('/session');
-  startSession = (templateId: number | null) =>
-    this.post<Workout>('/session', { template_id: templateId });
+  startSession = (source: SessionSource = {}) => this.post<Workout>('/session', source);
   discardSession = () => this.delete('/session');
   finishSession = (checkedSetIds: number[], date: string) =>
     this.post<Workout>('/session/finish', { checked_set_ids: checkedSetIds, date });

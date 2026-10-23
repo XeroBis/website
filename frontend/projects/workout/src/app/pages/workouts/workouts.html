@@ -1,18 +1,71 @@
-<div class="toolbar">
+<div class="toolbar list-toolbar">
   <ab-viewing-select />
-  <div class="segmented" role="group" [attr.aria-label]="'workouts.groupBy' | translate">
-    @for (level of levelList; track level) {
-      <button type="button" [class.active]="levels().has(level)" (click)="toggleLevel(level)">
-        {{ 'workouts.group.' + level | translate }}
+  <div class="view-controls">
+    <div class="segmented" role="group" [attr.aria-label]="'workouts.groupBy' | translate">
+      @for (level of levelList; track level) {
+        <button type="button" [class.active]="levels().has(level)" (click)="toggleLevel(level)">
+          {{ 'workouts.group.' + level | translate }}
+        </button>
+      }
+    </div>
+    <button
+      type="button"
+      class="btn round"
+      data-testid="filters-toggle"
+      [class.active]="showFilters()"
+      [attr.aria-pressed]="showFilters()"
+      [attr.aria-label]="'workouts.filters' | translate"
+      [title]="'workouts.filters' | translate"
+      (click)="toggleFilters()"
+    >
+      <ab-icon name="filter" />
+    </button>
+  </div>
+  @if (viewing.isOwn()) {
+    <div class="list-actions">
+      <a class="btn accent" routerLink="/session"
+        ><ab-icon name="timer" /> {{ 'workouts.live' | translate }}</a
+      >
+      <a class="btn primary" routerLink="/workouts/new"
+        ><ab-icon name="plus" /> {{ 'workouts.new' | translate }}</a
+      >
+    </div>
+  }
+</div>
+
+@if (showFilters()) {
+  <div class="toolbar filters">
+    <label class="toolbar-field filter-exercise">
+      <span>{{ 'workouts.filterExercise' | translate }}</span>
+      <ab-exercise-picker
+        [exercises]="catalog.value() ?? []"
+        [value]="filterExercise()"
+        (picked)="setFilter('exercise', $event.id)"
+      />
+    </label>
+    <label class="toolbar-field">
+      <span>{{ 'dashboard.from' | translate }}</span>
+      <input
+        type="date"
+        [value]="filters().date_from ?? ''"
+        (change)="setFilter('from', $any($event.target).value)"
+      />
+    </label>
+    <label class="toolbar-field">
+      <span>{{ 'dashboard.to' | translate }}</span>
+      <input
+        type="date"
+        [value]="filters().date_to ?? ''"
+        (change)="setFilter('to', $any($event.target).value)"
+      />
+    </label>
+    @if (filtered()) {
+      <button type="button" class="btn ghost" (click)="clearFilters()">
+        <ab-icon name="x" /> {{ 'workouts.clearFilters' | translate }}
       </button>
     }
   </div>
-  @if (viewing.isOwn()) {
-    <span class="push"></span>
-    <a class="btn accent" routerLink="/session"><ab-icon name="timer" /> {{ 'workouts.live' | translate }}</a>
-    <a class="btn primary" routerLink="/workouts/new"><ab-icon name="plus" /> {{ 'workouts.new' | translate }}</a>
-  }
-</div>
+}
 
 @if (error(); as e) {
   <p class="error">{{ e | translate }}</p>
@@ -33,32 +86,115 @@
     </button>
   } @else {
     @let w = row.workout;
+    @let isOpen = expanded().has(w.id);
+    @let hl = filters().exercise_id;
     <article class="card workout-card" [id]="'workout-' + w.id" data-testid="workout">
-      <header class="workout-head">
-        <span class="workout-date">{{ w.date | date: 'EEE d MMM y' : undefined : lang() }}</span>
-        <span class="workout-duration">{{ 'workouts.minutes' | translate: { n: w.duration_minutes } }}</span>
-        <span class="push"></span>
-        <button type="button" class="btn ghost sm" (click)="details.set(w)">
-          <ab-icon name="info" /> {{ 'common.details' | translate }}
-        </button>
-        @if (viewing.isOwn()) {
-          <button type="button" class="btn ghost sm" (click)="saveAsTemplate.set(w)">
-            <ab-icon name="layers" /> {{ 'workouts.saveAsTemplate' | translate }}
-          </button>
-          <a class="btn ghost sm" [routerLink]="['/workouts', w.id, 'edit']"
-            ><ab-icon name="pencil" /> {{ 'common.edit' | translate }}</a
+      <header class="workout-head split" [class.collapsed]="!isOpen">
+        <div class="head-main">
+          <button
+            type="button"
+            class="template-toggle"
+            data-testid="workout-toggle"
+            [attr.aria-expanded]="isOpen"
+            (click)="toggleCard(w.id)"
           >
-          <ab-confirm-button label="common.delete" (confirmed)="remove(w)" />
-        }
+            <ab-icon [name]="isOpen ? 'chevron-down' : 'chevron-right'" />
+            <span class="workout-date">{{
+              w.date | date: 'EEE d MMM y' : undefined : lang()
+            }}</span>
+          </button>
+        </div>
+        <div class="head-actions">
+          <button
+            type="button"
+            class="icon-btn accent"
+            [attr.aria-label]="'workouts.repeat' | translate"
+            [title]="'workouts.repeat' | translate"
+            (click)="repeat(w)"
+          >
+            <ab-icon name="repeat" />
+          </button>
+          @if (viewing.isOwn()) {
+            <a
+              class="icon-btn"
+              [routerLink]="['/workouts', w.id, 'edit']"
+              [attr.aria-label]="'common.edit' | translate"
+              [title]="'common.edit' | translate"
+              ><ab-icon name="pencil"
+            /></a>
+            <ab-menu>
+              <button type="button" class="menu-item" role="menuitem" (click)="details.set(w)">
+                <ab-icon name="info" /> {{ 'common.details' | translate }}
+              </button>
+              <button
+                type="button"
+                class="menu-item"
+                role="menuitem"
+                (click)="saveAsTemplate.set(w)"
+              >
+                <ab-icon name="layers" /> {{ 'workouts.saveAsTemplate' | translate }}
+              </button>
+              <button
+                type="button"
+                class="menu-item danger"
+                role="menuitem"
+                data-testid="delete"
+                (click)="remove(w)"
+              >
+                <ab-icon name="trash" /> {{ 'common.delete' | translate }}
+              </button>
+            </ab-menu>
+          } @else {
+            <button
+              type="button"
+              class="icon-btn"
+              [attr.aria-label]="'common.details' | translate"
+              [title]="'common.details' | translate"
+              (click)="details.set(w)"
+            >
+              <ab-icon name="info" />
+            </button>
+          }
+        </div>
       </header>
-      <ab-entry-list [entries]="w.exercises" (exerciseClicked)="history.set($event)" />
+      <button
+        type="button"
+        class="workout-summary"
+        tabindex="-1"
+        [class.open]="isOpen"
+        (click)="toggleCard(w.id)"
+      >
+        <span class="workout-duration">{{
+          'workouts.minutes' | translate: { n: w.duration_minutes }
+        }}</span>
+        @if (!isOpen) {
+          <span class="summary-names">
+            @for (item of entryNames(w.exercises, hl); track $index) {
+              <span class="name" [class.hit]="item.hit">{{
+                item.name ?? ('type.circuit' | translate)
+              }}</span>
+            }
+          </span>
+        }
+      </button>
+      @if (isOpen) {
+        <ab-entry-list
+          [entries]="w.exercises"
+          [highlight]="hl"
+          (exerciseClicked)="history.set($event)"
+        />
+      }
     </article>
   }
 } @empty {
   @if (!loading() && !error()) {
     <p class="empty">
-      {{ 'workouts.empty' | translate }}
-      @if (viewing.isOwn()) {
+      @if (filtered()) {
+        {{ 'workouts.noMatch' | translate }}
+      } @else {
+        {{ 'workouts.empty' | translate }}
+      }
+      @if (viewing.isOwn() && !filtered()) {
         <a routerLink="/workouts/new">{{ 'workouts.addFirst' | translate }}</a>
       }
     </p>
@@ -80,5 +216,27 @@
   <ab-history-modal [exercise]="ex" [userId]="viewing.queryUserId()" (closed)="history.set(null)" />
 }
 @if (saveAsTemplate(); as w) {
-  <ab-save-template-modal [workout]="w" (closed)="saveAsTemplate.set(null)" (saved)="saveAsTemplate.set(null)" />
+  <ab-save-template-modal
+    [workout]="w"
+    (closed)="saveAsTemplate.set(null)"
+    (saved)="saveAsTemplate.set(null)"
+  />
+}
+@if (deleting()) {
+  <div class="snackbar" role="status" data-testid="undo-bar">
+    <span>{{ 'workouts.deleted' | translate }}</span>
+    <button type="button" class="btn sm" (click)="undo()">{{ 'workouts.undo' | translate }}</button>
+  </div>
+} @else if (notice(); as n) {
+  <div class="snackbar error-bar" role="alert">
+    <span>{{ n | translate }}</span>
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="'common.close' | translate"
+      (click)="notice.set(null)"
+    >
+      <ab-icon name="x" />
+    </button>
+  </div>
 }

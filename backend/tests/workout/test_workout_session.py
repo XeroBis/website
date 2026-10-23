@@ -56,6 +56,44 @@ def test_someone_elses_template_is_a_404(client, other_client, ex):
     assert other_client.get(S).json() is None
 
 
+def test_repeat_a_workout(client, other_client, ex, add_workout):
+    circuit = {
+        "type": "circuit",
+        "name": "Finisher",
+        "rounds": 2,
+        "exercises": [
+            {"exercise_id": ex["Pull-ups"], "sets": [{"reps": 8}, {"reps": 7}]}
+        ],
+    }
+    w = add_workout(entries=[strength(ex["Bench press"], (10, 40), (8, 45)), circuit])
+    # Someone else's, through user_id (read-only sharing).
+    r = other_client.post(S, json={"workout_id": w["id"], "user_id": client.user_id})
+    assert r.status_code == 201
+    bench, finisher = r.json()["exercises"]
+    # Logged sets become the plan; circuit members start empty, like a template.
+    assert [(x["reps"], x["weight_kg"]) for x in bench["sets"]] == [(10, 40), (8, 45)]
+    assert (finisher["name"], finisher["rounds"]) == ("Finisher", 2)
+    assert finisher["exercises"][0]["sets"] == []
+    # The source workout is untouched.
+    assert client.get(f"{URL}/workouts/{w['id']}").json() == w
+    # Your own, without user_id.
+    assert client.post(S, json={"workout_id": w["id"]}).status_code == 201
+
+
+def test_repeat_refusals(client, other_client, ex, add_workout):
+    w = add_workout()
+    # Not yours and no user_id, unknown, or a live session: 404.
+    assert other_client.post(S, json={"workout_id": w["id"]}).status_code == 404
+    assert client.post(S, json={"workout_id": 999999}).status_code == 404
+    live = other_client.post(S, json={}).json()
+    body = {"workout_id": live["id"], "user_id": other_client.user_id}
+    assert client.post(S, json=body).status_code == 404
+    t = _template(client, ex)
+    body = {"template_id": t["id"], "workout_id": w["id"]}
+    assert client.post(S, json=body).status_code == 422
+    assert client.get(S).json() is None
+
+
 def test_edit_and_finish_keeps_only_checked_sets(client, ex):
     client.post(S, json={})
     bench = client.post(

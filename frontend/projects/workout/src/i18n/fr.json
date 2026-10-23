@@ -30,7 +30,8 @@
     "sure": "Sûr ?",
     "loading": "Chargement…",
     "close": "Fermer",
-    "none": "Aucun"
+    "none": "Aucun",
+    "more": "Plus d'actions"
   },
   "viewing": {
     "label": "Voir"
@@ -157,7 +158,14 @@
     "addFirst": "Enregistrer la première",
     "saveAsTemplate": "Enregistrer comme modèle",
     "minutes": "{{n}} min",
-    "rounds": "{{n}} tours"
+    "rounds": "{{n}} tours",
+    "repeat": "Refaire",
+    "filterExercise": "Exercice",
+    "clearFilters": "Effacer",
+    "noMatch": "Aucune séance ne correspond à ces filtres.",
+    "deleted": "Séance supprimée",
+    "undo": "Annuler",
+    "filters": "Filtres"
   },
   "saveTemplate": {
     "title": "Enregistrer comme modèle",
