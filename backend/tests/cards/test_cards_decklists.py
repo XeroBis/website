@@ -272,6 +272,51 @@ def test_30c_qualifiers_are_not_guessed():
     assert identifiers("30C", "144", ["Pay Day"]) == ["Pay Day"]
 
 
+@pytest.mark.parametrize(
+    "number,name,ability,bracket",
+    [
+        ("152", "Antique Dome Fossil", "Domed Armor", "Armure Dôme"),
+        ("153", "Antique Helix Fossil", "Helical Swell", "Houle Nautile"),
+        ("154", "Antique Old Amber", "Amber Protection", "Protection Ambre"),
+    ],
+)
+def test_mew_fossils_get_their_cardmarket_bracket(number, name, ability, bracket):
+    card = add_catalog_card(
+        set_code="MEW",
+        card_number=number,
+        name=name,
+        set_name="151",
+        supertype="Trainer",
+        details=moves(abilities=(ability,)),
+    )
+    text = cardmarket(card)
+    assert text == f"1x {name} [{bracket}] (151)"
+    assert parsed(text) == [card]
+    # Other Trainers with an ability keep no bracket.
+    assert cardmarket(card, set_code="BLK") == f"1x {name} (151)"
+
+
+def test_black_bolt_main_print_gets_sv_over_its_illustration_rare():
+    main = add_catalog_card(
+        set_code="BLK",
+        card_number="001",
+        name="Snivy",
+        set_name="Black Bolt",
+        details=moves("Tackle", "Vine Whip"),
+    )
+    rare = add_catalog_card(
+        set_code="BLK",
+        card_number="087",
+        name="Snivy",
+        set_name="Black Bolt",
+        details=moves("Tackle", "Vine Whip"),
+    )
+    main_text = cardmarket(main, include_sets=False)
+    assert main_text == "1x Snivy [Tackle | Vine Whip | SV]"
+    assert cardmarket(rare, include_sets=False) == "1x Snivy [Tackle | Vine Whip]"
+    assert parsed(main_text) == [main]
+
+
 def test_miraidon_identifier_round_trips():
     card = add_catalog_card(
         set_code="30C",
@@ -337,6 +382,18 @@ def test_miraidon_identifier_round_trips():
             "Tinkaton [Knock Off | Wild Press]",
         ),
         ("OBF", "Gumshoos", ["Headbang", "Crunch"], "Gumshoos [Headbutt | Crunch]"),
+        (
+            "MEW",
+            "Nidoking",
+            ["Enthusiastic King", "Venomous Impact"],
+            "Nidoking [Enthusiastic King | Venom Impact]",
+        ),
+        (
+            "MEW",
+            "Psyduck",
+            ["Overthink", "Water Gun"],
+            "Psyduck [Overthinking | Water Gun]",
+        ),
     ],
 )
 def test_cardmarket_product_names_round_trip(
@@ -432,6 +489,10 @@ def test_unversioned_additionals_is_the_poke_ball():
     )
     text = "1x Buddy-Buddy Poffin (Prismatic Evolutions: Additionals)"
     assert prints(text) == [(card, "reverse_pokeball")]
+    # Its only Additionals product is exported unversioned too.
+    with database.SessionLocal() as db:
+        line = decklists.entry(db.get(m.CardCatalog, card), 1, "en", "reverse_pokeball")
+        assert decklists.render_cardmarket([line], include_sets=False) == text
     # A print the card doesn't come in falls back to the standard one.
     assert prints(
         "1x Buddy-Buddy Poffin (V.2) (Prismatic Evolutions: Additionals)"

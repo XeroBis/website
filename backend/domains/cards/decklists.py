@@ -64,23 +64,64 @@ _VERSION_BY_BALL = {v: k for k, v in _POKEBALL_MASTERBALL.items()}
 _REVERSE_THEN_BALL_SETS = {"ASC"}
 _ADDITIONALS = ": Additionals"
 
-# Verified Cardmarket product qualifiers for otherwise colliding 30C prints:
-# number → (the card's English moves, what Cardmarket's bracket says). The
-# expected moves guard against applying a qualifier to different data.
-_CARDMARKET_30C_IDENTIFIERS = {
-    "10": (("Flame Tail",), ("Flame Tail", "30")),
-    "20": (("Wormhole",), ("Wormhole", "30")),
-    "23": (("Thunder Shock",), ("Thunder Shock", "30")),
-    "24": (("Volt Tackle",), ("Volt Tackle", "30")),
-    "25": (("Spark",), ("Spark", "30")),
-    "39": (("Iron Tail",), ("Iron Tail", "30")),
-    "62": (("Mach Bolt", "Electro Drift"), ("Mach Bolt", "Mach Bolt")),
-    "65": (("Psychic",), ("Psychic", "30C")),
-    "78": (("Splash",), ("Splash", "30")),
-    "79": (("Stiffen",), ("Stiffen", "30")),
-    "89": (("Pay Day",), ("Pay Day",)),
-    "113": (("Pay Day",), ("Pay Day", "30")),
-    "121": (("Elemental Blast",), ("Elemental Blast", "30")),
+# Verified Cardmarket brackets for prints whose product name would otherwise
+# collide or not match: set code → number → (the card's English moves, what
+# Cardmarket's bracket says). The expected moves guard against applying a
+# bracket to different data. A Trainer gets a bracket only from here.
+_SV = "SV"
+_CARDMARKET_PRINT_IDENTIFIERS = {
+    "30C": {
+        "10": (("Flame Tail",), ("Flame Tail", "30")),
+        "20": (("Wormhole",), ("Wormhole", "30")),
+        "23": (("Thunder Shock",), ("Thunder Shock", "30")),
+        "24": (("Volt Tackle",), ("Volt Tackle", "30")),
+        "25": (("Spark",), ("Spark", "30")),
+        "39": (("Iron Tail",), ("Iron Tail", "30")),
+        "62": (("Mach Bolt", "Electro Drift"), ("Mach Bolt", "Mach Bolt")),
+        "65": (("Psychic",), ("Psychic", "30C")),
+        "78": (("Splash",), ("Splash", "30")),
+        "79": (("Stiffen",), ("Stiffen", "30")),
+        "89": (("Pay Day",), ("Pay Day",)),
+        "113": (("Pay Day",), ("Pay Day", "30")),
+        "121": (("Elemental Blast",), ("Elemental Blast", "30")),
+    },
+    # The Antique fossils' brackets are their French ability names.
+    "MEW": {
+        "152": (("Domed Armor",), ("Armure Dôme",)),
+        "153": (("Helical Swell",), ("Houle Nautile",)),
+        "154": (("Amber Protection",), ("Protection Ambre",)),
+    },
+    # Main-set prints sharing their name and moves with an Illustration Rare.
+    "BLK": {
+        number: (moves, (*moves, _SV))
+        for number, moves in {
+            "1": ("Tackle", "Vine Whip"),
+            "4": ("Collect", "Scratch"),
+            "17": ("Collect", "Scratch"),
+            "21": ("Round", "Hyper Voice"),
+            "29": ("Call for Family", "Static Shock"),
+            "33": ("Charge", "Disaster Volt"),
+            "52": ("Sturdy", "Stone Edge"),
+            "56": ("Poison Point", "Venoshock"),
+            "72": ("Fly",),
+            "75": ("Tail Slap",),
+        }.items()
+    },
+    "WHT": {
+        number: (moves, (*moves, _SV))
+        for number, moves in {
+            "1": ("Bug Bite",),
+            "4": ("Absorb",),
+            "6": ("Rear Kick",),
+            "11": ("Tackle", "Rollout"),
+            "13": ("Inferno Fandango", "Heat Crash"),
+            "14": ("Collect", "Scratch"),
+            "21": ("Tackle", "Water Gun"),
+            "38": ("Reflect", "Telekinesis"),
+            "47": ("Smack Down", "Power Gem"),
+            "54": ("Retaliate", "Land Crush"),
+        }.items()
+    },
 }
 # Cardmarket product names that differ from the printed English name.
 _CARDMARKET_NAME_OVERRIDES = {
@@ -113,6 +154,10 @@ _CARDMARKET_MOVE_OVERRIDES = {
         ("Crushing Blow", "Alloyed Hammer"): ("Knock Off", "Wild Press"),
     },
     "OBF": {("Headbang", "Crunch"): ("Headbutt", "Crunch")},
+    "MEW": {
+        ("Enthusiastic King", "Venomous Impact"): ("Enthusiastic King", "Venom Impact"),
+        ("Overthink", "Water Gun"): ("Overthinking", "Water Gun"),
+    },
 }
 
 
@@ -170,14 +215,20 @@ def cardmarket_identifiers(
     set_code: str | None, card_number: str | None, moves: list[str]
 ) -> list[str]:
     """What Cardmarket puts in the bracket for these moves."""
+    verified = _print_identifiers(set_code, card_number, moves)
+    if verified is not None:
+        return verified
     replacement = _CARDMARKET_MOVE_OVERRIDES.get(set_code or "", {}).get(tuple(moves))
-    if replacement:
-        return list(replacement)
-    if set_code == "30C":
-        rule = _CARDMARKET_30C_IDENTIFIERS.get(number_key(card_number or ""))
-        if rule and tuple(moves) == rule[0]:
-            return list(rule[1])
-    return moves
+    return list(replacement) if replacement else moves
+
+
+def _print_identifiers(
+    set_code: str | None, card_number: str | None, moves: list[str]
+) -> list[str] | None:
+    """The verified bracket of this print, None when it has none."""
+    rules = _CARDMARKET_PRINT_IDENTIFIERS.get(set_code or "", {})
+    rule = rules.get(number_key(card_number or ""))
+    return list(rule[1]) if rule and tuple(moves) == rule[0] else None
 
 
 # ── parsing ──────────────────────────────────────────────────────────────────
@@ -353,6 +404,14 @@ def additionals_version(card: m.CardCatalog, variant_type: str) -> int | None:
     return _VERSION_BY_BALL.get(variant_type)
 
 
+def _versioned(card: m.CardCatalog) -> bool:
+    """Whether Cardmarket versions `card`'s Additionals products: not when a
+    Poké Ball reverse is its only one (most trainers and energies)."""
+    if card.set_code in _REVERSE_THEN_BALL_SETS:
+        return True
+    return any(v.variant_type == _POKEBALL_MASTERBALL[2] for v in card.variants)
+
+
 def _matchable(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", text.lower())
 
@@ -493,22 +552,26 @@ def _cardmarket_name(line: Entry) -> str:
 def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
     """`<qty>x <name> [moves] (<expansion>)`: the bracket only for Pokémon
     with known moves, the expansion unless `include_sets` is off. A print
-    sold as an Additionals product always names its version and expansion
-    (without them Cardmarket would pick the plain card)."""
+    sold as an Additionals product always names its expansion (without it
+    Cardmarket would pick the plain card), and its version unless it's the
+    card's only Additionals product."""
     rows = []
     for line in entries:
         card = line.card
         bracket = suffix = ""
         if card is not None:
-            moves = cardmarket_identifiers(
-                card.set_code, card.card_number, move_names(card)
-            )
-            if moves and card.supertype in (None, "Pokémon", "Pokemon"):
+            card_moves = move_names(card)
+            moves = cardmarket_identifiers(card.set_code, card.card_number, card_moves)
+            verified = _print_identifiers(card.set_code, card.card_number, card_moves)
+            if moves and (
+                card.supertype in (None, "Pokémon", "Pokemon") or verified is not None
+            ):
                 bracket = f" [{' | '.join(moves)}]"
             version = additionals_version(card, line.variant_type)
             if version and card.set_name:
                 expansion = clean_set_name(card.set_name) + _ADDITIONALS
-                suffix = f" (V.{version}) ({expansion})"
+                tag = f" (V.{version})" if _versioned(card) else ""
+                suffix = f"{tag} ({expansion})"
             elif include_sets and card.set_name:
                 suffix = f" ({clean_set_name(card.set_name)})"
         rows.append(f"{line.quantity}x {_cardmarket_name(line)}{bracket}{suffix}")
