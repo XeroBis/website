@@ -14,6 +14,10 @@ User-facing behaviour per app.
 
 ## Auth — `auth.alanbignon.com`
 
+### Look
+
+Neo-brutalist: a cobalt grid background (midnight blue in dark), one card per page with thick borders and hard shadows, yellow buttons. The card is centred, and scrolls from its top when taller than the screen. On phones (≤ 480px) the card is tighter, inputs use 16px text (no zoom on focus), buttons, links and the users page's app checkboxes are about 44px tall (the checkboxes two per line), the language and theme buttons share the card's width under their label, and long pseudos and emails wrap. Hover effects on the account page's app links only apply with a mouse.
+
 ### Pages
 
 - `/login`: email + password. On success, goes to `?redirect=` if it is allowed, otherwise to the portfolio (`alanbignon.com`). Allowed in prod: `https://alanbignon.com` or `https://<anything>.alanbignon.com`, no port, no credentials in the URL. Allowed in dev: `http://localhost:4600`–`4604`. A visitor who is already logged in is sent on right away. Errors: invalid credentials, too many attempts, generic.

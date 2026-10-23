@@ -61,16 +61,11 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  height: 100%;
-}
-
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 1.5rem 1rem;
   font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -81,6 +76,12 @@ body {
   background-size: 28px 28px;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+}
+
+/* The app and page hosts don't box anything: the card is the body's flex item. */
+ab-root,
+ab-root > * {
+  display: contents;
 }
 
 ::selection {
@@ -95,6 +96,7 @@ body {
   border: 3px solid var(--line);
   border-radius: 4px;
   background: var(--paper);
+  margin-block: auto; /* centred, yet scrolls from its top when taller than the screen */
   box-shadow: 10px 10px 0 var(--drop);
   animation: drop 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
 
@@ -302,12 +304,14 @@ button {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .email {
   margin: 0.15rem 0 0.5rem;
   font-size: 0.85rem;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .link-btn,
@@ -328,6 +332,7 @@ button {
 
 .language-picker {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.9rem;
@@ -375,11 +380,13 @@ button {
     box-shadow 0.08s ease,
     background 0.1s ease;
 
-  &:hover {
-    background: var(--accent);
-    color: var(--on-accent);
-    box-shadow: var(--shadow-sm);
-    transform: translate(-2px, -2px);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--accent);
+      color: var(--on-accent);
+      box-shadow: var(--shadow-sm);
+      transform: translate(-2px, -2px);
+    }
   }
   &:active {
     box-shadow: none;
@@ -400,8 +407,10 @@ button {
   color: var(--muted);
 }
 
-.app-link:hover .app-description {
-  color: var(--on-accent);
+@media (hover: hover) {
+  .app-link:hover .app-description {
+    color: var(--on-accent);
+  }
 }
 
 .logout {
@@ -429,7 +438,6 @@ button {
 
 .card.wide {
   width: min(720px, 100%);
-  margin-block: auto; /* stays scrollable when taller than the screen */
 }
 
 .user-list {
@@ -510,5 +518,81 @@ button {
     margin: 0;
     padding: 0;
     accent-color: var(--on-accent);
+  }
+}
+
+/* Phones: a tighter card, 16px inputs (iOS zooms into anything smaller) and
+   tap targets of about 44px. */
+
+@media (max-width: 480px) {
+  body {
+    padding: 1.25rem 0.75rem 1.75rem;
+  }
+
+  .card {
+    padding: 2rem 1.25rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  .subtitle {
+    margin-bottom: 1.4rem;
+  }
+
+  input {
+    font-size: 1rem;
+  }
+
+  button {
+    min-height: 2.75rem;
+  }
+
+  .link-btn,
+  .link-btn:hover,
+  .link-btn:active,
+  .link-btn:disabled {
+    min-height: 2.75rem;
+    font-size: 0.85rem;
+  }
+
+  .row {
+    gap: 1.25rem;
+  }
+
+  .lang-btn {
+    flex: 1;
+    min-height: 2.5rem;
+  }
+
+  .language-picker > span {
+    flex-basis: 100%;
+  }
+
+  .alt-action a {
+    display: inline-block;
+    padding-block: 0.6rem;
+  }
+
+  .identity,
+  .user-row {
+    padding: 0.85rem;
+  }
+
+  .app-toggles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .app-toggle {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.65rem;
+
+    input {
+      width: 1.15rem;
+      height: 1.15rem;
+    }
   }
 }
