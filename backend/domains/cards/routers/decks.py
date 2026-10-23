@@ -242,11 +242,11 @@ def add_catalog_cards(
 
 
 def _pasted_cards(db: Session, text: str) -> list[tuple[m.CardCatalog, str, int]]:
-    """The matched lines of a pasted decklist, as standard prints (a
-    decklist says nothing about prints)."""
+    """The matched lines of a pasted decklist, each in its print (standard
+    unless a Cardmarket Additionals line names another)."""
     return [
-        (card, "standard", copies)
-        for card, copies in decklists.matched_cards(db, text).values()
+        (card, variant, copies)
+        for (_, variant), (card, copies) in decklists.matched_cards(db, text).items()
     ]
 
 
@@ -734,7 +734,10 @@ def export_deck_text(
     rendering as the converter; `mode` as in the JSON export."""
     deck = owned_deck(db, deck_id, user.id)
     rows = _export_quantities(db, user.id, deck, deck_rows(db, deck.id), mode)
-    entries = [decklists.entry(catalog_card_of(row), copies) for row, copies in rows]
+    entries = [
+        decklists.entry(catalog_card_of(row), copies, variant_type=row.variant_type)
+        for row, copies in rows
+    ]
     return Response(decklists.render(entries, format), media_type="text/plain")
 
 
@@ -878,7 +881,7 @@ def paste_deck_cards(
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
-    """Add a pasted decklist's matched cards (standard print) on top of the
+    """Add a pasted decklist's matched cards (in their prints) on top of the
     deck's; a normal deck needs them owned and follows the limits, all or
     nothing."""
     deck = owned_deck(db, deck_id, user.id)

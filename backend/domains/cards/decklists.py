@@ -11,7 +11,10 @@ Cardmarket: a flat list of `<qty>x <name> [Ability | Attack] (<expansion>)`.
 No number, so matched by name, then narrowed by set code or expansion title,
 then by the bracketed move names. Candidates still tied (a bare
 `<qty>x <name>`, same-set reprints) resolve to the most recently released
-print, lowest number first, rather than staying unmatched.
+print, lowest number first, rather than staying unmatched. Cardmarket sells
+ball reverses as their own products, in a `<Set>: Additionals` expansion told
+apart by version: `<qty>x <name> [moves] (V.n) (<Set>: Additionals)` (see
+additionals_print()). Every other line is the standard print.
 
 Rendering always uses English move names and set titles (Cardmarket's
 product titles); only the card name may be French.
@@ -29,6 +32,7 @@ from sqlalchemy.orm import Session
 from domains.cards import models as m
 from domains.cards.names import GENDER_SYMBOLS, canonical_energy_name, to_catalog_style
 from domains.cards.search import stripped
+from domains.cards.variant_order import BALL_VARIANTS
 
 Format = Literal["tcgplayer", "cardmarket"]
 
@@ -44,10 +48,21 @@ _TCGPLAYER_SECTION = re.compile(
 # "(Expansion)" (Cardmarket's importer needs the expansion in parentheses).
 _CARDMARKET_LINE = re.compile(r"^(?P<qty>\d+)\s*[xX]\s+(?P<rest>.+)$")
 _CARDMARKET_PAREN = re.compile(
-    r"^(?P<name>.+?)\s*(?:\[(?P<moves>[^\]]+)\]\s*)?\((?P<set_name>[^)]+)\)\s*$"
+    r"^(?P<name>.+?)\s*(?:\[(?P<moves>[^\]]+)\]\s*)?"
+    r"(?:\((?P<version>[Vv]\.\d+)\)\s*)?\((?P<set_name>[^)]+)\)\s*$"
 )
 _CARDMARKET_BRACKET = re.compile(r"^(?P<name>.+?)\s*\[(?P<moves>[^\]]+)\]\s*$")
 _SET_CODE_SUFFIX = re.compile(r"\s*\([A-Za-z0-9]+\)\s*$")
+
+# Prints Cardmarket sells as `(V.n) (<Set>: Additionals)` products, by
+# version. Most ball sets (checked on Prismatic Evolutions, Black Bolt and
+# White Flare): V.1 Poké Ball (also when unversioned, a trainer's only ball),
+# V.2 Master Ball. Sets where each card has a single ball (Ascended Heroes)
+# sell the plain reverse as V.1 and that ball as V.2.
+_POKEBALL_MASTERBALL = {1: "reverse_pokeball", 2: "reverse_masterball"}
+_VERSION_BY_BALL = {v: k for k, v in _POKEBALL_MASTERBALL.items()}
+_REVERSE_THEN_BALL_SETS = {"ASC"}
+_ADDITIONALS = ": Additionals"
 
 # Verified Cardmarket product qualifiers for otherwise colliding 30C prints:
 # number → (the card's English moves, what Cardmarket's bracket says). The
@@ -104,17 +119,24 @@ _CARDMARKET_MOVE_OVERRIDES = {
 @dataclass
 class Entry:
     """One decklist line: `card` is the matched catalog card (None when
-    unmatched), `name` what gets rendered (the parsed name when unmatched)."""
+    unmatched), `name` what gets rendered (the parsed name when unmatched),
+    `variant_type` its print."""
 
     quantity: int
     name: str
     card: m.CardCatalog | None = None
+    variant_type: str = "standard"
 
 
-def entry(card: m.CardCatalog, quantity: int, language: str = "en") -> Entry:
+def entry(
+    card: m.CardCatalog,
+    quantity: int,
+    language: str = "en",
+    variant_type: str = "standard",
+) -> Entry:
     """A matched line, named in `language` (moves and sets stay English)."""
     name = card.display_name if language == "fr" and card.display_name else card.name
-    return Entry(quantity, name, card)
+    return Entry(quantity, name, card, variant_type)
 
 
 # ── moves ────────────────────────────────────────────────────────────────────
@@ -196,19 +218,23 @@ def parse(db: Session, text: str) -> tuple[Format | None, list[Entry]]:
     return None, []
 
 
-def matched_cards(db: Session, text: str) -> dict[int, tuple[m.CardCatalog, int]]:
-    """catalog id → (card, total quantity) over the matched lines of a pasted
-    decklist; unmatched lines are dropped, repeats add up."""
+Tally = dict[tuple[int, str], tuple[m.CardCatalog, int]]
+
+
+def matched_cards(db: Session, text: str) -> Tally:
+    """(catalog id, print) → (card, total quantity) over the matched lines of
+    a pasted decklist; unmatched lines are dropped, repeats add up."""
     return tally(parse(db, text)[1])
 
 
-def tally(lines: list[Entry]) -> dict[int, tuple[m.CardCatalog, int]]:
+def tally(lines: list[Entry]) -> Tally:
     """matched_cards() over already parsed lines."""
-    totals: dict[int, tuple[m.CardCatalog, int]] = {}
+    totals: Tally = {}
     for line in lines:
         if line.card is not None:
-            previous = totals.get(line.card.id, (line.card, 0))[1]
-            totals[line.card.id] = (line.card, previous + line.quantity)
+            key = (line.card.id, line.variant_type)
+            previous = totals.get(key, (line.card, 0))[1]
+            totals[key] = (line.card, previous + line.quantity)
     return totals
 
 
@@ -251,9 +277,9 @@ def _parse_cardmarket(db: Session, text: str) -> list[Entry]:
             continue
         quantity = int(match["qty"])
         rest = match["rest"].strip()
-        card = _resolve_cardmarket(db, rest)
+        card, variant = _resolve_cardmarket(db, rest)
         entries.append(
-            Entry(quantity, card.name, card) if card else Entry(quantity, rest)
+            Entry(quantity, card.name, card, variant) if card else Entry(quantity, rest)
         )
     return entries
 
@@ -264,37 +290,67 @@ def _bracket_names(raw: str | None) -> list[str] | None:
     return [name.strip() for name in re.split(r"[,|]", raw) if name.strip()]
 
 
-def _resolve_cardmarket(db: Session, rest: str) -> m.CardCatalog | None:
-    """`Name [moves] (Expansion)` first; then a bracket without expansion;
-    then the whole line as a bare name (a name ending in "ex"/"V" would
-    otherwise lose that word to the expansion split below); then older
-    un-parenthesized `Name Expansion` lines, longest name first."""
+def _resolve_cardmarket(db: Session, rest: str) -> tuple[m.CardCatalog | None, str]:
+    """The card and its print. `Name [moves] (V.n) (Expansion)` first (an
+    Additionals expansion is the main set's ball print); then a bracket
+    without expansion; then the whole line as a bare name (a name ending in
+    "ex"/"V" would otherwise lose that word to the expansion split below);
+    then older un-parenthesized `Name Expansion` lines, longest name first."""
     paren = _CARDMARKET_PAREN.match(rest)
     if paren:
+        set_name = paren["set_name"].strip()
+        additionals = set_name.casefold().endswith(_ADDITIONALS.casefold())
+        if additionals:
+            set_name = set_name[: -len(_ADDITIONALS)].strip()
         card = _match_by_name(
-            db,
-            paren["name"].strip(),
-            paren["set_name"].strip(),
-            _bracket_names(paren["moves"]),
+            db, paren["name"].strip(), set_name, _bracket_names(paren["moves"])
         )
         if card:
-            return card
+            version = int(paren["version"][2:]) if paren["version"] else None
+            variant = additionals_print(card, version) if additionals else None
+            printed = variant in {v.variant_type for v in card.variants}
+            return card, variant if printed else "standard"
     bracket = _CARDMARKET_BRACKET.match(rest)
     if bracket:
-        return _match_by_name(
+        card = _match_by_name(
             db, bracket["name"].strip(), "", _bracket_names(bracket["moves"])
         )
+        return card, "standard"
     card = _match_by_name(db, rest, "")
     if card:
-        return card
+        return card, "standard"
     words = rest.split()
     for split_at in range(len(words) - 1, 0, -1):
         card = _match_by_name(
             db, " ".join(words[:split_at]), " ".join(words[split_at:])
         )
         if card:
-            return card
-    return None
+            return card, "standard"
+    return None, "standard"
+
+
+def additionals_print(card: m.CardCatalog, version: int | None) -> str | None:
+    """The print an Additionals product of `card` sells, by its version
+    (None when unversioned); None when it can't be told. Not checked
+    against the card's prints."""
+    if card.set_code in _REVERSE_THEN_BALL_SETS:
+        if version == 1:
+            return "reverse"
+        balls = [
+            v.variant_type for v in card.variants if v.variant_type in BALL_VARIANTS
+        ]
+        return balls[0] if len(balls) == 1 else None
+    return _POKEBALL_MASTERBALL.get(version or 1)
+
+
+def additionals_version(card: m.CardCatalog, variant_type: str) -> int | None:
+    """The version of the Additionals product selling `card`'s print; None
+    when that print isn't sold there."""
+    if card.set_code in _REVERSE_THEN_BALL_SETS:
+        if variant_type == "reverse":
+            return 1
+        return 2 if variant_type in BALL_VARIANTS else None
+    return _VERSION_BY_BALL.get(variant_type)
 
 
 def _matchable(text: str) -> str:
@@ -436,7 +492,9 @@ def _cardmarket_name(line: Entry) -> str:
 
 def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
     """`<qty>x <name> [moves] (<expansion>)`: the bracket only for Pokémon
-    with known moves, the expansion unless `include_sets` is off."""
+    with known moves, the expansion unless `include_sets` is off. A print
+    sold as an Additionals product always names its version and expansion
+    (without them Cardmarket would pick the plain card)."""
     rows = []
     for line in entries:
         card = line.card
@@ -447,7 +505,11 @@ def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
             )
             if moves and card.supertype in (None, "Pokémon", "Pokemon"):
                 bracket = f" [{' | '.join(moves)}]"
-            if include_sets and card.set_name:
+            version = additionals_version(card, line.variant_type)
+            if version and card.set_name:
+                expansion = clean_set_name(card.set_name) + _ADDITIONALS
+                suffix = f" (V.{version}) ({expansion})"
+            elif include_sets and card.set_name:
                 suffix = f" ({clean_set_name(card.set_name)})"
         rows.append(f"{line.quantity}x {_cardmarket_name(line)}{bracket}{suffix}")
     return "\n".join(rows)

@@ -369,6 +369,75 @@ def test_cardmarket_product_names_round_trip(
     assert product not in cardmarket(card, set_code="OTHER")
 
 
+def prints(text) -> list[tuple[int | None, str]]:
+    with database.SessionLocal() as db:
+        return [
+            (line.card.id if line.card else None, line.variant_type)
+            for line in decklists.parse(db, text)[1]
+        ]
+
+
+@pytest.mark.parametrize(
+    "set_code, set_name, variants, suffixes",
+    [
+        # Most ball sets: V.1 Poké Ball, V.2 Master Ball.
+        (
+            "BLK",
+            "Black Bolt",
+            ("standard", "reverse", "reverse_pokeball", "reverse_masterball"),
+            {
+                "standard": "(Black Bolt)",
+                "reverse_pokeball": "(V.1) (Black Bolt: Additionals)",
+                "reverse_masterball": "(V.2) (Black Bolt: Additionals)",
+            },
+        ),
+        # Ascended Heroes: V.1 the plain reverse, V.2 the card's one ball,
+        # whichever it is.
+        (
+            "ASC",
+            "Ascended Heroes",
+            ("standard", "reverse", "reverse_friendball"),
+            {
+                "reverse": "(V.1) (Ascended Heroes: Additionals)",
+                "reverse_friendball": "(V.2) (Ascended Heroes: Additionals)",
+            },
+        ),
+        (
+            "ASC",
+            "Ascended Heroes",
+            ("standard", "reverse", "reverse_pokeball"),
+            {"reverse_pokeball": "(V.2) (Ascended Heroes: Additionals)"},
+        ),
+    ],
+)
+def test_additionals_prints_round_trip(set_code, set_name, variants, suffixes):
+    card = add_catalog_card(
+        set_code=set_code, set_name=set_name, name="Victini", variants=variants
+    )
+    for variant, suffix in suffixes.items():
+        with database.SessionLocal() as db:
+            line = decklists.entry(db.get(m.CardCatalog, card), 1, variant_type=variant)
+            text = decklists.render_cardmarket([line])
+        assert text == f"1x Victini {suffix}"
+        assert prints(text) == [(card, variant)]
+
+
+def test_unversioned_additionals_is_the_poke_ball():
+    card = add_catalog_card(
+        set_code="PRE",
+        set_name="Prismatic Evolutions",
+        name="Buddy-Buddy Poffin",
+        supertype="Trainer",
+        variants=("standard", "reverse", "reverse_pokeball"),
+    )
+    text = "1x Buddy-Buddy Poffin (Prismatic Evolutions: Additionals)"
+    assert prints(text) == [(card, "reverse_pokeball")]
+    # A print the card doesn't come in falls back to the standard one.
+    assert prints(
+        "1x Buddy-Buddy Poffin (V.2) (Prismatic Evolutions: Additionals)"
+    ) == [(card, "standard")]
+
+
 # ── set missing-cards exports ────────────────────────────────────────────────
 
 
@@ -400,6 +469,21 @@ def test_missing_export_by_exact_print(client, base_set):
     assert client.get(url, params={"variant_type": "reverse_masterball"}).text == ""
     assert client.get(url, params={"variant_type": "unknown"}).status_code == 422
     assert client.get(f"{URL}/catalog/sets/nope/missing/text").status_code == 404
+
+
+def test_missing_export_names_the_additionals_product(client):
+    add_catalog_card(
+        set_code="ASC",
+        set_name="Ascended Heroes",
+        name="Bayleef",
+        variants=("standard", "reverse", "reverse_friendball"),
+    )
+    url = f"{URL}/catalog/sets/ASC/missing/text"
+    ball = client.get(url, params={"variant_type": "reverse_friendball"})
+    assert ball.text == "1x Bayleef (V.2) (Ascended Heroes: Additionals)"
+    reverse = client.get(url, params={"variant_type": "reverse"})
+    assert reverse.text == "1x Bayleef (V.1) (Ascended Heroes: Additionals)"
+    assert client.get(url).text == "1x Bayleef (Ascended Heroes)"
 
 
 def test_missing_export_options(client, base_set):

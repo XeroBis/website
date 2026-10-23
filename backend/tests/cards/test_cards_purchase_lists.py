@@ -12,10 +12,18 @@ CATALOG = f"{URL}/catalog"
 
 
 def article(
-    name, code, number, amount=1, price="0,10 €", reverse=False, label="Reverse Holo"
+    name,
+    code,
+    number,
+    amount=1,
+    price="0,10 €",
+    reverse=False,
+    label="Reverse Holo",
+    href="/en/Pokemon/Products/Singles/X/Y",
 ):
     """One `<tr>` of a Cardmarket order's article table, trimmed to what's
-    read. `label` is the reverse icon's, which follows the site's language."""
+    read. `label` is the reverse icon's, which follows the site's language;
+    `href` the product link."""
     extras = (
         f'<span class="icon is-24x24"><span class="icon" aria-label="{label}"'
         f' data-bs-original-title="{label}"></span></span>'
@@ -27,10 +35,10 @@ def article(
         data-name="{name} " data-number="{number}">
       <td class="select min-size"><input type="checkbox"></td>
       <td data-amount="{amount}" class="amount">{amount}<span>x</span></td>
-      <td class="name text-start"><a href="/en/Pokemon/Products/Singles/X/Y">{name}
+      <td class="name text-start"><a href="{href}">{name}
           ({code} {number})</a></td>
       <td class="info">
-        <div class="d-md-none"><a href="/en/Pokemon/Products/Singles/X/Y">{name}
+        <div class="d-md-none"><a href="{href}">{name}
           ({code} {number})</a></div>
         <a class="expansion-symbol" aria-label="Scarlet &amp; Violet"></a>
         <span class="icon" aria-label="French"></span>
@@ -133,6 +141,68 @@ def test_reverse_label_of_the_french_site(client, rai):
         "standard",
         "reverse",
     ]
+
+
+def test_additionals_rows_are_ball_reverses(client):
+    victini = add_catalog_card(
+        set_code="BLK",
+        card_number="12",
+        name="Victini",
+        variants=("standard", "reverse", "reverse_pokeball", "reverse_masterball"),
+    )
+    magcargo = add_catalog_card(
+        set_code="ASC",
+        card_number="24",
+        name="Ethan's Magcargo",
+        variants=("standard", "reverse", "reverse_pokeball"),
+    )
+    poffin = add_catalog_card(
+        set_code="PRE",
+        card_number="101",
+        name="Buddy-Buddy Poffin",
+        variants=("standard", "reverse", "reverse_pokeball"),
+    )
+    singles = "/fr/Pokemon/Products/Singles"
+
+    def additional(name, code, number, slug):
+        return article(
+            name,
+            f"x{code}",
+            number,
+            reverse=True,
+            label="Reverse",
+            href=f"{singles}/{slug}-x{code}{number}?sellerCountry=12&amp;language=2",
+        )
+
+    html = order(
+        additional("Victini", "BLK", "012", "Black-Bolt-Additionals/Victini-V1"),
+        additional("Victini", "BLK", "012", "Black-Bolt-Additionals/Victini-V2"),
+        # Ascended Heroes: V1 the plain reverse, V2 the card's one ball.
+        additional(
+            "Magcargo", "ASC", "024", "Ascended-Heroes-Additionals/Ethans-Magcargo-V1"
+        ),
+        additional(
+            "Magcargo", "ASC", "024", "Ascended-Heroes-Additionals/Ethans-Magcargo-V2"
+        ),
+        # No version: a trainer's only ball, the Poké Ball.
+        additional(
+            "Poffin",
+            "PRE",
+            "101",
+            "Prismatic-Evolutions-Additionals/Buddy-Buddy-Poffin",
+        ),
+    )
+    preview = client.post(f"{LISTS}/cardmarket/preview", json={"html": html}).json()
+    assert [
+        (line["catalog_id"], line["variant_type"]) for line in preview["lines"]
+    ] == [
+        (victini, "reverse_pokeball"),
+        (victini, "reverse_masterball"),
+        (magcargo, "reverse"),
+        (magcargo, "reverse_pokeball"),
+        (poffin, "reverse_pokeball"),
+    ]
+    assert preview["set_codes"] == ["ASC", "BLK", "PRE"]
 
 
 def test_import_creates_the_list(client, imported, pika, rai):

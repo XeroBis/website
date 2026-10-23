@@ -169,10 +169,10 @@ def _draft_out(db: Session, draft: m.DeckUpgradeDraft) -> s.DraftOut:
 # ── diffing a target decklist ────────────────────────────────────────────────
 
 
-def _target(db: Session, text: str) -> dict[int, tuple[m.CardCatalog, int]]:
-    """catalog id → (card, copies) from a pasted decklist, or else from a
-    deck file's JSON (its `cards`, matched by set code and number). Lines or
-    cards that don't match are dropped."""
+def _target(db: Session, text: str) -> decklists.Tally:
+    """(catalog id, print) → (card, copies) from a pasted decklist, or else
+    from a deck file's JSON (its `cards`, matched by set code and number).
+    Lines or cards that don't match are dropped."""
     totals = decklists.matched_cards(db, text)
     if totals:
         return totals
@@ -192,48 +192,60 @@ def _target(db: Session, text: str) -> dict[int, tuple[m.CardCatalog, int]]:
         catalog.setdefault((card.set_code, card.card_number), card)
     for item in file.cards:
         card = catalog.get((item.set_code, item.card_number))
-        if card is not None:
-            previous = totals.get(card.id, (card, 0))[1]
-            totals[card.id] = (card, previous + item.quantity_in_deck)
+        if card is not None and item.variant_type in {
+            v.variant_type for v in card.variants
+        }:
+            key = (card.id, item.variant_type)
+            previous = totals.get(key, (card, 0))[1]
+            totals[key] = (card, previous + item.quantity_in_deck)
     return totals
 
 
-def _diff(db: Session, deck: m.Deck, text: str) -> list[tuple[m.CardCatalog, int]]:
-    """The signed changes turning the deck's standard prints into the target
-    list (a decklist says nothing about prints), each result checked to stay
-    within 0–4. Unchanged cards are left out."""
+Change = tuple[m.CardCatalog, str, int]
+
+
+def _diff(db: Session, deck: m.Deck, text: str) -> list[Change]:
+    """The signed changes, per print, turning the deck into the target list,
+    each card's result (over its prints) checked to stay within 0–4.
+    Unchanged prints are left out."""
     target = _target(db, text)
     if not target:
         raise invalid("No cards could be matched in the pasted text")
-    current: dict[int, tuple[m.CardCatalog, int]] = {
-        row.card.catalog_id: (row.card.catalog_card, row.quantity_in_deck)
+    current: decklists.Tally = {
+        (row.card.catalog_id, row.variant_type): (
+            row.card.catalog_card,
+            row.quantity_in_deck,
+        )
         for row in deck_rows(db, deck.id)
-        if row.variant_type == "standard"
     }
     changes = []
-    for catalog_id, (card, copies) in (current | target).items():
-        baseline = current.get(catalog_id, (card, 0))[1]
-        wanted = target.get(catalog_id, (card, 0))[1]
+    wanted_per_card: dict[int, tuple[m.CardCatalog, int]] = {}
+    for (catalog_id, variant), (card, _) in (current | target).items():
+        baseline = current.get((catalog_id, variant), (card, 0))[1]
+        wanted = target.get((catalog_id, variant), (card, 0))[1]
+        total = wanted_per_card.get(catalog_id, (card, 0))[1] + wanted
+        wanted_per_card[catalog_id] = (card, total)
         if wanted != baseline:
-            check_result(card, baseline, wanted - baseline)
-            changes.append((card, wanted - baseline))
+            changes.append((card, variant, wanted - baseline))
+    for card, wanted in wanted_per_card.values():
+        check_result(card, 0, wanted)
     return changes
 
 
 def _replace_entries(
-    db: Session, draft: m.DeckUpgradeDraft, changes: list[tuple[m.CardCatalog, int]]
+    db: Session, draft: m.DeckUpgradeDraft, changes: list[Change]
 ) -> None:
     db.execute(
         delete(m.DeckUpgradeDraftCard).where(
             m.DeckUpgradeDraftCard.draft_id == draft.id
         )
     )
-    for card, delta in changes:
+    for card, variant, delta in changes:
         db.add(
             m.DeckUpgradeDraftCard(
                 draft_id=draft.id,
                 catalog_id=card.id,
-                variant_type="standard",
+                variant_type=variant,
                 quantity_delta=delta,
             )
         )
@@ -473,7 +485,7 @@ def _still_needed(
     user_id: int,
     entries: list[m.DeckUpgradeDraftCard],
     mode: ExportMode,
-) -> list[tuple[m.CardCatalog, int]]:
+) -> list[Change]:
     """Proposed additions summed per (card, print) over `entries`, then cut
     down by `mode` once against the pooled demand (so one owned copy never
     covers two drafts): `full` all of it, `missing` minus owned copies,
@@ -486,7 +498,7 @@ def _still_needed(
             previous = pooled.get(key, (entry.catalog_card, 0))[1]
             pooled[key] = (entry.catalog_card, previous + entry.quantity_delta)
     if mode == "full":
-        return list(pooled.values())
+        return [(card, key[1], wanted) for key, (card, wanted) in pooled.items()]
     counts = deck_rules.availability(db, user_id, set(pooled))
     needed = []
     for key, (card, wanted) in pooled.items():
@@ -497,7 +509,7 @@ def _still_needed(
             "reserve_singles": max(available - BINDER_COPIES, 0),
         }[mode]
         if have < wanted:
-            needed.append((card, wanted - have))
+            needed.append((card, key[1], wanted - have))
     return needed
 
 
@@ -516,7 +528,10 @@ def export_draft_text(
     deck = _normal_deck(db, deck_id, user.id)
     draft = _draft(db, deck, draft_id)
     needed = _still_needed(db, user.id, _entries(db, [draft.id]), mode)
-    entries = [decklists.entry(card, copies) for card, copies in needed]
+    entries = [
+        decklists.entry(card, copies, variant_type=variant)
+        for card, variant, copies in needed
+    ]
     return Response(
         decklists.render(entries, format, include_sets), media_type="text/plain"
     )
@@ -580,7 +595,10 @@ def export_drafts_text(
     if found != len(ids):
         raise not_found("Draft")
     needed = _still_needed(db, user.id, _entries(db, ids), mode)
-    entries = [decklists.entry(card, copies, language) for card, copies in needed]
+    entries = [
+        decklists.entry(card, copies, language, variant)
+        for card, variant, copies in needed
+    ]
     return Response(
         decklists.render(entries, format, include_sets), media_type="text/plain"
     )

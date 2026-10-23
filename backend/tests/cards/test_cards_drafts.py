@@ -151,6 +151,36 @@ def test_paste_diffs_against_the_standard_prints(client, deck, pika, rai):
     assert client.put(url, json=too_many).status_code == 409
 
 
+def test_paste_diffs_per_print(client):
+    victini = add_catalog_card(
+        set_code="BLK",
+        set_name="Black Bolt",
+        card_number="12",
+        name="Victini",
+        variants=("standard", "reverse", "reverse_pokeball", "reverse_masterball"),
+    )
+    deck = make_deck(client.user_id)
+    put_in_deck(deck, own(client.user_id, victini, standard=2), 2)
+    text = "1x Victini (Black Bolt)\n2x Victini (V.2) (Black Bolt: Additionals)"
+    draft = new_draft(client, deck, decklist_text=text)
+    assert {
+        (e["catalog_id"], e["variant_type"]): e["quantity_delta"]
+        for e in draft["entries"]
+    } == {
+        (victini, "standard"): -1,
+        (victini, "reverse_masterball"): 2,
+    }
+    export = client.get(
+        f"{DECKS}/{deck}/drafts/{draft['id']}/export/text",
+        params={"format": "cardmarket", "mode": "full"},
+    )
+    assert export.text == "2x Victini (V.2) (Black Bolt: Additionals)"
+    # The copy limit counts a card's prints together.
+    too_many = "3x Victini (Black Bolt)\n2x Victini (V.2) (Black Bolt: Additionals)"
+    url = f"{DECKS}/{deck}/drafts/{draft['id']}/paste"
+    assert client.put(url, json={"decklist_text": too_many}).status_code == 409
+
+
 def test_apply_writes_the_deck_and_consumes_the_draft(client, deck, pika, rai):
     draft = new_draft(client, deck)["id"]
     set_entry(client, deck, draft, pika, -1)

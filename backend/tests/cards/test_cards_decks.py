@@ -702,6 +702,34 @@ def test_phantom_export_modes(client, pika, rai):
     )
 
 
+@pytest.fixture
+def victini():
+    return add_catalog_card(
+        set_code="BLK",
+        set_name="Black Bolt",
+        card_number="12",
+        name="Victini",
+        variants=("standard", "reverse", "reverse_pokeball", "reverse_masterball"),
+    )
+
+
+def test_paste_keeps_each_lines_print(client, victini):
+    own(client.user_id, victini, standard=1, reverse_masterball=1)
+    deck = make_deck(client.user_id)
+    text = "1x Victini (Black Bolt)\n1x Victini (V.2) (Black Bolt: Additionals)"
+    url = f"{DECKS}/{deck}/cards/from-paste"
+    assert client.post(url, json={"decklist_text": text}).status_code == 201
+    assert {k: c["quantity_in_deck"] for k, c in cards_of(client, deck).items()} == {
+        (victini, "standard"): 1,
+        (victini, "reverse_masterball"): 1,
+    }
+    export = client.get(f"{DECKS}/{deck}/export/text", params={"format": "cardmarket"})
+    assert export.text == text
+    # A normal deck needs that print owned: no Poké Ball copy.
+    poke_ball = "1x Victini (V.1) (Black Bolt: Additionals)"
+    assert client.post(url, json={"decklist_text": poke_ball}).status_code == 409
+
+
 def test_deck_text_export(client, pika, energy):
     deck = create(
         client,

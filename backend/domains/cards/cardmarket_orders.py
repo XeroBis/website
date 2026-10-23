@@ -3,7 +3,9 @@ lists (see data-model.md `cards` "Rules").
 
 Each `<tr data-article-id>` row is one article: `data-amount` copies of the
 card linked in its name cell (`Gyarados ex (SVI 045)`), its extras (a
-`Reverse Holo` icon) and a unit price cell (`0,20 €`).
+`Reverse Holo` icon) and a unit price cell (`0,20 €`). A ball reverse links to
+the set's Additionals expansion, its code `x`-prefixed:
+`…/Singles/Black-Bolt-Additionals/Victini-V1-xBLK012`, `Victini (xBLK 012)`.
 """
 
 import re
@@ -15,12 +17,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from domains.cards import models as m
-from domains.cards.decklists import number_key
+from domains.cards.decklists import additionals_print, number_key
 
 # "Gyarados ex (SVI 045)": the set code and number Cardmarket appends.
 _CODE_AND_NUMBER = re.compile(
     r"\((?P<code>[A-Za-z0-9-]+)\s+(?P<number>[A-Za-z0-9]+)\)\s*$"
 )
+# An Additionals product link, and its version when it has one.
+_ADDITIONALS_HREF = re.compile(r"-Additionals/")
+_VERSION_IN_HREF = re.compile(r"-V(?P<version>\d+)-x[A-Za-z0-9]+(?:[?#]|$)")
 # The reverse icon's label: "Reverse Holo" in English, "Reverse" in French.
 _REVERSE_EXTRAS = {"Reverse Holo", "Reverse"}
 
@@ -33,6 +38,7 @@ class Article:
     label: str
     unit_price: Decimal
     extras: list[str] = field(default_factory=list)
+    href: str = ""
     card: m.CardCatalog | None = None
     variant_type: str = "standard"
     reason: str | None = None
@@ -61,6 +67,7 @@ class _OrderTable(HTMLParser):
                 "name": "",
                 "price": "",
                 "extras": [],
+                "href": "",
                 "name_done": False,
             }
             return
@@ -78,6 +85,7 @@ class _OrderTable(HTMLParser):
             and "/Products/" in (attributes.get("href") or "")
         ):
             self._capture = "name"
+            self._row["href"] = attributes["href"]
         elif tag == "td" and "price" in classes:
             self._capture = "price"
 
@@ -99,6 +107,7 @@ class _OrderTable(HTMLParser):
                     label=" ".join(row["name"].split()),
                     unit_price=_price(row["price"]),
                     extras=row["extras"],
+                    href=row["href"],
                 )
             )
 
@@ -118,10 +127,27 @@ def _price(text: str) -> Decimal:
         return Decimal(0)
 
 
-def _catalog_key(label: str) -> tuple[str, str] | None:
-    """(lowercase set code, number key) from "Name (SVI 045)"."""
-    found = _CODE_AND_NUMBER.search(label)
-    return (found["code"].lower(), number_key(found["number"])) if found else None
+def _catalog_key(article: Article) -> tuple[str, str] | None:
+    """(lowercase set code, number key) from "Name (SVI 045)", the main
+    set's code for an Additionals product ("xBLK" → "blk")."""
+    found = _CODE_AND_NUMBER.search(article.label)
+    if not found:
+        return None
+    code = found["code"].lower()
+    if _ADDITIONALS_HREF.search(article.href) and code.startswith("x"):
+        code = code[1:]
+    return code, number_key(found["number"])
+
+
+def _print(article: Article, card: m.CardCatalog) -> str | None:
+    """An Additionals product's print by its version; else the reverse
+    extra → `reverse`, none → `standard`."""
+    if _ADDITIONALS_HREF.search(article.href):
+        found = _VERSION_IN_HREF.search(article.href)
+        return additionals_print(card, int(found["version"]) if found else None)
+    if _REVERSE_EXTRAS.intersection(article.extras):
+        return "reverse"
+    return "standard"
 
 
 def read(db: Session, html: str) -> list[Article]:
@@ -131,7 +157,7 @@ def read(db: Session, html: str) -> list[Article]:
     table.feed(html)
     table.close()
     articles = table.articles
-    keys = [_catalog_key(article.label) for article in articles]
+    keys = [_catalog_key(article) for article in articles]
     codes = {key[0] for key in keys if key}
     by_number: dict[tuple[str, str], m.CardCatalog] = {}
     if codes:
@@ -148,9 +174,10 @@ def read(db: Session, html: str) -> list[Article]:
         if card is None:
             article.reason = "no catalog card"
             continue
-        variant = (
-            "reverse" if _REVERSE_EXTRAS.intersection(article.extras) else "standard"
-        )
+        variant = _print(article, card)
+        if variant is None:
+            article.reason = "unknown Additionals print"
+            continue
         if variant not in {v.variant_type for v in card.variants}:
             article.reason = f'not printed in "{variant}"'
             continue

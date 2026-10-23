@@ -266,10 +266,17 @@ def _missing_cards(
 
 
 def _missing_text(
-    cards: list[m.CardCatalog], format: decklists.Format, language: str
+    cards: list[m.CardCatalog],
+    format: decklists.Format,
+    language: str,
+    variant_type: str | None = None,
 ) -> Response:
-    """One copy of each, names in `language` (moves and sets English)."""
-    entries = [decklists.entry(card, 1, language) for card in cards]
+    """One copy of each, names in `language` (moves and sets English), in
+    `variant_type` when filtered on one print (a ball reverse then names its
+    Cardmarket Additionals product)."""
+    entries = [
+        decklists.entry(card, 1, language, variant_type or "standard") for card in cards
+    ]
     return Response(decklists.render(entries, format), media_type="text/plain")
 
 
@@ -304,7 +311,7 @@ def export_set_missing_text(
         include_incoming,
         variant_type,
     )
-    return _missing_text(cards, format, language)
+    return _missing_text(cards, format, language, variant_type)
 
 
 @router.post("/sets/missing/text", response_class=Response)
