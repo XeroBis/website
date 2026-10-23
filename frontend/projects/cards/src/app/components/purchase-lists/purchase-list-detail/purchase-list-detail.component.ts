@@ -1,4 +1,4 @@
-import { computed, signal } from '@angular/core';
+import { computed, linkedSignal, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -27,6 +27,13 @@ import {
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { isMainVariant, togglePrintSelection } from '../../../util/variant-display.util';
 import { variantIconUrl } from '../../../util/variant-icons.util';
+import {
+  CardOrder,
+  orderCards,
+  readStoredCardOrder,
+  storeCardOrder,
+} from '../../../util/card-order.util';
+import { CardOrderComponent } from '../../shared/card-order/card-order.component';
 import { ModalComponent } from '../../shared/modal/modal.component';
 import {
   SearchableSelectComponent,
@@ -35,6 +42,7 @@ import {
 
 type ListView = 'grid' | 'list' | 'sets';
 const VIEW_STORAGE_KEY = 'purchaseListView';
+const ORDER_STORAGE_KEY = 'purchaseListOrder';
 
 function readStoredView(): ListView {
   try {
@@ -71,6 +79,7 @@ interface AddQuery {
     CommonModule,
     FormsModule,
     RouterModule,
+    CardOrderComponent,
     ModalComponent,
     SearchableSelectComponent,
     TranslatePipe,
@@ -119,19 +128,62 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
       ),
     ),
   );
+  /** Number (the list's set-then-number order), name or quantity.
+   * Remembered per browser. */
+  order = signal<CardOrder>(readStoredCardOrder(ORDER_STORAGE_KEY));
+  /** Line ids and catalog ids in the chosen order. Kept when only quantities
+   * or prints change, so the line being edited doesn't jump away. */
+  private ranks = linkedSignal<
+    { cards: PurchaseListCard[]; order: CardOrder },
+    { lines: Map<number, number>; tiles: Map<number, number> }
+  >({
+    source: () => ({ cards: this.purchaseList()?.cards ?? [], order: this.order() }),
+    computation: ({ cards, order }, previous) => {
+      const sameLines =
+        !!previous &&
+        previous.source.order === order &&
+        previous.source.cards.length === cards.length &&
+        cards.every((card) => previous.value.lines.has(card.id));
+      if (sameLines) {
+        return previous.value;
+      }
+      const lines = orderCards(cards, order, {
+        name: (card) => card.name,
+        quantity: (card) => card.quantity,
+      });
+      const tileCopies = new Map<number, number>();
+      for (const card of cards) {
+        tileCopies.set(card.catalog_id, (tileCopies.get(card.catalog_id) ?? 0) + card.quantity);
+      }
+      const tiles = orderCards(
+        cards.filter(
+          (card, index) => cards.findIndex((c) => c.catalog_id === card.catalog_id) === index,
+        ),
+        order,
+        { name: (card) => card.name, quantity: (card) => tileCopies.get(card.catalog_id) ?? 0 },
+      );
+      return {
+        lines: new Map(lines.map((card, index) => [card.id, index])),
+        tiles: new Map(tiles.map((card, index) => [card.catalog_id, index])),
+      };
+    },
+  });
   filteredCards = computed(() => {
     const term = this.search().trim().toLowerCase();
-    return (this.purchaseList()?.cards ?? []).filter(
-      (card) =>
-        (!term || card.name.toLowerCase().includes(term)) &&
-        (this.setFilter().size === 0 || this.setFilter().has(card.set_code)) &&
-        (this.printFilter().length === 0 || this.printFilter().includes(card.variant_type)) &&
-        (this.rarityFilter().size === 0 ||
-          (!!card.rarity && this.rarityFilter().has(rarityCategory(card.rarity)))),
-    );
+    const rank = this.ranks().lines;
+    return (this.purchaseList()?.cards ?? [])
+      .filter(
+        (card) =>
+          (!term || card.name.toLowerCase().includes(term)) &&
+          (this.setFilter().size === 0 || this.setFilter().has(card.set_code)) &&
+          (this.printFilter().length === 0 || this.printFilter().includes(card.variant_type)) &&
+          (this.rarityFilter().size === 0 ||
+            (!!card.rarity && this.rarityFilter().has(rarityCategory(card.rarity)))),
+      )
+      .sort((a, b) => (rank.get(a.id) ?? rank.size) - (rank.get(b.id) ?? rank.size));
   });
   /** filteredCards grouped by card (a card bought as standard and reverse is
-   * one tile), in the list's set-then-number order. */
+   * one tile), in the chosen order. */
   tiles = computed(() => {
     const tiles = new Map<number, PurchaseTile>();
     for (const card of this.filteredCards()) {
@@ -160,7 +212,10 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
         (a, b) => variants.indexOf(a.variant_type) - variants.indexOf(b.variant_type),
       );
     }
-    return [...tiles.values()];
+    const rank = this.ranks().tiles;
+    return [...tiles.values()].sort(
+      (a, b) => (rank.get(a.catalog_id) ?? rank.size) - (rank.get(b.catalog_id) ?? rank.size),
+    );
   });
   setGroups = computed(() => {
     const groups = new Map<
@@ -176,7 +231,11 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
       group.tiles.push(tile);
       group.quantity += tile.prints.reduce((sum, print) => sum + print.quantity, 0);
     }
-    return [...groups.values()];
+    // Sets stay in the list's order; the chosen order sorts within each.
+    const setOrder = this.setOptions().map((set) => set.set_code);
+    return [...groups.values()].sort(
+      (a, b) => setOrder.indexOf(a.set_code) - setOrder.indexOf(b.set_code),
+    );
   });
   readonly variantLabels = VARIANT_LABELS;
   readonly variantIcon = variantIconUrl;
@@ -345,6 +404,11 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
       }
       return next;
     });
+  }
+
+  setOrder(order: CardOrder): void {
+    this.order.set(order);
+    storeCardOrder(ORDER_STORAGE_KEY, order);
   }
 
   setView(view: ListView): void {

@@ -35,6 +35,13 @@ import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { DEFAULT_SET_RARITIES, DEFAULT_SET_VARIANTS } from '../../../util/set-filter-defaults.util';
 import { variantIconUrl } from '../../../util/variant-icons.util';
 import { CardDetailComponent } from '../../shared/card-detail/card-detail.component';
+import { CardOrderComponent } from '../../shared/card-order/card-order.component';
+import {
+  CardOrder,
+  orderCards,
+  readStoredCardOrder,
+  storeCardOrder,
+} from '../../../util/card-order.util';
 import { SetCardGridComponent, SetGridAdapter } from '../set-card-grid/set-card-grid.component';
 import { ModalComponent } from '../../shared/modal/modal.component';
 import {
@@ -45,6 +52,7 @@ import {
   selectDisplayedPrints,
 } from '../../../util/variant-display.util';
 const VIEW_STORAGE_KEY = 'setDetailView';
+const ORDER_STORAGE_KEY = 'setDetailOrder';
 function readStoredView(): 'grid' | 'checklist' | 'binder' {
   try {
     const view = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -61,6 +69,7 @@ function readStoredView(): 'grid' | 'checklist' | 'binder' {
     FormsModule,
     RouterLink,
     CardDetailComponent,
+    CardOrderComponent,
     SetCardGridComponent,
     SetFiltersComponent,
     ModalComponent,
@@ -121,6 +130,8 @@ export class SetDetailComponent implements OnInit, OnDestroy {
    * filteredCards for why a getter re-run on every change-detection cycle
    * over the whole set was the cause of multi-second typing lag. */
   filteredCards = signal<CardCatalogEntry[]>([]);
+  /** Number (the set's order), name or quantity. Remembered per browser. */
+  order = signal<CardOrder>(readStoredCardOrder(ORDER_STORAGE_KEY));
   /** Only the logo/symbol paths matter here -- fetched via listSets() since
    * GET /api/cards/catalog/sets/{code}/cards doesn't carry them (see main.py's
    * /api/cards/images/ mount and GET /api/cards/catalog/sets's docstring). */
@@ -216,6 +227,11 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   }
   toggleMissingOnly(): void {
     this.missingOnly.set(!this.missingOnly());
+    this.recomputeFilteredCards();
+  }
+  setOrder(order: CardOrder): void {
+    this.order.set(order);
+    storeCardOrder(ORDER_STORAGE_KEY, order);
     this.recomputeFilteredCards();
   }
   setView(view: 'grid' | 'checklist' | 'binder'): void {
@@ -361,7 +377,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
               next.set(entry.id, card);
               return next;
             });
-            this.recomputeFilteredCards();
+            this.recomputeFilteredCards(true);
             this.toastService.show(this.translate.instant('sets.addedCard', { name: card.name }));
           },
           error: (err) => {
@@ -405,7 +421,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
               next.delete(entry.id);
               return next;
             });
-            this.recomputeFilteredCards();
+            this.recomputeFilteredCards(true);
             return;
           }
           this.ownedCards.update((value) => {
@@ -413,7 +429,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
             next.set(entry.id, updated);
             return next;
           });
-          this.recomputeFilteredCards();
+          this.recomputeFilteredCards(true);
         },
         error: (err) => {
           this.pendingIds.update((value) => {
@@ -471,27 +487,45 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     }
     return sortRarityCategories(seen);
   }
-  private recomputeFilteredCards(): void {
-    const { term: numberTerm } = parseAnchoredSearch(this.search().trim().toLowerCase());
-    this.filteredCards.set(
-      this.cards().filter((card) => {
-        if (this.displayedVariants(card).length === 0) {
-          return false;
-        }
-        const category = card.rarity ? rarityCategory(card.rarity) : null;
-        if (
-          this.selectedRarities().size > 0 &&
-          (!category || !this.selectedRarities().has(category))
-        ) {
-          return false;
-        }
-        if (!this.search().trim()) {
-          return true;
-        }
-        const matchesNumber = !!numberTerm && card.card_number.toLowerCase().includes(numberTerm);
-        return matchesNumber || matchesCatalogSearch(card.name, this.search());
-      }),
+  /** Owned copies across every print, the quantity sort's key. */
+  private totalOwned(entry: CardCatalogEntry): number {
+    return entry.variants.reduce(
+      (sum, variant) => sum + this.variantTileOwnedQuantity(entry, variant),
+      0,
     );
+  }
+  /** `keepOrder` (after a + or −) keeps the cards where they are, so a
+   * quantity sort doesn't move the card being stepped. */
+  private recomputeFilteredCards(keepOrder = false): void {
+    const { term: numberTerm } = parseAnchoredSearch(this.search().trim().toLowerCase());
+    const position = new Map(this.filteredCards().map((card, index) => [card.id, index]));
+    const ordered = orderCards(this.cards(), this.order(), {
+      name: (card) => card.name,
+      quantity: (card) => this.totalOwned(card),
+    });
+    const filtered = ordered.filter((card) => {
+      if (this.displayedVariants(card).length === 0) {
+        return false;
+      }
+      const category = card.rarity ? rarityCategory(card.rarity) : null;
+      if (
+        this.selectedRarities().size > 0 &&
+        (!category || !this.selectedRarities().has(category))
+      ) {
+        return false;
+      }
+      if (!this.search().trim()) {
+        return true;
+      }
+      const matchesNumber = !!numberTerm && card.card_number.toLowerCase().includes(numberTerm);
+      return matchesNumber || matchesCatalogSearch(card.name, this.search());
+    });
+    if (keepOrder) {
+      // Cards that just appeared (e.g. missing again) go after the others.
+      const rank = (card: CardCatalogEntry) => position.get(card.id) ?? position.size;
+      filtered.sort((a, b) => rank(a) - rank(b));
+    }
+    this.filteredCards.set(filtered);
   }
   /** Completion over filteredCards (not the full set) so the header bar
    * updates live as the rarity/search filters narrow the grid. */
@@ -544,7 +578,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
             next.set(entry.id, card);
             return next;
           });
-          this.recomputeFilteredCards();
+          this.recomputeFilteredCards(true);
           this.toastService.show(this.translate.instant('sets.addedCard', { name: card.name }));
         },
         error: (err) => {
@@ -593,7 +627,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
               next.delete(entry.id);
               return next;
             });
-            this.recomputeFilteredCards();
+            this.recomputeFilteredCards(true);
             this.toastService.show(
               this.translate.instant('sets.removedCard', { name: existing.name }),
             );
@@ -604,7 +638,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
             next.set(entry.id, updated);
             return next;
           });
-          this.recomputeFilteredCards();
+          this.recomputeFilteredCards(true);
         },
         error: (err) => {
           this.pendingIds.update((value) => {

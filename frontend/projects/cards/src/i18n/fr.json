@@ -93,6 +93,14 @@
     "set_name_asc": "Extension (A-Z)",
     "set_name_desc": "Extension (Z-A)"
   },
+  "cardOrder": {
+    "label": "Tri",
+    "number": "Numéro",
+    "name": "Nom",
+    "quantity": "Quantité",
+    "ascending": "Croissant",
+    "descending": "Décroissant"
+  },
   "browse": {
     "filters": "Filtres",
     "grid": "Grille",

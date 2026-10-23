@@ -1,5 +1,8 @@
 <section class="surface filters">
-  <div class="rarity-search-row">
+  <div class="search-row">
+    <ng-content />
+  </div>
+  <div class="rarity-row">
     <div class="rarity-toggle-row">
       <button
         type="button"
@@ -27,7 +30,6 @@
         </button>
       }
     </div>
-    <ng-content />
   </div>
   <div class="reverse-filters" [attr.aria-label]="'filters.printVariant' | translate">
     <button

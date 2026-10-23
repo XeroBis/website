@@ -40,6 +40,17 @@
   @if (list.cards.length > 0) {
     <div class="toolbar">
       <section class="surface filter-panel">
+        <div class="filter-row search-row">
+          <input
+            type="text"
+            class="input card-search"
+            [placeholder]="'purchaseLists.detail.searchPlaceholder' | translate"
+            [attr.aria-label]="'purchaseLists.detail.searchPlaceholder' | translate"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+          />
+          <app-card-order [order]="order()" (orderChange)="setOrder($event)" />
+        </div>
         <div class="filter-row">
           <button
             type="button"
@@ -66,14 +77,6 @@
               <span class="chip-fallback">{{ rarity }}</span>
             </button>
           }
-          <input
-            type="text"
-            class="input card-search"
-            [placeholder]="'purchaseLists.detail.searchPlaceholder' | translate"
-            [attr.aria-label]="'purchaseLists.detail.searchPlaceholder' | translate"
-            [ngModel]="search()"
-            (ngModelChange)="search.set($event)"
-          />
         </div>
         <div class="filter-row" [attr.aria-label]="'filters.printVariant' | translate">
           <button

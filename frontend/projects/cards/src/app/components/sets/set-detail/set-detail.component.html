@@ -39,6 +39,7 @@
             [ngModel]="search()"
             (ngModelChange)="onSearchChange($event)"
           />
+          <app-card-order [order]="order()" (orderChange)="setOrder($event)" />
         </app-set-filters>
       </div>
       <div class="set-detail-filters-right">

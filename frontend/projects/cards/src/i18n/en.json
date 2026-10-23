@@ -93,6 +93,14 @@
     "set_name_asc": "Set (A-Z)",
     "set_name_desc": "Set (Z-A)"
   },
+  "cardOrder": {
+    "label": "Sort",
+    "number": "Number",
+    "name": "Name",
+    "quantity": "Quantity",
+    "ascending": "Ascending",
+    "descending": "Descending"
+  },
   "browse": {
     "filters": "Filters",
     "grid": "Grid",

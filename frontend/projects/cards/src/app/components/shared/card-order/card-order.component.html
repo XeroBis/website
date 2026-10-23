@@ -1,0 +1,25 @@
+<div class="card-order">
+  <select
+    class="select"
+    [attr.aria-label]="'cardOrder.label' | translate"
+    [value]="order.field"
+    (change)="setField($any($event.target).value)"
+  >
+    @for (field of fields; track field) {
+      <option [value]="field" [selected]="field === order.field">
+        {{ 'common.sortLabel' | translate: { label: ('cardOrder.' + field | translate) } }}
+      </option>
+    }
+  </select>
+  <button
+    type="button"
+    class="btn btn-secondary btn-icon"
+    [attr.aria-label]="
+      (order.descending ? 'cardOrder.descending' : 'cardOrder.ascending') | translate
+    "
+    [title]="(order.descending ? 'cardOrder.descending' : 'cardOrder.ascending') | translate"
+    (click)="flip()"
+  >
+    <ab-icon [name]="order.descending ? 'arrow-down' : 'arrow-up'" />
+  </button>
+</div>
