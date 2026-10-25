@@ -4,7 +4,7 @@ import { provideI18n } from '@shared';
 import en from '../../../../i18n/en.json';
 import fr from '../../../../i18n/fr.json';
 import { VariantType } from '../../../models/card.model';
-import { FiltersPanelComponent } from './filters-panel.component';
+import { PrintFiltersComponent } from './print-filters.component';
 
 const OPTIONS: VariantType[] = [
   'reverse',
@@ -14,20 +14,18 @@ const OPTIONS: VariantType[] = [
   'holo_cosmos',
 ];
 
-describe('FiltersPanelComponent variant filter', () => {
+describe('PrintFiltersComponent print row', () => {
   async function render(collapse: boolean, selected: VariantType[] = []) {
     TestBed.configureTestingModule({ providers: [provideI18n({ en, fr })] });
-    const fixture = TestBed.createComponent(FiltersPanelComponent);
-    fixture.componentRef.setInput('variantOptions', OPTIONS);
-    fixture.componentRef.setInput('variantType', selected);
+    const fixture = TestBed.createComponent(PrintFiltersComponent);
+    fixture.componentRef.setInput('variants', OPTIONS);
+    fixture.componentRef.setInput('selectedVariants', selected);
     fixture.componentRef.setInput('collapseVariants', collapse);
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const shown = () =>
-      [...el.querySelectorAll('.variant-icon-row .rarity-toggle-btn')].map((b) =>
-        b.getAttribute('title'),
-      );
-    const more = () => el.querySelector<HTMLButtonElement>('.variant-more-btn');
+      [...el.querySelectorAll('.variant-btn')].map((b) => b.getAttribute('title'));
+    const more = () => el.querySelector<HTMLButtonElement>('.more-btn');
     return { fixture, shown, more };
   }
 
@@ -54,5 +52,19 @@ describe('FiltersPanelComponent variant filter', () => {
     const { shown, more } = await render(false);
     expect(shown()).toHaveLength(5);
     expect(more()).toBeNull();
+  });
+
+  it('starts each row with an "all" button that clears the selection', async () => {
+    const { fixture } = await render(false, ['reverse']);
+    const component = fixture.componentInstance;
+    const emitted: VariantType[][] = [];
+    component.variantsChange.subscribe((v) => emitted.push(v));
+    const all = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+      '.all-btn',
+    );
+    expect(all).toHaveLength(2);
+    expect(all[1].getAttribute('aria-pressed')).toBe('false');
+    all[1].click();
+    expect(emitted).toEqual([[]]);
   });
 });

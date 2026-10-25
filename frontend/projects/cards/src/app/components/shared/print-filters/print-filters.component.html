@@ -1,0 +1,86 @@
+<div class="filter-row rarity-row" [class.labeled]="labeled">
+  @if (labeled) {
+    <span class="filter-row-label">{{ 'filters.rarity' | translate }}</span>
+  }
+  <div class="toggle-row">
+    <button
+      type="button"
+      class="toggle-btn all-btn"
+      [class.active]="selectedRarities.length === 0"
+      [attr.aria-pressed]="selectedRarities.length === 0"
+      [attr.aria-label]="'sets.allRarities' | translate"
+      [title]="'sets.allRarities' | translate"
+      (click)="toggleRarity('all')"
+    >
+      <ab-icon name="layers" />
+    </button>
+    @for (category of rarities; track category) {
+      <button
+        type="button"
+        class="toggle-btn"
+        [class.active]="selectedRarities.includes(category)"
+        [attr.aria-pressed]="selectedRarities.includes(category)"
+        [attr.aria-label]="category"
+        [title]="category"
+        (click)="toggleRarity(category)"
+      >
+        <img [src]="rarityIcon(category)" [alt]="category" (error)="onRarityIconError($event)" />
+        <span class="rarity-fallback">{{ category }}</span>
+      </button>
+    }
+  </div>
+</div>
+@if (variants.length) {
+  <div class="filter-row variant-row" [class.labeled]="labeled">
+    @if (labeled) {
+      <span class="filter-row-label">{{ variantLabel | translate }}</span>
+    }
+    <div class="toggle-row" [attr.aria-label]="variantLabel | translate">
+      <button
+        type="button"
+        class="toggle-btn all-btn"
+        [class.active]="selectedVariants.length === 0"
+        [attr.aria-pressed]="selectedVariants.length === 0"
+        [attr.aria-label]="'sets.allVariants' | translate"
+        [title]="'sets.allVariants' | translate"
+        (click)="toggleVariant('all')"
+      >
+        <ab-icon name="layers" />
+      </button>
+      @for (variant of shownVariants; track variant) {
+        <button
+          type="button"
+          class="toggle-btn variant-btn"
+          [class.active]="selectedVariants.includes(variant)"
+          [attr.aria-pressed]="selectedVariants.includes(variant)"
+          [attr.aria-label]="variantLabels[variant]"
+          [title]="variantLabels[variant]"
+          (click)="toggleVariant(variant)"
+        >
+          <img [src]="variantIcon(variant)" [alt]="variantLabels[variant]" />
+        </button>
+      }
+      @if (hiddenVariantCount) {
+        <button
+          type="button"
+          class="toggle-btn more-btn"
+          [attr.aria-label]="'filters.moreVariants' | translate: { count: hiddenVariantCount }"
+          [title]="'filters.moreVariants' | translate: { count: hiddenVariantCount }"
+          (click)="showAllVariants = true"
+        >
+          +{{ hiddenVariantCount }}
+        </button>
+      } @else if (collapseVariants && showAllVariants) {
+        <button
+          type="button"
+          class="toggle-btn more-btn"
+          [attr.aria-label]="'filters.fewerVariants' | translate"
+          [title]="'filters.fewerVariants' | translate"
+          (click)="showAllVariants = false"
+        >
+          −
+        </button>
+      }
+    </div>
+  </div>
+}

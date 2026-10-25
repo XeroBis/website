@@ -57,64 +57,17 @@
         }
       </div>
     </div>
-    <div class="filter-group">
-      <span class="filter-group-label">{{ 'filters.rarity' | translate }}</span>
-      <div class="type-toggle-row icon-row rarity-icon-row">
-        @for (r of rarities; track r) {
-          <button
-            type="button"
-            class="type-toggle-btn icon-btn rarity-toggle-btn"
-            [class.active]="isRarityActive(r)"
-            [attr.aria-label]="r"
-            [title]="r"
-            (click)="toggleRarity(r)"
-          >
-            <img [src]="rarityIcon(r)" [alt]="r" (error)="onRarityIconError($event)" />
-            <span class="icon-fallback rarity-icon-fallback">{{ r }}</span>
-          </button>
-        }
-      </div>
-    </div>
-    @if (variantOptions.length) {
-      <div class="filter-group">
-        <span class="filter-group-label">{{ variantFilterLabel | translate }}</span>
-        <div class="type-toggle-row icon-row rarity-icon-row variant-icon-row">
-          @for (v of shownVariantOptions; track v) {
-            <button
-              type="button"
-              class="type-toggle-btn icon-btn rarity-toggle-btn"
-              [class.active]="isVariantTypeActive(v)"
-              [attr.aria-label]="variantLabel(v)"
-              [title]="variantLabel(v)"
-              (click)="toggleVariantType(v)"
-            >
-              <img [src]="variantIcon(v)" [alt]="variantLabel(v)" />
-            </button>
-          }
-          @if (hiddenVariantCount) {
-            <button
-              type="button"
-              class="type-toggle-btn variant-more-btn"
-              [attr.aria-label]="'filters.moreVariants' | translate: { count: hiddenVariantCount }"
-              [title]="'filters.moreVariants' | translate: { count: hiddenVariantCount }"
-              (click)="showAllVariants = true"
-            >
-              +{{ hiddenVariantCount }}
-            </button>
-          } @else if (collapseVariants && showAllVariants) {
-            <button
-              type="button"
-              class="type-toggle-btn variant-more-btn"
-              [attr.aria-label]="'filters.fewerVariants' | translate"
-              [title]="'filters.fewerVariants' | translate"
-              (click)="showAllVariants = false"
-            >
-              −
-            </button>
-          }
-        </div>
-      </div>
-    }
+    <app-print-filters
+      [labeled]="true"
+      [rarities]="rarities"
+      [variants]="variantOptions"
+      [variantLabel]="variantFilterLabel"
+      [collapseVariants]="collapseVariants"
+      [selectedRarities]="rarity"
+      [selectedVariants]="variantType"
+      (raritiesChange)="onRarityChange($event)"
+      (variantsChange)="onVariantTypeChange($event)"
+    />
     @if (showAvailableFilter) {
       <select class="select" [ngModel]="available" (ngModelChange)="onAvailableChange($event)">
         <option value="">{{ 'filters.allCards' | translate }}</option>

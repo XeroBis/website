@@ -12,12 +12,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { CardSet, VARIANT_LABELS, VariantType } from '../../../models/card.model';
+import { CardSet, VariantType } from '../../../models/card.model';
 import { supertypeKey as supertypeKeyFor } from '../../../util/card-type-translate.util';
-import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { SORT_OPTIONS, SortOption } from '../../../util/sort.util';
-import { isMainVariant } from '../../../util/variant-display.util';
-import { variantIconUrl } from '../../../util/variant-icons.util';
+import { PrintFiltersComponent } from '../print-filters/print-filters.component';
 
 const MOBILE_BREAKPOINT_PX = 900;
 
@@ -27,7 +25,7 @@ const CARD_TYPES = ['Pokémon', 'Trainer', 'Energy'];
 
 @Component({
   selector: 'app-filters-panel',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, PrintFiltersComponent],
   templateUrl: './filters-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './filters-panel.component.scss',
@@ -85,7 +83,6 @@ export class FiltersPanelComponent implements OnChanges {
   @Input() variantType: VariantType[] = [];
   /** Show only the main prints (plus any selected one) until "+" is pressed. */
   @Input() collapseVariants = false;
-  showAllVariants = false;
   @Output() variantTypeChange = new EventEmitter<VariantType[]>();
 
   @Input() available: '' | 'available' | 'unavailable' = '';
@@ -119,23 +116,6 @@ export class FiltersPanelComponent implements OnChanges {
     return this.supertype.includes(value);
   }
 
-  isRarityActive(value: string): boolean {
-    return this.rarity.includes(value);
-  }
-
-  rarityIcon(category: string): string {
-    return rarityIconUrl(category);
-  }
-
-  /** No icon dropped in for this category yet -- hide the broken image and
-   * fall back to the text badge sitting right behind it in the template
-   * (same pattern as the Sets page's set-detail rarity filter). */
-  onRarityIconError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-    img.nextElementSibling?.classList.add('visible');
-  }
-
   supertypeKey(value: string): string {
     return supertypeKeyFor(value);
   }
@@ -162,41 +142,12 @@ export class FiltersPanelComponent implements OnChanges {
     this.filterChange.emit();
   }
 
-  toggleRarity(value: string): void {
-    const active = this.rarity.includes(value);
-    const next = active ? this.rarity.filter((v) => v !== value) : [...this.rarity, value];
+  onRarityChange(next: string[]): void {
     this.rarityChange.emit(next);
     this.filterChange.emit();
   }
 
-  get shownVariantOptions(): VariantType[] {
-    if (!this.collapseVariants || this.showAllVariants) {
-      return this.variantOptions;
-    }
-    return this.variantOptions.filter((v) => isMainVariant(v) || this.variantType.includes(v));
-  }
-
-  get hiddenVariantCount(): number {
-    return this.variantOptions.length - this.shownVariantOptions.length;
-  }
-
-  isVariantTypeActive(value: VariantType): boolean {
-    return this.variantType.includes(value);
-  }
-
-  variantLabel(value: VariantType): string {
-    return VARIANT_LABELS[value];
-  }
-
-  variantIcon(value: VariantType): string {
-    return variantIconUrl(value);
-  }
-
-  toggleVariantType(value: VariantType): void {
-    const active = this.variantType.includes(value);
-    const next = active
-      ? this.variantType.filter((v) => v !== value)
-      : [...this.variantType, value];
+  onVariantTypeChange(next: VariantType[]): void {
     this.variantTypeChange.emit(next);
     this.filterChange.emit();
   }
