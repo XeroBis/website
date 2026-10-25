@@ -559,7 +559,6 @@
     "missingOnly": "Afficher uniquement les cartes manquantes",
     "duplicatesOnly": "Afficher uniquement les variantes possédées en 2 exemplaires ou plus",
     "exportMissing": "Exporter les cartes manquantes",
-    "exportVariant": "Variante d’impression",
     "exportRarities": "Raretés à exporter (aucune sélectionnée = toutes)",
     "exportFormat": "Format",
     "exportLanguage": "Langue des cartes",
@@ -570,13 +569,13 @@
     "exportMissingEmpty": "Aucune carte manquante à exporter.",
     "exportMissingFailed": "Échec de l'export des cartes manquantes.",
     "combineSetsExport": {
-      "button": "Exporter plusieurs séries",
-      "pickerTitle": "Combiner des séries",
+      "button": "Exporter les cartes manquantes de plusieurs séries",
       "pickerSearchPlaceholder": "Rechercher des séries ou des catégories...",
-      "pickerHint": "Sélectionnez plusieurs séries pour exporter une liste combinée des cartes manquantes, avec une seule sélection de rareté/format/langue pour toutes.",
       "noSetsMatch": "Aucune série ne correspond à cette recherche.",
-      "continue": "Continuer ({{count}} sélectionnée(s))",
-      "exportTitle": "Exporter {{count}} série(s) combinée(s)"
+      "selectAll": "Tout sélectionner",
+      "clear": "Effacer",
+      "missingCount": "{{count}} manquante(s)",
+      "exportSelected": "Exporter {{count}} carte(s) de {{sets}} série(s)"
     },
     "shareSet": "Partager",
     "showVariantsStandard": "Afficher les variantes d'impression (standard uniquement)",
@@ -612,7 +611,9 @@
     "backToSets": "Retour aux séries",
     "cardCount": "{{count}} cartes",
     "countIncoming": "Compter les cartes en route comme possédées",
-    "incomingBadge": "En route ×{{count}}"
+    "incomingBadge": "En route ×{{count}}",
+    "exportVariants": "Impressions (une section par impression)",
+    "missingSummary": "{{count}} manquante(s) · {{percent}} %"
   },
   "missingIntervals": {
     "title": "Cartes manquantes",

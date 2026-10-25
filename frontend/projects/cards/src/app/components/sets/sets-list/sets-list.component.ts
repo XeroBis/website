@@ -14,7 +14,7 @@ import { rarityCategories, rawRaritiesForCategory } from '../../../util/rarity-c
 import { variantIconUrl } from '../../../util/variant-icons.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { DEFAULT_SET_RARITIES, DEFAULT_SET_VARIANTS } from '../../../util/set-filter-defaults.util';
-import { CombineSetsExportComponent } from '../combine-sets-export/combine-sets-export.component';
+import { MissingExportModalComponent } from '../missing-export-modal/missing-export-modal.component';
 import { ModalComponent } from '../../shared/modal/modal.component';
 interface SetsGroup {
   series: string;
@@ -43,7 +43,7 @@ const FRENCH_SERIES_NAMES: Record<string, string> = {
     RouterLink,
     TranslatePipe,
     ModalComponent,
-    CombineSetsExportComponent,
+    MissingExportModalComponent,
   ],
   templateUrl: './sets-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +85,7 @@ export class SetsListComponent implements OnInit {
   variantTypes = signal<VariantType[]>([]);
   readonly variantLabels = VARIANT_LABELS;
   readonly variantIcon = variantIconUrl;
+  exportOpen = signal(false);
   sharesModalOpen = signal(false);
   sharesLoading = signal(false);
   shares = signal<Share[]>([]);

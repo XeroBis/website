@@ -18,7 +18,15 @@
       >
         <ab-icon name="share" />
       </button>
-      <app-combine-sets-export [sets]="sets()" [rarityCategories]="rarityCategories()" />
+      <button
+        type="button"
+        class="btn btn-secondary btn-icon"
+        [attr.aria-label]="'sets.combineSetsExport.button' | translate"
+        [title]="'sets.combineSetsExport.button' | translate"
+        (click)="exportOpen.set(true)"
+      >
+        <ab-icon name="download" />
+      </button>
     </div>
   </div>
 
@@ -218,4 +226,13 @@
       </table>
     }
   </app-modal>
+}
+
+@if (exportOpen()) {
+  <app-missing-export-modal
+    [sets]="sets()"
+    [rarityCategories]="rarityCategories()"
+    [variantTypes]="variantTypes()"
+    (closed)="exportOpen.set(false)"
+  />
 }

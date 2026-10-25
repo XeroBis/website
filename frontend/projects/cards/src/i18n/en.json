@@ -559,7 +559,6 @@
     "missingOnly": "Show only missing cards",
     "duplicatesOnly": "Show only variants owned in quantity 2 or more",
     "exportMissing": "Export missing cards",
-    "exportVariant": "Print variant",
     "exportRarities": "Rarities to export (none selected = all)",
     "exportFormat": "Format",
     "exportLanguage": "Card language",
@@ -570,13 +569,13 @@
     "exportMissingEmpty": "No missing cards to export.",
     "exportMissingFailed": "Failed to export missing cards.",
     "combineSetsExport": {
-      "button": "Combine sets export",
-      "pickerTitle": "Combine sets",
+      "button": "Export missing cards from several sets",
       "pickerSearchPlaceholder": "Search sets or categories...",
-      "pickerHint": "Pick several sets to export one combined missing-cards list, using a single rarity/format/language selection for all of them.",
       "noSetsMatch": "No sets match this search.",
-      "continue": "Continue ({{count}} selected)",
-      "exportTitle": "Export {{count}} combined set(s)"
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "missingCount": "{{count}} missing",
+      "exportSelected": "Export {{count}} card(s) from {{sets}} set(s)"
     },
     "shareSet": "Share",
     "showVariantsStandard": "Show print variants (standard only)",
@@ -612,7 +611,9 @@
     "backToSets": "Back to Sets",
     "cardCount": "{{count}} cards",
     "countIncoming": "Count incoming as owned",
-    "incomingBadge": "Incoming ×{{count}}"
+    "incomingBadge": "Incoming ×{{count}}",
+    "exportVariants": "Prints (one section per print)",
+    "missingSummary": "{{count}} missing · {{percent}}%"
   },
   "missingIntervals": {
     "title": "Missing cards",

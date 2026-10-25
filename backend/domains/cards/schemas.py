@@ -545,6 +545,13 @@ class SetCodes(BaseModel):
     set_codes: list[str] = Field(min_length=1)
 
 
+class SetMissingOut(BaseModel):
+    set_code: str
+    missing: int
+    total: int
+    completion_percent: int
+
+
 # ── decklist converter ───────────────────────────────────────────────────────
 
 

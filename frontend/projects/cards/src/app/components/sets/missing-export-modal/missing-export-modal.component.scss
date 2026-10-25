@@ -1,0 +1,163 @@
+.export-missing-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.export-missing-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.export-missing-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.export-missing-radio-row {
+  display: flex;
+  gap: var(--space-3);
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+}
+
+.export-missing-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.export-missing-count {
+  margin: 0;
+  font-weight: 600;
+}
+
+.export-missing-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.dimmed {
+  opacity: 0.5;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.rarity-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.rarity-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  img {
+    width: 1.15rem;
+    height: 1.15rem;
+    object-fit: contain;
+  }
+  // The svg is 1em: size it by font, or it sits in the corner of a bigger box.
+  ab-icon {
+    font-size: 1.15rem;
+  }
+  .rarity-fallback {
+    display: none;
+  }
+  .rarity-fallback.visible {
+    display: inline;
+  }
+  &.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
+}
+
+.set-grid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+
+  .input {
+    flex: 1;
+    min-width: 12rem;
+  }
+}
+
+.set-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.set-grid-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+
+  img {
+    width: 100%;
+    height: 3.5rem;
+    object-fit: contain;
+  }
+
+  &.selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    box-shadow: inset 0 0 0 1px var(--color-primary);
+  }
+}
+
+.set-grid-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.set-grid-stats {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

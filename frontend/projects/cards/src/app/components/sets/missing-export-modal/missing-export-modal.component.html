@@ -1,0 +1,194 @@
+<app-modal [title]="'sets.exportMissing' | translate" [wide]="!setCode" (closed)="close()">
+  <div class="export-missing-modal">
+    <div class="export-missing-field">
+      <span class="export-missing-label">{{ 'sets.exportVariants' | translate }}</span>
+      <div class="rarity-toggle-row">
+        @for (variant of shownVariants; track variant) {
+          <button
+            type="button"
+            class="rarity-toggle-btn"
+            [class.active]="selectedVariants().has(variant)"
+            [attr.aria-pressed]="selectedVariants().has(variant)"
+            [attr.aria-label]="variantLabels[variant]"
+            [title]="variantLabels[variant]"
+            (click)="toggleVariant(variant)"
+          >
+            <img [src]="variantIcon(variant)" [alt]="variantLabels[variant]" />
+          </button>
+        }
+        @if (hiddenOtherCount > 0) {
+          <button type="button" class="rarity-toggle-btn" (click)="otherVariantsOpen.set(true)">
+            +{{ hiddenOtherCount }}
+          </button>
+        } @else if (otherVariantsOpen()) {
+          <button type="button" class="rarity-toggle-btn" (click)="otherVariantsOpen.set(false)">
+            −
+          </button>
+        }
+      </div>
+    </div>
+    @if (rarityCategories.length > 0) {
+      <div class="export-missing-field">
+        <span class="export-missing-label">{{ 'sets.exportRarities' | translate }}</span>
+        <div class="rarity-toggle-row">
+          <button
+            type="button"
+            class="rarity-toggle-btn"
+            [class.active]="selectedRarities().size === 0"
+            [attr.aria-label]="'sets.allRarities' | translate"
+            [title]="'sets.allRarities' | translate"
+            (click)="clearRarities()"
+          >
+            <ab-icon name="copy" />
+          </button>
+          @for (r of rarityCategories; track r) {
+            <button
+              type="button"
+              class="rarity-toggle-btn"
+              [class.active]="selectedRarities().has(r)"
+              [attr.aria-pressed]="selectedRarities().has(r)"
+              [attr.aria-label]="r"
+              [title]="r"
+              (click)="toggleRarity(r)"
+            >
+              <img [src]="rarityIcon(r)" [alt]="r" (error)="onRarityIconError($event)" />
+              <span class="rarity-fallback">{{ r }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+    <div class="export-missing-field">
+      <span class="export-missing-label">{{ 'sets.exportFormat' | translate }}</span>
+      <div class="export-missing-radio-row">
+        <label>
+          <input type="radio" name="missingExportFormat" value="tcgplayer" [(ngModel)]="format" />
+          TCGplayer
+        </label>
+        <label>
+          <input type="radio" name="missingExportFormat" value="cardmarket" [(ngModel)]="format" />
+          Cardmarket
+        </label>
+      </div>
+    </div>
+    <div class="export-missing-field">
+      <span class="export-missing-label">{{ 'sets.exportLanguage' | translate }}</span>
+      <div class="export-missing-radio-row">
+        <label>
+          <input type="radio" name="missingExportLanguage" value="en" [(ngModel)]="language" />
+          {{ 'sets.exportLanguageEn' | translate }}
+        </label>
+        <label>
+          <input type="radio" name="missingExportLanguage" value="fr" [(ngModel)]="language" />
+          {{ 'sets.exportLanguageFr' | translate }}
+        </label>
+      </div>
+    </div>
+    <div class="export-missing-field">
+      <label class="export-missing-checkbox">
+        <input type="checkbox" [checked]="excludeInDeck()" (change)="toggleExcludeInDeck()" />
+        {{ 'sets.excludeInDeck' | translate }}
+      </label>
+      <label class="export-missing-checkbox">
+        <input
+          type="checkbox"
+          [checked]="countIncoming.enabled()"
+          (change)="toggleCountIncoming()"
+        />
+        {{ 'sets.countIncoming' | translate }}
+      </label>
+    </div>
+
+    @if (setCode) {
+      <p class="export-missing-count" [class.dimmed]="loading()">
+        @if (singleSummary; as row) {
+          {{
+            'sets.missingSummary'
+              | translate: { count: row.missing, percent: row.completion_percent }
+          }}
+        } @else if (!loading()) {
+          {{ 'sets.exportMissingEmpty' | translate }}
+        }
+      </p>
+    } @else {
+      <div class="export-missing-field">
+        <div class="set-grid-toolbar">
+          <input
+            type="text"
+            class="input"
+            [placeholder]="'sets.combineSetsExport.pickerSearchPlaceholder' | translate"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+          />
+          <button type="button" class="btn btn-ghost" (click)="selectAllVisible()">
+            {{ 'sets.combineSetsExport.selectAll' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            [disabled]="selectedCodes().size === 0"
+            (click)="clearSelection()"
+          >
+            {{ 'sets.combineSetsExport.clear' | translate }}
+          </button>
+        </div>
+        @if (visibleSets().length === 0) {
+          <p class="muted">
+            {{ (loading() ? 'common.loading' : 'sets.combineSetsExport.noSetsMatch') | translate }}
+          </p>
+        } @else {
+          <ul class="set-grid" [class.dimmed]="loading()">
+            @for (set of visibleSets(); track set.set_code) {
+              @let row = summary().get(set.set_code)!;
+              <li>
+                <button
+                  type="button"
+                  class="set-grid-tile"
+                  [class.selected]="selectedCodes().has(set.set_code)"
+                  [attr.aria-pressed]="selectedCodes().has(set.set_code)"
+                  [title]="set.set_name"
+                  (click)="toggleSet(set.set_code)"
+                >
+                  <img
+                    [src]="logoUrl(set)"
+                    [alt]="set.set_name"
+                    loading="lazy"
+                    (error)="onLogoError($event, set)"
+                  />
+                  <span class="set-grid-name">{{ set.set_name }}</span>
+                  <span class="set-grid-stats">
+                    {{ 'sets.combineSetsExport.missingCount' | translate: { count: row.missing } }}
+                    · {{ row.completion_percent }}%
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <div class="export-missing-buttons">
+      <button type="button" class="btn btn-ghost" [disabled]="exporting()" (click)="close()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="exporting() || selectedCodes().size === 0"
+        (click)="exportMissing()"
+      >
+        @if (exporting()) {
+          {{ 'common.exporting' | translate }}
+        } @else if (setCode) {
+          {{ 'sets.exportMissing' | translate }}
+        } @else {
+          {{
+            'sets.combineSetsExport.exportSelected'
+              | translate: { sets: selectedCodes().size, count: selectedMissing }
+          }}
+        }
+      </button>
+    </div>
+  </div>
+</app-modal>

@@ -62,6 +62,14 @@ export interface CardSet {
   completion_percent: number | null;
 }
 
+/** One set's line in the missing-cards export grid, for its options. */
+export interface SetMissingSummary {
+  set_code: string;
+  missing: number;
+  total: number;
+  completion_percent: number;
+}
+
 /** A compact inclusive run of missing numeric card IDs in a set. */
 export interface MissingCardInterval {
   start_number: number;

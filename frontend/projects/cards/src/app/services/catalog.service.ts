@@ -10,6 +10,7 @@ import {
   CardSet,
   CatalogStats,
   MissingSetIntervals,
+  SetMissingSummary,
   RefreshStepStatus,
   VariantType,
 } from '../models/card.model';
@@ -159,44 +160,31 @@ export class CatalogService {
     return this.http.get<CardCatalogEntry[]>(`${this.baseUrl}/sets/${setCode}/cards`);
   }
 
-  /** Cardmarket-format decklist of every card in this set not owned at all
-   * -- see the Sets page's "Export missing cards". includeExtraNumbering
-   * includes secret/ultra rares
-   * numbered past the set's card_count and non-numeric card numbers,
-   * excluded by default. */
-  exportSetMissingText(
-    setCode: string,
+  /** Per set with something missing for these options: missing and selected
+   * cards, one per (card, print) -- the missing-cards export modal's grid. */
+  missingSummary(
     rarities: string[],
-    format: 'tcgplayer' | 'cardmarket',
-    language: 'en' | 'fr',
+    variants: VariantType[],
     excludeDeckAllocated: boolean,
     includeIncoming: boolean,
-    variantType: VariantType | '' = '',
-  ): Observable<string> {
+    setCodes: string[] = [],
+  ): Observable<SetMissingSummary[]> {
     let params = new HttpParams()
-      .set('format', format)
-      .set('language', language)
       .set('exclude_deck_allocated', String(excludeDeckAllocated))
       .set('include_incoming', String(includeIncoming));
-    if (variantType) params = params.set('variant_type', variantType);
-    for (const rarity of rarities) {
-      params = params.append('rarity', rarity);
-    }
-    return this.http.get(`${this.baseUrl}/sets/${setCode}/missing/text`, {
-      params,
-      responseType: 'text',
-    });
+    for (const rarity of rarities) params = params.append('rarity', rarity);
+    for (const variant of variants) params = params.append('variant_type', variant);
+    for (const code of setCodes) params = params.append('set_code', code);
+    return this.http.get<SetMissingSummary[]>(`${this.baseUrl}/sets/missing/summary`, { params });
   }
 
-  /** Combined "export missing cards" across several sets at once (the Sets
-   * page's "Combine sets export") -- same params as exportSetMissingText
-   * above, but `setCodes` goes in the POST body and the single rarity/
-   * format/language/exclude-deck-allocated selection applies across every
-   * selected set. See documentation/features.md's "Combined sets
-   * missing-cards export". */
-  exportMultiSetMissingText(
+  /** Missing cards of `setCodes` as a TCGplayer/PTCGL or Cardmarket list, one
+   * section per print in blocks of 100 -- see documentation/features.md's
+   * Sets entry. */
+  exportMissingText(
     setCodes: string[],
     rarities: string[],
+    variants: VariantType[],
     format: 'tcgplayer' | 'cardmarket',
     language: 'en' | 'fr',
     excludeDeckAllocated: boolean,
@@ -207,9 +195,8 @@ export class CatalogService {
       .set('language', language)
       .set('exclude_deck_allocated', String(excludeDeckAllocated))
       .set('include_incoming', String(includeIncoming));
-    for (const rarity of rarities) {
-      params = params.append('rarity', rarity);
-    }
+    for (const rarity of rarities) params = params.append('rarity', rarity);
+    for (const variant of variants) params = params.append('variant_type', variant);
     return this.http.post(
       `${this.baseUrl}/sets/missing/text`,
       { set_codes: setCodes },

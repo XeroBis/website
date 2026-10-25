@@ -15,7 +15,6 @@ import {
   CardSet,
   SHARE_DURATION_OPTIONS,
   Share,
-  VARIANT_LABELS,
   VariantType,
 } from '../../../models/card.model';
 import { CardsService } from '../../../services/cards.service';
@@ -26,14 +25,9 @@ import { SharesService } from '../../../services/shares.service';
 import { ToastService } from '../../../services/toast.service';
 import { CardDisplayNamePipe } from '../../../util/card-display-name.pipe';
 import { matchesCatalogSearch, parseAnchoredSearch } from '../../../util/pokemon-translations.util';
-import {
-  rarityCategory,
-  rawRaritiesForCategory,
-  sortRarityCategories,
-} from '../../../util/rarity-category.util';
+import { rarityCategory, sortRarityCategories } from '../../../util/rarity-category.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { DEFAULT_SET_RARITIES, DEFAULT_SET_VARIANTS } from '../../../util/set-filter-defaults.util';
-import { variantIconUrl } from '../../../util/variant-icons.util';
 import { CardDetailComponent } from '../../shared/card-detail/card-detail.component';
 import { CardOrderComponent } from '../../shared/card-order/card-order.component';
 import {
@@ -44,6 +38,7 @@ import {
 } from '../../../util/card-order.util';
 import { SetCardGridComponent, SetGridAdapter } from '../set-card-grid/set-card-grid.component';
 import { ModalComponent } from '../../shared/modal/modal.component';
+import { MissingExportModalComponent } from '../missing-export-modal/missing-export-modal.component';
 import {
   buildVariantTiles,
   completionPercent,
@@ -73,6 +68,7 @@ function readStoredView(): 'grid' | 'checklist' | 'binder' {
     SetCardGridComponent,
     SetFiltersComponent,
     ModalComponent,
+    MissingExportModalComponent,
     CardDisplayNamePipe,
     TranslatePipe,
   ],
@@ -91,14 +87,6 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   loading = signal(true);
   detailCard = signal<CardCatalogEntry | null>(null);
   exportModalOpen = signal(false);
-  exportingMissing = signal(false);
-  exportSelectedRarities = signal(new Set<string>());
-  exportFormat = signal<'tcgplayer' | 'cardmarket'>('cardmarket');
-  exportLanguage = signal<'en' | 'fr'>('en');
-  exportExcludeInDeck = signal(false);
-  exportVariantType = signal<VariantType>('standard');
-  readonly exportVariantLabels = VARIANT_LABELS;
-  readonly exportVariantIcon = variantIconUrl;
   get exportVariantTypes(): VariantType[] {
     return [
       ...new Set(
@@ -694,83 +682,6 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     } else {
       img.style.visibility = 'hidden';
     }
-  }
-  toggleExportRarity(rarity: string): void {
-    if (this.exportSelectedRarities().has(rarity)) {
-      this.exportSelectedRarities.update((value) => {
-        const next = new Set(value);
-        next.delete(rarity);
-        return next;
-      });
-    } else {
-      this.exportSelectedRarities.update((value) => {
-        const next = new Set(value);
-        next.add(rarity);
-        return next;
-      });
-    }
-  }
-  isExportRarityActive(rarity: string): boolean {
-    return this.exportSelectedRarities().has(rarity);
-  }
-  isAllExportRaritiesActive(): boolean {
-    return this.exportSelectedRarities().size === 0;
-  }
-  clearExportRarities(): void {
-    this.exportSelectedRarities.set(new Set());
-  }
-  toggleExportExcludeInDeck(): void {
-    this.exportExcludeInDeck.set(!this.exportExcludeInDeck());
-  }
-  /** Copies a TCGplayer/PTCGL- or Cardmarket-format decklist (per
-   * exportFormat) of every card in this set not owned at all to the
-   * clipboard, narrowed to exportSelectedRarities (empty = every rarity,
-   * including secret/extra-numbered cards -- no numbering gate hides them),
-   * rendered in exportLanguage, and -- when exportExcludeInDeck is on --
-   * also treating copies allocated to a deck as unavailable (same rule as
-   * the page's own "don't count cards in a deck" toggle, but a separate,
-   * independent flag, same pattern as exportSelectedRarities vs.
-   * selectedRarities) -- mirrors the deck export panel's copy-to-clipboard
-   * pattern. */
-  exportMissing(): void {
-    this.exportingMissing.set(true);
-    const rawRarities = [...this.exportSelectedRarities()].flatMap((category) =>
-      rawRaritiesForCategory(category),
-    );
-    this.catalogService
-      .exportSetMissingText(
-        this.setCode(),
-        rawRarities,
-        this.exportFormat(),
-        this.exportLanguage(),
-        this.exportExcludeInDeck(),
-        this.countIncoming.enabled(),
-        this.exportVariantType(),
-      )
-      .subscribe({
-        next: (text) => {
-          this.exportingMissing.set(false);
-          if (!text) {
-            this.toastService.show(this.translate.instant('sets.exportMissingEmpty'));
-            return;
-          }
-          navigator.clipboard.writeText(text).then(
-            () => {
-              this.toastService.show(this.translate.instant('sets.exportMissingCopied'));
-              this.exportModalOpen.set(false);
-            },
-            () =>
-              this.toastService.show(
-                this.translate.instant('sets.exportMissingCopyFailed'),
-                'error',
-              ),
-          );
-        },
-        error: () => {
-          this.exportingMissing.set(false);
-          this.toastService.show(this.translate.instant('sets.exportMissingFailed'), 'error');
-        },
-      });
   }
   openExportModal(): void {
     this.exportModalOpen.set(true);

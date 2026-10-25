@@ -223,3 +223,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **What**: deleting a workout on `/workouts` hides the card and shows an Undo bar for 6 s; the `DELETE` is sent when the bar goes away or the page is left.
 - **Over a soft delete** (`deleted_at` column, restore endpoint, purge job): no schema or API change; the only way to lose the undo is closing the tab within those seconds, which then deletes as asked.
 - **Repeat** reuses `POST /session` with a `workout_id` (over copying the entries in the browser and adding them one by one), so a session from a workout is built exactly like one from a template.
+
+## Cards: one missing-cards export modal, split by print (2026-10-25)
+
+- **What**: the set page's and the Sets page's missing-cards exports became one modal (options first, then, on the Sets page, a grid of set logos with each set's missing count and %), with several prints at once; the export has a section per print in blocks of 100 cards.
+- **Over**: two diverging modals (the combined one had no print choice and a separate set-picker step) and a single print per export.
+- **Why**: a Cardmarket/TCGplayer line can't tell a reverse from a standard, so prints must be separated in the text; blocks of 100 paste in one go; seeing which sets miss what before ticking them avoids exporting empty sets. The single-set `GET …/missing/text` is gone: the modal posts the set codes either way.

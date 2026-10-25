@@ -391,22 +391,23 @@ def test_incoming_per_print(client, imported, pika, rai):
 
 def test_missing_views_count_incoming_cards(client, imported, pika, rai, eevee):
     def text(**params):
-        response = client.get(f"{CATALOG}/sets/SVI/missing/text", params=params)
+        response = client.post(
+            f"{CATALOG}/sets/missing/text", params=params, json={"set_codes": ["SVI"]}
+        )
         assert response.status_code == 200
         return response.text
 
-    def combined(**params):
-        return client.post(
-            f"{CATALOG}/sets/missing/text", params=params, json={"set_codes": ["SVI"]}
-        ).text
+    def summary(**params):
+        rows = client.get(f"{CATALOG}/sets/missing/summary", params=params).json()
+        return {row["set_code"]: row["missing"] for row in rows}.get("SVI", 0)
 
     def numbers(**params):
         rows = client.get(f"{CATALOG}/missing-intervals", params=params).json()
         return {row["set_code"]: row["missing_numbers"] for row in rows}["SVI"]
 
-    for export in (text, combined):
-        assert "Pikachu" not in export() and "Eevee" in export()
-        assert "Pikachu" in export(include_incoming=False)
+    assert "Pikachu" not in text() and "Eevee" in text()
+    assert "Pikachu" in text(include_incoming=False)
+    assert summary(include_incoming=False) == summary() + 1
     assert numbers() == [27]
     assert numbers(include_incoming=False) == [25, 26, 27]
     # By print: the reverse Raichu is incoming, the reverse Pikachu isn't.

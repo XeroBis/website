@@ -515,21 +515,37 @@ def base_set():
     }
 
 
+def missing_text(client, set_codes=("base1",), **params):
+    return client.post(
+        f"{URL}/catalog/sets/missing/text",
+        params=params,
+        json={"set_codes": list(set_codes)},
+    )
+
+
 def test_missing_export_by_exact_print(client, base_set):
     own(client.user_id, base_set["standard_owned"], standard=1)
     own(client.user_id, base_set["reverse_owned"], reverse=1)
-    url = f"{URL}/catalog/sets/base1/missing/text"
-    assert client.get(url).text == ""
-    reverse = client.get(url, params={"variant_type": "reverse"})
+    reverse = missing_text(client, variant_type="reverse")
     assert reverse.status_code == 200
-    assert reverse.text == "1x Standard owned (Scarlet & Violet)"
-    standard = client.get(
-        url, params={"variant_type": "standard", "format": "tcgplayer"}
+    assert reverse.text == "Reverse 1/1\n1x Standard owned (Scarlet & Violet)"
+    standard = missing_text(client, format="tcgplayer")
+    assert standard.text == "Standard 1/1\nPokémon (1)\n1 Reverse owned base1 2"
+    both = missing_text(client, variant_type=["reverse", "standard"])
+    assert both.text == (
+        "Standard 1/1\n1x Reverse owned (Scarlet & Violet)\n\n"
+        "Reverse 1/1\n1x Standard owned (Scarlet & Violet)"
     )
-    assert standard.text == "Pokémon (1)\n1 Reverse owned base1 2"
-    assert client.get(url, params={"variant_type": "reverse_masterball"}).text == ""
-    assert client.get(url, params={"variant_type": "unknown"}).status_code == 422
-    assert client.get(f"{URL}/catalog/sets/nope/missing/text").status_code == 404
+    assert missing_text(client, variant_type="reverse_masterball").text == ""
+    assert missing_text(client, variant_type="unknown").status_code == 422
+
+
+def test_missing_export_in_blocks_of_100(client):
+    for number in range(1, 151):
+        add_catalog_card(set_code="big", card_number=str(number), name=f"Card {number}")
+    lines = missing_text(client, ["big"]).text.split("\n")
+    assert lines[0] == "Standard 1/2" and lines[101] == ""
+    assert lines[102] == "Standard 2/2" and len(lines) == 153
 
 
 def test_missing_export_names_the_additionals_product(client):
@@ -539,12 +555,11 @@ def test_missing_export_names_the_additionals_product(client):
         name="Bayleef",
         variants=("standard", "reverse", "reverse_friendball"),
     )
-    url = f"{URL}/catalog/sets/ASC/missing/text"
-    ball = client.get(url, params={"variant_type": "reverse_friendball"})
-    assert ball.text == "1x Bayleef (V.2) (Ascended Heroes: Additionals)"
-    reverse = client.get(url, params={"variant_type": "reverse"})
-    assert reverse.text == "1x Bayleef (V.1) (Ascended Heroes: Additionals)"
-    assert client.get(url).text == "1x Bayleef (Ascended Heroes)"
+    ball = missing_text(client, ["ASC"], variant_type="reverse_friendball")
+    assert ball.text.endswith("1x Bayleef (V.2) (Ascended Heroes: Additionals)")
+    reverse = missing_text(client, ["ASC"], variant_type="reverse")
+    assert reverse.text.endswith("1x Bayleef (V.1) (Ascended Heroes: Additionals)")
+    assert missing_text(client, ["ASC"]).text.endswith("1x Bayleef (Ascended Heroes)")
 
 
 def test_missing_export_options(client, base_set):
@@ -553,13 +568,13 @@ def test_missing_export_options(client, base_set):
     with database.SessionLocal() as db:
         db.get(m.CardCatalog, base_set["reverse_owned"]).display_name = "Possédé"
         db.commit()
-    url = f"{URL}/catalog/sets/base1/missing/text"
-    assert client.get(url, params={"language": "fr"}).text == (
-        "1x Possédé (Scarlet & Violet)"
+    assert missing_text(client, language="fr").text == (
+        "Standard 1/1\n1x Possédé (Scarlet & Violet)"
     )
-    assert client.get(url, params={"rarity": "Common"}).text == ""
-    in_decks = client.get(url, params={"exclude_deck_allocated": True})
+    assert missing_text(client, rarity="Common").text == ""
+    in_decks = missing_text(client, exclude_deck_allocated=True)
     assert in_decks.text.splitlines() == [
+        "Standard 1/1",
         "1x Standard owned (Scarlet & Violet)",
         "1x Reverse owned (Scarlet & Violet)",
     ]
@@ -567,14 +582,29 @@ def test_missing_export_options(client, base_set):
 
 def test_missing_export_over_several_sets(client, base_set):
     add_catalog_card(set_code="base2", card_number="1", name="Other set card")
-    url = f"{URL}/catalog/sets/missing/text"
-    response = client.post(
-        url, params={"format": "tcgplayer"}, json={"set_codes": ["base2", "base1"]}
-    )
+    response = missing_text(client, ["base2", "base1"], format="tcgplayer")
     assert response.text == (
-        "Pokémon (3)\n1 Standard owned base1 1\n1 Reverse owned base1 2\n"
-        "1 Other set card base2 1"
+        "Standard 1/1\nPokémon (3)\n1 Standard owned base1 1\n"
+        "1 Reverse owned base1 2\n1 Other set card base2 1"
     )
-    unknown = client.post(url, json={"set_codes": ["base1", "nope"]})
+    unknown = missing_text(client, ["base1", "nope"])
     assert unknown.status_code == 404 and "nope" in unknown.json()["detail"]
-    assert client.post(url, json={"set_codes": []}).status_code == 422
+    assert missing_text(client, []).status_code == 422
+
+
+def test_missing_summary(client, base_set):
+    add_catalog_card(set_code="base2", card_number="1", name="Other set card")
+    own(client.user_id, base_set["standard_owned"], standard=1)
+    own(client.user_id, add_catalog_card(set_code="done"), standard=1)
+    url = f"{URL}/catalog/sets/missing/summary"
+    assert client.get(url).json() == [
+        {"set_code": "base1", "missing": 1, "total": 2, "completion_percent": 50},
+        {"set_code": "base2", "missing": 1, "total": 1, "completion_percent": 0},
+    ]
+    both = client.get(
+        url, params={"variant_type": ["standard", "reverse"], "set_code": "base1"}
+    )
+    assert both.json() == [
+        {"set_code": "base1", "missing": 3, "total": 4, "completion_percent": 25}
+    ]
+    assert client.get(url, params={"variant_type": "nope"}).status_code == 422

@@ -259,106 +259,12 @@
 }
 
 @if (exportModalOpen()) {
-  <app-modal [title]="'sets.exportMissing' | translate" (closed)="closeExportModal()">
-    <div class="export-missing-modal">
-      <div class="export-missing-field">
-        <span class="export-missing-label">{{ 'sets.exportVariant' | translate }}</span>
-        <div class="rarity-toggle-row">
-          @for (variant of exportVariantTypes; track variant) {
-            <button
-              type="button"
-              class="rarity-toggle-btn"
-              [class.active]="exportVariantType() === variant"
-              [attr.aria-pressed]="exportVariantType() === variant"
-              [attr.aria-label]="exportVariantLabels[variant]"
-              [title]="exportVariantLabels[variant]"
-              (click)="exportVariantType.set(variant)"
-            >
-              <img [src]="exportVariantIcon(variant)" [alt]="exportVariantLabels[variant]" />
-            </button>
-          }
-        </div>
-      </div>
-      @if (availableRarities.length > 0) {
-        <div class="export-missing-field">
-          <span class="export-missing-label">{{ 'sets.exportRarities' | translate }}</span>
-          <div class="rarity-toggle-row">
-            <button
-              type="button"
-              class="rarity-toggle-btn"
-              [class.active]="isAllExportRaritiesActive()"
-              [attr.aria-label]="'sets.allRarities' | translate"
-              [title]="'sets.allRarities' | translate"
-              (click)="clearExportRarities()"
-            >
-              <ab-icon name="copy" />
-            </button>
-            @for (r of availableRarities; track r) {
-              <button
-                type="button"
-                class="rarity-toggle-btn"
-                [class.active]="isExportRarityActive(r)"
-                [attr.aria-label]="r"
-                [title]="r"
-                (click)="toggleExportRarity(r)"
-              >
-                <img [src]="rarityIcon(r)" [alt]="r" (error)="onRarityIconError($event)" />
-                <span class="rarity-fallback">{{ r }}</span>
-              </button>
-            }
-          </div>
-        </div>
-      }
-      <div class="export-missing-field">
-        <span class="export-missing-label">{{ 'sets.exportFormat' | translate }}</span>
-        <div class="export-missing-radio-row">
-          <label>
-            <input type="radio" name="exportFormat" value="tcgplayer" [(ngModel)]="exportFormat" />
-            TCGplayer
-          </label>
-          <label>
-            <input type="radio" name="exportFormat" value="cardmarket" [(ngModel)]="exportFormat" />
-            Cardmarket
-          </label>
-        </div>
-      </div>
-      <div class="export-missing-field">
-        <span class="export-missing-label">{{ 'sets.exportLanguage' | translate }}</span>
-        <div class="export-missing-radio-row">
-          <label>
-            <input type="radio" name="exportLanguage" value="en" [(ngModel)]="exportLanguage" />
-            {{ 'sets.exportLanguageEn' | translate }}
-          </label>
-          <label>
-            <input type="radio" name="exportLanguage" value="fr" [(ngModel)]="exportLanguage" />
-            {{ 'sets.exportLanguageFr' | translate }}
-          </label>
-        </div>
-      </div>
-      <div class="export-missing-field">
-        <label class="export-missing-checkbox">
-          <input type="checkbox" [(ngModel)]="exportExcludeInDeck" />
-          {{ 'sets.excludeInDeck' | translate }}
-        </label>
-        <label class="export-missing-checkbox">
-          <input
-            type="checkbox"
-            [checked]="countIncoming.enabled()"
-            (change)="countIncoming.toggle()"
-          />
-          {{ 'sets.countIncoming' | translate }}
-        </label>
-      </div>
-      <button
-        type="button"
-        class="btn btn-primary"
-        [disabled]="exportingMissing()"
-        (click)="exportMissing()"
-      >
-        {{ (exportingMissing() ? 'common.exporting' : 'sets.exportMissing') | translate }}
-      </button>
-    </div>
-  </app-modal>
+  <app-missing-export-modal
+    [setCode]="setCode()"
+    [rarityCategories]="availableRarities"
+    [variantTypes]="exportVariantTypes"
+    (closed)="closeExportModal()"
+  />
 }
 
 @if (shareModalOpen()) {
