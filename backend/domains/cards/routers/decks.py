@@ -356,6 +356,7 @@ def _deck_file(
                 card_number=catalog_card_of(row).card_number,
                 variant_type=row.variant_type,
                 quantity_in_deck=copies,
+                poster_slot=row.poster_slot,
             )
             for row, copies in rows
         ],
@@ -490,6 +491,7 @@ def _import_deck(
     db.flush()
     deck_rules.log_deck_history(db, deck.id, "created", deck.name)
     add_catalog_cards(db, user.id, deck, items)
+    _set_imported_posters(db, deck, file.cards, [card for card, _, _ in items])
 
     baseline: dict[tuple[int, str], int] = {}
     for card, variant, copies in items:
@@ -508,6 +510,37 @@ def _import_deck(
         db.add(draft)
     db.flush()
     return deck
+
+
+def _set_imported_posters(
+    db: Session,
+    deck: m.Deck,
+    file_cards: list[s.DeckFileCard],
+    catalog_cards: list[m.CardCatalog],
+) -> None:
+    """Give the imported rows their poster slots. A slot outside 0–2, taken
+    by an earlier card, or on a row that already has one is ignored."""
+    wanted = [
+        (card.id, item.variant_type, item.poster_slot)
+        for item, card in zip(file_cards, catalog_cards, strict=True)
+        if item.poster_slot in range(3)
+    ]
+    if not wanted:
+        return
+    db.flush()
+    rows = {
+        (catalog_card_of(row).id, row.variant_type): row
+        for row in db.scalars(
+            _with_cards(select(m.DeckCard)).where(m.DeckCard.deck_id == deck.id)
+        )
+    }
+    taken: set[int] = set()
+    for catalog_id, variant, slot in wanted:
+        row = rows.get((catalog_id, variant))
+        if row is None or row.poster_slot is not None or slot in taken:
+            continue
+        row.poster_slot = slot
+        taken.add(slot)
 
 
 def check_result(card: m.CardCatalog, baseline: int, delta: int) -> None:

@@ -514,6 +514,16 @@ def test_export_then_import_round_trip(client, other_client, pika, rai):
         f"{DECKS}/{deck}/cards/bulk",
         json={"items": [{"card_id": pika_card, "all_variants": True}]},
     )
+    rows = cards_of(client, deck)
+    client.put(
+        f"{DECKS}/{deck}",
+        json={
+            "poster_card_ids": [
+                rows[(pika, "reverse")]["id"],
+                rows[(pika, "standard")]["id"],
+            ]
+        },
+    )
     draft = client.post(f"{DECKS}/{deck}/drafts", json={"name": "Up"}).json()
     client.put(
         f"{DECKS}/{deck}/drafts/{draft['id']}/entries/{rai}",
@@ -535,6 +545,7 @@ def test_export_then_import_round_trip(client, other_client, pika, rai):
                         "card_number": "25",
                         "variant_type": "standard",
                         "quantity_in_deck": 1,
+                        "poster_slot": 1,
                     },
                     {
                         "name": "Pikachu",
@@ -542,6 +553,7 @@ def test_export_then_import_round_trip(client, other_client, pika, rai):
                         "card_number": "25",
                         "variant_type": "reverse",
                         "quantity_in_deck": 1,
+                        "poster_slot": 0,
                     },
                 ],
                 "drafts": [
@@ -585,6 +597,40 @@ def test_export_then_import_round_trip(client, other_client, pika, rai):
     assert other_client.get(f"{DECKS}/export").json() == exported
     main = response.json()[0]["id"]
     assert deck_log(main)[0] == ("created", "Main", None, None, None)
+
+
+def test_import_ignores_bad_poster_slots(client, pika, rai):
+    file = {
+        "name": "Wants",
+        "deck_type": "phantom",
+        "cards": [
+            {
+                "set_code": "SVI",
+                "card_number": "25",
+                "quantity_in_deck": 1,
+                "poster_slot": 2,
+            },
+            {
+                "set_code": "SVI",
+                "card_number": "26",
+                "quantity_in_deck": 1,
+                "poster_slot": 2,
+            },
+            {
+                "set_code": "SVI",
+                "card_number": "25",
+                "variant_type": "reverse",
+                "quantity_in_deck": 1,
+                "poster_slot": 5,
+            },
+        ],
+    }
+    response = client.post(f"{DECKS}/import", json=file)
+    assert response.status_code == 201, response.text
+    posters = response.json()["poster_cards"]
+    assert [(c["name"], c["variant_type"], c["poster_slot"]) for c in posters] == [
+        ("Pikachu", "standard", 2)
+    ]
 
 
 def test_old_files_import_unchanged(client, pika):

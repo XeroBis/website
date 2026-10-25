@@ -399,13 +399,23 @@ class DeckWipeResult(BaseModel):
 
 class DeckFileCard(BaseModel):
     """A card of a deck file, identified by set code and number (`name` is
-    informational; old files' extra `set_name`/`image_path` are ignored)."""
+    informational; old files' extra `set_name`/`image_path` are ignored).
+    `poster_slot` (0–2) marks a poster card, left out of exports otherwise;
+    an invalid one is ignored on import."""
 
     name: str | None = None
     set_code: str = Field(min_length=1)
     card_number: str = Field(min_length=1)
     variant_type: str = "standard"
     quantity_in_deck: int = Field(ge=1)
+    poster_slot: int | None = None
+
+    @model_serializer(mode="wrap")
+    def _without_empty_poster_slot(self, handler):
+        data = handler(self)
+        if data.get("poster_slot") is None:
+            data.pop("poster_slot", None)
+        return data
 
 
 class DeckFileDraftEntry(BaseModel):
