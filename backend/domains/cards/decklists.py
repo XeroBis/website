@@ -94,12 +94,17 @@ _CARDMARKET_PRINT_IDENTIFIERS = {
         "113": (("Pay Day",), ("Pay Day", "30")),
         "121": (("Elemental Blast",), ("Elemental Blast", "30")),
     },
-    # The Antique fossils' brackets are their French ability names.
     "MEW": {
-        "152": (("Domed Armor",), ("Armure Dôme",)),
-        "153": (("Helical Swell",), ("Houle Nautile",)),
-        "154": (("Amber Protection",), ("Protection Ambre",)),
+        # Main-set prints sharing their name and moves with an Illustration
+        # Rare.
+        "1": (("Leech Seed",), ("Leech Seed", "151")),
+        "2": (("Leech Seed", "Vine Whip"), ("Leech Seed", "Vine Whip", "151")),
+        # The Antique fossils are Trainers, bracketed only from here.
+        "152": (("Domed Armor",), ("Domed Armor",)),
+        "153": (("Helical Swell",), ("Helical Swell",)),
+        "154": (("Amber Protection",), ("Amber Protection",)),
     },
+    "OBF": {"116": (("Bite",), ("Bite", "sv3"))},
     "PFL": {"76": (("Ball Roll",), ("Ball Roll", "PFL"))},
     # Main-set prints sharing their name and moves with an Illustration Rare.
     "BLK": {
@@ -144,6 +149,7 @@ _CARDMARKET_NAME_OVERRIDES = {
         "Telepathic Psychic Energy": "Telepathic [P] Energy",
         "Growing Grass Energy": "Growing [G] Energy",
     },
+    "JTG": {"Billy and O'Nare": "Billy & O'Nare"},
     "PBL": {
         "Shadowy Darkness Energy": "Shadowy D Energy",
         "Voltaic Lightning Energy": "Voltaic L Energy",
@@ -166,6 +172,7 @@ _CARDMARKET_MOVE_OVERRIDES = {
         ("Crushing Blow", "Alloyed Hammer"): ("Knock Off", "Wild Press"),
     },
     "OBF": {("Headbang", "Crunch"): ("Headbutt", "Crunch")},
+    "TWM": {("Dastardly Jab", "Sludge Bomb"): ("Dastardly", "Sludge Bomb")},
     "MEW": {
         ("Enthusiastic King", "Venomous Impact"): ("Enthusiastic King", "Venom Impact"),
         ("Overthink", "Water Gun"): ("Overthinking", "Water Gun"),

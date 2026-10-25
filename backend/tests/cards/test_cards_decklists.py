@@ -273,14 +273,14 @@ def test_30c_qualifiers_are_not_guessed():
 
 
 @pytest.mark.parametrize(
-    "number,name,ability,bracket",
+    "number,name,ability",
     [
-        ("152", "Antique Dome Fossil", "Domed Armor", "Armure Dôme"),
-        ("153", "Antique Helix Fossil", "Helical Swell", "Houle Nautile"),
-        ("154", "Antique Old Amber", "Amber Protection", "Protection Ambre"),
+        ("152", "Antique Dome Fossil", "Domed Armor"),
+        ("153", "Antique Helix Fossil", "Helical Swell"),
+        ("154", "Antique Old Amber", "Amber Protection"),
     ],
 )
-def test_mew_fossils_get_their_cardmarket_bracket(number, name, ability, bracket):
+def test_mew_fossils_get_their_cardmarket_bracket(number, name, ability):
     card = add_catalog_card(
         set_code="MEW",
         card_number=number,
@@ -290,10 +290,40 @@ def test_mew_fossils_get_their_cardmarket_bracket(number, name, ability, bracket
         details=moves(abilities=(ability,)),
     )
     text = cardmarket(card)
-    assert text == f"1x {name} [{bracket}] (151)"
+    assert text == f"1x {name} [{ability}] (151)"
     assert parsed(text) == [card]
     # Other Trainers with an ability keep no bracket.
     assert cardmarket(card, set_code="BLK") == f"1x {name} (151)"
+
+
+@pytest.mark.parametrize(
+    "set_code,set_name,number,name,attacks,product",
+    [
+        ("MEW", "151", "001", "Bulbasaur", ["Leech Seed"], "[Leech Seed | 151]"),
+        (
+            "MEW",
+            "151",
+            "002",
+            "Ivysaur",
+            ["Leech Seed", "Vine Whip"],
+            "[Leech Seed | Vine Whip | 151]",
+        ),
+        ("OBF", "Obsidian Flames", "116", "Rockruff", ["Bite"], "[Bite | sv3]"),
+    ],
+)
+def test_prints_get_their_set_in_the_bracket(
+    set_code, set_name, number, name, attacks, product
+):
+    card = add_catalog_card(
+        set_code=set_code,
+        card_number=number,
+        name=name,
+        set_name=set_name,
+        details=moves(*attacks),
+    )
+    text = cardmarket(card)
+    assert text == f"1x {name} {product} ({set_name})"
+    assert parsed(text) == [card]
 
 
 def test_black_bolt_main_print_gets_sv_over_its_illustration_rare():
@@ -376,6 +406,13 @@ def test_miraidon_identifier_round_trips():
             "Slowking [Wash the State Clean]",
         ),
         ("SCR", "Espathra", ["Psychic Flash"], "Espathra [Psy Flash]"),
+        (
+            "TWM",
+            "Scolipede",
+            ["Dastardly Jab", "Sludge Bomb"],
+            "Scolipede [Dastardly | Sludge Bomb]",
+        ),
+        ("JTG", "Billy and O'Nare", [], "Billy & O'Nare"),
         ("BLK", "Escavalier", ["Wild Lances"], "Escavalier [Wild Lance]"),
         (
             "PAF",
