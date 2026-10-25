@@ -586,6 +586,33 @@ def test_artworks_are_cardmarket_versions():
         assert prints(ball) == [(card, "reverse_pokeball")]
 
 
+def test_special_prints_make_the_standard_v1():
+    # Scarlet & Violet sells a card's stamped prints as its V.2, V.3…
+    stamped = add_catalog_card(
+        set_code="SVI",
+        set_name="Scarlet & Violet",
+        card_number="156",
+        name="Lechonk",
+        details=moves("Whimsy Tackle"),
+        variants=("standard", "reverse", "stamp_set_logo"),
+    )
+    plain = add_catalog_card(
+        set_code="SVI",
+        set_name="Scarlet & Violet",
+        card_number="097",
+        name="Fidough",
+        details=moves("Rear Kick"),
+    )
+    text = cardmarket(stamped, include_sets=False)
+    assert text == "1x Lechonk [Whimsy Tackle] (V.1) (Scarlet & Violet)"
+    assert parsed(text) == [stamped]
+    assert cardmarket(plain) == "1x Fidough [Rear Kick] (Scarlet & Violet)"
+    # Other sets don't.
+    assert cardmarket(stamped, set_code="OBF") == (
+        "1x Lechonk [Whimsy Tackle] (Scarlet & Violet)"
+    )
+
+
 # ── set missing-cards exports ────────────────────────────────────────────────
 
 

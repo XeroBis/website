@@ -72,6 +72,10 @@ _ADDITIONALS = ": Additionals"
 # expansion and its Additionals alike, whose only Additionals product is
 # the Poké Ball reverse: set code → number → version.
 _ARTWORK_VERSIONS = {"PRE": {"96": 1, "97": 2, "98": 3, "99": 4}}
+# Sets where Cardmarket sells a card's special prints (stamps, cosmos holo…)
+# as more versions of it in the main expansion: its standard is then V.1.
+_SPECIAL_PRINTS_AS_VERSIONS_SETS = {"SVI", "PAL"}
+_PLAIN_PRINTS = {"standard", "reverse"}
 
 # Verified Cardmarket brackets for prints whose product name would otherwise
 # collide or not match: set code → number → (the card's English moves, what
@@ -407,6 +411,16 @@ def _artwork_version(card: m.CardCatalog) -> int | None:
     return versions.get(number_key(card.card_number or ""))
 
 
+def _main_version(card: m.CardCatalog) -> int | None:
+    """The version of `card`'s product in its main expansion; None when
+    unversioned."""
+    artwork = _artwork_version(card)
+    if artwork is not None:
+        return artwork
+    special = any(v.variant_type not in _PLAIN_PRINTS for v in card.variants)
+    return 1 if special and card.set_code in _SPECIAL_PRINTS_AS_VERSIONS_SETS else None
+
+
 def _artwork(db: Session, card: m.CardCatalog, version: int | None) -> m.CardCatalog:
     """The artwork of `card` a `(V.n)` names; `card` itself when its set
     doesn't version it by artwork."""
@@ -606,8 +620,9 @@ def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
     with known moves, the expansion unless `include_sets` is off. A print
     sold as an Additionals product always names its expansion (without it
     Cardmarket would pick the plain card), and its version unless it's the
-    card's only Additionals product. A card versioned by artwork always
-    names its expansion and version."""
+    card's only Additionals product. A card versioned in its main expansion
+    (by artwork, or for its special prints) always names that expansion and
+    version."""
     rows = []
     for line in entries:
         card = line.card
@@ -625,9 +640,9 @@ def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
                 expansion = clean_set_name(card.set_name) + _ADDITIONALS
                 tag = f" (V.{version})" if _versioned(card) else ""
                 suffix = f"{tag} ({expansion})"
-            elif _artwork_version(card) and card.set_name:
+            elif (main_version := _main_version(card)) and card.set_name:
                 expansion = clean_set_name(card.set_name)
-                suffix = f" (V.{_artwork_version(card)}) ({expansion})"
+                suffix = f" (V.{main_version}) ({expansion})"
             elif include_sets and card.set_name:
                 suffix = f" ({clean_set_name(card.set_name)})"
         rows.append(f"{line.quantity}x {_cardmarket_name(line)}{bracket}{suffix}")
