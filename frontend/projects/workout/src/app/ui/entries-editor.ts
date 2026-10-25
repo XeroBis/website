@@ -97,6 +97,7 @@ const FIELD_INPUT: Record<SetField, { step: number; min: number | null }> = {
           </select>
         </label>
       }
+      <ng-content />
     </div>
 
     <ng-template #arrows let-list="list" let-i="i" let-set="set">

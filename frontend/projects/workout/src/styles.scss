@@ -980,6 +980,20 @@ input.search {
   gap: 0.5rem;
   align-items: flex-end;
   margin: 0.5rem 0;
+  /* Phones: + Exercise, + Circuit and Save stay at the bottom of the screen. */
+  @media (max-width: 560px) {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-inline: -1.3rem;
+    padding: 0.6rem 1.3rem max(0.6rem, env(safe-area-inset-bottom));
+    background: var(--ab-surface);
+    border-top: 1px solid var(--ab-border);
+    > .btn {
+      flex: 1;
+      padding-inline: 0.6rem;
+    }
+  }
 }
 .picker {
   position: relative;

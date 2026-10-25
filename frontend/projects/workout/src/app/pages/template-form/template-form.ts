@@ -25,13 +25,14 @@ import { Row, RowError, blankExercise, isRowError, rowsFromEntries, toEntries } 
           <input type="text" name="name" maxlength="100" required [(ngModel)]="name" />
         </label>
         <h2>{{ 'editor.exercises' | translate }}</h2>
-        <ab-entries-editor [(rows)]="rows" [exercises]="exercises.value() ?? []" [savedCircuits]="circuits.value() ?? []" />
+        <ab-entries-editor [(rows)]="rows" [exercises]="exercises.value() ?? []" [savedCircuits]="circuits.value() ?? []">
+          <button type="submit" class="btn primary push" [disabled]="saving()">
+            {{ (saving() ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </ab-entries-editor>
         @if (error(); as e) {
           <p class="error" data-testid="form-error">{{ e.key | translate: e.params }}</p>
         }
-        <button type="submit" class="btn primary" [disabled]="saving()">
-          {{ (saving() ? 'common.saving' : 'common.save') | translate }}
-        </button>
       </form>
     } @else {
       <p class="muted">{{ 'common.loading' | translate }}</p>
