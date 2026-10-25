@@ -417,6 +417,9 @@ form.inline {
   &.accent {
     color: var(--ab-accent);
   }
+  &.danger {
+    color: var(--wk-danger);
+  }
 }
 .link {
   border: none;
@@ -935,6 +938,14 @@ input.search {
       margin-bottom: 0;
     }
   }
+  /* Phones: less padding so nested circuit rows keep room for the sets. */
+  @media (max-width: 560px) {
+    padding: 0.6rem;
+    gap: 0.5rem;
+    .editor-row {
+      padding: 0.5rem;
+    }
+  }
 }
 .row-head {
   display: flex;
@@ -954,24 +965,88 @@ input.search {
 .arrows {
   display: inline-flex;
 }
-.sets-head {
+.circuit-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 20rem) 5rem 5rem;
+  gap: 0.5rem;
+  input {
+    width: 100%;
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: minmax(0, 1fr) 5rem 5rem;
+  }
+}
+/* Sets: number | the fields (one column each) | remove, field names once as
+   column heads. On phones, all six fields go two lines of three per set, each
+   input with its own name (column heads hidden), sets divided by a line. */
+.sets {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ab-muted);
+  flex-direction: column;
+  gap: 0.35rem;
 }
 .set-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) 2.2rem;
+  align-items: center;
   gap: 0.5rem;
   .set-num {
     color: var(--wk-faint);
-    min-width: 1.2rem;
-    padding-bottom: 0.6rem;
+  }
+}
+.set-fields {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 6.5rem));
+  gap: 0.35rem 0.5rem;
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+  .set-field > span {
+    display: none;
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    .wide & {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      .set-field > span {
+        display: block;
+        font-size: 0.72rem;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+    .wide .set-head & {
+      visibility: hidden;
+      height: 0;
+    }
+    input {
+      appearance: textfield;
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+      }
+    }
+  }
+}
+.set-head {
+  align-items: end;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--ab-muted);
+  .set-fields {
+    align-items: end;
+  }
+  .icon-btn[aria-pressed='true'] {
+    color: var(--ab-accent);
+  }
+}
+@media (max-width: 560px) {
+  .sets.wide .set-row:not(.set-head) + .set-row {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--ab-border);
   }
 }
 .editor-actions {

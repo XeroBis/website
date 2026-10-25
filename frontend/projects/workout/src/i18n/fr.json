@@ -92,7 +92,7 @@
     "addExercise": "Exercice",
     "addCircuit": "Circuit",
     "insertCircuit": "Insérer un circuit enregistré",
-    "remove": "Retirer",
+    "removeExercise": "Retirer l'exercice",
     "removeCircuit": "Retirer le circuit",
     "moreFields": "Plus de champs",
     "fewerFields": "Moins de champs",

@@ -45,11 +45,17 @@ const FIELD_INPUT: Record<SetField, { step: number; min: number | null }> = {
             <span class="row-num">{{ i + 1 }}</span>
             <ng-container *ngTemplateOutlet="arrows; context: { list: rows(), i, set: setRows }" />
             <span class="badge" data-type="circuit">{{ 'type.circuit' | translate }}</span>
-            <button type="button" class="btn danger sm push" (click)="removeRow(i)">
-              {{ 'editor.removeCircuit' | translate }}
+            <button
+              type="button"
+              class="icon-btn danger push"
+              [attr.aria-label]="'editor.removeCircuit' | translate"
+              [title]="'editor.removeCircuit' | translate"
+              (click)="removeRow(i)"
+            >
+              <ab-icon name="trash" />
             </button>
           </div>
-          <div class="fields">
+          <div class="circuit-fields">
             <label
               >{{ 'editor.circuitName' | translate }}
               <input type="text" maxlength="100" [(ngModel)]="row.name" />
@@ -128,39 +134,69 @@ const FIELD_INPUT: Record<SetField, { step: number; min: number | null }> = {
             <span class="badge" [attr.data-type]="row.exercise.type">{{ 'type.' + row.exercise.type | translate }}</span>
           }
           @if (list.length > 1 || !circuit) {
-            <button type="button" class="btn danger sm push" (click)="circuit ? removeMember(circuit, i) : removeRow(i)">
-              {{ 'editor.remove' | translate }}
+            <button
+              type="button"
+              class="icon-btn danger push"
+              [attr.aria-label]="'editor.removeExercise' | translate"
+              [title]="'editor.removeExercise' | translate"
+              (click)="circuit ? removeMember(circuit, i) : removeRow(i)"
+            >
+              <ab-icon name="trash" />
             </button>
           }
         </div>
         <ab-exercise-picker [exercises]="exercises()" [value]="row.exercise" (picked)="pickExercise(row, $event)" />
-        <div class="sets-head">
-          <span>{{ 'editor.sets' | translate }}</span>
-          <button type="button" class="btn ghost sm" (click)="row.allFields = !row.allFields">
-            {{ (row.allFields ? 'editor.fewerFields' : 'editor.moreFields') | translate }}
-          </button>
-        </div>
-        @for (set of row.sets; track $index; let s = $index) {
-          <div class="set-row">
-            <span class="set-num">{{ s + 1 }}</span>
-            @for (field of fieldsOf(row); track field) {
-              <label
-                >{{ 'field.' + field | translate }}
-                <input
-                  type="number"
-                  [step]="fieldInput[field].step"
-                  [attr.min]="fieldInput[field].min"
-                  [(ngModel)]="set[field]"
-                />
-              </label>
-            }
-            @if (row.sets.length > 1) {
-              <button type="button" class="icon-btn" [attr.aria-label]="'editor.removeSet' | translate" (click)="row.sets.splice(s, 1)">
-                <ab-icon name="x" />
-              </button>
-            }
+        @let fields = fieldsOf(row);
+        <!-- One grid: field names once as column heads, then one line per set. -->
+        <div
+          class="sets"
+          role="group"
+          [attr.aria-label]="'editor.sets' | translate"
+          [class.wide]="fields.length > 3"
+          [style.--cols]="fields.length"
+        >
+          <div class="set-row set-head">
+            <span></span>
+            <div class="set-fields">
+              @for (field of fields; track field) {
+                <span>{{ 'field.' + field | translate }}</span>
+              }
+            </div>
+            <button
+              type="button"
+              class="icon-btn"
+              [attr.aria-label]="(row.allFields ? 'editor.fewerFields' : 'editor.moreFields') | translate"
+              [title]="(row.allFields ? 'editor.fewerFields' : 'editor.moreFields') | translate"
+              [attr.aria-pressed]="!!row.allFields"
+              (click)="row.allFields = !row.allFields"
+            >
+              <ab-icon name="more" />
+            </button>
           </div>
-        }
+          @for (set of row.sets; track $index; let s = $index) {
+            <div class="set-row">
+              <span class="set-num">{{ s + 1 }}</span>
+              <div class="set-fields">
+                @for (field of fields; track field) {
+                  <label class="set-field"
+                    ><span>{{ 'field.' + field | translate }}</span>
+                    <input
+                      type="number"
+                      [step]="fieldInput[field].step"
+                      [attr.min]="fieldInput[field].min"
+                      [(ngModel)]="set[field]"
+                    />
+                  </label>
+                }
+              </div>
+              @if (row.sets.length > 1) {
+                <button type="button" class="icon-btn" [attr.aria-label]="'editor.removeSet' | translate" (click)="row.sets.splice(s, 1)">
+                  <ab-icon name="x" />
+                </button>
+              }
+            </div>
+          }
+        </div>
         <button type="button" class="btn ghost sm" (click)="addSet(row)">
           <ab-icon name="plus" /> {{ 'editor.addSet' | translate }}
         </button>

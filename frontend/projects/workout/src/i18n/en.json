@@ -92,7 +92,7 @@
     "addExercise": "Exercise",
     "addCircuit": "Circuit",
     "insertCircuit": "Insert a saved circuit",
-    "remove": "Remove",
+    "removeExercise": "Remove the exercise",
     "removeCircuit": "Remove the circuit",
     "moreFields": "More fields",
     "fewerFields": "Fewer fields",
