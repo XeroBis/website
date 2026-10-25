@@ -226,6 +226,6 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 
 ## Cards: one missing-cards export modal, split by print (2026-10-25)
 
-- **What**: the set page's and the Sets page's missing-cards exports became one modal (options first, then, on the Sets page, a grid of set logos with each set's missing count and %), with several prints at once; the export has a section per print in blocks of 100 cards.
+- **What**: the set page's and the Sets page's missing-cards exports became one modal (options first, then, on the Sets page, the set logos in collapsible series groups with each set's missing count and %), with several prints at once; the export puts standard and Additionals-named lines in one list and every other print in its own, in blocks of 150 cards.
 - **Over**: two diverging modals (the combined one had no print choice and a separate set-picker step) and a single print per export.
-- **Why**: a Cardmarket/TCGplayer line can't tell a reverse from a standard, so prints must be separated in the text; blocks of 100 paste in one go; seeing which sets miss what before ticking them avoids exporting empty sets. The single-set `GET …/missing/text` is gone: the modal posts the set codes either way.
+- **Why**: a plain Cardmarket line (and any TCGplayer line) can't tell a reverse from a standard, so such prints are imported on their own and set by hand, while an Additionals line names its print and can share the standard list; blocks of 150 paste in one go; seeing which sets miss what before ticking them avoids exporting empty sets. The single-set `GET …/missing/text` is gone: the modal posts the set codes either way.

@@ -575,7 +575,9 @@
       "selectAll": "Select all",
       "clear": "Clear",
       "missingCount": "{{count}} missing",
-      "exportSelected": "Export {{count}} card(s) from {{sets}} set(s)"
+      "exportSelected": "Export {{count}} card(s) from {{sets}} set(s)",
+      "selectSeries": "Select every set of {{series}}",
+      "seriesStats": "{{selected}}/{{sets}} sets · {{count}} missing"
     },
     "shareSet": "Share",
     "showVariantsStandard": "Show print variants (standard only)",
@@ -612,7 +614,7 @@
     "cardCount": "{{count}} cards",
     "countIncoming": "Count incoming as owned",
     "incomingBadge": "Incoming ×{{count}}",
-    "exportVariants": "Prints (one section per print)",
+    "exportVariants": "Prints",
     "missingSummary": "{{count}} missing · {{percent}}%"
   },
   "missingIntervals": {

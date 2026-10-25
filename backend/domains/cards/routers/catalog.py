@@ -209,7 +209,7 @@ def list_set_cards(
 # ── missing cards as text ────────────────────────────────────────────────────
 
 
-MISSING_BLOCK_SIZE = 100
+MISSING_BLOCK_SIZE = 150
 
 
 def _missing_query(
@@ -279,6 +279,20 @@ def _print_label(variant_type: str) -> str:
     return variant_type.replace("_", " ").title()
 
 
+def _missing_line_order(line: tuple[m.CardCatalog, str], set_rank: dict[str, int]):
+    """By set (`set_rank`), then number (numeric first), then print."""
+    card, variant = line
+    number = card.card_number
+    numeric = int(number) if number.isdigit() else None
+    return (
+        set_rank[card.set_code],
+        numeric is None,
+        numeric or 0,
+        number,
+        variant_sort_key(variant),
+    )
+
+
 @router.get("/sets/missing/summary", response_model=list[s.SetMissingOut])
 def sets_missing_summary(
     rarity: list[str] | None = Query(None, description="Raw rarity values"),
@@ -344,22 +358,32 @@ def export_sets_missing_text(
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
-    """The cards of these sets the user owns no copy of (shopping list), one
-    section per print, in blocks of 100 headed `<Print> i/n`, as a
+    """The cards of these sets the user owns no copy of (shopping list), in
+    lists of up to 150 headed `<Prints> i/n` (see `MISSING_BLOCK_SIZE`), as a
     TCGplayer/PTCGL or Cardmarket list: names in `language` (moves and sets
-    English), a ball reverse naming its Cardmarket Additionals product."""
+    English). Standard lines and the Cardmarket lines naming an Additionals
+    product share the main list; every other print has its own."""
     prints = _selected_prints(variant_type)
-    known = set(
-        db.scalars(
-            select(m.CardCatalog.set_code)
-            .distinct()
-            .where(m.CardCatalog.set_code.in_(body.set_codes))
+    card = m.CardCatalog
+    # The Sets page's order: newest first, World Championships last.
+    known = db.scalars(
+        select(card.set_code)
+        .where(card.set_code.in_(body.set_codes))
+        .group_by(card.set_code, card.set_name)
+        .order_by(
+            case((func.max(card.series) == "World Championships", 1), else_=0),
+            desc(func.min(card.release_date)).nulls_last(),
+            card.set_name,
         )
-    )
-    unknown = sorted(set(body.set_codes) - known)
+    ).all()
+    unknown = sorted(set(body.set_codes) - set(known))
     if unknown:
         raise not_found(f"Set {', '.join(unknown)}")
-    blocks = []
+    set_rank = {code: i for i, code in enumerate(known)}
+    # Standard lines and the prints a Cardmarket line names (an Additionals
+    # product) share the main list; any other print gets its own, to be set
+    # by hand on import.
+    lists: dict[str | None, list[tuple[m.CardCatalog, str]]] = {}
     for variant in prints:
         cards = db.scalars(
             _missing_query(
@@ -368,22 +392,29 @@ def export_sets_missing_text(
                 exclude_deck_allocated,
                 include_incoming,
                 variant,
-                list(known),
-            ).order_by(
-                m.CardCatalog.set_code,
-                search.numeric_card_number().nulls_last(),
-                m.CardCatalog.card_number,
+                known,
             )
         ).all()
+        for card in cards:
+            named = variant == "standard" or (
+                format == "cardmarket"
+                and decklists.additionals_version(card, variant) is not None
+            )
+            lists.setdefault(None if named else variant, []).append((card, variant))
+    blocks = []
+    for key in sorted(lists, key=lambda k: -1 if k is None else variant_sort_key(k)):
+        lines = sorted(lists[key], key=lambda line: _missing_line_order(line, set_rank))
+        label = " + ".join(
+            _print_label(v) for v in prints if any(line[1] == v for line in lines)
+        )
         chunks = [
-            cards[i : i + MISSING_BLOCK_SIZE]
-            for i in range(0, len(cards), MISSING_BLOCK_SIZE)
+            lines[i : i + MISSING_BLOCK_SIZE]
+            for i in range(0, len(lines), MISSING_BLOCK_SIZE)
         ]
         for i, chunk in enumerate(chunks, 1):
-            entries = [decklists.entry(card, 1, language, variant) for card in chunk]
+            entries = [decklists.entry(card, 1, language, v) for card, v in chunk]
             blocks.append(
-                f"{_print_label(variant)} {i}/{len(chunks)}\n"
-                + decklists.render(entries, format)
+                f"{label} {i}/{len(chunks)}\n" + decklists.render(entries, format)
             )
     return Response("\n\n".join(blocks), media_type="text/plain")
 

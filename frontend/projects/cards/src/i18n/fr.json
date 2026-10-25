@@ -575,7 +575,9 @@
       "selectAll": "Tout sélectionner",
       "clear": "Effacer",
       "missingCount": "{{count}} manquante(s)",
-      "exportSelected": "Exporter {{count}} carte(s) de {{sets}} série(s)"
+      "exportSelected": "Exporter {{count}} carte(s) de {{sets}} série(s)",
+      "selectSeries": "Sélectionner toutes les séries de {{series}}",
+      "seriesStats": "{{selected}}/{{sets}} séries · {{count}} manquante(s)"
     },
     "shareSet": "Partager",
     "showVariantsStandard": "Afficher les variantes d'impression (standard uniquement)",
@@ -612,7 +614,7 @@
     "cardCount": "{{count}} cartes",
     "countIncoming": "Compter les cartes en route comme possédées",
     "incomingBadge": "En route ×{{count}}",
-    "exportVariants": "Impressions (une section par impression)",
+    "exportVariants": "Impressions",
     "missingSummary": "{{count}} manquante(s) · {{percent}} %"
   },
   "missingIntervals": {

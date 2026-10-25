@@ -87,6 +87,23 @@ export class MissingExportModalComponent implements OnInit {
     );
   });
 
+  /** `visibleSets` by series, in the Sets page's order. */
+  readonly groups = computed(() => {
+    const groups = new Map<string, { series: string; name: string; sets: CardSet[] }>();
+    for (const set of this.visibleSets()) {
+      const series = set.series ?? '';
+      let group = groups.get(series);
+      if (!group) {
+        group = { series, name: set.series_display_name ?? series, sets: [] };
+        groups.set(series, group);
+      }
+      group.sets.push(set);
+    }
+    return [...groups.values()];
+  });
+  /** Series are collapsed until opened; a search shows every match. */
+  expandedSeries = signal(new Set<string>());
+
   constructor(
     private readonly catalogService: CatalogService,
     private readonly toastService: ToastService,
@@ -185,6 +202,33 @@ export class MissingExportModalComponent implements OnInit {
       (codes) => new Set([...codes, ...this.visibleSets().map((set) => set.set_code)]),
     );
   }
+  isExpanded(series: string): boolean {
+    return !!this.search().trim() || this.expandedSeries().has(series);
+  }
+  toggleExpanded(series: string): void {
+    const next = new Set(this.expandedSeries());
+    if (next.has(series)) next.delete(series);
+    else next.add(series);
+    this.expandedSeries.set(next);
+  }
+  selectedInGroup(sets: CardSet[]): number {
+    const codes = this.selectedCodes();
+    return sets.filter((set) => codes.has(set.set_code)).length;
+  }
+  groupMissing(sets: CardSet[]): number {
+    const summary = this.summary();
+    return sets.reduce((sum, set) => sum + (summary.get(set.set_code)?.missing ?? 0), 0);
+  }
+  /** Ticks every set of the series, or unticks them all when all are ticked. */
+  toggleGroup(sets: CardSet[]): void {
+    const all = this.selectedInGroup(sets) === sets.length;
+    const next = new Set(this.selectedCodes());
+    for (const set of sets) {
+      if (all) next.delete(set.set_code);
+      else next.add(set.set_code);
+    }
+    this.selectedCodes.set(next);
+  }
   clearSelection(): void {
     this.selectedCodes.set(new Set());
   }
@@ -241,8 +285,8 @@ export class MissingExportModalComponent implements OnInit {
     if (!this.exporting()) this.closed.emit();
   }
 
-  /** Copies the export to the clipboard: one section per print, in blocks
-   * of 100 cards, over the ticked sets (or the one set). */
+  /** Copies the export of the ticked sets (or the one set) to the
+   * clipboard, in lists of up to 150 cards. */
   exportMissing(): void {
     if (this.selectedCodes().size === 0) return;
     this.exporting.set(true);

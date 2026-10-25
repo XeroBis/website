@@ -178,9 +178,9 @@ export class CatalogService {
     return this.http.get<SetMissingSummary[]>(`${this.baseUrl}/sets/missing/summary`, { params });
   }
 
-  /** Missing cards of `setCodes` as a TCGplayer/PTCGL or Cardmarket list, one
-   * section per print in blocks of 100 -- see documentation/features.md's
-   * Sets entry. */
+  /** Missing cards of `setCodes` as TCGplayer/PTCGL or Cardmarket lists of up
+   * to 150 cards, split by print where a line can't name it -- see
+   * documentation/features.md's Sets entry. */
   exportMissingText(
     setCodes: string[],
     rarities: string[],

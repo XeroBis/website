@@ -137,33 +137,79 @@
             {{ (loading() ? 'common.loading' : 'sets.combineSetsExport.noSetsMatch') | translate }}
           </p>
         } @else {
-          <ul class="set-grid" [class.dimmed]="loading()">
-            @for (set of visibleSets(); track set.set_code) {
-              @let row = summary().get(set.set_code)!;
-              <li>
-                <button
-                  type="button"
-                  class="set-grid-tile"
-                  [class.selected]="selectedCodes().has(set.set_code)"
-                  [attr.aria-pressed]="selectedCodes().has(set.set_code)"
-                  [title]="set.set_name"
-                  (click)="toggleSet(set.set_code)"
-                >
-                  <img
-                    [src]="logoUrl(set)"
-                    [alt]="set.set_name"
-                    loading="lazy"
-                    (error)="onLogoError($event, set)"
+          <div class="set-groups" [class.dimmed]="loading()">
+            @for (group of groups(); track group.series) {
+              @let selected = selectedInGroup(group.sets);
+              <section class="set-group">
+                <div class="set-group-header">
+                  <input
+                    type="checkbox"
+                    [checked]="selected === group.sets.length"
+                    [indeterminate]="selected > 0 && selected < group.sets.length"
+                    [attr.aria-label]="
+                      'sets.combineSetsExport.selectSeries' | translate: { series: group.name }
+                    "
+                    [title]="
+                      'sets.combineSetsExport.selectSeries' | translate: { series: group.name }
+                    "
+                    (change)="toggleGroup(group.sets)"
                   />
-                  <span class="set-grid-name">{{ set.set_name }}</span>
-                  <span class="set-grid-stats">
-                    {{ 'sets.combineSetsExport.missingCount' | translate: { count: row.missing } }}
-                    · {{ row.completion_percent }}%
-                  </span>
-                </button>
-              </li>
+                  <button
+                    type="button"
+                    class="set-group-toggle"
+                    [attr.aria-expanded]="isExpanded(group.series)"
+                    (click)="toggleExpanded(group.series)"
+                  >
+                    <ab-icon [name]="isExpanded(group.series) ? 'chevron-down' : 'chevron-right'" />
+                    <span class="set-group-name">{{ group.name }}</span>
+                    <span class="set-grid-stats">
+                      {{
+                        'sets.combineSetsExport.seriesStats'
+                          | translate
+                            : {
+                                selected: selected,
+                                sets: group.sets.length,
+                                count: groupMissing(group.sets),
+                              }
+                      }}
+                    </span>
+                  </button>
+                </div>
+                @if (isExpanded(group.series)) {
+                  <ul class="set-grid">
+                    @for (set of group.sets; track set.set_code) {
+                      @let row = summary().get(set.set_code)!;
+                      <li>
+                        <button
+                          type="button"
+                          class="set-grid-tile"
+                          [class.selected]="selectedCodes().has(set.set_code)"
+                          [attr.aria-pressed]="selectedCodes().has(set.set_code)"
+                          [title]="set.set_name"
+                          (click)="toggleSet(set.set_code)"
+                        >
+                          <img
+                            [src]="logoUrl(set)"
+                            [alt]="set.set_name"
+                            loading="lazy"
+                            (error)="onLogoError($event, set)"
+                          />
+                          <span class="set-grid-name">{{ set.set_name }}</span>
+                          <span class="set-grid-stats">
+                            {{
+                              'sets.combineSetsExport.missingCount'
+                                | translate: { count: row.missing }
+                            }}
+                            · {{ row.completion_percent }}%
+                          </span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
             }
-          </ul>
+          </div>
         }
       </div>
     }

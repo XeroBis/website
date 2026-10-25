@@ -540,12 +540,12 @@ def test_missing_export_by_exact_print(client, base_set):
     assert missing_text(client, variant_type="unknown").status_code == 422
 
 
-def test_missing_export_in_blocks_of_100(client):
-    for number in range(1, 151):
+def test_missing_export_in_lists_of_150(client):
+    for number in range(1, 201):
         add_catalog_card(set_code="big", card_number=str(number), name=f"Card {number}")
     lines = missing_text(client, ["big"]).text.split("\n")
-    assert lines[0] == "Standard 1/2" and lines[101] == ""
-    assert lines[102] == "Standard 2/2" and len(lines) == 153
+    assert lines[0] == "Standard 1/2" and lines[151] == ""
+    assert lines[152] == "Standard 2/2" and len(lines) == 203
 
 
 def test_missing_export_names_the_additionals_product(client):
@@ -560,6 +560,23 @@ def test_missing_export_names_the_additionals_product(client):
     reverse = missing_text(client, ["ASC"], variant_type="reverse")
     assert reverse.text.endswith("1x Bayleef (V.1) (Ascended Heroes: Additionals)")
     assert missing_text(client, ["ASC"]).text.endswith("1x Bayleef (Ascended Heroes)")
+    every_print = ["standard", "reverse", "reverse_friendball"]
+    # Cardmarket names these reverses: one list, by card then print.
+    assert missing_text(client, ["ASC"], variant_type=every_print).text == (
+        "Standard + Reverse + Reverse Friendball 1/1\n"
+        "1x Bayleef (Ascended Heroes)\n"
+        "1x Bayleef (V.1) (Ascended Heroes: Additionals)\n"
+        "1x Bayleef (V.2) (Ascended Heroes: Additionals)"
+    )
+    # TCGplayer can't: one list per print.
+    tcgplayer = missing_text(
+        client, ["ASC"], variant_type=every_print, format="tcgplayer"
+    ).text
+    assert [line for line in tcgplayer.splitlines() if "1/1" in line] == [
+        "Standard 1/1",
+        "Reverse 1/1",
+        "Reverse Friendball 1/1",
+    ]
 
 
 def test_missing_export_options(client, base_set):
@@ -581,11 +598,22 @@ def test_missing_export_options(client, base_set):
 
 
 def test_missing_export_over_several_sets(client, base_set):
-    add_catalog_card(set_code="base2", card_number="1", name="Other set card")
-    response = missing_text(client, ["base2", "base1"], format="tcgplayer")
+    with database.SessionLocal() as db:
+        for card_id in base_set.values():
+            db.get(m.CardCatalog, card_id).release_date = date(2023, 3, 31)
+        db.commit()
+    add_catalog_card(
+        set_code="base2",
+        card_number="1",
+        name="Other set card",
+        set_name="Newer set",
+        release_date=date(2024, 1, 26),
+    )
+    response = missing_text(client, ["base1", "base2"], format="tcgplayer")
+    # Newest set first.
     assert response.text == (
-        "Standard 1/1\nPokémon (3)\n1 Standard owned base1 1\n"
-        "1 Reverse owned base1 2\n1 Other set card base2 1"
+        "Standard 1/1\nPokémon (3)\n1 Other set card base2 1\n"
+        "1 Standard owned base1 1\n1 Reverse owned base1 2"
     )
     unknown = missing_text(client, ["base1", "nope"])
     assert unknown.status_code == 404 and "nope" in unknown.json()["detail"]
