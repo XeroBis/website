@@ -221,6 +221,7 @@ def test_refresh_rotates_tokens(client, user):
     assert client.get("/api/auth/me").status_code == 200
 
     # The old refresh token is revoked: replaying it fails.
+    client.cookies.delete(REFRESH_COOKIE)
     client.cookies.set(REFRESH_COOKIE, old_refresh, path="/api/auth")
     assert client.post("/api/auth/refresh", headers=csrf(client)).status_code == 401
 
@@ -241,9 +242,9 @@ def test_refresh_without_refresh_token_clears_cookies(client, user):
 
 def test_refresh_rejects_access_token(client, user):
     login(client)
-    client.cookies.set(
-        REFRESH_COOKIE, client.cookies.get(SESSION_COOKIE), path="/api/auth"
-    )
+    access = client.cookies.get(SESSION_COOKIE)
+    client.cookies.delete(REFRESH_COOKIE)
+    client.cookies.set(REFRESH_COOKIE, access, path="/api/auth")
     assert client.post("/api/auth/refresh", headers=csrf(client)).status_code == 401
 
 
