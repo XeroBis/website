@@ -290,6 +290,80 @@ textarea.input {
   border-radius: var(--radius-md);
 }
 
+// Radios are a ring that gets a red dot, checkboxes a rounded square that fills
+// red with a white tick; both ringed like the text inputs on focus.
+input[type='radio'],
+input[type='checkbox'] {
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  border: 1.5px solid var(--color-text-faint);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &::before {
+    content: '';
+    transform: scale(0);
+    transition: transform 0.15s ease;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+  }
+
+  &:checked {
+    border-color: var(--color-primary);
+
+    &::before {
+      transform: scale(1);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+input[type='radio'] {
+  border-radius: 50%;
+
+  &::before {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+  }
+}
+
+input[type='checkbox'] {
+  border-radius: 0.3rem;
+
+  &::before {
+    width: 0.6rem;
+    height: 0.6rem;
+    background: var(--color-primary-contrast);
+    clip-path: polygon(14% 44%, 0 59%, 40% 100%, 100% 26%, 86% 12%, 39% 70%);
+  }
+
+  &:checked {
+    background: var(--color-primary);
+  }
+}
+
 /* Surfaces */
 .surface {
   background: var(--color-surface);
