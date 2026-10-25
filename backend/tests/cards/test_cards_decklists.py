@@ -317,6 +317,19 @@ def test_black_bolt_main_print_gets_sv_over_its_illustration_rare():
     assert parsed(main_text) == [main]
 
 
+def test_phantasmal_flames_jigglypuff_names_its_set():
+    card = add_catalog_card(
+        set_code="PFL",
+        card_number="076",
+        name="Jigglypuff",
+        set_name="Phantasmal Flames",
+        details=moves("Ball Roll"),
+    )
+    text = cardmarket(card)
+    assert text == "1x Jigglypuff [Ball Roll | PFL] (Phantasmal Flames)"
+    assert parsed(text) == [card]
+
+
 def test_miraidon_identifier_round_trips():
     card = add_catalog_card(
         set_code="30C",
@@ -356,6 +369,13 @@ def test_miraidon_identifier_round_trips():
         ("POR", "Growing Grass Energy", [], "Growing [G] Energy"),
         ("PFL", "Lokix", ["Low Kick", "Jumping Shot"], "Lokix [Low Kick | Jump Shot]"),
         ("PFL", "Pawmot", ["Voltaic Fist"], "Pawmot [Voltage Fist]"),
+        (
+            "PRE",
+            "Slowking",
+            ["Wash the Slate Clean"],
+            "Slowking [Wash the State Clean]",
+        ),
+        ("SCR", "Espathra", ["Psychic Flash"], "Espathra [Psy Flash]"),
         ("BLK", "Escavalier", ["Wild Lances"], "Escavalier [Wild Lance]"),
         (
             "PAF",
@@ -499,6 +519,36 @@ def test_unversioned_additionals_is_the_poke_ball():
     ) == [(card, "standard")]
 
 
+def test_artworks_are_cardmarket_versions():
+    # Black Belt's Training 96–99: one product per artwork, V.1–V.4, in the
+    # main expansion and its Additionals.
+    cards = [
+        add_catalog_card(
+            set_code="PRE",
+            set_name="Prismatic Evolutions",
+            card_number=f"0{number}",
+            name="Black Belt's Training",
+            supertype="Trainer",
+            variants=("standard", "reverse", "reverse_pokeball"),
+        )
+        for number in range(96, 100)
+    ]
+    for version, card in enumerate(cards, start=1):
+        with database.SessionLocal() as db:
+            catalog = db.get(m.CardCatalog, card)
+            standard = decklists.render_cardmarket(
+                [decklists.entry(catalog, 1)], include_sets=False
+            )
+            ball = decklists.render_cardmarket(
+                [decklists.entry(catalog, 1, variant_type="reverse_pokeball")]
+            )
+        name = "1x Black Belt's Training"
+        assert standard == f"{name} (V.{version}) (Prismatic Evolutions)"
+        assert ball == f"{name} (V.{version}) (Prismatic Evolutions: Additionals)"
+        assert prints(standard) == [(card, "standard")]
+        assert prints(ball) == [(card, "reverse_pokeball")]
+
+
 # ── set missing-cards exports ────────────────────────────────────────────────
 
 
@@ -567,6 +617,23 @@ def test_missing_export_names_the_additionals_product(client):
         "1x Bayleef (Ascended Heroes)\n"
         "1x Bayleef (V.1) (Ascended Heroes: Additionals)\n"
         "1x Bayleef (V.2) (Ascended Heroes: Additionals)"
+    )
+    # A card without a ball has no Additionals product: its reverse is a
+    # plain line, in its own list.
+    add_catalog_card(
+        set_code="ASC",
+        set_name="Ascended Heroes",
+        card_number="200",
+        name="Balloon",
+        supertype="Trainer",
+        variants=("standard", "reverse"),
+    )
+    assert missing_text(client, ["ASC"], variant_type="reverse").text == (
+        "Reverse 1/1\n"
+        "1x Bayleef (V.1) (Ascended Heroes: Additionals)\n"
+        "\n"
+        "Reverse 1/1\n"
+        "1x Balloon (Ascended Heroes)"
     )
     # TCGplayer can't: one list per print.
     tcgplayer = missing_text(

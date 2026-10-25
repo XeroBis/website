@@ -14,7 +14,10 @@ then by the bracketed move names. Candidates still tied (a bare
 print, lowest number first, rather than staying unmatched. Cardmarket sells
 ball reverses as their own products, in a `<Set>: Additionals` expansion told
 apart by version: `<qty>x <name> [moves] (V.n) (<Set>: Additionals)` (see
-additionals_print()). Every other line is the standard print.
+additionals_print()). Every other line is the standard print. A few cards
+reprinted in one set with several artworks are one product per artwork, by
+version, in the main expansion and its Additionals alike (see
+_ARTWORK_VERSIONS).
 
 Rendering always uses English move names and set titles (Cardmarket's
 product titles); only the card name may be French.
@@ -58,11 +61,17 @@ _SET_CODE_SUFFIX = re.compile(r"\s*\([A-Za-z0-9]+\)\s*$")
 # version. Most ball sets (checked on Prismatic Evolutions, Black Bolt and
 # White Flare): V.1 Poké Ball (also when unversioned, a trainer's only ball),
 # V.2 Master Ball. Sets where each card has a single ball (Ascended Heroes)
-# sell the plain reverse as V.1 and that ball as V.2.
+# sell the plain reverse as V.1 and that ball as V.2; a card there without a
+# ball (most trainers and energies) has no Additionals product, its reverse
+# being a plain line.
 _POKEBALL_MASTERBALL = {1: "reverse_pokeball", 2: "reverse_masterball"}
 _VERSION_BY_BALL = {v: k for k, v in _POKEBALL_MASTERBALL.items()}
 _REVERSE_THEN_BALL_SETS = {"ASC"}
 _ADDITIONALS = ": Additionals"
+# Cards Cardmarket sells as one product per artwork, `(V.n)` in the main
+# expansion and its Additionals alike, whose only Additionals product is
+# the Poké Ball reverse: set code → number → version.
+_ARTWORK_VERSIONS = {"PRE": {"96": 1, "97": 2, "98": 3, "99": 4}}
 
 # Verified Cardmarket brackets for prints whose product name would otherwise
 # collide or not match: set code → number → (the card's English moves, what
@@ -91,6 +100,7 @@ _CARDMARKET_PRINT_IDENTIFIERS = {
         "153": (("Helical Swell",), ("Houle Nautile",)),
         "154": (("Amber Protection",), ("Protection Ambre",)),
     },
+    "PFL": {"76": (("Ball Roll",), ("Ball Roll", "PFL"))},
     # Main-set prints sharing their name and moves with an Illustration Rare.
     "BLK": {
         number: (moves, (*moves, _SV))
@@ -147,6 +157,8 @@ _CARDMARKET_MOVE_OVERRIDES = {
         ("Voltaic Fist",): ("Voltage Fist",),
     },
     "BLK": {("Wild Lances",): ("Wild Lance",)},
+    "PRE": {("Wash the Slate Clean",): ("Wash the State Clean",)},
+    "SCR": {("Psychic Flash",): ("Psy Flash",)},
     "PAF": {("Slow-Acting Syncope", "Mach Cross"): ("Slow-Acting Hold", "Mach Cross")},
     "PAR": {
         ("Powerful Cross", "Waterfall"): ("Power Cross", "Waterfall"),
@@ -358,6 +370,7 @@ def _resolve_cardmarket(db: Session, rest: str) -> tuple[m.CardCatalog | None, s
         )
         if card:
             version = int(paren["version"][2:]) if paren["version"] else None
+            card = _artwork(db, card, version)
             variant = additionals_print(card, version) if additionals else None
             printed = variant in {v.variant_type for v in card.variants}
             return card, variant if printed else "standard"
@@ -380,10 +393,37 @@ def _resolve_cardmarket(db: Session, rest: str) -> tuple[m.CardCatalog | None, s
     return None, "standard"
 
 
+def _artwork_version(card: m.CardCatalog) -> int | None:
+    """The version Cardmarket gives this artwork; None when not versioned
+    by artwork."""
+    versions = _ARTWORK_VERSIONS.get(card.set_code, {})
+    return versions.get(number_key(card.card_number or ""))
+
+
+def _artwork(db: Session, card: m.CardCatalog, version: int | None) -> m.CardCatalog:
+    """The artwork of `card` a `(V.n)` names; `card` itself when its set
+    doesn't version it by artwork."""
+    versions = _ARTWORK_VERSIONS.get(card.set_code, {})
+    if version is None or _artwork_version(card) is None:
+        return card
+    numbers = {number for number, v in versions.items() if v == version}
+    siblings = db.scalars(
+        select(m.CardCatalog).where(
+            m.CardCatalog.set_code == card.set_code, m.CardCatalog.name == card.name
+        )
+    )
+    return next(
+        (other for other in siblings if number_key(other.card_number) in numbers),
+        card,
+    )
+
+
 def additionals_print(card: m.CardCatalog, version: int | None) -> str | None:
     """The print an Additionals product of `card` sells, by its version
     (None when unversioned); None when it can't be told. Not checked
     against the card's prints."""
+    if _artwork_version(card) is not None:
+        return _POKEBALL_MASTERBALL[1]
     if card.set_code in _REVERSE_THEN_BALL_SETS:
         if version == 1:
             return "reverse"
@@ -397,7 +437,12 @@ def additionals_print(card: m.CardCatalog, version: int | None) -> str | None:
 def additionals_version(card: m.CardCatalog, variant_type: str) -> int | None:
     """The version of the Additionals product selling `card`'s print; None
     when that print isn't sold there."""
+    artwork = _artwork_version(card)
+    if artwork is not None:
+        return artwork if variant_type == _POKEBALL_MASTERBALL[1] else None
     if card.set_code in _REVERSE_THEN_BALL_SETS:
+        if not any(v.variant_type in BALL_VARIANTS for v in card.variants):
+            return None
         if variant_type == "reverse":
             return 1
         return 2 if variant_type in BALL_VARIANTS else None
@@ -407,7 +452,7 @@ def additionals_version(card: m.CardCatalog, variant_type: str) -> int | None:
 def _versioned(card: m.CardCatalog) -> bool:
     """Whether Cardmarket versions `card`'s Additionals products: not when a
     Poké Ball reverse is its only one (most trainers and energies)."""
-    if card.set_code in _REVERSE_THEN_BALL_SETS:
+    if card.set_code in _REVERSE_THEN_BALL_SETS or _artwork_version(card):
         return True
     return any(v.variant_type == _POKEBALL_MASTERBALL[2] for v in card.variants)
 
@@ -554,7 +599,8 @@ def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
     with known moves, the expansion unless `include_sets` is off. A print
     sold as an Additionals product always names its expansion (without it
     Cardmarket would pick the plain card), and its version unless it's the
-    card's only Additionals product."""
+    card's only Additionals product. A card versioned by artwork always
+    names its expansion and version."""
     rows = []
     for line in entries:
         card = line.card
@@ -572,6 +618,9 @@ def render_cardmarket(entries: list[Entry], include_sets: bool = True) -> str:
                 expansion = clean_set_name(card.set_name) + _ADDITIONALS
                 tag = f" (V.{version})" if _versioned(card) else ""
                 suffix = f"{tag} ({expansion})"
+            elif _artwork_version(card) and card.set_name:
+                expansion = clean_set_name(card.set_name)
+                suffix = f" (V.{_artwork_version(card)}) ({expansion})"
             elif include_sets and card.set_name:
                 suffix = f" ({clean_set_name(card.set_name)})"
         rows.append(f"{line.quantity}x {_cardmarket_name(line)}{bracket}{suffix}")

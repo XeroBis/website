@@ -162,6 +162,12 @@ def test_additionals_rows_are_ball_reverses(client):
         name="Buddy-Buddy Poffin",
         variants=("standard", "reverse", "reverse_pokeball"),
     )
+    training = add_catalog_card(
+        set_code="PRE",
+        card_number="98",
+        name="Black Belt's Training",
+        variants=("standard", "reverse", "reverse_pokeball"),
+    )
     singles = "/fr/Pokemon/Products/Singles"
 
     def additional(name, code, number, slug):
@@ -191,6 +197,13 @@ def test_additionals_rows_are_ball_reverses(client):
             "101",
             "Prismatic-Evolutions-Additionals/Buddy-Buddy-Poffin",
         ),
+        # Versioned by artwork: the version names the card, not the ball.
+        additional(
+            "Training",
+            "PRE",
+            "098",
+            "Prismatic-Evolutions-Additionals/Black-Belts-Training-V3",
+        ),
     )
     preview = client.post(f"{LISTS}/cardmarket/preview", json={"html": html}).json()
     assert [
@@ -201,6 +214,7 @@ def test_additionals_rows_are_ball_reverses(client):
         (magcargo, "reverse"),
         (magcargo, "reverse_pokeball"),
         (poffin, "reverse_pokeball"),
+        (training, "reverse_pokeball"),
     ]
     assert preview["set_codes"] == ["ASC", "BLK", "PRE"]
 
