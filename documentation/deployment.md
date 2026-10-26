@@ -16,6 +16,12 @@ make prod-seed-user ADMIN_EMAIL=… ADMIN_PASSWORD=… [ADMIN_PSEUDO=…]   # ad
 
 Volumes: `pgdata` (the database) and `cards_data` (cards' downloaded images, ~2 GB, not in the database and not in the backups: keep the catalog image export zip as its copy, or rebuild it with the refresh steps). Cards' **Import images** (Catalog Management) uploads the ~2 GB zip into `cards_data` before restoring it, so that volume's disk needs about twice the archive's size free during an import; the edge accepts up to 4 GB on that one route (`snippets/app.conf`).
 
+The backend runs as the unprivileged `app` user (uid 1000), which must own `cards_data`. A volume created since then gets that owner on its own; one created while the backend still ran as root needs it once (dev: the same command without `-f docker-compose.prod.yml`). Until then cards' images are still served, but the catalog refresh steps and the images import can't write:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm --no-deps -u root backend chown -R app:app /data/cards
+```
+
 Migrations run automatically (`alembic upgrade head`) on backend start. The backend refuses to start if `SECRET_KEY` (≥ 32 chars) or `REGISTER_SECRET` (≥ 16 chars) is missing or too short. Changing `SECRET_KEY` logs everyone out. Without `TMDB_READ_ACCESS_TOKEN` the backend still starts, but media's film and series search answers 502 (books use Open Library, no key).
 
 `make prod-media-refresh` re-fetches every TMDB / Open Library catalog row (e.g. after a column is added); covers are kept. Other accounts sign up at `auth.alanbignon.com/signup` with `REGISTER_SECRET` as the sign-up code; an admin then ticks their apps on `/admin/users`.

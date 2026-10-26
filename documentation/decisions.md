@@ -229,3 +229,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **What**: the set page's and the Sets page's missing-cards exports became one modal (options first, then, on the Sets page, the set logos in collapsible series groups with each set's missing count and %), with several prints at once; the export puts standard and Additionals-named lines in one list and every other print in its own, in blocks of 150 cards.
 - **Over**: two diverging modals (the combined one had no print choice and a separate set-picker step) and a single print per export.
 - **Why**: a plain Cardmarket line (and any TCGplayer line) can't tell a reverse from a standard, so such prints are imported on their own and set by hand, while an Additionals line names its print and can share the standard list; blocks of 150 paste in one go; seeing which sets miss what before ticking them avoids exporting empty sets. The single-set `GET …/missing/text` is gone: the modal posts the set codes either way.
+
+## Backend container: non-root `app` user (2026-10-26)
+
+- **What**: the backend image runs as `app` (uid 1000) in dev and prod. Code and venv stay root-owned, so the process can't rewrite them; only `/data/cards` (`cards_data`) belongs to `app`. Existing volumes got a one-time `chown` (deployment.md "Stack").
+- **Over**: running as root (the image default), and over a root entrypoint that fixes the volume's owner on every start and then drops privileges with `setpriv`.
+- **Why**: a compromised backend no longer has root inside the container, which also limits the damage of any container escape. uid 1000 matches the usual host user, so files the dev container writes into the `./backend` bind mount stay the host user's. A one-time chown keeps the startup command simple and doesn't re-walk ~2 GB of images on every start.

@@ -129,7 +129,7 @@ One login for every app. The cookies are set by `/api/auth/login` (or `/register
 | | Dev (`docker-compose.yml`) | Prod (`docker-compose.prod.yml`) |
 |---|---|---|
 | `db` | Postgres 18, password `website`, published on 5440 | Postgres 18, `POSTGRES_PASSWORD` from `.env`, not published |
-| `backend` | `./backend` bind-mounted, `uvicorn --reload`, published on 8400 | baked image, no reload, not published |
+| `backend` | `./backend` bind-mounted, `uvicorn --reload`, published on 8400; runs as `app` (uid 1000) | baked image, no reload, not published; runs as `app` (uid 1000) |
 | cards files | `cards_data` volume at `/data/cards` (`CARDS_DATA_DIR`) | same |
 | auth env | fixed fake `SECRET_KEY`/`REGISTER_SECRET`, no `COOKIE_DOMAIN`, `COOKIE_SECURE=false`, `ADMIN_*` defaults for `make seed-user`; `TMDB_READ_ACCESS_TOKEN` from the root `.env` (optional) | `SECRET_KEY`/`REGISTER_SECRET` from `.env` (required), `COOKIE_DOMAIN=.alanbignon.com`, `COOKIE_SECURE=true`, `TMDB_READ_ACCESS_TOKEN` from `.env` |
 | frontend | `frontend` container: one `ng serve` per app (4600–4604), `./frontend` bind-mounted, `--poll 2000` | built into the `edge` image |

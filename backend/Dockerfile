@@ -13,6 +13,15 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
+# Run unprivileged. uid 1000 matches the usual host user, so files the dev
+# container writes into the ./backend bind mount stay the host user's. The
+# code and venv stay root-owned (read-only to the app); only CARDS_DATA_DIR is
+# writable, and a fresh cards_data volume takes this folder's owner.
+RUN useradd --uid 1000 --user-group --no-create-home app \
+    && mkdir -p /data/cards \
+    && chown app:app /data/cards
+USER app
+
 EXPOSE 8000
 
 # Dev default (live reload). docker-compose.prod.yml overrides `command`
