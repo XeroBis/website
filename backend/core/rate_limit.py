@@ -2,7 +2,8 @@
 
 In-memory, so limits are per backend process (prod runs one uvicorn worker).
 Behind the edge nginx, uvicorn's --proxy-headers makes `request.client` the
-real client rather than nginx. Usage: `@limiter.limit("10/minute")` on a route
+real client rather than nginx (the edge overwrites any X-Forwarded-For the
+client sent, see infra/nginx/snippets/api-proxy.conf). Usage: `@limiter.limit("10/minute")` on a route
 that takes a `request: Request` parameter.
 """
 

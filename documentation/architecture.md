@@ -91,7 +91,7 @@ website/
 ## Request flow
 
 **Prod.** Browser → `edge` (nginx, 443) → by `Host`:
-- `/api/...` → `backend:8000`, URI unchanged. Same-origin on every host; the backend checks the session cookie itself (no `auth_request`, no `X-User-*` headers).
+- `/api/...` → `backend:8000`, URI unchanged. Same-origin on every host; the backend checks the session cookie itself (no `auth_request`, no `X-User-*` headers). The edge sets `X-Forwarded-For` to the connecting IP, overwriting any the client sent, since uvicorn takes it as the client IP the rate limits key on.
   It's a `location ^~ /api/`, so the static-asset regex never catches an API path ending in `.jpg`/`.png`/`.svg` (card images, variant badges). 20 MB body limit, except two exact-match locations for cards' images archive: `POST /api/cards/catalog/import/images` (4 GB body, passed on unbuffered as it arrives) and `GET /api/cards/catalog/export/images` (response unbuffered).
 - anything else → static files from `/usr/share/nginx/html/<app>`, with unknown paths falling back to `index.html` (Angular routing). Hashed assets are cached for a year, `index.html` and `/ngsw-worker.js` are `no-cache`.
 
