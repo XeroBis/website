@@ -62,6 +62,8 @@ website/
 │   └── backups/                # prod: backup.sh (weekly pg_dump + email), restore.sh (whole DB or one schema),
 │                               #   msmtprc.template, dumps/ (gitignored)
 ├── .github/workflows/ci.yml    # lint + backend + frontend tests; on main, then SSH deploy
+├── .github/workflows/audit.yml # pip-audit + npm audit of runtime deps (push, PR, weekly)
+├── .github/dependabot.yml      # weekly actions/Docker PRs; security-only for uv/npm
 ├── docker-compose.yml          # dev
 ├── docker-compose.prod.yml     # prod
 ├── Makefile

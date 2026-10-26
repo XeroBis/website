@@ -235,3 +235,13 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **What**: the backend image runs as `app` (uid 1000) in dev and prod. Code and venv stay root-owned, so the process can't rewrite them; only `/data/cards` (`cards_data`) belongs to `app`. Existing volumes got a one-time `chown` (deployment.md "Stack").
 - **Over**: running as root (the image default), and over a root entrypoint that fixes the volume's owner on every start and then drops privileges with `setpriv`.
 - **Why**: a compromised backend no longer has root inside the container, which also limits the damage of any container escape. uid 1000 matches the usual host user, so files the dev container writes into the `./backend` bind mount stay the host user's. A one-time chown keeps the startup command simple and doesn't re-walk ~2 GB of images on every start.
+
+## Supply chain: pinned actions and uv, dependency audit, Dependabot (2026-10-26)
+
+- **What**: GitHub Actions pinned by commit SHA, uv pinned to one version in `backend/Dockerfile` and CI; a separate `audit` workflow (`pip-audit`, `npm audit --omit=dev --audit-level=high`) on push, PR and weekly; Dependabot for actions and Docker images weekly, security-only for uv and npm.
+- **Over**: tags (`@v4`, `uv:latest`), which whoever controls the upstream repo or image can move to new code that then runs in CI with the deploy SSH key, or in the backend image; and over no audit at all.
+- **The audit doesn't gate deploy**: a CVE with no fix yet, often in a transitive package, would otherwise block every deploy; the red commit and the weekly run make it visible.
+- **Only runtime deps, high and above, for npm**: the build toolchain (Angular CLI, test runners) never reaches the browser, and its low/moderate findings are mostly noise.
+- **Images keep version tags, not digests**: python/node/nginx still get OS patches on each rebuild; only uv, the one `latest`, moved to an exact version.
+- **No routine version PRs for uv/npm**: upgrades stay deliberate (`uv add "pkg>=X"`, Angular updates by hand); Dependabot keeps the SHA pins, which nobody would bump by hand, current.
+

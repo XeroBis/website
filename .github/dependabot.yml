@@ -1,0 +1,36 @@
+# Weekly grouped PRs keep the SHA-pinned actions and the Docker base images
+# current. Backend (uv) and frontend (npm) packages only get security PRs
+# (limit 0 turns off their version updates, not their security updates);
+# routine upgrades stay manual (`uv add "pkg>=X"`, `npm install`).
+# Security PRs also need "Dependabot security updates" on in the repo settings
+# (documentation/deployment.md "CI and deploy").
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Not the compose files: a postgres major bump needs a dump and restore.
+  - package-ecosystem: docker
+    directories: ["/backend", "/infra/nginx"]
+    schedule:
+      interval: weekly
+    groups:
+      images:
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

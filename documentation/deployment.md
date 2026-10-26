@@ -32,6 +32,12 @@ Building the image compiles the five Angular apps on the VPS. Check `free -h` be
 
 `.github/workflows/ci.yml`, on every push and PR: `lint` (ruff + `black --check`), `backend` (pytest against a `postgres:18` service on port 5440, like the dev `db`) and `frontend` (`npm test`, every project, Node 24). On a push to `main`, `deploy` runs once all three pass: over SSH, `cd website && git pull --ff-only origin main && make prod`, then `docker image prune -f` to drop the previous build's images. Deploys never overlap.
 
+Actions are pinned by commit SHA (the tag in a comment), and uv by version, the same in CI (`setup-uv`'s `version`) and in `backend/Dockerfile` (`ghcr.io/astral-sh/uv:<version>`): bump both together.
+
+`.github/workflows/audit.yml`, on every push and PR, every Monday and by hand: `pip-audit` on the backend's locked production packages (`uv export --no-dev`) and `npm audit --omit=dev --audit-level=high` on the frontend's. A finding turns the commit red but doesn't hold up `deploy` (a separate workflow): fix it with `uv add "pkg>=X"` / `npm install`, or wait for Dependabot's PR.
+
+`.github/dependabot.yml`: weekly grouped PRs for the actions' SHAs and the `backend` and `infra/nginx` Dockerfiles' images (not the compose files' `postgres`, whose major bumps need a dump and restore). uv and npm packages only get security PRs, which also need **Settings → Code security → Dependabot alerts** and **Dependabot security updates** turned on.
+
 GitHub repository secrets (Settings → Secrets and variables → Actions):
 - `VPS_HOST`: the box's IP or hostname.
 - `VPS_USER`: the account that owns `~/website` and can run `docker` without `sudo`.

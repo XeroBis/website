@@ -1,6 +1,6 @@
 FROM python:3.14-slim
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /uvx /usr/local/bin/
 
 # Keep the venv outside /app: docker-compose bind-mounts ./backend over /app in
 # dev, and `uv sync` there would otherwise create/overwrite .venv on the host.
