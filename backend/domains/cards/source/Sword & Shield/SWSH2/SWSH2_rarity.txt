@@ -1,4 +1,8 @@
 id,rarity,supertype
+1,Common,Pokémon
+2,Uncommon,Pokémon
+3,Rare,Pokémon
+4,Common,Pokémon
 5,Uncommon,Pokémon
 6,Uncommon,Pokémon
 7,Common,Pokémon
