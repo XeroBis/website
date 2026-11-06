@@ -15,7 +15,11 @@ import { PublicSharesService } from '../../../services/shares.service';
 import { SetCardGridComponent, SetGridAdapter } from '../set-card-grid/set-card-grid.component';
 import { SetFiltersComponent } from '../set-filters/set-filters.component';
 import { rarityCategory, sortRarityCategories } from '../../../util/rarity-category.util';
-import { DEFAULT_SET_RARITIES, DEFAULT_SET_VARIANTS } from '../../../util/set-filter-defaults.util';
+import {
+  DEFAULT_SET_RARITIES,
+  DEFAULT_SET_VARIANTS,
+  lacksDefaultRarities,
+} from '../../../util/set-filter-defaults.util';
 import { matchesCatalogSearch, parseAnchoredSearch } from '../../../util/pokemon-translations.util';
 import {
   buildVariantTiles,
@@ -98,6 +102,11 @@ export class SharedSetComponent implements OnInit {
     this.publicSharesService.get(this.token).subscribe({
       next: (set) => {
         this.set.set(set);
+        if (lacksDefaultRarities(set.cards.map((card) => card.rarity))) {
+          this.selectedRarities.set(new Set());
+          this.selectedVariants.set([]);
+          this.variantDisplayMode.set(printSelectionMode([]));
+        }
         this.loading.set(false);
       },
       error: () => {

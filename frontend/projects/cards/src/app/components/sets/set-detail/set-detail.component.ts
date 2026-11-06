@@ -27,7 +27,11 @@ import { CardDisplayNamePipe } from '../../../util/card-display-name.pipe';
 import { matchesCatalogSearch, parseAnchoredSearch } from '../../../util/pokemon-translations.util';
 import { rarityCategory, sortRarityCategories } from '../../../util/rarity-category.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
-import { DEFAULT_SET_RARITIES, DEFAULT_SET_VARIANTS } from '../../../util/set-filter-defaults.util';
+import {
+  DEFAULT_SET_RARITIES,
+  DEFAULT_SET_VARIANTS,
+  lacksDefaultRarities,
+} from '../../../util/set-filter-defaults.util';
 import { CardDetailComponent } from '../../shared/card-detail/card-detail.component';
 import { CardOrderComponent } from '../../shared/card-order/card-order.component';
 import {
@@ -161,6 +165,11 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       incoming: this.purchaseListsService.incoming(this.setCode()),
     }).subscribe(({ cards, owned, incoming }) => {
       this.cards.set(cards);
+      if (lacksDefaultRarities(cards.map((card) => card.rarity))) {
+        this.selectedRarities.set(new Set());
+        this.selectedVariants.set([]);
+        this.variantDisplayMode.set(printSelectionMode([]));
+      }
       this.setName.set(cards[0]?.set_name ?? this.setCode());
       this.ownedCards.set(new Map(owned.map((card) => [card.catalog_id, card])));
       const byCard = new Map<number, Map<VariantType, number>>();
