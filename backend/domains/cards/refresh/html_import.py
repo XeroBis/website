@@ -21,6 +21,30 @@ def _english_name(series: str, name: str) -> str:
     return name if series == source.ENERGIES_SERIES else canonical_energy_name(name)
 
 
+def _url_changed(old: tuple[str | None, str | None], new: dict) -> bool:
+    """A scan URL now differs from the recorded one, query included (e.g.
+    `?class=md` -> `?class=hd`). A URL appearing or disappearing isn't one."""
+    return any(
+        before and after and before != after
+        for before, after in zip(old, (new["en"], new["fr"]))
+    )
+
+
+def _redownload(
+    row: m.CardCatalog, variant: m.CardCatalogVariant, slot: source.CardSlot
+) -> None:
+    """Mark both scans of the print to download again (scans.py overwrites the
+    files under the same names)."""
+    if variant.variant_type == "standard":
+        if not row.image_path.startswith(source.PENDING_PREFIX):
+            row.image_path = source.pending_image_path(
+                row.set_code, row.card_number, slot.scan_url_en
+            )
+        row.image_path_fr = None
+    else:
+        variant.image_path_us = variant.image_path_fr = None
+
+
 def import_html(db: Session, root: Path | None = None) -> dict:
     """One catalog row per card slot, matched first by its English standard
     scan URL (so a corrected number updates the row in place, keeping its
@@ -35,7 +59,7 @@ def import_html(db: Session, root: Path | None = None) -> dict:
         source.without_query(row.source_url): row for row in rows if row.source_url
     }
 
-    sets_processed = cards_upserted = 0
+    sets_processed = cards_upserted = redownloads = 0
     for series, set_code, set_dir in source.iter_sets(root):
         try:
             header = source.parse_set_header(set_dir, set_code)
@@ -103,6 +127,7 @@ def import_html(db: Session, root: Path | None = None) -> dict:
             row.supertype = slot.supertype
             row.card_count = header.card_count
             row.release_date = header.release_date
+            previous_source_url = row.source_url
             if slot.scan_url_en:
                 row.source_url = slot.scan_url_en
                 by_scan[scan_key] = row
@@ -113,6 +138,17 @@ def import_html(db: Session, root: Path | None = None) -> dict:
                 if variant is None:
                     variant = m.CardCatalogVariant(variant_type=variant_type)
                     row.variants.append(variant)
+                    # Before prints had rows, the standard scan's URL was
+                    # only on the card.
+                    old = (
+                        previous_source_url if variant_type == "standard" else None,
+                        None,
+                    )
+                else:
+                    old = (variant.source_url_en, variant.source_url_fr)
+                if _url_changed(old, urls):
+                    _redownload(row, variant, slot)
+                    redownloads += 1
                 variant.source_url_en = urls["en"]
                 variant.source_url_fr = urls["fr"]
             cards_upserted += 1
@@ -124,6 +160,10 @@ def import_html(db: Session, root: Path | None = None) -> dict:
     # name.txt may have changed with the source.
     display._series_names_fr.cache_clear()
     logger.info(
-        "import_html: %d set(s), %d card(s) upserted", sets_processed, cards_upserted
+        "import_html: %d set(s), %d card(s) upserted, %d print(s) to download "
+        "again (scan URL changed)",
+        sets_processed,
+        cards_upserted,
+        redownloads,
     )
     return {"sets_processed": sets_processed, "cards_upserted": cards_upserted}

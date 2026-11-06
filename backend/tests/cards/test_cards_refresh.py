@@ -287,6 +287,78 @@ def test_scrape_images_downloads_missing_scans_and_keeps_failed_ones_pending(
     )
 
 
+def test_a_changed_scan_url_downloads_that_print_again(source_dir, data_dir, web):
+    """`?class=md` -> `?class=hd`: the import resets the changed prints'
+    scans, the download overwrites them and drops the stale thumbnail."""
+    write_set(
+        source_dir,
+        SV,
+        "SVI",
+        [card("Sprigatito", "1", versions=(2,)), card("Fuecoco", "4", versions=(2,))],
+    )
+    for page in (source_dir / SV / "SVI").glob("SVI_??.html"):
+        page.write_text(page.read_text().replace("?class=hd", "?class=md"))
+    run_import()
+    for url in web_urls():
+        web.add(url.replace("?class=hd", "?class=md"), b"md")
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+    sprigatito = by_number(catalog(), "1")
+    old_thumbnail = thumbnails.thumbnail_for(data_dir / sprigatito.image_path)
+    old_thumbnail.parent.mkdir(parents=True)
+    old_thumbnail.write_bytes(b"md thumbnail")
+
+    # Only Sprigatito's English pages change (its French scans stay md).
+    write_set(
+        source_dir,
+        SV,
+        "SVI",
+        [card("Sprigatito", "1", versions=(2,)), card("Fuecoco", "4", versions=(2,))],
+    )
+    for name in ("SVI_en.html", "SVI_fr.html"):
+        page = source_dir / SV / "SVI" / name
+        text = page.read_text().replace("?class=hd", "?class=md")
+        if name == "SVI_en.html":
+            text = text.replace("/1.jpg?class=md", "/1.jpg?class=hd")
+        page.write_text(text)
+    run_import()
+
+    sprigatito, fuecoco = catalog()
+    assert sprigatito.image_path == "__pending__/SVI/1_1"
+    assert sprigatito.image_path_fr is None
+    reverse = sprigatito.variants[1]
+    assert (reverse.image_path_us, reverse.image_path_fr) == (None, None)
+    assert not fuecoco.image_path.startswith("__pending__")
+    assert fuecoco.variants[1].image_path_us is not None
+
+    web.requests.clear()
+    for url in web_urls():
+        web.add(url, b"hd")
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+
+    assert sorted(web.requests) == sorted(
+        [
+            scan_url("SVI", "US", "1"),
+            scan_url("SVI", "FR", "1").replace("?class=hd", "?class=md"),
+            scan_url("SVI", "US", "1", 2),
+            scan_url("SVI", "FR", "1", 2).replace("?class=hd", "?class=md"),
+        ]
+    )
+    sprigatito = by_number(catalog(), "1")
+    assert (data_dir / sprigatito.image_path).read_bytes() == b"hd"
+    assert not old_thumbnail.exists()
+
+
+def web_urls() -> list[str]:
+    return [
+        scan_url("SVI", language, number, version)
+        for language in ("US", "FR")
+        for number in ("1", "4")
+        for version in (None, 2)
+    ]
+
+
 def test_world_championship_names_keep_the_slot_and_energies_fall_back_to_french():
     row = m.CardCatalog(
         series="World Championships", set_code="WC22", card_number="123", name="Cheryl"

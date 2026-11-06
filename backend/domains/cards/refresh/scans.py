@@ -191,6 +191,11 @@ def scrape_images(
                     path = data_dir / download.path
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_bytes(content)
+                    if download.is_standard:
+                        # A scan downloaded again (its URL changed) gets a
+                        # new thumbnail; see thumbnails.thumbnail_for.
+                        thumbnail = path.parent.parent / "thumbnails" / path.name
+                        thumbnail.unlink(missing_ok=True)
                     setattr(download.target, download.field, download.path)
                     downloaded.add(download.row.id)
                     if download.is_standard and on_standard_saved:
