@@ -49,7 +49,6 @@ export class MissingIntervalsComponent implements OnInit {
     'reverse_duskball',
     'reverse_quickball',
     'reverse_rocketball',
-    'reverse_masterball',
   ]);
   readonly variantLabels = VARIANT_LABELS;
   readonly variantIcon = variantIconUrl;

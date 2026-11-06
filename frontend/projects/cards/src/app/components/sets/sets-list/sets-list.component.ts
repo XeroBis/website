@@ -66,7 +66,6 @@ export class SetsListComponent implements OnInit {
     'reverse_duskball',
     'reverse_quickball',
     'reverse_rocketball',
-    'reverse_masterball',
   ]);
   get otherRarities(): string[] {
     return this.rarityCategories().filter((category) => !this.quickRarities.includes(category));

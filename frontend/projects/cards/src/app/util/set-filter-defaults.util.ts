@@ -13,7 +13,6 @@ export const DEFAULT_SET_VARIANTS: VariantType[] = [
   'reverse_duskball',
   'reverse_quickball',
   'reverse_rocketball',
-  'reverse_masterball',
 ];
 
 /** True when none of the set's cards falls in DEFAULT_SET_RARITIES (energy

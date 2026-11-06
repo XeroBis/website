@@ -10,6 +10,7 @@ const OPTIONS: VariantType[] = [
   'reverse',
   'reverse_pokeball',
   'reverse_rocketball',
+  'reverse_masterball',
   'stamp_league',
   'holo_cosmos',
 ];
@@ -29,13 +30,13 @@ describe('PrintFiltersComponent print row', () => {
     return { fixture, shown, more };
   }
 
-  it('keeps reverse and the ball reverses in view, the rest behind "+"', async () => {
+  it('keeps reverse and the ball reverses but Master Ball in view, the rest behind "+"', async () => {
     const { fixture, shown, more } = await render(true);
     expect(shown()).toEqual(['Reverse', 'Reverse Poké Ball', 'Reverse Rocket Ball']);
-    expect(more()?.textContent?.trim()).toBe('+2');
+    expect(more()?.textContent?.trim()).toBe('+3');
     more()!.click();
     await fixture.whenStable();
-    expect(shown()).toHaveLength(5);
+    expect(shown()).toHaveLength(6);
     expect(more()?.textContent?.trim()).toBe('−');
     more()!.click();
     await fixture.whenStable();
@@ -45,12 +46,12 @@ describe('PrintFiltersComponent print row', () => {
   it('still shows a hidden variant once it is selected', async () => {
     const { shown, more } = await render(true, ['holo_cosmos']);
     expect(shown()).toContain('Holo Cosmos');
-    expect(more()?.textContent?.trim()).toBe('+1');
+    expect(more()?.textContent?.trim()).toBe('+2');
   });
 
   it('shows every variant when not collapsed', async () => {
     const { shown, more } = await render(false);
-    expect(shown()).toHaveLength(5);
+    expect(shown()).toHaveLength(6);
     expect(more()).toBeNull();
   });
 

@@ -36,7 +36,6 @@ const MAIN_VARIANTS = new Set<VariantType>([
   'reverse_duskball',
   'reverse_quickball',
   'reverse_rocketball',
-  'reverse_masterball',
 ]);
 
 /** The one "Export missing cards" modal (documentation/features.md, Sets):

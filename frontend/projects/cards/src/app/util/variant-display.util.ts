@@ -67,7 +67,12 @@ export function selectDisplayedPrints<T extends VariantLike>(
 }
 
 /** Standard, Reverse and the ball reverses (Poké, Friend, Love, Dusk, Quick,
- * Rocket, Master Ball): the prints a collapsed print filter keeps in view. */
+ * Rocket Ball; not Master Ball): the prints a collapsed print filter keeps in
+ * view. */
 export function isMainVariant(value: string): boolean {
-  return value === 'standard' || value === 'reverse' || /^reverse_\w+ball$/.test(value);
+  return (
+    value === 'standard' ||
+    value === 'reverse' ||
+    (/^reverse_\w+ball$/.test(value) && value !== 'reverse_masterball')
+  );
 }
