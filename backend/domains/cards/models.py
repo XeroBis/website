@@ -122,6 +122,9 @@ class CardCatalogVariant(Base):
     # Always null for `standard`, whose scans are on card_catalog.
     image_path_fr: Mapped[str | None] = mapped_column(Text)
     image_path_us: Mapped[str | None] = mapped_column(Text)
+    # The CDN redirects every scan URL of this print elsewhere (it has no
+    # scan of its own): not asked again until the HTML import sees a new URL.
+    no_scan: Mapped[bool] = mapped_column(default=False, server_default="false")
 
     catalog_card: Mapped[CardCatalog] = relationship(back_populates="variants")
 

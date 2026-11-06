@@ -43,6 +43,7 @@ def _redownload(
         row.image_path_fr = None
     else:
         variant.image_path_us = variant.image_path_fr = None
+        variant.no_scan = False
 
 
 def import_html(db: Session, root: Path | None = None) -> dict:
@@ -149,6 +150,12 @@ def import_html(db: Session, root: Path | None = None) -> dict:
                 if _url_changed(old, urls):
                     _redownload(row, variant, slot)
                     redownloads += 1
+                elif variant.no_scan and any(
+                    new and not before
+                    for before, new in zip(old, (urls["en"], urls["fr"]))
+                ):
+                    # A new URL may have a scan: ask the CDN again.
+                    variant.no_scan = False
                 variant.source_url_en = urls["en"]
                 variant.source_url_fr = urls["fr"]
             cards_upserted += 1

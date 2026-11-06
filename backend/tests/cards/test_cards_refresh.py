@@ -350,6 +350,59 @@ def test_a_changed_scan_url_downloads_that_print_again(source_dir, data_dir, web
     assert not old_thumbnail.exists()
 
 
+def test_a_print_the_cdn_redirects_is_not_asked_again(source_dir, data_dir, web):
+    """Every URL of a print redirecting = no scan of its own: skipped until
+    its URL changes. A failure that isn't a redirect is retried."""
+    write_set(source_dir, SV, "SVI", [card("Sprigatito", "1", versions=(2, 94))])
+    run_import()
+    web.add(scan_url("SVI", "US", "1"))
+    web.add(scan_url("SVI", "FR", "1"))
+    for language in ("US", "FR"):
+        web.redirect(scan_url("SVI", language, "1", 2), scan_url("SVI", language, "1"))
+    web.redirect(scan_url("SVI", "US", "1", 94), scan_url("SVI", "US", "1"))
+    web.add(scan_url("SVI", "FR", "1", 94), status=500)
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+
+    _, reverse, pokeball = by_number(catalog(), "1").variants
+    assert reverse.no_scan and not pokeball.no_scan
+    assert (reverse.image_path_us, reverse.image_path_fr) == (None, None)
+
+    web.requests.clear()
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+    assert sorted(web.requests) == sorted(
+        [scan_url("SVI", "US", "1", 94), scan_url("SVI", "FR", "1", 94)]
+    )
+
+    # A new URL for the print: asked again.
+    for page in (source_dir / SV / "SVI").glob("SVI_??.html"):
+        page.write_text(page.read_text().replace("/2/1.jpg?class=hd", "/2/1.jpg"))
+    run_import()
+    assert not by_number(catalog(), "1").variants[1].no_scan
+
+
+def test_a_world_championship_card_without_english_scan_takes_the_french_one(
+    source_dir, data_dir, web
+):
+    write_set(
+        source_dir, source.WORLD_CHAMPIONSHIPS_SERIES, "WC25", [card("Iono", "49")]
+    )
+    run_import()
+    web.redirect(scan_url("WC25", "US", "49"), scan_url("WC25", "FR", "49"))
+    web.add(scan_url("WC25", "FR", "49"), b"fr")
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+
+    (iono,) = catalog()
+    assert iono.image_path == iono.image_path_fr
+    assert (data_dir / iono.image_path).read_bytes() == b"fr"
+    web.requests.clear()
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+    assert web.requests == []
+
+
 def web_urls() -> list[str]:
     return [
         scan_url("SVI", language, number, version)
@@ -372,7 +425,7 @@ def test_world_championship_names_keep_the_slot_and_energies_fall_back_to_french
         image_path="__pending__/Energies/1_1",
         image_path_fr="Energies/Energies/cards/1_grass_energy_standard_FR.jpg",
     )
-    assert scans.use_energies_french_fallback(energy)
+    assert scans.use_french_fallback(energy)
     assert energy.image_path == energy.image_path_fr
 
 

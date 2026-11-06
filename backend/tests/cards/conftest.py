@@ -69,6 +69,10 @@ class FakeWeb:
     def add(self, url: str, content: bytes = b"\xff\xd8jpeg", status: int = 200):
         self.routes[url] = httpx2.Response(status, content=content)
 
+    def redirect(self, url: str, to: str) -> None:
+        """How the CDN answers a scan it doesn't have."""
+        self.routes[url] = httpx2.Response(301, headers={"Location": to})
+
     def json(self, url: str, data) -> None:
         self.routes[url] = httpx2.Response(200, json=data)
 

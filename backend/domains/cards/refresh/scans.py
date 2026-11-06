@@ -52,11 +52,16 @@ def standard_urls(row: m.CardCatalog) -> tuple[str | None, str | None]:
     return standard.source_url_en, standard.source_url_fr
 
 
-def use_energies_french_fallback(row: m.CardCatalog) -> bool:
-    """A few `Energies` cards have no English scan: use the French one, so the
-    card can be shown and exported."""
+# Series where some cards have no English scan (the CDN redirects it to the
+# French one).
+FRENCH_FALLBACK_SERIES = {source.ENERGIES_SERIES, source.WORLD_CHAMPIONSHIPS_SERIES}
+
+
+def use_french_fallback(row: m.CardCatalog) -> bool:
+    """A few `Energies` and World Championships cards have no English scan:
+    use the French one, so the card can be shown and exported."""
     if (
-        row.series == source.ENERGIES_SERIES
+        row.series in FRENCH_FALLBACK_SERIES
         and is_pending(row.image_path)
         and row.image_path_fr
     ):
@@ -93,6 +98,7 @@ def _missing(row: m.CardCatalog) -> Iterator[_Download]:
     for variant in row.variants:
         if (
             variant.variant_type == "standard"
+            or variant.no_scan
             or variant.image_path_us
             or variant.image_path_fr
         ):
@@ -111,15 +117,25 @@ def _missing(row: m.CardCatalog) -> Iterator[_Download]:
                 )
 
 
-def _fetch(client: httpx2.Client, url: str) -> bytes | None:
+@dataclass
+class _Fetched:
+    content: bytes | None = None
+    # The CDN answers a scan it doesn't have with a redirect to another one
+    # (a print's to the standard scan, a missing English one to the French).
+    redirected: bool = False
+
+
+def _fetch(client: httpx2.Client, url: str) -> _Fetched:
     try:
         response = client.get(url)
     except httpx2.HTTPError:
         logger.debug("Scan download failed: %s", url)
-        return None
+        return _Fetched()
     finally:
         time.sleep(REQUEST_DELAY)
-    return response.content if response.status_code == 200 else None
+    if response.status_code == 200:
+        return _Fetched(content=response.content)
+    return _Fetched(redirected=response.is_redirect)
 
 
 def _fetch_all(client: httpx2.Client, downloads: list[_Download]):
@@ -173,6 +189,7 @@ def scrape_images(
         on_progress(done, total)
 
     downloaded: set[int] = set()
+    no_scan = 0
     with http.client(timeout=TIMEOUT) as client:
         for set_code in set_codes:
             downloads = work.get(set_code)
@@ -182,10 +199,20 @@ def scrape_images(
                     set_code,
                     len(downloads),
                 )
-                for download, content in _fetch_all(client, downloads):
+                # Per print other than standard: did every URL redirect?
+                all_redirected: dict[int, tuple[object, bool]] = {}
+                for download, fetched in _fetch_all(client, downloads):
                     done += 1
                     if on_progress:
                         on_progress(done, total)
+                    if not download.is_standard:
+                        key = id(download.target)
+                        before = all_redirected.get(key, (download.target, True))[1]
+                        all_redirected[key] = (
+                            download.target,
+                            before and fetched.redirected,
+                        )
+                    content = fetched.content
                     if content is None:
                         continue
                     path = data_dir / download.path
@@ -200,11 +227,20 @@ def scrape_images(
                     downloaded.add(download.row.id)
                     if download.is_standard and on_standard_saved:
                         on_standard_saved(path)
+                for variant, redirected in all_redirected.values():
+                    if redirected:
+                        variant.no_scan = True
+                        no_scan += 1
             for row in by_set.get(set_code, ()):
-                use_energies_french_fallback(row)
+                use_french_fallback(row)
             db.commit()
 
-    logger.info("scrape_images: scans saved for %d card(s)", len(downloaded))
+    logger.info(
+        "scrape_images: scans saved for %d card(s), %d print(s) found with no "
+        "scan of their own",
+        len(downloaded),
+        no_scan,
+    )
     return {"images_downloaded": len(downloaded)}
 
 
@@ -235,7 +271,7 @@ def link_existing_files(
             if found := existing(image_path_for(row, url_fr, "standard", "fr")):
                 row.image_path_fr = found
                 linked += 1
-        if use_energies_french_fallback(row):
+        if use_french_fallback(row):
             linked += 1
         for variant in row.variants:
             if variant.variant_type == "standard":
