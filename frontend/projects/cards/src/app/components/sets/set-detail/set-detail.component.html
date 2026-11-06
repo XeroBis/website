@@ -150,7 +150,7 @@
       [checklistControls]="checklistControls"
     />
     <ng-template #checklistControls let-card let-variant="variant">
-      <div class="checklist-stepper" [class.owned]="variantTileOwnedQuantity(card, variant) > 0">
+      <div class="checklist-stepper" [class.owned]="variantTileCountsAsOwned(card, variant)">
         @if (variantTileOwnedQuantity(card, variant) > 0) {
           <button
             type="button"

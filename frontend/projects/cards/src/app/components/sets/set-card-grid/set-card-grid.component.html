@@ -17,7 +17,7 @@
       </thead>
       <tbody>
         @for (card of cards; track card.id) {
-          <tr [class.not-owned]="adapter.quantity(card) === 0">
+          <tr [class.not-owned]="notOwned(card)">
             <td class="checklist-number" [class.secret]="adapter.secret(card)">
               {{ adapter.number(card) }}
             </td>
@@ -52,7 +52,7 @@
                       "
                     />
                   } @else {
-                    <span [class.missing]="adapter.quantity(card, print) === 0">{{
+                    <span [class.missing]="notOwned(card, print)">{{
                       adapter.quantity(card, print)
                     }}</span>
                   }
@@ -94,7 +94,7 @@
                   subLabel=""
                   [ownedQty]="adapter.quantity(item.card, item.variant)"
                   [incomingQty]="incomingQty(item.card, item.variant)"
-                  [notOwned]="adapter.quantity(item.card, item.variant) === 0"
+                  [notOwned]="notOwned(item.card, item.variant)"
                   [clickable]="interactive"
                   (tileClick)="adapter.open(item.card, item.variant)"
                 >
@@ -141,7 +141,7 @@
               subLabel=""
               [ownedQty]="adapter.quantity(card, variant)"
               [incomingQty]="incomingQty(card, variant)"
-              [notOwned]="adapter.quantity(card, variant) === 0"
+              [notOwned]="notOwned(card, variant)"
               [clickable]="interactive"
               (tileClick)="adapter.open(card, variant)"
             >
@@ -167,7 +167,7 @@
         [ownedQty]="adapter.quantity(card)"
         [incomingQty]="incomingQty(card)"
         [reverseQty]="adapter.reverse(card)"
-        [notOwned]="adapter.quantity(card) === 0"
+        [notOwned]="notOwned(card)"
         [clickable]="interactive"
         (tileClick)="adapter.open(card)"
       >

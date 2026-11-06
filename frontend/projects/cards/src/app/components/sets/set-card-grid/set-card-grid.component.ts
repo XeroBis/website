@@ -28,6 +28,9 @@ export interface SetGridAdapter<T> {
   reverse: (card: T) => number;
   /** Copies on incoming purchase lists (the owner's set page only). */
   incoming?: (card: T, variant?: CardCatalogVariant) => number;
+  /** "Count incoming as owned" is on: incoming copies show as owned (no
+   * badge, not greyed); off, they get the "Incoming ×N" badge. */
+  countIncoming?: () => boolean;
   open: (card: T, variant?: CardCatalogVariant) => void;
 }
 /** Shared layout; each page supplies ownership and image access for its context. */
@@ -112,8 +115,16 @@ export class SetCardGridComponent<T extends SetGridCard> implements OnChanges {
     img.style.display = 'none';
     img.nextElementSibling?.classList.add('visible');
   }
+  /** The "Incoming ×N" badge count: 0 while incoming copies count as owned. */
   incomingQty(card: T, variant?: CardCatalogVariant): number {
-    return this.adapter.incoming?.(card, variant) ?? 0;
+    return this.adapter.countIncoming?.() ? 0 : (this.adapter.incoming?.(card, variant) ?? 0);
+  }
+  /** Greyed out: no copy owned, nor incoming while those count as owned. */
+  notOwned(card: T, variant?: CardCatalogVariant): boolean {
+    if (this.adapter.quantity(card, variant) > 0) {
+      return false;
+    }
+    return !(this.adapter.countIncoming?.() && (this.adapter.incoming?.(card, variant) ?? 0) > 0);
   }
   variantLabel(variant: CardCatalogVariant): string {
     return VARIANT_LABELS[variant.variant_type];

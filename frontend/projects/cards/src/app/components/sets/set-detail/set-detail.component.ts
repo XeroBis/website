@@ -145,6 +145,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       variant ? this.variantTileOwnedQuantity(card, variant) : this.quantityOwned(card),
     reverse: (card) => this.reverseQuantity(card),
     incoming: (card, variant) => this.incomingQuantity(card, variant?.variant_type ?? 'standard'),
+    countIncoming: () => this.countIncoming.enabled(),
     open: (card, variant) => this.openDetail(card, variant),
   };
   constructor(
@@ -283,8 +284,21 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       return this.filteredCompletionPercent;
     }
     const tiles = this.variantTiles;
-    const owned = tiles.filter((t) => this.variantTileOwnedQuantity(t.entry, t.variant) > 0).length;
+    const owned = tiles.filter((t) => this.variantTileCountsAsOwned(t.entry, t.variant)).length;
     return completionPercent(owned, tiles.length);
+  }
+  variantTileCountsAsOwned(entry: CardCatalogEntry, variant: CardCatalogVariant): boolean {
+    return this.countsAsOwned(
+      entry,
+      variant.variant_type,
+      this.variantTileOwnedQuantity(entry, variant),
+    );
+  }
+  /** Owned copies, plus incoming ones while "Count incoming as owned" is on. */
+  private countsAsOwned(entry: CardCatalogEntry, variantType: VariantType, owned: number): boolean {
+    return (
+      owned > 0 || (this.countIncoming.enabled() && this.incomingQuantity(entry, variantType) > 0)
+    );
   }
   /** 'standard' reuses the catalog's own image_path (that's the print it
    * comes from, no separate pokecardex scan needed). Every other variant --
@@ -317,8 +331,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       const owned = this.countsVariants
         ? this.variantTileOwnedQuantity(entry, variant)
         : this.quantityOwned(entry);
-      const incoming = this.countIncoming.enabled() ? this.incomingQuantity(entry, shown) : 0;
-      return owned + incoming <= 0;
+      return !this.countsAsOwned(entry, shown, owned);
     });
   }
   variantTileOwnedQuantity(entry: CardCatalogEntry, variant: CardCatalogVariant): number {
@@ -531,7 +544,9 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     if (filtered.length === 0) {
       return 0;
     }
-    const owned = filtered.filter((card) => this.quantityOwned(card) > 0).length;
+    const owned = filtered.filter((card) =>
+      this.countsAsOwned(card, 'standard', this.quantityOwned(card)),
+    ).length;
     return Math.round((owned / filtered.length) * 100);
   }
   rarityIcon(rarity: string): string {
