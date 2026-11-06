@@ -12,6 +12,17 @@
       <button
         type="button"
         class="btn btn-secondary btn-icon"
+        [class.active]="countIncoming.enabled()"
+        [attr.aria-label]="'sets.countIncoming' | translate"
+        [title]="'sets.countIncoming' | translate"
+        [attr.aria-pressed]="countIncoming.enabled()"
+        (click)="toggleCountIncoming()"
+      >
+        <ab-icon name="truck" />
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary btn-icon"
         [attr.aria-label]="'sets.myShares' | translate"
         [title]="'sets.myShares' | translate"
         (click)="openSharesModal()"

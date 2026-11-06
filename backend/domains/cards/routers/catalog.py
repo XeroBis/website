@@ -5,7 +5,7 @@ user reads; only admins correct a name."""
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import and_, case, desc, distinct, exists, func, select, true
+from sqlalchemy import and_, case, desc, distinct, exists, func, or_, select, true
 from sqlalchemy.orm import Session, selectinload
 
 from core.database import get_db
@@ -106,11 +106,16 @@ def list_sets(
         None, description="Count each of these prints independently"
     ),
     reverse: bool = Query(False, description="Count every print of every card"),
+    include_incoming: bool = Query(
+        False, description="Copies on incoming purchase lists count as owned"
+    ),
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
     """One row per set, newest first, World Championships sets last, with the
     user's completion of the selected cards (see data-model.md "Rules").
+    `include_incoming`: a card (or print) on an incoming purchase list counts
+    as owned.
 
     - No `variant_type`/`reverse`: a card counts when owned in any print;
       without `rarity`, only normal numbering (number ≤ card_count) counts.
@@ -153,13 +158,26 @@ def list_sets(
             included = and_(
                 included, m.CardCatalogVariant.variant_type.in_(variant_type)
             )
-        owned = and_(included, m.CardVariantQuantity.quantity > 0)
+        has = m.CardVariantQuantity.quantity > 0
+        if include_incoming:
+            incoming = _incoming_per_print(user.id)
+            query = query.outerjoin(
+                incoming,
+                and_(
+                    incoming.c.catalog_id == card.id,
+                    incoming.c.variant_type == m.CardCatalogVariant.variant_type,
+                ),
+            )
+            has = or_(has, incoming.c.copies > 0)
+        owned = and_(included, has)
         unit = m.CardCatalogVariant.id
     else:
-        owned = and_(
-            included,
-            m.Card.variant_quantities.any(m.CardVariantQuantity.quantity > 0),
-        )
+        has = m.Card.variant_quantities.any(m.CardVariantQuantity.quantity > 0)
+        if include_incoming:
+            incoming = incoming_copies(user.id)
+            query = query.outerjoin(incoming, incoming.c.catalog_id == card.id)
+            has = or_(has, incoming.c.copies > 0)
+        owned = and_(included, has)
         unit = card.id
     query = query.add_columns(
         func.count(case((included, unit))).label("total"),
@@ -188,6 +206,19 @@ def list_sets(
         )
         for row in rows
     ]
+
+
+def _incoming_per_print(user_id: int):
+    """Subquery `(catalog_id, variant_type, copies)`: the user's copies on
+    lists not received, per print."""
+    row = m.PurchaseListCard
+    return (
+        select(row.catalog_id, row.variant_type, func.sum(row.quantity).label("copies"))
+        .join(m.PurchaseList, m.PurchaseList.id == row.purchase_list_id)
+        .where(m.PurchaseList.user_id == user_id, m.PurchaseList.received_at.is_(None))
+        .group_by(row.catalog_id, row.variant_type)
+        .subquery()
+    )
 
 
 @router.get("/sets/{set_code}/cards", response_model=list[s.CatalogCardOut])

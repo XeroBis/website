@@ -122,8 +122,10 @@ export class CatalogService {
   listSets(
     rarities: string[] = [],
     variant: VariantType | VariantType[] | 'all' | null = null,
+    includeIncoming = false,
   ): Observable<CardSet[]> {
     let params = new HttpParams();
+    if (includeIncoming) params = params.set('include_incoming', true);
     for (const rarity of rarities) {
       params = params.append('rarity', rarity);
     }

@@ -432,3 +432,20 @@ def test_missing_views_count_incoming_cards(client, imported, pika, rai, eevee):
     client.post(f"{LISTS}/{imported['purchase_list']['id']}/receive")
     # Received: owned now, no longer incoming.
     assert numbers(include_incoming=False) == [27]
+
+
+def test_set_completion_counts_incoming_cards(client, imported):
+    def completion(**params):
+        rows = client.get(f"{CATALOG}/sets", params=params).json()
+        return {row["set_code"]: row["completion_percent"] for row in rows}["SVI"]
+
+    # Pikachu (standard) and Raichu (reverse) incoming, Eevee not.
+    assert completion() == 0
+    assert completion(include_incoming=True) == 67
+    # By print: 2 of the 5 prints (Pikachu standard, Raichu reverse).
+    prints = {"variant_type": ["standard", "reverse"]}
+    assert completion(**prints) == 0
+    assert completion(**prints, include_incoming=True) == 40
+
+    client.post(f"{LISTS}/{imported['purchase_list']['id']}/receive")
+    assert completion(**prints) == 40

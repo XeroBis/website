@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CardSet, Share, VariantType, VARIANT_LABELS } from '../../../models/card.model';
 import { CatalogService } from '../../../services/catalog.service';
+import { CountIncomingService } from '../../../services/count-incoming.service';
 import { SharesService } from '../../../services/shares.service';
 import { ToastService } from '../../../services/toast.service';
 import { loadStoredFilters, saveStoredFilters } from '../../../util/filter-storage.util';
@@ -95,6 +96,7 @@ export class SetsListComponent implements OnInit {
     private readonly sharesService: SharesService,
     private readonly toastService: ToastService,
     private readonly translate: TranslateService,
+    readonly countIncoming: CountIncomingService,
     @Inject(PLATFORM_ID)
     platformId: object,
   ) {
@@ -134,13 +136,21 @@ export class SetsListComponent implements OnInit {
     const rarities = this.selectedRarityCategories().flatMap((category) =>
       rawRaritiesForCategory(category),
     );
-    this.catalogService.listSets(rarities, this.selectedVariants()).subscribe((sets) => {
-      if (requestId !== this.reloadSetsRequestId) {
-        return;
-      }
-      this.sets.set(sets);
-      this.loading.set(false);
-    });
+    this.catalogService
+      .listSets(rarities, this.selectedVariants(), this.countIncoming.enabled())
+      .subscribe((sets) => {
+        if (requestId !== this.reloadSetsRequestId) {
+          return;
+        }
+        this.sets.set(sets);
+        this.loading.set(false);
+      });
+  }
+  /** "Count incoming as owned" (shared with the set page, the missing
+   * exports and /missing): recomputes every set's completion. */
+  toggleCountIncoming(): void {
+    this.countIncoming.toggle();
+    this.reloadSets();
   }
   toggleRarityCategory(category: string): void {
     this.selectedRarityCategories.set(
