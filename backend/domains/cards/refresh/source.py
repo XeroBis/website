@@ -157,6 +157,7 @@ VERSION_ID_TO_VARIANT: dict[int, str] = {
     221: "stamp_fossil_museum",
     224: "stamp_pokemonxp",
     229: "stamp_what_s_your_favorite",
+    242: "stamp_pokemon_game_on",
 }
 
 _MONTHS = {

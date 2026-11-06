@@ -129,6 +129,7 @@ SPECIAL_VARIANTS = (
     "stamp_fossil_museum",
     "stamp_pokemonxp",
     "stamp_what_s_your_favorite",
+    "stamp_pokemon_game_on",
 )
 ALL_VARIANT_TYPES = STANDARD_VARIANTS + BALL_VARIANTS + SPECIAL_VARIANTS
 

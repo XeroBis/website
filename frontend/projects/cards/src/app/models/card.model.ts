@@ -228,7 +228,8 @@ export type VariantType =
   | 'finalist_professor_program'
   | 'stamp_fossil_museum'
   | 'stamp_pokemonxp'
-  | 'stamp_what_s_your_favorite';
+  | 'stamp_what_s_your_favorite'
+  | 'stamp_pokemon_game_on';
 
 export const VARIANT_LABELS: Record<VariantType, string> = {
   standard: 'Standard',
@@ -353,6 +354,7 @@ export const VARIANT_LABELS: Record<VariantType, string> = {
   stamp_fossil_museum: 'Stamp (Fossil Museum)',
   stamp_pokemonxp: 'Stamp (PokémonXP)',
   stamp_what_s_your_favorite: "Stamp (What's Your Favorite?)",
+  stamp_pokemon_game_on: 'Stamp (Pokémon Game On!)',
 };
 
 /** Short badge text, e.g. "R", "PB", "MB" -- see features.md's badge
@@ -479,6 +481,7 @@ export const VARIANT_BADGES: Record<VariantType, string> = {
   stamp_fossil_museum: 'V221',
   stamp_pokemonxp: 'V224',
   stamp_what_s_your_favorite: 'V229',
+  stamp_pokemon_game_on: 'V242',
 };
 
 export interface CardCatalogVariant {
