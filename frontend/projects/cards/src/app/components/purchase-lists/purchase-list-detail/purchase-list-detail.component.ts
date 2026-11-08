@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { Icon, IconName } from '@shared';
 import {
   CardCatalogEntry,
@@ -71,6 +71,9 @@ interface TrayLine {
   variant: VariantType;
   quantity: number;
 }
+
+/** Search results per request; more load while scrolling. */
+const ADD_PAGE_SIZE = 60;
 
 interface AddQuery {
   active: boolean;
@@ -306,6 +309,13 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
   private addOptionsLoaded = false;
   private readonly addSearch$ = new Subject<AddQuery>();
   private addSearchSubscription?: Subscription;
+  /** Matches in all, and the pages loaded so far (infinite scroll). */
+  addTotal = signal(0);
+  addLoadingMore = signal(false);
+  private addPage = 1;
+  /** The search the shown results answer, for loading its next pages. */
+  private addLoadedQuery: AddQuery | null = null;
+  private addMoreSubscription?: Subscription;
   private listId!: number;
 
   constructor(
@@ -340,29 +350,22 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
         // the stream alive for the next change.
         switchMap((query) =>
           !query.active
-            ? of(null)
-            : this.catalogService
-                .browse({
-                  search: query.term || undefined,
-                  setCode: query.setCode || undefined,
-                  rarity: query.rarities.length
-                    ? query.rarities.flatMap(rawRaritiesForCategory)
-                    : undefined,
-                  variantType: query.prints.length ? query.prints : undefined,
-                  sort: query.setCode ? 'card_number_asc' : 'name_asc',
-                  pageSize: 60,
-                })
-                .pipe(catchError(() => of(null))),
+            ? of({ query, page: null })
+            : this.fetchAddPage(query, 1).pipe(map((page) => ({ query, page }))),
         ),
       )
-      .subscribe((page) => {
+      .subscribe(({ query, page }) => {
         this.addSearching.set(false);
         this.addResults.set(page?.items ?? []);
+        this.addTotal.set(page?.total ?? 0);
+        this.addPage = 1;
+        this.addLoadedQuery = page ? query : null;
       });
   }
 
   ngOnDestroy(): void {
     this.addSearchSubscription?.unsubscribe();
+    this.addMoreSubscription?.unsubscribe();
   }
 
   load(): void {
@@ -598,7 +601,60 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** One page of the add modal's search; a failed one gives null. */
+  private fetchAddPage(query: AddQuery, page: number) {
+    return this.catalogService
+      .browse({
+        search: query.term || undefined,
+        setCode: query.setCode || undefined,
+        rarity: query.rarities.length ? query.rarities.flatMap(rawRaritiesForCategory) : undefined,
+        variantType: query.prints.length ? query.prints : undefined,
+        sort: query.setCode ? 'card_number_asc' : 'name_asc',
+        page,
+        pageSize: ADD_PAGE_SIZE,
+      })
+      .pipe(catchError(() => of(null)));
+  }
+
+  /** Near the bottom of the results, the next page is appended. */
+  onAddResultsScroll(event: Event): void {
+    const box = event.target as HTMLElement;
+    if (box.scrollTop + box.clientHeight >= box.scrollHeight - 200) {
+      this.loadMoreAddResults();
+    }
+  }
+
+  private loadMoreAddResults(): void {
+    const query = this.addLoadedQuery;
+    if (
+      !query ||
+      this.addSearching() ||
+      this.addLoadingMore() ||
+      this.addResults().length >= this.addTotal()
+    ) {
+      return;
+    }
+    this.addLoadingMore.set(true);
+    this.addMoreSubscription = this.fetchAddPage(query, this.addPage + 1).subscribe((page) => {
+      this.addLoadingMore.set(false);
+      if (!page) {
+        return;
+      }
+      this.addPage = page.page;
+      // A card already shown (the list shifted between pages) stays once.
+      const shown = new Set(this.addResults().map((card) => card.id));
+      this.addResults.update((results) => [
+        ...results,
+        ...page.items.filter((card) => !shown.has(card.id)),
+      ]);
+    });
+  }
+
   private runAddSearch(): void {
+    // A page still loading belongs to the previous search.
+    this.addMoreSubscription?.unsubscribe();
+    this.addLoadingMore.set(false);
+    this.addLoadedQuery = null;
     // The previous results stay (dimmed) until the new ones arrive, so the
     // list doesn't empty and refill on every change.
     this.addSearching.set(this.addActive());

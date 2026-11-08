@@ -341,6 +341,12 @@
   }
 }
 
+.load-more {
+  grid-column: 1 / -1;
+  padding: var(--space-2);
+  text-align: center;
+}
+
 .search-result {
   display: flex;
   align-items: center;

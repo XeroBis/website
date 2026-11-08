@@ -335,7 +335,11 @@
               {{ 'saleLists.detail.addNoResults' | translate }}
             }
           </p>
-          <div class="search-results" [class.stale]="addSearching()">
+          <div
+            class="search-results"
+            [class.stale]="addSearching()"
+            (scroll)="onAddResultsScroll($event)"
+          >
             @for (result of addResults(); track result.id) {
               <button type="button" class="search-result" (click)="pickCard(result)">
                 <img [src]="imageUrl(result.image_path)" [alt]="result.name" class="card-thumb" />
@@ -349,6 +353,9 @@
                   <span class="in-tray">×{{ copies }}</span>
                 }
               </button>
+            }
+            @if (addLoadingMore()) {
+              <p class="muted load-more">{{ 'common.loading' | translate }}</p>
             }
           </div>
           @if (addTray().length > 0) {
