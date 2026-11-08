@@ -523,6 +523,7 @@ def import_collection(
     allocated = deck_rules.allocated_by_print(
         db, [card.id for card in cards.values() if card.id is not None]
     )
+    on_sale = deck_rules.on_sale_by_print(db, user.id, list(wanted))
     for catalog_id, quantities in wanted.items():
         card = cards[catalog_id]
         for variant, quantity in quantities.items():
@@ -532,6 +533,14 @@ def import_collection(
                     deck_rules.refused(
                         f'"{catalog_by_id[catalog_id].name}" ({variant}): '
                         f"{in_decks} copies are in decks"
+                    )
+                )
+            selling = on_sale.get((catalog_id, variant), 0)
+            if quantity < in_decks + selling:
+                raise rejected(
+                    deck_rules.refused(
+                        f'"{catalog_by_id[catalog_id].name}" ({variant}): '
+                        f"{selling} copies are on sale"
                     )
                 )
             set_quantity(db, card, variant, quantity, "import")
@@ -628,7 +637,7 @@ def bulk_add_cards(
 @router.delete("", response_model=s.CollectionWipeResult)
 def delete_all_cards(user: User = Depends(cards_user), db: Session = Depends(get_db)):
     """Wipe the user's collection and decks (with their cards, history and
-    drafts), plus every combat that used one of those decks, whoever played
+    drafts) and unsold sale lists, plus every combat that used one of those decks, whoever played
     it. Each print is logged as removed first. Other users' cards and decks
     are untouched."""
     cards = db.scalars(
@@ -658,6 +667,12 @@ def delete_all_cards(user: User = Depends(cards_user), db: Session = Depends(get
     # deck_cards, deck_history and drafts follow by ON DELETE CASCADE, and
     # the variant quantities with their cards.
     db.execute(delete(m.Deck).where(m.Deck.user_id == user.id))
+    # Unsold sale lists would reserve copies no longer owned; sold ones stay.
+    db.execute(
+        delete(m.SaleList).where(
+            m.SaleList.user_id == user.id, m.SaleList.sold_at.is_(None)
+        )
+    )
     db.execute(delete(m.Card).where(m.Card.user_id == user.id))
     db.commit()
     logger.warning(
@@ -705,6 +720,13 @@ def set_card_quantity(
         raise deck_rules.refused(
             f"{in_decks} copies of this print are in decks; remove them first"
         )
+    on_sale = deck_rules.on_sale_by_print(db, user.id, [card.catalog_id]).get(
+        (card.catalog_id, variant), 0
+    )
+    if body.quantity < in_decks + on_sale:
+        raise deck_rules.refused(
+            f"{on_sale} copies of this print are on sale; remove them first"
+        )
     set_quantity(db, card, variant, body.quantity, "manual")
     if not card.variant_quantities:
         db.delete(card)
@@ -718,11 +740,16 @@ def set_card_quantity(
 def delete_card(
     card_id: int, user: User = Depends(cards_user), db: Session = Depends(get_db)
 ):
-    """Remove a card and all its prints; refused while it is in a deck."""
+    """Remove a card and all its prints; refused while it is in a deck or
+    on sale."""
     card = _owned_card(db, card_id, user.id)
     if db.scalar(select(exists().where(m.DeckCard.card_id == card.id))):
         raise deck_rules.refused(
             "The card is in a deck; remove it from every deck first"
+        )
+    if deck_rules.on_sale_by_print(db, user.id, [card.catalog_id]):
+        raise deck_rules.refused(
+            "The card is on sale; remove it from every sale list first"
         )
     for vq in card.variant_quantities:
         _log(

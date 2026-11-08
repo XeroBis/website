@@ -64,6 +64,14 @@ interface PurchaseTile {
   prints: { variant_type: VariantType; quantity: number }[];
 }
 
+/** A card waiting in the add modal's tray. */
+interface TrayLine {
+  key: number;
+  card: CardCatalogEntry;
+  variant: VariantType;
+  quantity: number;
+}
+
 interface AddQuery {
   active: boolean;
   term: string;
@@ -250,10 +258,19 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
   addSearch = signal('');
   addResults = signal<CardCatalogEntry[]>([]);
   addSearching = signal(false);
-  addPicked = signal<CardCatalogEntry | null>(null);
-  addVariant = signal<VariantType>('standard');
-  addQuantity = signal(1);
+  /** Cards picked so far, added together by one click. */
+  addTray = signal<TrayLine[]>([]);
+  addTrayCopies = computed(() => this.addTray().reduce((sum, line) => sum + line.quantity, 0));
+  /** Copies in the tray per catalog card, for the results' badges. */
+  addTrayByCard = computed(() => {
+    const copies = new Map<number, number>();
+    for (const line of this.addTray()) {
+      copies.set(line.card.id, (copies.get(line.card.id) ?? 0) + line.quantity);
+    }
+    return copies;
+  });
   adding = signal(false);
+  private trayKey = 0;
   /** The add modal's catalog filters; any of them (or a 2+ letter name)
    * starts a search. */
   addSetCode = signal('');
@@ -511,8 +528,7 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
   openAdd(): void {
     this.addSearch.set('');
     this.addResults.set([]);
-    this.addPicked.set(null);
-    this.addQuantity.set(1);
+    this.addTray.set([]);
     this.addSetCode.set('');
     this.addRarities.set([]);
     this.addPrints.set([]);
@@ -589,29 +605,62 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     this.addSearch$.next(this.addQuery());
   }
 
+  /** Into the tray, in the one print filtered on when the card comes in it;
+   * picked again in that print, one more copy. */
   pickCard(card: CardCatalogEntry): void {
-    this.addPicked.set(card);
-    // The one print filtered on, when the card comes in it.
     const [print] = this.addPrints();
     const preselect =
       this.addPrints().length === 1 && card.variants?.some((v) => v.variant_type === print);
-    this.addVariant.set(preselect ? print : 'standard');
+    const variant = preselect ? print : 'standard';
+    const existing = this.addTray().find(
+      (line) => line.card.id === card.id && line.variant === variant,
+    );
+    if (existing) {
+      this.updateTrayLine(existing.key, { quantity: existing.quantity + 1 });
+    } else {
+      this.addTray.update((tray) => [...tray, { key: ++this.trayKey, card, variant, quantity: 1 }]);
+    }
+  }
+
+  updateTrayLine(key: number, patch: Partial<Pick<TrayLine, 'variant' | 'quantity'>>): void {
+    if (patch.quantity !== undefined) {
+      // A cleared or fractional input still means at least one copy.
+      patch = { ...patch, quantity: Math.max(1, Math.floor(Number(patch.quantity) || 1)) };
+    }
+    this.addTray.update((tray) =>
+      tray.map((line) => (line.key === key ? { ...line, ...patch } : line)),
+    );
+  }
+
+  removeTrayLine(key: number): void {
+    this.addTray.update((tray) => tray.filter((line) => line.key !== key));
   }
 
   submitAdd(): void {
-    const card = this.addPicked();
-    if (!card) {
+    const tray = this.addTray();
+    if (tray.length === 0) {
       return;
     }
     this.adding.set(true);
     this.purchaseListsService
-      .addCard(this.listId, card.id, this.addVariant(), Math.max(1, this.addQuantity()))
+      .addCards(
+        this.listId,
+        tray.map((line) => ({
+          catalog_id: line.card.id,
+          variant_type: line.variant,
+          quantity: line.quantity,
+        })),
+      )
       .subscribe({
         next: (detail) => {
           this.adding.set(false);
           this.purchaseList.set(detail);
           this.addOpen.set(false);
-          this.toastService.show(this.translate.instant('purchaseLists.detail.added'));
+          this.toastService.show(
+            this.translate.instant('purchaseLists.detail.addedMany', {
+              count: this.addTrayCopies(),
+            }),
+          );
         },
         error: (err) => {
           this.adding.set(false);

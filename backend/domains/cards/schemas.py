@@ -812,6 +812,12 @@ class PurchaseListCardAdd(BaseModel):
     quantity: int = Field(1, ge=1)
 
 
+class PurchaseListCardsAdd(BaseModel):
+    """Several cards at once (the add dialog's tray), all or nothing."""
+
+    items: list[PurchaseListCardAdd] = Field(min_length=1)
+
+
 class PurchaseListCardUpdate(BaseModel):
     variant_type: str
     quantity: int = Field(ge=1)
@@ -991,3 +997,54 @@ class CatalogFile(BaseModel):
 class CatalogImportResult(BaseModel):
     created: int
     updated: int
+
+
+# ── sale lists ───────────────────────────────────────────────────────────────
+
+
+class SaleListCreate(BaseModel):
+    name: Name
+
+
+class SaleListRename(BaseModel):
+    name: Name
+
+
+class SaleListCardAdd(BaseModel):
+    catalog_id: int
+    variant_type: str = "standard"
+    quantity: int = Field(1, ge=1)
+
+
+class SaleListCardsAdd(BaseModel):
+    """Several cards at once (the add dialog's tray), all or nothing."""
+
+    items: list[SaleListCardAdd] = Field(min_length=1)
+
+
+class SaleListCardUpdate(BaseModel):
+    variant_type: str
+    quantity: int = Field(ge=1)
+
+
+class SaleListOut(BaseModel):
+    """`total_cards`: lines."""
+
+    id: int
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    sold_at: datetime | None
+    total_cards: int
+    total_quantity: int
+
+
+class SaleListDetailOut(SaleListOut):
+    # Same card fields as a purchase list's.
+    cards: list[PurchaseListCardOut]
+
+
+class OnSalePrint(BaseModel):
+    catalog_id: int
+    variant_type: str
+    quantity: int

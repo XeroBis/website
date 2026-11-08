@@ -1,0 +1,126 @@
+<div class="top-bar">
+  <h1 class="page-title">{{ 'saleLists.title' | translate }}</h1>
+  <div class="top-actions">
+    <button type="button" class="btn btn-primary" (click)="openCreate()">
+      <ab-icon name="plus" />
+      {{ 'saleLists.newList' | translate }}
+    </button>
+  </div>
+</div>
+<p class="page-hint">{{ 'saleLists.hint' | translate }}</p>
+
+@if (createName() !== null) {
+  <app-modal [title]="'saleLists.newTitle' | translate" (closed)="closeCreate()">
+    <div class="import-form">
+      <label>
+        {{ 'saleLists.name' | translate }}
+        <input
+          type="text"
+          class="input"
+          [ngModel]="createName()"
+          (ngModelChange)="createName.set($event)"
+          (keyup.enter)="submitCreate()"
+        />
+      </label>
+      <p class="field-hint">{{ 'saleLists.newHint' | translate }}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeCreate()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="creating()"
+          (click)="submitCreate()"
+        >
+          {{ creating() ? ('saleLists.creating' | translate) : ('saleLists.create' | translate) }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+}
+
+@if (loading()) {
+  <p>{{ 'common.loading' | translate }}</p>
+} @else if (saleLists().length === 0) {
+  <p>{{ 'saleLists.noneYet' | translate }}</p>
+} @else {
+  <div class="purchase-list-grid">
+    @for (list of saleLists(); track list.id) {
+      <div class="purchase-list-card" [class.received]="list.sold_at" (click)="openList(list)">
+        <div class="purchase-list-card-head">
+          <span class="purchase-list-card-name">{{ list.name }}</span>
+          @if (list.sold_at) {
+            <span class="status-badge received">{{
+              'saleLists.soldOn' | translate: { date: (list.sold_at | date: 'dd/MM/yyyy') }
+            }}</span>
+          } @else {
+            <span class="status-badge incoming">{{ 'saleLists.onSale' | translate }}</span>
+          }
+        </div>
+        <div class="purchase-list-card-count">
+          {{
+            'decklistPreview.uniqueTotal'
+              | translate: { unique: list.total_cards, total: list.total_quantity }
+          }}
+        </div>
+        <div class="purchase-list-card-meta">
+          <span>{{ list.created_at | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="row-actions">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="openRename(list, $event)">
+            {{ 'common.rename' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            (click)="openDeleteConfirm(list, $event)"
+          >
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (renameTarget(); as target) {
+  <app-modal [title]="'saleLists.renameTitle' | translate" (closed)="closeRename()">
+    <label class="rename-field">
+      {{ 'saleLists.name' | translate }}
+      <input type="text" class="input" [(ngModel)]="renameValue" />
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeRename()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="renaming()"
+        (click)="submitRename()"
+      >
+        {{ renaming() ? ('common.saving' | translate) : ('common.save' | translate) }}
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (deleteTarget(); as target) {
+  <app-modal [title]="'saleLists.deleteTitle' | translate" (closed)="closeDeleteConfirm()">
+    <p>{{ 'saleLists.deleteBody' | translate }}</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="deleting()"
+        (click)="confirmDelete()"
+      >
+        {{ deleting() ? ('common.deleting' | translate) : ('common.delete' | translate) }}
+      </button>
+    </div>
+  </app-modal>
+}

@@ -401,6 +401,44 @@ def add_purchase_list_card(
     return detail_out(db, list_id, user)
 
 
+@router.post(
+    "/{list_id}/cards/bulk",
+    response_model=s.PurchaseListDetailOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_purchase_list_cards(
+    list_id: int,
+    body: s.PurchaseListCardsAdd,
+    user: User = Depends(cards_user),
+    db: Session = Depends(get_db),
+):
+    """Several cards by hand, all or nothing; repeats add up."""
+    purchase_list = _incoming_list(db, list_id, user.id)
+    catalog = _catalog_cards(db, {item.catalog_id for item in body.items})
+    for item in body.items:
+        _check_print(catalog[item.catalog_id], item.variant_type)
+    for item in body.items:
+        _add(purchase_list, item.catalog_id, item.variant_type, item.quantity)
+    _touch(purchase_list)
+    db.commit()
+    return detail_out(db, list_id, user)
+
+
+def _catalog_cards(db: Session, catalog_ids: set[int]) -> dict[int, m.CardCatalog]:
+    """These catalog cards with their prints, by id; 404 if one is unknown."""
+    catalog = {
+        card.id: card
+        for card in db.scalars(
+            select(m.CardCatalog)
+            .where(m.CardCatalog.id.in_(catalog_ids))
+            .options(selectinload(m.CardCatalog.variants))
+        )
+    }
+    if len(catalog) != len(catalog_ids):
+        raise not_found("Card")
+    return catalog
+
+
 @router.put("/{list_id}/cards/{row_id}", response_model=s.PurchaseListDetailOut)
 def update_purchase_list_card(
     list_id: int,

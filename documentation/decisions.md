@@ -245,3 +245,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Images keep version tags, not digests**: python/node/nginx still get OS patches on each rebuild; only uv, the one `latest`, moved to an exact version.
 - **No routine version PRs for uv/npm**: upgrades stay deliberate (`uv add "pkg>=X"`, Angular updates by hand); Dependabot keeps the SHA pins, which nobody would bump by hand, current.
 
+## Cards: sale lists (2026-11-08)
+
+- **What**: a "Liste des ventes": named lists of the cards the user is selling, created empty and filled by hand from the collection; "Mark sold" takes the whole list off the collection (history source `sale`) and keeps it read-only as history. Tables `cards.sale_lists` / `sale_list_cards` (migration `0013`), mirroring purchase lists.
+- **Named lists, over one flat list**: one list per batch or buyer, sold in one go like a purchase list is received.
+- **Copies on sale are reserved**: a print's copies on unsold lists ≤ owned − in normal decks, and decks, drafts, collection edits and imports can't take those copies, over only checking at Mark sold: a list can always be sold, and two lists can't sell the same copy. They still count as owned everywhere else, since they haven't left yet.
+- **No price, no Cardmarket import, no "for sale" badge elsewhere** for now: just the lists.

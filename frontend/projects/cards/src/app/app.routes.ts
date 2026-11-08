@@ -97,6 +97,22 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'sale-lists',
+        title: 'nav.saleLists',
+        loadComponent: () =>
+          import('./components/sale-lists/sale-list-list/sale-list-list.component').then(
+            (m) => m.SaleListListComponent,
+          ),
+      },
+      {
+        path: 'sale-lists/:id',
+        title: 'nav.saleLists',
+        loadComponent: () =>
+          import('./components/sale-lists/sale-list-detail/sale-list-detail.component').then(
+            (m) => m.SaleListDetailComponent,
+          ),
+      },
+      {
         path: 'convert',
         title: 'nav.convert',
         loadComponent: () =>

@@ -2,8 +2,8 @@
 
 A shared catalog (`card_catalog` + the print variants each card comes in),
 then everything personal: the collection (`cards` + a quantity per owned
-variant), decks, upgrade drafts, purchases, purchase lists and share
-links, each scoped to a `core.users` row. Combats are the one
+variant), decks, upgrade drafts, purchases, purchase lists, sale lists
+and share links, each scoped to a `core.users` row. Combats are the one
 shared log between users.
 """
 
@@ -34,7 +34,7 @@ from domains.cards.variant_order import variant_order_expr
 SCHEMA = {"schema": "cards"}
 DECK_TYPES = ("normal", "phantom")
 COLLECTION_ACTIONS = ("added", "increased", "decreased", "removed")
-COLLECTION_SOURCES = ("manual", "import", "purchase")
+COLLECTION_SOURCES = ("manual", "import", "purchase", "sale")
 COMBAT_SIDES = ("a", "b")
 
 
@@ -514,4 +514,57 @@ class PurchaseListCard(Base):
     created_at: Mapped[datetime] = _created_at()
 
     purchase_list: Mapped[PurchaseList] = relationship(back_populates="cards")
+    catalog_card: Mapped[CardCatalog] = relationship()
+
+
+# ── sale lists ───────────────────────────────────────────────────────────────
+
+
+class SaleList(Base):
+    """Cards the user is selling ("Liste des ventes"): their copies are
+    reserved (decks and collection edits can't take them) until the list is
+    sold (`sold_at` set), which takes them off the collection."""
+
+    __tablename__ = "sale_lists"
+    __table_args__ = (UniqueConstraint("user_id", "name"), SCHEMA)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = _user_fk(index=True)
+    name: Mapped[str] = mapped_column(Text)
+    sold_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    cards: Mapped[list[SaleListCard]] = relationship(
+        back_populates="sale_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="SaleListCard.id",
+    )
+
+
+class SaleListCard(Base):
+    """Copies of one owned print on a sale list."""
+
+    __tablename__ = "sale_list_cards"
+    __table_args__ = (
+        UniqueConstraint("sale_list_id", "catalog_id", "variant_type"),
+        CheckConstraint("quantity >= 1", name="quantity"),
+        SCHEMA,
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sale_list_id: Mapped[int] = mapped_column(
+        ForeignKey("cards.sale_lists.id", ondelete="CASCADE"), index=True
+    )
+    catalog_id: Mapped[int] = mapped_column(ForeignKey("cards.card_catalog.id"))
+    variant_type: Mapped[str] = mapped_column(
+        Text, default="standard", server_default="standard"
+    )
+    quantity: Mapped[int]
+    created_at: Mapped[datetime] = _created_at()
+
+    sale_list: Mapped[SaleList] = relationship(back_populates="cards")
     catalog_card: Mapped[CardCatalog] = relationship()

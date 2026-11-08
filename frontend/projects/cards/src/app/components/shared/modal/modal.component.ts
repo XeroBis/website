@@ -20,6 +20,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class ModalComponent implements OnInit, OnDestroy {
   @Input() title = '';
   @Input() wide = false;
+  /** Wider still, for pickers with a lot to show side by side. */
+  @Input() large = false;
   @Input() fullscreen = false;
   @Output() closed = new EventEmitter<void>();
 

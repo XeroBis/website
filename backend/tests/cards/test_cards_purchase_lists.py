@@ -449,3 +449,37 @@ def test_set_completion_counts_incoming_cards(client, imported):
 
     client.post(f"{LISTS}/{imported['purchase_list']['id']}/receive")
     assert completion(**prints) == 40
+
+
+def test_bulk_add_by_hand_is_all_or_nothing(client, pika, rai, eevee):
+    detail = client.post(LISTS, json={"name": "Wants"}).json()
+    url = f"{LISTS}/{detail['id']}/cards/bulk"
+    # Eevee has no reverse print: nothing is added.
+    refused = client.post(
+        url,
+        json={
+            "items": [
+                {"catalog_id": pika},
+                {"catalog_id": eevee, "variant_type": "reverse"},
+            ]
+        },
+    )
+    assert refused.status_code == 422
+    assert client.get(f"{LISTS}/{detail['id']}").json()["cards"] == []
+    assert (
+        client.post(url, json={"items": [{"catalog_id": 999_999}]}).status_code == 404
+    )
+    added = client.post(
+        url,
+        json={
+            "items": [
+                {"catalog_id": pika, "quantity": 2},
+                {"catalog_id": rai, "variant_type": "reverse"},
+                {"catalog_id": pika},
+            ]
+        },
+    )
+    assert added.status_code == 201, added.text
+    assert lines(added.json()) == {(pika, "standard"): 3, (rai, "reverse"): 1}
+    client.post(f"{LISTS}/{detail['id']}/receive")
+    assert client.post(url, json={"items": [{"catalog_id": pika}]}).status_code == 409

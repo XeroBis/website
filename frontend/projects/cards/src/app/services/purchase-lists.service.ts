@@ -60,17 +60,12 @@ export class PurchaseListsService {
     return this.http.post<PurchaseListDetail>(`${this.baseUrl}/${id}/receive`, {});
   }
 
-  addCard(
+  /** Several cards at once, all or nothing; repeats add up. */
+  addCards(
     id: number,
-    catalogId: number,
-    variantType: VariantType,
-    quantity: number,
+    items: { catalog_id: number; variant_type: VariantType; quantity: number }[],
   ): Observable<PurchaseListDetail> {
-    return this.http.post<PurchaseListDetail>(`${this.baseUrl}/${id}/cards`, {
-      catalog_id: catalogId,
-      variant_type: variantType,
-      quantity,
-    });
+    return this.http.post<PurchaseListDetail>(`${this.baseUrl}/${id}/cards/bulk`, { items });
   }
 
   updateCard(

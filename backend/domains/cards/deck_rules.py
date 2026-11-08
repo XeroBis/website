@@ -77,6 +77,27 @@ def allocated_by_print(db: Session, card_ids) -> dict[tuple[int, str], int]:
     return {(card_id, variant): total for card_id, variant, total in rows}
 
 
+def on_sale_by_print(
+    db: Session, user_id: int, catalog_ids
+) -> dict[tuple[int, str], int]:
+    """Copies of each (catalog card, print) on the user's unsold sale lists,
+    which decks and collection edits can't take, in one grouped query."""
+    if not catalog_ids:
+        return {}
+    row = m.SaleListCard
+    rows = db.execute(
+        select(row.catalog_id, row.variant_type, func.sum(row.quantity))
+        .join(m.SaleList, m.SaleList.id == row.sale_list_id)
+        .where(
+            m.SaleList.user_id == user_id,
+            m.SaleList.sold_at.is_(None),
+            row.catalog_id.in_(catalog_ids),
+        )
+        .group_by(row.catalog_id, row.variant_type)
+    ).all()
+    return {(catalog_id, variant): total for catalog_id, variant, total in rows}
+
+
 def owned_cards(db: Session, user_id: int, catalog_ids) -> dict[int, m.Card]:
     """The user's card rows for these catalog cards, by catalog id, with
     their prints and catalog card loaded."""
@@ -128,7 +149,8 @@ def set_owned_quantities(
     - ≤ 4 copies per card over its prints (Basic Energy unlimited) and ≤ 60
       cards, checked when the change raises them;
     - a raised print needs that many spare copies (owned − in any normal
-      deck), keeping `reserve` more back (the binder copy drafts keep).
+      deck − on sale), keeping `reserve` more back (the binder copy drafts
+      keep).
 
     Each card must have `catalog_card` and `variant_quantities` loaded and a
     flushed id; each (card, print) appears once."""
@@ -147,6 +169,9 @@ def set_owned_quantities(
 
     card_before, card_after = per_card(before), per_card(after)
     allocated = allocated_by_print(db, {card.id for card, _, _ in targets})
+    on_sale = on_sale_by_print(
+        db, deck.user_id, {card.catalog_id for card, _, _ in targets}
+    )
     for card, variant, quantity in targets:
         name = card.catalog_card.name
         copies = card_after[card.id]
@@ -160,6 +185,7 @@ def set_owned_quantities(
         spare = (
             owned_quantity(card, variant)
             - allocated.get((card.id, variant), 0)
+            - on_sale.get((card.catalog_id, variant), 0)
             - reserve
         )
         if extra > 0 and extra > spare:

@@ -42,6 +42,7 @@ const MENUS: { key: MenuKey; links: NavLink[] }[] = [
     links: [
       { path: '/purchases', key: 'purchases', icon: 'list' },
       { path: '/purchase-lists', key: 'purchaseLists', icon: 'truck' },
+      { path: '/sale-lists', key: 'saleLists', icon: 'upload' },
       { path: '/missing', key: 'missingCards', icon: 'list' },
     ],
   },
