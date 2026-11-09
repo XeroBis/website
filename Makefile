@@ -38,6 +38,18 @@ seed-basic-user: ## Create or update a dev non-admin account (or reset its passw
 media-refresh: ## Re-fetch every TMDB / Open Library catalog row (dev)
 	docker compose exec backend /opt/venv/bin/python -m domains.media.refresh
 
+# Binder divider for a set, into documentation/docx/set_dividers (dev catalog
+# and scans), e.g.:
+#   make set-divider CODE=DLR HIGHLIGHTS="11 23 84" FORCE=1
+#   make set-divider CODE=30C STYLE=B PREVIEW=1   (-> 30C_B_divider.docx + .png)
+#   make set-divider CODE=30C STYLE=B BACKGROUND=playmat   (another background than white)
+set-divider: ## A set's binder divider in documentation/docx/set_dividers: make set-divider CODE=… [STYLE=B [BACKGROUND=…]] [HIGHLIGHTS="n …"] [PREVIEW=1] [FORCE=1]
+	@test -n "$(CODE)" || { echo "CODE is required"; exit 1; }
+	docker compose run --rm -v "$(CURDIR)/documentation/docx/set_dividers:/dividers" backend \
+		/opt/venv/bin/python -m domains.cards.set_divider $(CODE) --out-dir /dividers \
+		$(if $(STYLE),--style $(STYLE)) $(if $(BACKGROUND),--background $(BACKGROUND)) $(if $(HIGHLIGHTS),--highlights $(HIGHLIGHTS)) \
+		$(if $(PREVIEW),--preview) $(if $(FORCE),--force)
+
 # ── quality ──────────────────────────────────────────────────────────────────
 
 hooks: ## Enable the git pre-commit hook (ruff + black on staged backend files)

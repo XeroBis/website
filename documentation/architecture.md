@@ -38,7 +38,9 @@ website/
 │   │   │                       #   refresh/ (catalog jobs: source.py parses the saved HTML, html_import, scans,
 │   │   │                       #   thumbnails, set_assets, variant_icons, card_details via http.py (httpx2), jobs.py
 │   │   │                       #   = in-memory job state + runner, archive.py = images zip, metadata.py = catalog file),
-│   │   │                       #   source/ (saved pokecardex HTML, CARDS_SOURCE_DIR)
+│   │   │                       #   source/ (saved pokecardex HTML, CARDS_SOURCE_DIR),
+│   │   │                       #   set_divider.py (`make set-divider`: a set's binder divider into documentation/docx;
+│   │   │                       #   style B drawn by set_divider_b.py with fonts/Fredoka.ttf, OFL)
 │   │   └── workout/            #   /api/workout routes (routers/: catalog, workouts, templates, circuits, session,
 │   │                           #   stats, transfer = import/export, admin), `workout` schema models, muscles.py,
 │   │                           #   entries.py (shared build/serialize of workout/template/circuit entries), stats.py, transfer.py
@@ -68,6 +70,11 @@ website/
 ├── docker-compose.prod.yml     # prod
 ├── Makefile
 └── documentation/
+    └── docx/                   # cards' printable binder dividers (from the old cards repo): pokemon_set_dividers.docx
+                                #   (every set, its code, release date and card count), set_dividers/<CODE>_set_divider.docx
+                                #   (one page per set: logo, symbol, 3 highlight cards, card count/release date/code;
+                                #   `make set-divider CODE=…` makes a new one from MEG's; <CODE>_B_divider.docx: style B, STYLE=B;
+                                #   30C_B_backgrounds/: previews of style B's backgrounds)
 ```
 
 ### Backend conventions
