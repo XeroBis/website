@@ -1,7 +1,7 @@
 # Build context: the repo root (see docker-compose.prod.yml).
 
 # Stage 1 — build every Angular app.
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
