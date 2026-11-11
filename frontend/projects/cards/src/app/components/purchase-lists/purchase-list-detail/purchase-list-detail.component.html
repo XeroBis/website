@@ -382,18 +382,41 @@
             (scroll)="onAddResultsScroll($event)"
           >
             @for (result of addResults(); track result.id) {
-              <button type="button" class="search-result" (click)="pickCard(result)">
-                <img [src]="imageUrl(result.image_path)" [alt]="result.name" class="card-thumb" />
-                <span class="card-info">
-                  <span class="card-name">{{ result.name }}</span>
-                  <span class="card-set">
-                    {{ result.set_name }} · {{ result.set_code }} {{ result.card_number }}
+              <div class="search-result">
+                <button type="button" class="result-pick" (click)="pickCard(result)">
+                  <img [src]="imageUrl(result.image_path)" [alt]="result.name" class="card-thumb" />
+                  <span class="card-info">
+                    <span class="card-name">{{ result.name }}</span>
+                    <span class="card-set">
+                      {{ result.set_name }} · {{ result.set_code }} {{ result.card_number }}
+                    </span>
                   </span>
-                </span>
-                @if (addTrayByCard().get(result.id); as copies) {
-                  <span class="in-tray">×{{ copies }}</span>
-                }
-              </button>
+                </button>
+                <div
+                  class="result-prints"
+                  [attr.aria-label]="'purchaseLists.detail.print' | translate"
+                >
+                  @for (choice of result.variants ?? []; track choice.variant_type) {
+                    @let copies = addTrayByPrint().get(result.id + '|' + choice.variant_type);
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.active]="!!copies"
+                      [attr.aria-label]="variantLabels[choice.variant_type]"
+                      [title]="variantLabels[choice.variant_type]"
+                      (click)="pickPrint(result, choice.variant_type)"
+                    >
+                      <img
+                        [src]="variantIcon(choice.variant_type)"
+                        [alt]="variantLabels[choice.variant_type]"
+                      />
+                      @if (copies) {
+                        <span class="chip-count">×{{ copies }}</span>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
             }
             @if (addLoadingMore()) {
               <p class="muted load-more">{{ 'common.loading' | translate }}</p>

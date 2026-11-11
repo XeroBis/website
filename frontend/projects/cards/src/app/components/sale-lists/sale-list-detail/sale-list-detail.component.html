@@ -341,18 +341,40 @@
             (scroll)="onAddResultsScroll($event)"
           >
             @for (result of addResults(); track result.id) {
-              <button type="button" class="search-result" (click)="pickCard(result)">
-                <img [src]="imageUrl(result.image_path)" [alt]="result.name" class="card-thumb" />
-                <span class="card-info">
-                  <span class="card-name">{{ result.name }}</span>
-                  <span class="card-set">
-                    {{ result.set_name }} · {{ result.set_code }} {{ result.card_number }}
+              <div class="search-result">
+                <button type="button" class="result-pick" (click)="pickCard(result)">
+                  <img [src]="imageUrl(result.image_path)" [alt]="result.name" class="card-thumb" />
+                  <span class="card-info">
+                    <span class="card-name">{{ result.name }}</span>
+                    <span class="card-set">
+                      {{ result.set_name }} · {{ result.set_code }} {{ result.card_number }}
+                    </span>
                   </span>
-                </span>
-                @if (addTrayByCard().get(result.catalog_id); as copies) {
-                  <span class="in-tray">×{{ copies }}</span>
-                }
-              </button>
+                </button>
+                <div class="result-prints" [attr.aria-label]="'saleLists.detail.print' | translate">
+                  @for (choice of resultPrints(result); track choice.variant_type) {
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.active]="choice.inTray > 0"
+                      [disabled]="choice.left === 0"
+                      [attr.aria-label]="
+                        variantLabels[choice.variant_type] + ' (' + choice.left + ')'
+                      "
+                      [title]="variantLabels[choice.variant_type] + ' (' + choice.left + ')'"
+                      (click)="pickPrint(result, choice.variant_type)"
+                    >
+                      <img
+                        [src]="variantIcon(choice.variant_type)"
+                        [alt]="variantLabels[choice.variant_type]"
+                      />
+                      @if (choice.inTray > 0) {
+                        <span class="chip-count">×{{ choice.inTray }}</span>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
             }
             @if (addLoadingMore()) {
               <p class="muted load-more">{{ 'common.loading' | translate }}</p>

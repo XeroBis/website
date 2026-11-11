@@ -265,14 +265,6 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
   /** Cards picked so far, added together by one click. */
   addTray = signal<TrayLine[]>([]);
   addTrayCopies = computed(() => this.addTray().reduce((sum, line) => sum + line.quantity, 0));
-  /** Copies in the tray per catalog card, for the results' badges. */
-  addTrayByCard = computed(() => {
-    const copies = new Map<number, number>();
-    for (const line of this.addTray()) {
-      copies.set(line.card.catalog_id, (copies.get(line.card.catalog_id) ?? 0) + line.quantity);
-    }
-    return copies;
-  });
   /** Some print has more copies in the tray than can go on sale. */
   addTrayOver = computed(() =>
     this.addTray().some((line) => line.quantity > this.trayLineMax(line)),
@@ -684,6 +676,21 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
       .filter((choice) => choice.sellable > 0 || choice.variant_type === line.variant);
   }
 
+  /** A result's prints with a copy left to sell (or already in the tray),
+   * for its print icons. */
+  resultPrints(card: Card): { variant_type: VariantType; left: number; inTray: number }[] {
+    return card.variants
+      .map((variant) => {
+        const inTray = this.inTray(card.catalog_id, variant.variant_type);
+        return {
+          variant_type: variant.variant_type,
+          left: Math.max(this.sellable(card, variant.variant_type) - inTray, 0),
+          inTray,
+        };
+      })
+      .filter((choice) => choice.left > 0 || choice.inTray > 0);
+  }
+
   /** Into the tray, in its first print with a copy left; picked again, one
    * more copy of that print. */
   pickCard(card: Card): void {
@@ -692,6 +699,15 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
       .find((v) => this.sellable(card, v) - this.inTray(card.catalog_id, v) > 0);
     if (!variant) {
       this.toastService.show(this.translate.instant('saleLists.detail.nothingSellable'), 'error');
+      return;
+    }
+    this.pickPrint(card, variant);
+  }
+
+  /** One more copy of that print in the tray: onto its line, else a new one,
+   * so one card can sit in the tray in several prints. */
+  pickPrint(card: Card, variant: VariantType): void {
+    if (this.sellable(card, variant) - this.inTray(card.catalog_id, variant) <= 0) {
       return;
     }
     const existing = this.addTray().find(
@@ -704,14 +720,32 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** A print switched to one the card already has a line in merges the two
+   * lines (as in the list view). */
   updateTrayLine(key: number, patch: Partial<Pick<TrayLine, 'variant' | 'quantity'>>): void {
     if (patch.quantity !== undefined) {
       // A cleared or fractional input still means at least one copy.
       patch = { ...patch, quantity: Math.max(1, Math.floor(Number(patch.quantity) || 1)) };
     }
-    this.addTray.update((tray) =>
-      tray.map((line) => (line.key === key ? { ...line, ...patch } : line)),
-    );
+    this.addTray.update((tray) => {
+      const line = tray.find((l) => l.key === key);
+      if (!line) {
+        return tray;
+      }
+      const updated = { ...line, ...patch };
+      const twin = tray.find(
+        (l) =>
+          l.key !== key &&
+          l.card.catalog_id === updated.card.catalog_id &&
+          l.variant === updated.variant,
+      );
+      if (twin) {
+        updated.quantity += twin.quantity;
+      }
+      return tray
+        .filter((l) => l !== twin)
+        .map((l) => (l.key === key ? updated : l));
+    });
   }
 
   removeTrayLine(key: number): void {

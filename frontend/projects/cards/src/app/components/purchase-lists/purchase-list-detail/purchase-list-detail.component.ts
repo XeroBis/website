@@ -264,11 +264,12 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
   /** Cards picked so far, added together by one click. */
   addTray = signal<TrayLine[]>([]);
   addTrayCopies = computed(() => this.addTray().reduce((sum, line) => sum + line.quantity, 0));
-  /** Copies in the tray per catalog card, for the results' badges. */
-  addTrayByCard = computed(() => {
-    const copies = new Map<number, number>();
+  /** Copies in the tray per `card id|print`, for the results' print icons. */
+  addTrayByPrint = computed(() => {
+    const copies = new Map<string, number>();
     for (const line of this.addTray()) {
-      copies.set(line.card.id, (copies.get(line.card.id) ?? 0) + line.quantity);
+      const key = `${line.card.id}|${line.variant}`;
+      copies.set(key, (copies.get(key) ?? 0) + line.quantity);
     }
     return copies;
   });
@@ -667,7 +668,12 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     const [print] = this.addPrints();
     const preselect =
       this.addPrints().length === 1 && card.variants?.some((v) => v.variant_type === print);
-    const variant = preselect ? print : 'standard';
+    this.pickPrint(card, preselect ? print : 'standard');
+  }
+
+  /** One more copy of that print in the tray: onto its line, else a new one,
+   * so one card can sit in the tray in several prints. */
+  pickPrint(card: CardCatalogEntry, variant: VariantType): void {
     const existing = this.addTray().find(
       (line) => line.card.id === card.id && line.variant === variant,
     );
@@ -678,14 +684,27 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** A print switched to one the card already has a line in merges the two
+   * lines (as in the list view). */
   updateTrayLine(key: number, patch: Partial<Pick<TrayLine, 'variant' | 'quantity'>>): void {
     if (patch.quantity !== undefined) {
       // A cleared or fractional input still means at least one copy.
       patch = { ...patch, quantity: Math.max(1, Math.floor(Number(patch.quantity) || 1)) };
     }
-    this.addTray.update((tray) =>
-      tray.map((line) => (line.key === key ? { ...line, ...patch } : line)),
-    );
+    this.addTray.update((tray) => {
+      const line = tray.find((l) => l.key === key);
+      if (!line) {
+        return tray;
+      }
+      const updated = { ...line, ...patch };
+      const twin = tray.find(
+        (l) => l.key !== key && l.card.id === updated.card.id && l.variant === updated.variant,
+      );
+      if (twin) {
+        updated.quantity += twin.quantity;
+      }
+      return tray.filter((l) => l !== twin).map((l) => (l.key === key ? updated : l));
+    });
   }
 
   removeTrayLine(key: number): void {

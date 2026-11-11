@@ -310,17 +310,6 @@
   }
 }
 
-.in-tray {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: var(--color-primary);
-  color: var(--color-primary-contrast, #fff);
-}
-
 .muted {
   margin: 0;
   color: var(--color-text-muted);
@@ -347,22 +336,57 @@
   text-align: center;
 }
 
+/* A result: the card (picks its default print), then its print icons (each
+   picks that print). */
 .search-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-within {
+    background: var(--color-primary-light);
+  }
+}
+
+.result-pick {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2);
+  padding: 0;
   border: none;
-  border-radius: var(--radius-sm);
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
 
-  &:hover,
-  &:focus-visible {
-    background: var(--color-primary-light);
+.result-prints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+
+  .filter-chip {
+    min-height: 32px;
+    min-width: 32px;
+    gap: 0.2rem;
+    background: var(--color-surface, transparent);
+
+    &.active {
+      background: var(--color-primary-light);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+
+  .chip-count {
+    font-weight: 600;
   }
 }
 
