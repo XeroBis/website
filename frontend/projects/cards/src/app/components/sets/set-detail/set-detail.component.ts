@@ -40,7 +40,11 @@ import {
   readStoredCardOrder,
   storeCardOrder,
 } from '../../../util/card-order.util';
-import { SetCardGridComponent, SetGridAdapter } from '../set-card-grid/set-card-grid.component';
+import {
+  SetCardGridComponent,
+  SetGridAdapter,
+  SetView,
+} from '../set-card-grid/set-card-grid.component';
 import { ModalComponent } from '../../shared/modal/modal.component';
 import { MissingExportModalComponent } from '../missing-export-modal/missing-export-modal.component';
 import {
@@ -52,10 +56,10 @@ import {
 } from '../../../util/variant-display.util';
 const VIEW_STORAGE_KEY = 'setDetailView';
 const ORDER_STORAGE_KEY = 'setDetailOrder';
-function readStoredView(): 'grid' | 'checklist' | 'binder' {
+function readStoredView(): SetView {
   try {
     const view = localStorage.getItem(VIEW_STORAGE_KEY);
-    return view === 'checklist' || view === 'binder' ? view : 'grid';
+    return view === 'checklist' || view === 'binder' || view === 'binder12' ? view : 'grid';
   } catch {
     return 'grid';
   }
@@ -115,8 +119,8 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   duplicatesOnly = signal(false);
   /** Selected print controls the grid layout. */
   variantDisplayMode = signal<VariantDisplayMode>(printSelectionMode(this.selectedVariants()));
-  /** Grid, checklist, or nine-pocket binder. Remembered per browser. */
-  view = signal<'grid' | 'checklist' | 'binder'>(readStoredView());
+  /** Grid, checklist, or nine- or twelve-pocket binder. Remembered per browser. */
+  view = signal<SetView>(readStoredView());
   /** Recomputed explicitly (debounced on filterChange$ for the search box)
    * rather than as a template getter -- see collection.component.ts's
    * filteredCards for why a getter re-run on every change-detection cycle
@@ -232,7 +236,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     storeCardOrder(ORDER_STORAGE_KEY, order);
     this.recomputeFilteredCards();
   }
-  setView(view: 'grid' | 'checklist' | 'binder'): void {
+  setView(view: SetView): void {
     this.view.set(view);
     this.recomputeFilteredCards();
     try {

@@ -14,6 +14,8 @@ import { rarityCategory } from '../../../util/rarity-category.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import { variantIconUrl } from '../../../util/variant-icons.util';
 import { CardTileComponent } from '../../shared/card-tile/card-tile.component';
+/** Grid, checklist, nine-pocket (3×3) or twelve-pocket (4×3) binder. */
+export type SetView = 'grid' | 'checklist' | 'binder' | 'binder12';
 export interface SetGridCard {
   id: number;
   name: string;
@@ -48,7 +50,7 @@ export class SetCardGridComponent<T extends SetGridCard> implements OnChanges {
   @Input({ required: true })
   adapter!: SetGridAdapter<T>;
   @Input()
-  view: 'grid' | 'checklist' | 'binder' = 'grid';
+  view: SetView = 'grid';
   @Input()
   checklistControls: TemplateRef<{
     $implicit: T;
@@ -78,19 +80,20 @@ export class SetCardGridComponent<T extends SetGridCard> implements OnChanges {
         : this.cards.flatMap((card) =>
             this.adapter.variants(card).map((variant) => ({ card, variant })),
           );
-    this.binderPages.set([]);
-    for (let start = 0; start < slots.length; start += 9) {
+    const size = this.view === 'binder12' ? 12 : 9;
+    const pages: ({
+      card: T;
+      variant?: CardCatalogVariant;
+    } | null)[][] = [];
+    for (let start = 0; start < slots.length; start += size) {
       const page: ({
         card: T;
         variant?: CardCatalogVariant;
-      } | null)[] = slots.slice(start, start + 9);
-      while (page.length < 9) page.push(null);
-      this.binderPages.update((value) => {
-        const next = [...value];
-        next.push(page);
-        return next;
-      });
+      } | null)[] = slots.slice(start, start + size);
+      while (page.length < size) page.push(null);
+      pages.push(page);
     }
+    this.binderPages.set(pages);
   }
   get variantTypes(): VariantType[] {
     const present = new Set(

@@ -585,6 +585,7 @@
     "showVariantsBoth": "Show print variants (standard and reverse)",
     "viewGrid": "Grid view",
     "viewBinder": "Binder view",
+    "viewBinder12": "Binder view (4×3)",
     "binderPage": "Page {{page}} of {{total}}",
     "viewChecklist": "Checklist view",
     "checklistName": "Name",

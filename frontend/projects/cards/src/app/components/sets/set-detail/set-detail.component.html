@@ -117,6 +117,17 @@
           >
             <ab-icon name="book" />
           </button>
+          <button
+            type="button"
+            class="btn"
+            [class.active]="view() === 'binder12'"
+            [attr.aria-label]="'sets.viewBinder12' | translate"
+            [title]="'sets.viewBinder12' | translate"
+            [attr.aria-pressed]="view() === 'binder12'"
+            (click)="setView('binder12')"
+          >
+            <ab-icon name="pockets" />
+          </button>
         </div>
         <button
           type="button"

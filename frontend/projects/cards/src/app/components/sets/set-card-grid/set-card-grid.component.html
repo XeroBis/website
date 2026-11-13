@@ -66,8 +66,8 @@
       </tbody>
     </table>
   </div>
-} @else if (view === 'binder') {
-  <div class="binder-pages">
+} @else if (view === 'binder' || view === 'binder12') {
+  <div class="binder-pages" [class.wide]="view === 'binder12'">
     @for (page of binderPages(); track $index) {
       <section
         class="binder-page"

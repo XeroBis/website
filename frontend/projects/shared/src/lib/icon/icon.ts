@@ -14,6 +14,9 @@ const PATHS = {
   more: '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',
   crown:
     '<path d="M11.562 3.266a.5.5 0 0 1 .876 0L16 9.5a1 1 0 0 0 1.516.294l4.117-3.43a.5.5 0 0 1 .798.519l-2.834 10.2a1 1 0 0 1-.964.732H5.367a1 1 0 0 1-.964-.732l-2.834-10.2a.5.5 0 0 1 .798-.519l4.117 3.43A1 1 0 0 0 8 9.5z"/><path d="M5 21h14"/>',
+  // A 4×3 pocket page (cards' twelve-pocket binder view).
+  pockets:
+    '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16"/><path d="M12 4v16"/><path d="M17 4v16"/><path d="M2 9.33h20"/><path d="M2 14.67h20"/>',
   book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
   film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
   tv: '<rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/>',

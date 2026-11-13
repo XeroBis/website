@@ -34,6 +34,19 @@
   box-shadow: var(--shadow-md);
 }
 
+// 4×3 pages are wider: two a row, one below 1000px.
+.binder-pages.wide .binder-page {
+  width: calc((100% - var(--space-4)) / 2);
+
+  @media (max-width: 1000px) {
+    width: 100%;
+  }
+}
+
+.binder-pages.wide .binder-pockets {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .binder-page-label {
   margin-bottom: var(--space-2);
   color: var(--color-text-muted);

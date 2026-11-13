@@ -12,7 +12,11 @@ import {
   VariantType,
 } from '../../../models/card.model';
 import { PublicSharesService } from '../../../services/shares.service';
-import { SetCardGridComponent, SetGridAdapter } from '../set-card-grid/set-card-grid.component';
+import {
+  SetCardGridComponent,
+  SetGridAdapter,
+  SetView,
+} from '../set-card-grid/set-card-grid.component';
 import { SetFiltersComponent } from '../set-filters/set-filters.component';
 import { rarityCategory, sortRarityCategories } from '../../../util/rarity-category.util';
 import {
@@ -59,7 +63,7 @@ export class SharedSetComponent implements OnInit {
   search = signal('');
   missingOnly = signal(false);
   duplicatesOnly = signal(false);
-  view = signal<'grid' | 'checklist' | 'binder'>('grid');
+  view = signal<SetView>('grid');
   get countsVariants(): boolean {
     return this.view() === 'checklist' || this.variantDisplayMode() !== 'standard';
   }

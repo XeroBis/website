@@ -585,6 +585,7 @@
     "showVariantsBoth": "Afficher les variantes d'impression (standard et reverse)",
     "viewGrid": "Vue grille",
     "viewBinder": "Vue classeur",
+    "viewBinder12": "Vue classeur (4×3)",
     "binderPage": "Page {{page}} sur {{total}}",
     "viewChecklist": "Vue checklist",
     "checklistName": "Nom",
