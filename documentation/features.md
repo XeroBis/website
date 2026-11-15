@@ -6,11 +6,11 @@ User-facing behaviour per app.
 
 - `GET /api/health` → `{"status": "ok"}` when the backend can reach the database (500 otherwise). Available on every host.
 - **One login for every app** (see architecture.md "Session"). A page behind `authGuard` sends a logged-out visitor to the portfolio's home page (`alanbignon.com`), never to the login page; they log in from the header's "Log in" link. `adminGuard` does the same, and sends a logged-in non-admin to the app's root. `appGuard(app)` does the same, and sends a logged-in user without access to that app to the auth app's account page.
-- **App access**: a new account can use no app. An admin grants apps per user (auth app, `/admin/users`). Admins can use every app. Workout, cards and media are entirely behind their grant (pages and API). The portfolio is public; its grant only allows editing projects.
+- **App access**: a new account can use no app. An admin grants apps per user (auth app, `/admin/users`). Admins can use every app. Workout, cards, media and tools are entirely behind their grant (pages and API). The portfolio is public; its grant only allows editing projects.
 - **Language**: the logged-in user's saved language (FR/EN). Logged out: the last language used on that site, then the browser's language if it's French or English, then French.
 - **Theme**: System (follows the device), Light or Dark, one choice for every app. The logged-in user's saved theme; logged out, the last one picked on any `*.alanbignon.com` site (a cookie), else System. Every app has both a light and a dark look.
 - Placeholder pages show who is logged in (pseudo and email) or a "Log in" link.
-- **Header** (`ab-header`, used by portfolio, media, workout and cards): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; a theme button cycling System → Light → Dark (monitor, sun, moon icons; its label names the current theme), saved on the account when logged in and in a cookie for every site either way; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page). On phones (≤ 720px) only the title and a menu button stay in the bar; the button opens a panel with the links (one per line), the FR/EN switch, the theme button and the session. Tapping a link, the title or Escape closes it.
+- **Header** (`ab-header`, used by portfolio, media, workout, cards and tools): the app title linking home; the app's own links; an FR/EN switch, which saves the language on the account when logged in and otherwise only for that site; a theme button cycling System → Light → Dark (monitor, sun, moon icons; its label names the current theme), saved on the account when logged in and in a cookie for every site either way; then the pseudo with an apps-grid icon button (the old workout navbar's, labelled "My account"), linking to the auth app's account page, which is the only place to log out), or "Log in" (auth app login, coming back to the current page). On phones (≤ 720px) only the title and a menu button stay in the bar; the button opens a panel with the links (one per line), the FR/EN switch, the theme button and the session. Tapping a link, the title or Escape closes it.
 
 ## Auth — `auth.alanbignon.com`
 
@@ -20,7 +20,7 @@ Neo-brutalist: a cobalt grid background (midnight blue in dark), one card per pa
 
 ### Pages
 
-- `/login`: email + password. On success, goes to `?redirect=` if it is allowed, otherwise to the portfolio (`alanbignon.com`). Allowed in prod: `https://alanbignon.com` or `https://<anything>.alanbignon.com`, no port, no credentials in the URL. Allowed in dev: `http://localhost:4600`–`4604`. A visitor who is already logged in is sent on right away. Errors: invalid credentials, too many attempts, generic.
+- `/login`: email + password. On success, goes to `?redirect=` if it is allowed, otherwise to the portfolio (`alanbignon.com`). Allowed in prod: `https://alanbignon.com` or `https://<anything>.alanbignon.com`, no port, no credentials in the URL. Allowed in dev: `http://localhost:4600`–`4605`. A visitor who is already logged in is sent on right away. Errors: invalid credentials, too many attempts, generic.
 - `/signup` (invite-only): email, password (12+ chars), pseudo (required, ≤ 50), sign-up code. Success logs the user in and follows the same redirect rule. Errors: wrong code, email taken, invalid fields, too many attempts. `?redirect=` is kept when switching between login and sign-up.
 - `/` (account, logged in only, otherwise the portfolio): pseudo and email, inline pseudo editing, language picker (Français/English, applied at once), theme picker (System/Light/Dark, applied at once), links to the portfolio (always) and to the workout/cards/media apps the user has access to ("No other app yet" when none), a "Users" link for admins, log out (then `/login`).
 - `/admin/users` (behind `adminGuard`: logged out → portfolio, not an admin → `/`): every user, oldest first, with pseudo, email and sign-up date. Each non-admin row has one checkbox per app (Portfolio (edit), Workout, Cards, Media); a click saves at once (the box is disabled while saving, and reverts with an error if the save fails). Admin rows show "Admin: all apps" instead of checkboxes.
@@ -386,3 +386,28 @@ An entry summary is `{id, status, rating, owned_formats, current_season, current
 - Manual add: title trimmed, required; year 0–9999; genres non-empty, repeats dropped.
 - Rating 1–10; formats from the list above; season 1–999, episode 0–9999 (series only).
 - Sessions: `finished_on` not before `started_on` (also checked in the page so the message is translated); at most one open session.
+
+## Tools — `tools.alanbignon.com`
+
+Everyday PDF tools. Every page is behind `appGuard('tools')` (logged out → portfolio; no tools access → the auth app's account page). FR/EN. **Files never leave the browser**: they are read, processed and downloaded locally (architecture.md "Tools frontend"); nothing is uploaded or kept, and leaving or reloading a page forgets its files. No history, no database.
+
+### Look
+
+"Workbench": a cool grey ground (`#f3f5f8`), white surfaces, a cobalt accent (`#2b56e0`), Space Grotesk headings, Inter for the UI, JetBrains Mono for page ranges and file names. Dark: near-black blue-grey, lighter cobalt. Each tool has its own icon tint on the home page (merge cobalt, extract orange, organize teal, images → PDF purple, PDF → images raspberry). Pages are drawn as thumbnails on a grey tray; selected pages get a cobalt ring and a check badge; the main action sits in a bar fixed to the bottom of the screen.
+
+### Pages
+
+- `/`: the five tools as cards (icon, name, one-line description), with "Runs in your browser — files are never uploaded". The header links to each tool.
+- `/merge`: add PDFs (button or drop on the page). Each file is a chip (colour tag, name, page count, remove) and its pages appear in the grid with a stripe of the file's colour. Drag chips to reorder whole files, or drag pages anywhere, across files. Remove single pages from the grid. Output file name (default `merged.pdf`), then "Merge & download". Needs at least one page.
+- `/extract`: one PDF. Pick pages by clicking thumbnails or by typing ranges (`1-3, 7, 10-12`); the two stay in sync (clicking rewrites the text as compact ranges). "All" / "None". Output: **One PDF** (the selected pages, in page order, `<name>-pages.pdf`) or **One PDF per range** (`<name>-1-3.pdf`, … in a zip, `<name>-split.zip`; a single range downloads its PDF directly).
+- `/organize`: one PDF. Drag pages to reorder; under each page: rotate left, rotate right, delete (the page dims, with Undo). The footer counts pages kept, rotated and deleted; "Reset" undoes everything, "Save PDF" downloads `<name>-organized.pdf`. Deleting every page disables saving.
+- `/images-to-pdf`: add JPG/PNG images (button or drop), drag to reorder, remove. Options: page size **A4** / **Letter** / **Fit image** (the page is the image's size), orientation **Auto** (follows each image) / **Portrait** / **Landscape**, margins **None** / **Small** (10 mm) / **Large** (20 mm); with Fit image, orientation and margins are greyed out (the page is the image), with a live preview of page 1. Each image is scaled to fit inside the margins, centred, never stretched. "Create PDF" downloads `images.pdf`.
+- `/pdf-to-images`: one PDF; pick pages (all selected at first). Format **PNG** / **JPG** (with a quality slider, 40–100 %, default 85), resolution **72** / **150** (default) / **300 dpi**. One page downloads `<name>-p<n>.<ext>`; several, `<name>-images.zip`.
+
+### Validation
+
+- Only PDFs are accepted on the PDF tools and only JPG/PNG on Images → PDF; other files are skipped with a message naming them.
+- A PDF that can't be read (damaged, or password-protected) is rejected with a message; the other files stay.
+- Page ranges: numbers and `a-b` ranges separated by commas, from 1 to the page count; an invalid part is flagged under the field and ignored.
+- Big files are fine as long as the browser has the memory; a tool shows a spinner and disables its button while it works.
+

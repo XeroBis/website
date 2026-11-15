@@ -35,7 +35,7 @@ Models in `backend/core/models.py`.
 | Column | Type | Notes |
 |---|---|---|
 | `user_id` | integer, PK, FK → `core.users.id` `ON DELETE CASCADE` | |
-| `app` | text, PK | `'portfolio'`, `'workout'`, `'cards'` or `'media'` (`ck_user_apps_app`). |
+| `app` | text, PK | `'portfolio'`, `'workout'`, `'cards'`, `'media'` or `'tools'` (`ck_user_apps_app`). |
 
 ### `core.revoked_tokens`
 

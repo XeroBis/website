@@ -57,13 +57,14 @@ services:
       API_TARGET: http://backend:8000
       # Each `ng serve` takes ~1 GB of RAM; run only the apps you work on, e.g.
       # `make up APPS="cards auth"`.
-      APPS: ${APPS:-portfolio workout cards media auth}
+      APPS: ${APPS:-portfolio workout cards media tools auth}
     ports:
       - "4600:4600" # portfolio
       - "4601:4601" # workout
       - "4602:4602" # cards
       - "4603:4603" # media
       - "4604:4604" # auth
+      - "4605:4605" # tools
     volumes:
       - ./frontend:/app
       - /app/node_modules

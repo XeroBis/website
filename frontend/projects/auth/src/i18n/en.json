@@ -57,6 +57,7 @@
     "APP_WORKOUT": "Workout",
     "APP_CARDS": "Cards",
     "APP_MEDIA": "Media",
+    "APP_TOOLS": "Tools",
     "BACK": "← Back to your account",
     "ERROR_LOAD": "Could not load users.",
     "ERROR_SAVE": "Could not save access.",
@@ -71,6 +72,8 @@
     "CARDS": "Pokemon Cards",
     "CARDS_DESC": "Card collection & deck-building",
     "MEDIA": "Media",
-    "MEDIA_DESC": "Books, films & series tracker"
+    "MEDIA_DESC": "Books, films & series tracker",
+    "TOOLS": "Tools",
+    "TOOLS_DESC": "PDF tools, in your browser"
   }
 }

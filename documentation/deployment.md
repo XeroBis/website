@@ -26,7 +26,7 @@ Migrations run automatically (`alembic upgrade head`) on backend start. The back
 
 `make prod-media-refresh` re-fetches every TMDB / Open Library catalog row (e.g. after a column is added); covers are kept. Other accounts sign up at `auth.alanbignon.com/signup` with `REGISTER_SECRET` as the sign-up code; an admin then ticks their apps on `/admin/users`.
 
-Building the image compiles the five Angular apps on the VPS. Check `free -h` before the first build; if it runs out of memory, add swap (or move the build to CI, see ideas.md).
+Building the image compiles the six Angular apps on the VPS. Check `free -h` before the first build; if it runs out of memory, add swap (or move the build to CI, see ideas.md).
 
 ## CI and deploy
 
@@ -53,7 +53,7 @@ One multi-SAN Let's Encrypt cert (`--cert-name multi-alanbignon`) for every host
 sudo certbot certonly --webroot -w ~/website/infra/certbot-webroot \
   --cert-name multi-alanbignon --expand \
   -d alanbignon.com -d www.alanbignon.com -d alanbignon.fr -d www.alanbignon.fr \
-  -d auth.alanbignon.com -d cards.alanbignon.com -d media.alanbignon.com \
+  -d auth.alanbignon.com -d cards.alanbignon.com -d media.alanbignon.com -d tools.alanbignon.com \
   -d workout.alanbignon.com
 ```
 

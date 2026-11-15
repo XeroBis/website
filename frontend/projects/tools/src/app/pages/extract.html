@@ -1,0 +1,103 @@
+<section class="tool" abFileDrop (abFileDrop)="open($event)">
+  <header class="tool-head">
+    <div>
+      <h1>{{ 'tool.extract.title' | translate }}</h1>
+      <p class="lead">{{ 'tool.extract.lead' | translate }}</p>
+    </div>
+    @if (source(); as source) {
+      <ab-file-head [source]="source" (picked)="open($event)" />
+    }
+  </header>
+
+  <ab-skipped [skipped]="skipped()" [error]="job.error()" />
+
+  @if (source(); as source) {
+    <div class="options-bar">
+      <label class="field grow">
+        {{ 'extract.pages' | translate }}
+        <input
+          class="mono"
+          type="text"
+          [placeholder]="'extract.placeholder' | translate"
+          [value]="text()"
+          [attr.aria-invalid]="parsed().invalid.length > 0"
+          aria-describedby="ranges-error"
+          (input)="text.set($any($event.target).value)"
+        />
+      </label>
+      <div class="segmented" role="group" [attr.aria-label]="'extract.output' | translate">
+        @for (m of modes; track m) {
+          <button type="button" [attr.aria-pressed]="mode() === m" (click)="mode.set(m)">
+            {{ 'extract.mode.' + m | translate }}
+          </button>
+        }
+      </div>
+      <div class="links-row">
+        <button type="button" class="btn-link" (click)="all()">
+          {{ 'common.all' | translate }}
+        </button>
+        <button type="button" class="btn-link" (click)="text.set('')">
+          {{ 'common.none' | translate }}
+        </button>
+      </div>
+      <p id="ranges-error" class="field-error" [hidden]="!parsed().invalid.length">
+        {{
+          'extract.invalid' | translate: { parts: parsed().invalid.join(', '), max: source.pages }
+        }}
+      </p>
+    </div>
+
+    <div class="tray" [attr.aria-label]="'common.pagesLabel' | translate">
+      @for (n of numbers(); track n) {
+        <button
+          type="button"
+          class="page pick"
+          [class.selected]="selected().has(n)"
+          [attr.aria-pressed]="selected().has(n)"
+          [attr.aria-label]="'common.pageN' | translate: { n }"
+          (click)="toggle(n)"
+        >
+          <span class="slot">
+            <ab-page-thumb [bytes]="source.bytes" [index]="n - 1" />
+            <span class="check"><ab-icon name="check" /></span>
+          </span>
+          <span class="caption">{{ n }}</span>
+        </button>
+      }
+    </div>
+
+    <footer class="action-bar">
+      <span class="summary">
+        <strong>{{
+          'common.page'
+            | plural: parsed().pages.length
+            | translate: { count: parsed().pages.length }
+        }}</strong>
+        ·
+        {{
+          (outputs() <= 1 ? 'extract.toOne' : 'extract.toMany') | translate: { count: outputs() }
+        }}
+      </span>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="job.busy() || !parsed().pages.length"
+        (click)="run(source)"
+      >
+        <ab-icon [name]="job.busy() ? 'loader' : 'download'" [class.spin]="job.busy()" />
+        {{ 'extract.run' | translate }}
+      </button>
+    </footer>
+  } @else {
+    <div class="empty">
+      <ab-icon name="scissors" class="empty-icon" />
+      <p>{{ 'common.emptyOne' | translate }}</p>
+      <ab-file-button
+        [label]="'common.choosePdf' | translate"
+        accept="application/pdf,.pdf"
+        [primary]="true"
+        (picked)="open($event)"
+      />
+    </div>
+  }
+</section>

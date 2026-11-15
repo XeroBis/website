@@ -1,4 +1,4 @@
-export type AppName = 'portfolio' | 'workout' | 'cards' | 'media' | 'auth';
+export type AppName = 'portfolio' | 'workout' | 'cards' | 'media' | 'tools' | 'auth';
 
 /**
  * Per-build settings. `environment.ts` is the prod build; every app's

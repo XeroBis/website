@@ -28,6 +28,7 @@ describe('routes', () => {
             workout: 'http://localhost:4601',
             cards: 'http://localhost:4602',
             media: 'http://localhost:4603',
+            tools: 'http://localhost:4605',
             auth: 'http://localhost:4604',
           },
         },

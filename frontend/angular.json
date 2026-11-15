@@ -353,6 +353,87 @@
         }
       }
     },
+    "tools": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/tools",
+      "sourceRoot": "projects/tools/src",
+      "prefix": "ab",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/tools/src/main.ts",
+            "tsConfig": "projects/tools/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/tools/public"
+              }
+            ],
+            "styles": [
+              "projects/tools/src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "pako"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/shared/src/lib/environment/environment.ts",
+                  "with": "projects/shared/src/lib/environment/environment.development.ts"
+                }
+              ]
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "tools:build:production"
+            },
+            "development": {
+              "buildTarget": "tools:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 4605,
+            "proxyConfig": "proxy.conf.mjs"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        }
+      }
+    },
     "auth": {
       "projectType": "application",
       "schematics": {

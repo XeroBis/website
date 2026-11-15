@@ -10,6 +10,7 @@ const prod: Environment = {
     workout: 'https://workout.alanbignon.com',
     cards: 'https://cards.alanbignon.com',
     media: 'https://media.alanbignon.com',
+    tools: 'https://tools.alanbignon.com',
     auth: 'https://auth.alanbignon.com',
   },
 };
@@ -44,7 +45,7 @@ describe('redirectTarget', () => {
   });
 
   describe('in dev', () => {
-    it.each(['http://localhost:4600/', 'http://localhost:4602/x', 'http://localhost:4604/'])(
+    it.each(['http://localhost:4600/', 'http://localhost:4602/x', 'http://localhost:4605/'])(
       'follows %s',
       (url) => {
         expect(redirectTarget(url, dev)).toBe(url);
@@ -53,7 +54,7 @@ describe('redirectTarget', () => {
 
     it.each([
       'http://localhost:4599/',
-      'http://localhost:4605/',
+      'http://localhost:4606/',
       'http://localhost/',
       'http://localhost:8400/api',
       'https://localhost:4602/',

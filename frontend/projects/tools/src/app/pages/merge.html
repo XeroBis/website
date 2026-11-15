@@ -1,0 +1,116 @@
+<section class="tool" abFileDrop (abFileDrop)="add($event)">
+  <header class="tool-head">
+    <div>
+      <h1>{{ 'tool.merge.title' | translate }}</h1>
+      <p class="lead">{{ 'tool.merge.lead' | translate }}</p>
+    </div>
+    @if (files().length) {
+      <ab-file-button
+        [label]="'merge.add' | translate"
+        accept="application/pdf,.pdf"
+        [multiple]="true"
+        (picked)="add($event)"
+      />
+    }
+  </header>
+
+  <ab-skipped [skipped]="skipped()" [error]="job.error()" />
+
+  @if (files().length) {
+    <div
+      class="chips"
+      cdkDropList
+      cdkDropListOrientation="mixed"
+      [attr.aria-label]="'merge.files' | translate"
+      (cdkDropListDropped)="dropFile($event)"
+    >
+      @for (file of files(); track file.id) {
+        <div class="chip" cdkDrag>
+          <ab-icon name="grip" class="grip" />
+          <span class="tag" [style.background]="file.color"></span>
+          <span class="chip-name">{{ file.name }}</span>
+          <span class="muted">{{
+            'common.page' | plural: file.pages | translate: { count: file.pages }
+          }}</span>
+          <button
+            type="button"
+            class="icon-btn"
+            [attr.aria-label]="'merge.removeFile' | translate: { name: file.name }"
+            (click)="removeFile(file)"
+          >
+            <ab-icon name="x" />
+          </button>
+        </div>
+      }
+    </div>
+
+    <div
+      class="tray"
+      cdkDropList
+      cdkDropListOrientation="mixed"
+      [attr.aria-label]="'common.pagesLabel' | translate"
+      (cdkDropListDropped)="dropPage($event)"
+    >
+      @for (page of pages(); track page.key) {
+        @let file = byId().get(page.source)!;
+        <figure class="page" cdkDrag>
+          <div class="slot tagged" [style.--tag]="file.color">
+            <ab-page-thumb [bytes]="file.bytes" [index]="page.index" />
+          </div>
+          <figcaption>
+            <span class="page-label">{{ file.name }}</span> · {{ page.index + 1 }}
+          </figcaption>
+          <button
+            type="button"
+            class="page-remove"
+            [attr.aria-label]="
+              'merge.removePage' | translate: { page: page.index + 1, name: file.name }
+            "
+            (click)="removePage(page)"
+          >
+            <ab-icon name="x" />
+          </button>
+        </figure>
+      }
+    </div>
+  } @else {
+    <div class="empty">
+      <ab-icon name="merge" class="empty-icon" />
+      <p>{{ 'merge.empty' | translate }}</p>
+      <ab-file-button
+        [label]="'merge.add' | translate"
+        accept="application/pdf,.pdf"
+        [multiple]="true"
+        [primary]="true"
+        (picked)="add($event)"
+      />
+    </div>
+  }
+
+  <footer class="action-bar">
+    <span class="summary">
+      <strong>{{
+        'common.page' | plural: pages().length | translate: { count: pages().length }
+      }}</strong>
+      · {{ 'common.file' | plural: files().length | translate: { count: files().length } }}
+    </span>
+    <label class="field">
+      {{ 'merge.fileName' | translate }}
+      <input
+        class="mono"
+        type="text"
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+      />
+    </label>
+    <button
+      type="button"
+      class="btn-primary"
+      [disabled]="job.busy() || !pages().length"
+      (click)="merge()"
+    >
+      <ab-icon [name]="job.busy() ? 'loader' : 'download'" [class.spin]="job.busy()" />
+      {{ 'merge.run' | translate }}
+    </button>
+  </footer>
+</section>

@@ -34,6 +34,7 @@ def test_admins_have_every_app(admin):
         "workout",
         "cards",
         "media",
+        "tools",
     ]
 
 
@@ -55,9 +56,9 @@ def test_list_users_oldest_first(admin, user):
 
 
 def test_set_apps_replaces_grants_in_app_order(admin, user):
-    r = set_apps(admin, user.id, ["media", "workout", "media"])
+    r = set_apps(admin, user.id, ["tools", "media", "workout", "media"])
     assert r.status_code == 200
-    assert r.json()["apps"] == ["workout", "media"]
+    assert r.json()["apps"] == ["workout", "media", "tools"]
     assert set_apps(admin, user.id, ["cards", "workout"]).json()["apps"] == [
         "workout",
         "cards",

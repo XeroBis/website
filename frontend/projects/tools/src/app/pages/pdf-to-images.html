@@ -1,0 +1,117 @@
+<section class="tool" abFileDrop (abFileDrop)="open($event)">
+  <header class="tool-head">
+    <div>
+      <h1>{{ 'tool.pdfToImages.title' | translate }}</h1>
+      <p class="lead">{{ 'tool.pdfToImages.lead' | translate }}</p>
+    </div>
+    @if (source(); as source) {
+      <ab-file-head [source]="source" (picked)="open($event)" />
+    }
+  </header>
+
+  <ab-skipped [skipped]="skipped()" [error]="job.error()" />
+
+  @if (source(); as source) {
+    <div class="split">
+      <div class="tray" [attr.aria-label]="'common.pagesLabel' | translate">
+        @for (n of numbers(); track n) {
+          <button
+            type="button"
+            class="page pick"
+            [class.selected]="selected().has(n)"
+            [attr.aria-pressed]="selected().has(n)"
+            [attr.aria-label]="'common.pageN' | translate: { n }"
+            (click)="toggle(n)"
+          >
+            <span class="slot">
+              <ab-page-thumb [bytes]="source.bytes" [index]="n - 1" />
+              <span class="check"><ab-icon name="check" /></span>
+            </span>
+            <span class="caption">{{ n }}</span>
+          </button>
+        }
+      </div>
+
+      <aside class="options">
+        <div class="option">
+          <span class="option-label" id="opt-format">{{ 'toImages.format' | translate }}</span>
+          <div class="segmented" role="group" aria-labelledby="opt-format">
+            @for (f of formats; track f) {
+              <button type="button" [attr.aria-pressed]="format() === f" (click)="format.set(f)">
+                {{ f.toUpperCase() }}
+              </button>
+            }
+          </div>
+        </div>
+        <div class="option">
+          <span class="option-label" id="opt-dpi">{{ 'toImages.resolution' | translate }}</span>
+          <div class="segmented" role="group" aria-labelledby="opt-dpi">
+            @for (d of dpis; track d) {
+              <button type="button" [attr.aria-pressed]="dpi() === d" (click)="dpi.set(d)">
+                {{ d }} dpi
+              </button>
+            }
+          </div>
+          <span class="hint">{{ 'toImages.dpi.' + dpi() | translate }}</span>
+        </div>
+        @if (format() === 'jpg') {
+          <label class="option">
+            <span class="option-row">
+              <span class="option-label">{{ 'toImages.quality' | translate }}</span>
+              <span class="mono">{{ quality() }} %</span>
+            </span>
+            <input
+              type="range"
+              min="40"
+              max="100"
+              step="5"
+              [value]="quality()"
+              (input)="quality.set(+$any($event.target).value)"
+            />
+          </label>
+        }
+        <div class="output">
+          <span>{{ 'toImages.file' | translate }}</span>
+          <span class="mono">{{ output() }}</span>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="action-bar">
+      <span class="summary">
+        @if (progress(); as p) {
+          {{ 'toImages.progress' | translate: p }}
+        } @else {
+          <strong>{{
+            'toImages.selected' | translate: { count: count(), total: source.pages }
+          }}</strong>
+        }
+      </span>
+      <button type="button" class="btn-link" (click)="toggleAll()">
+        {{ (numbers().length === count() ? 'common.none' : 'common.all') | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="job.busy() || !count()"
+        (click)="run(source)"
+      >
+        <ab-icon [name]="job.busy() ? 'loader' : 'download'" [class.spin]="job.busy()" />
+        {{
+          (count() === 1 ? 'toImages.runOne' : 'toImages.runMany') | translate: { count: count() }
+        }}
+      </button>
+    </footer>
+  } @else {
+    <div class="empty">
+      <ab-icon name="file-image" class="empty-icon" />
+      <p>{{ 'common.emptyOne' | translate }}</p>
+      <ab-file-button
+        [label]="'common.choosePdf' | translate"
+        accept="application/pdf,.pdf"
+        [primary]="true"
+        (picked)="open($event)"
+      />
+    </div>
+  }
+</section>

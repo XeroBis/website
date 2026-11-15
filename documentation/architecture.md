@@ -1,7 +1,7 @@
 # Architecture
 
 One repo, one backend, one frontend workspace, one database, one edge proxy,
-serving five sites:
+serving six sites:
 
 | Host | App (`frontend/projects/<app>`) | Backend domain (`backend/domains/<app>`) | DB schema |
 |---|---|---|---|
@@ -9,6 +9,7 @@ serving five sites:
 | `workout.alanbignon.com` | `workout` | `workout` | `workout` |
 | `cards.alanbignon.com` | `cards` | `cards` | `cards` |
 | `media.alanbignon.com` | `media` | `media` | `media` |
+| `tools.alanbignon.com` | `tools` | none (everything runs in the browser) | none |
 | `auth.alanbignon.com` | `auth` | `auth` | `core` (shared users/sessions) |
 
 `www.alanbignon.com`, `alanbignon.fr` and `www.alanbignon.fr` 301 to `alanbignon.com`.
@@ -55,7 +56,7 @@ website/
 │       │                       #   auth (AuthService, guards, interceptor), i18n, environment, http (httpStatus),
 │       │                       #   layout (`ab-header`), icon (`ab-icon`);
 │       │                       #   public/ngsw-worker.js: safety worker copied into cards' and workout's builds
-│       └── portfolio/ workout/ cards/ media/ auth/   # one application per site
+│       └── portfolio/ workout/ cards/ media/ tools/ auth/   # one application per site
 ├── infra/
 │   ├── nginx/                  # the edge: nginx.conf, snippets/, Dockerfile (builds the frontend into the image)
 │   ├── ssl/alanbignon.com/     # prod cert (gitignored *.pem)
@@ -88,13 +89,13 @@ website/
 ### Frontend: projects, library, bundles
 
 - Each application has its own `main.ts`, `index.html`, routes, `public/` assets (and optionally a web manifest), and builds to `frontend/dist/<app>/browser/`.
-- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; each also has a `favicon.svg`, which browsers that support it use instead. Cards keeps its original Poké Ball. Portfolio, workout, media and auth have new ones matching their look: workout a white dumbbell on its rose-brown, portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper. Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, rasterized from the same dumbbell, plus a maskable one with the dumbbell shrunk into the safe zone) so it can be installed to a phone's home screen. Cards likewise keeps the Poké Ball manifest, regular/maskable icons and a 180px Apple touch icon. No app has a real service worker. Cards and workout serve `/ngsw-worker.js` only as a safety worker that removes their old repos' Angular service worker (`projects/shared/public/ngsw-worker.js`, added to their `assets` in `angular.json`; see decisions.md "Safety worker"). Workout's body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
+- **Browser icons** (`public/`): every app has a `favicon.ico` and a 180px `apple-touch-icon.png`; each also has a `favicon.svg`, which browsers that support it use instead. Cards keeps its original Poké Ball. Portfolio, workout, media and auth have new ones matching their look: workout a white dumbbell on its rose-brown, portfolio a lime `>_` prompt on its near-black, auth a 2×2 apps grid (it's the hub for every app; yellow/white squares with hard black shadows) on its cobalt, media three spines on a shelf (book oxblood, film teal, series ochre) on its cream paper, tools a white wrench on its cobalt (the header shows the same tile). Their `.ico`/`.png` are rasterized from the same shapes as the SVG. Workout also has a web manifest (`manifest.webmanifest` + `icons/`, rasterized from the same dumbbell, plus a maskable one with the dumbbell shrunk into the safe zone) so it can be installed to a phone's home screen. Cards likewise keeps the Poké Ball manifest, regular/maskable icons and a 180px Apple touch icon. No app has a real service worker. Cards and workout serve `/ngsw-worker.js` only as a safety worker that removes their old repos' Angular service worker (`projects/shared/public/ngsw-worker.js`, added to their `assets` in `angular.json`; see decisions.md "Safety worker"). Workout's body-map SVGs (`front.svg`, `back.svg`) are fetched at runtime from its `public/`.
 - `shared` holds what more than one app needs (HTTP services, auth, i18n, layout pieces). Apps import it as `@shared`, which `tsconfig.json` maps to `projects/shared/src/public-api.ts`: the library's source is compiled into each app's bundle at build time, and tree-shaking keeps only the parts that app uses. Nothing is shared at runtime.
 - One `package.json`, so the Angular version is the same for every app.
 - **Environment**: `projects/shared/src/lib/environment/environment.ts` is the prod build's (`production: true`, the `https://*.alanbignon.com` app URLs). Each app's `development` build configuration (`ng serve`) swaps in `environment.development.ts` (the `http://localhost:460x` URLs) through `fileReplacements` in `angular.json`. Code reads it through the `ENVIRONMENT` injection token, which tests override.
-- **Auth wiring**: every app registers `provideHttpClient(withInterceptors([authInterceptor]))`. Apps with translated UI add `provideI18n({ en, fr })` with their own `src/i18n/*.json` (`auth`, `portfolio`, `media`, `workout` and `cards`). `provideI18n` merges in the `SHARED` strings used by `@shared` components (`lib/i18n/shared-translations.ts`), so an app's JSON only holds its own keys.
+- **Auth wiring**: every app registers `provideHttpClient(withInterceptors([authInterceptor]))`. Apps with translated UI add `provideI18n({ en, fr })` with their own `src/i18n/*.json` (`auth`, `portfolio`, `media`, `workout`, `cards` and `tools`). `provideI18n` merges in the `SHARED` strings used by `@shared` components (`lib/i18n/shared-translations.ts`), so an app's JSON only holds its own keys.
 - **Icons**: `ab-icon` (`@shared`) draws inline-SVG icons (Lucide paths, ISC license) at 1em in `currentColor`, by name. No icon font or package.
-- **Layout**: `ab-header` (`@shared`) is the top bar: app title linking to `/`, the app's own links as projected content, FR/EN switch, theme button, pseudo + an apps-grid icon linking to the auth app's account page (as on the old workout navbar) (no logout button: logging out happens there) or a log in link. It needs `provideI18n`. Used by `portfolio`, `media`, `workout` and `cards`; `auth` keeps its centred-card layout. It reads the `--ab-border`/`--ab-surface`/`--ab-accent`/`--ab-text`/`--ab-muted` CSS custom properties, with fallbacks, so each app can theme it.
+- **Layout**: `ab-header` (`@shared`) is the top bar: app title linking to `/`, the app's own links as projected content, FR/EN switch, theme button, pseudo + an apps-grid icon linking to the auth app's account page (as on the old workout navbar) (no logout button: logging out happens there) or a log in link. It needs `provideI18n`. Used by `portfolio`, `media`, `workout`, `cards` and `tools`; `auth` keeps its centred-card layout. It reads the `--ab-border`/`--ab-surface`/`--ab-accent`/`--ab-text`/`--ab-muted` CSS custom properties, with fallbacks, so each app can theme it.
 - **Theme**: `ThemeService` (`@shared`, started by `provideI18n`) resolves System/Light/Dark (account, then the `theme` cookie, then System), sets `data-theme="light|dark"` on `<html>` (removed for System) and rewrites the `theme` cookie (Domain from `Environment.cookieDomain`: `.alanbignon.com` in prod, none in dev; one year; not HttpOnly). An inline script in every `index.html` sets `data-theme` from the cookie before Angular boots, and updates the `theme-color` metas. Each app's `styles.scss` puts its default tokens on `:root` (light, except portfolio: dark) and the other theme's in a `@mixin`, included under `:root[data-theme="<other>"]` and `@media (prefers-color-scheme: <other>) { :root:not([data-theme="<default>"]) }`.
 
 ## Request flow
@@ -113,6 +114,10 @@ website/
 `projects/cards` uses standalone zoneless Angular 22, OnPush views, lazy routes, and signals for page and staging-queue state. The API wrappers live in `services/`; models, set/variant/rarity/sort/deck-visual helpers stay local. All URLs are relative `/api/cards/...`. Collection and deck image helpers use `/images/` (thumbnails replace the `/cards/` folder); `/shared/:token` uses public token-scoped image/logo/symbol routes and sits outside `appGuard('cards')`. Catalog Management has `adminGuard` in addition to the app guard; name edits are admin-only in the UI too.
 
 The shared language switch saves the account then explicitly reloads the current route so its API display fields follow the new language. Route recreation also handles set/deck/list id changes; ordinary same-URL navigation is ignored to preserve draft-modal back-button behavior. `readJson`/`downloadBlob` in `@shared` serve browser file transfers, and `httpErrorMessage` formats backend validation details. JSON imports send the parsed value. Cards opts into HttpClient's XHR backend for image-upload progress: ZIP import sends the File as `application/zip`, receives 202 after upload and polls restoration/linking. ZIP export is an anchor download, never an in-memory Blob. The admin page probes every job status on entry and polls while mounted, with teardown on navigation. Styling exposes `--color-*` and header `--ab-*` variables, which the cards look sets (features.md "Cards").
+
+### Tools frontend
+
+`projects/tools` has no backend domain and no schema: every tool reads the user's files with the File API, works on them in the browser and hands the result back as a download (`downloadBlob` from `@shared`). Nothing is uploaded; the only API call is the session check behind `appGuard('tools')`. Libraries: `pdf-lib` reads and writes PDFs (merge, copy pages, rotate, embed JPG/PNG), `pdfjs-dist` renders page thumbnails and the PDF → images export to a canvas (its worker is bundled by the Angular build as a hashed `.js` web worker through `pdf/pdf.worker.ts`, started lazily on the first render; copying pdf.js's `.mjs` file as an asset wouldn't work in prod, since the edge's nginx serves `.mjs` without a JavaScript MIME type), `fflate` builds zips, `@angular/cdk` drag-drop reorders files and pages. They're imported only by the tool pages, which are lazy routes, so the home page stays small. `pdf/` holds the PDF code: `ranges.ts` (page ranges), `ops.ts` (pdf-lib: page count, assemble = merge/extract/organize, split, images → PDF and its layout), `files.ts` (names, types, zip), `renderer.ts` (`PdfRenderer`, the only pdf.js user, so specs swap in a fake: jsdom has no canvas). `ui/` holds what the tools share: `ab-page-thumb` (a page drawn once it nears the viewport, in a square slot so a turned page fits), the add button and drop zone, the skipped-files notice, a one-action-at-a-time `Job`, and a `plural` pipe (`<key>.one|other`, French counting 0 as singular). `pages/single-pdf.ts` is the base of the three one-PDF tools (extract, organize, PDF → images). Page styles live in `styles.scss`, as in media.
 
 ### Background jobs
 
@@ -141,7 +146,7 @@ One login for every app. The cookies are set by `/api/auth/login` (or `/register
 | `backend` | `./backend` bind-mounted, `uvicorn --reload`, published on 8400; runs as `app` (uid 1000) | baked image, no reload, not published; runs as `app` (uid 1000) |
 | cards files | `cards_data` volume at `/data/cards` (`CARDS_DATA_DIR`) | same |
 | auth env | fixed fake `SECRET_KEY`/`REGISTER_SECRET`, no `COOKIE_DOMAIN`, `COOKIE_SECURE=false`, `ADMIN_*` defaults for `make seed-user`; `TMDB_READ_ACCESS_TOKEN` from the root `.env` (optional) | `SECRET_KEY`/`REGISTER_SECRET` from `.env` (required), `COOKIE_DOMAIN=.alanbignon.com`, `COOKIE_SECURE=true`, `TMDB_READ_ACCESS_TOKEN` from `.env` |
-| frontend | `frontend` container: one `ng serve` per app (4600–4604), `./frontend` bind-mounted, `--poll 2000` | built into the `edge` image |
+| frontend | `frontend` container: one `ng serve` per app (4600–4605), `./frontend` bind-mounted, `--poll 2000` | built into the `edge` image |
 | proxy | none (dev servers proxy `/api`) | `edge`: only container publishing 80/443 |
 
 Both stacks run `alembic upgrade head` before starting uvicorn, so migrations apply on every start.
@@ -154,6 +159,6 @@ Both stacks run `alembic upgrade head` before starting uvicorn, so migrations ap
 |---|---|
 | Postgres | 5440 (tests use DB `website_test` on the same server, `website_test_gw0`, `_gw1`, … one per pytest-xdist worker) |
 | Backend | 8400 |
-| portfolio / workout / cards / media / auth | 4600 / 4601 / 4602 / 4603 / 4604 |
+| portfolio / workout / cards / media / auth / tools | 4600 / 4601 / 4602 / 4603 / 4604 / 4605 |
 
 Each `ng serve` takes about 1 GB of RAM. `make up APPS="cards auth"` starts only those.

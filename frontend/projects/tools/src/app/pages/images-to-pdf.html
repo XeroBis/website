@@ -1,0 +1,154 @@
+<section class="tool" abFileDrop (abFileDrop)="add($event)">
+  <header class="tool-head">
+    <div>
+      <h1>{{ 'tool.imagesToPdf.title' | translate }}</h1>
+      <p class="lead">{{ 'tool.imagesToPdf.lead' | translate }}</p>
+    </div>
+    @if (images().length) {
+      <ab-file-button
+        [label]="'images.add' | translate"
+        accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+        [multiple]="true"
+        (picked)="add($event)"
+      />
+    }
+  </header>
+
+  <ab-skipped [skipped]="skipped()" [error]="job.error()" />
+
+  <div class="split">
+    @if (images().length) {
+      <div
+        class="tray images"
+        cdkDropList
+        cdkDropListOrientation="mixed"
+        [attr.aria-label]="'images.list' | translate"
+        (cdkDropListDropped)="drop($event)"
+      >
+        @for (image of images(); track image.id; let i = $index) {
+          <figure class="image-tile" cdkDrag>
+            <div class="image-box">
+              <img
+                [src]="image.url"
+                alt=""
+                draggable="false"
+                (load)="loaded(image, $event)"
+                (error)="broken(image)"
+              />
+            </div>
+            <figcaption>
+              <span class="page-label">{{ image.name }}</span>
+              <span class="mono muted">{{ i + 1 }}</span>
+            </figcaption>
+            <button
+              type="button"
+              class="page-remove"
+              [attr.aria-label]="'images.remove' | translate: { name: image.name }"
+              (click)="remove(image)"
+            >
+              <ab-icon name="x" />
+            </button>
+          </figure>
+        }
+      </div>
+    } @else {
+      <div class="empty">
+        <ab-icon name="image" class="empty-icon" />
+        <p>{{ 'images.empty' | translate }}</p>
+        <ab-file-button
+          [label]="'images.add' | translate"
+          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+          [multiple]="true"
+          [primary]="true"
+          (picked)="add($event)"
+        />
+      </div>
+    }
+
+    <aside class="options">
+      <div class="option">
+        <span class="option-label" id="opt-size">{{ 'images.size' | translate }}</span>
+        <div class="segmented" role="group" aria-labelledby="opt-size">
+          @for (o of sizes; track o) {
+            <button type="button" [attr.aria-pressed]="size() === o" (click)="size.set(o)">
+              {{ 'images.sizes.' + o | translate }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="option">
+        <span class="option-label" id="opt-orientation">{{
+          'images.orientation' | translate
+        }}</span>
+        <div class="segmented" role="group" aria-labelledby="opt-orientation">
+          @for (o of orientations; track o) {
+            <button
+              type="button"
+              [attr.aria-pressed]="orientation() === o"
+              [disabled]="size() === 'fit'"
+              (click)="orientation.set(o)"
+            >
+              {{ 'images.orientations.' + o | translate }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="option">
+        <span class="option-label" id="opt-margin">{{ 'images.margin' | translate }}</span>
+        <div class="segmented" role="group" aria-labelledby="opt-margin">
+          @for (o of margins; track o) {
+            <button
+              type="button"
+              [attr.aria-pressed]="margin() === o"
+              [disabled]="size() === 'fit'"
+              (click)="margin.set(o)"
+            >
+              {{ 'images.margins.' + o | translate }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="option">
+        <span class="option-label">{{ 'images.preview' | translate }}</span>
+        <div class="preview">
+          @let p = preview();
+          <div
+            class="preview-page"
+            [style.width.px]="p.page.width"
+            [style.height.px]="p.page.height"
+          >
+            <div
+              class="preview-image"
+              [style.left.px]="p.image.left"
+              [style.top.px]="p.image.top"
+              [style.width.px]="p.image.width"
+              [style.height.px]="p.image.height"
+            >
+              @if (p.url) {
+                <img [src]="p.url" alt="" />
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="action-bar">
+    <span class="summary">
+      <strong>{{
+        'images.count' | plural: images().length | translate: { count: images().length }
+      }}</strong>
+      → {{ 'common.page' | plural: images().length | translate: { count: images().length } }}
+    </span>
+    <button
+      type="button"
+      class="btn-primary"
+      [disabled]="job.busy() || !images().length"
+      (click)="create()"
+    >
+      <ab-icon [name]="job.busy() ? 'loader' : 'download'" [class.spin]="job.busy()" />
+      {{ 'images.run' | translate }}
+    </button>
+  </footer>
+</section>

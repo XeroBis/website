@@ -1,0 +1,103 @@
+<section class="tool" abFileDrop (abFileDrop)="open($event)">
+  <header class="tool-head">
+    <div>
+      <h1>{{ 'tool.organize.title' | translate }}</h1>
+      <p class="lead">{{ 'tool.organize.lead' | translate }}</p>
+    </div>
+    @if (source(); as source) {
+      <ab-file-head [source]="source" (picked)="open($event)" />
+    }
+  </header>
+
+  <ab-skipped [skipped]="skipped()" [error]="job.error()" />
+
+  @if (source(); as source) {
+    <div
+      class="tray wide"
+      cdkDropList
+      cdkDropListOrientation="mixed"
+      [attr.aria-label]="'common.pagesLabel' | translate"
+      (cdkDropListDropped)="drop($event)"
+    >
+      @for (page of pages(); track page.index) {
+        <figure class="page" cdkDrag [class.deleted]="page.deleted">
+          <div class="slot">
+            <ab-page-thumb [bytes]="source.bytes" [index]="page.index" [rotate]="page.rotate" />
+          </div>
+          @if (page.deleted) {
+            <figcaption class="tools-row">
+              <span class="deleted-label">{{ 'organize.deleted' | translate }}</span>
+              <button type="button" class="btn-small" (click)="setDeleted(page, false)">
+                <ab-icon name="undo" /> {{ 'organize.undo' | translate }}
+              </button>
+            </figcaption>
+          } @else {
+            <figcaption class="tools-row">
+              <button
+                type="button"
+                class="icon-btn raised"
+                [attr.aria-label]="'organize.left' | translate: { n: page.index + 1 }"
+                (click)="turn(page, -90)"
+              >
+                <ab-icon name="rotate-ccw" />
+              </button>
+              <span class="caption">{{ page.index + 1 }}</span>
+              <button
+                type="button"
+                class="icon-btn raised"
+                [attr.aria-label]="'organize.right' | translate: { n: page.index + 1 }"
+                (click)="turn(page, 90)"
+              >
+                <ab-icon name="rotate-cw" />
+              </button>
+              <button
+                type="button"
+                class="icon-btn raised danger"
+                [attr.aria-label]="'organize.delete' | translate: { n: page.index + 1 }"
+                (click)="setDeleted(page, true)"
+              >
+                <ab-icon name="trash" />
+              </button>
+            </figcaption>
+          }
+        </figure>
+      }
+    </div>
+
+    <footer class="action-bar">
+      <span class="summary">
+        <strong>{{ 'common.page' | plural: kept() | translate: { count: kept() } }}</strong>
+        · {{ 'organize.rotated' | plural: rotated() | translate: { count: rotated() } }} ·
+        {{ 'organize.removed' | plural: removed() | translate: { count: removed() } }}
+      </span>
+      <button
+        type="button"
+        class="btn-secondary"
+        [disabled]="job.busy() || !changed()"
+        (click)="reset(source)"
+      >
+        {{ 'organize.reset' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="job.busy() || !kept()"
+        (click)="save(source)"
+      >
+        <ab-icon [name]="job.busy() ? 'loader' : 'download'" [class.spin]="job.busy()" />
+        {{ 'organize.run' | translate }}
+      </button>
+    </footer>
+  } @else {
+    <div class="empty">
+      <ab-icon name="grid" class="empty-icon" />
+      <p>{{ 'common.emptyOne' | translate }}</p>
+      <ab-file-button
+        [label]="'common.choosePdf' | translate"
+        accept="application/pdf,.pdf"
+        [primary]="true"
+        (picked)="open($event)"
+      />
+    </div>
+  }
+</section>

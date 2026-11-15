@@ -9,7 +9,7 @@ Pseudo = Annotated[
 ]
 Language = Literal["en", "fr"]
 Theme = Literal["system", "light", "dark"]  # core.models.THEMES
-App = Literal["portfolio", "workout", "cards", "media"]  # core.models.APPS
+App = Literal["portfolio", "workout", "cards", "media", "tools"]  # core.models.APPS
 
 PASSWORD_MIN_LENGTH = 12
 

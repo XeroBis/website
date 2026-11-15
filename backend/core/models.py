@@ -14,7 +14,7 @@ DEFAULT_THEME = "system"
 # Apps access is granted to, per user (`core.user_apps`). The auth app is
 # open to any logged-in user; the portfolio is public and its grant only
 # allows editing projects.
-APPS = ("portfolio", "workout", "cards", "media")
+APPS = ("portfolio", "workout", "cards", "media", "tools")
 
 
 class User(Base):

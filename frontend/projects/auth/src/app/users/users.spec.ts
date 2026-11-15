@@ -16,7 +16,7 @@ const ADMIN: AdminUser = {
   language: 'fr',
   theme: 'system',
   is_admin: true,
-  apps: ['portfolio', 'workout', 'cards', 'media'],
+  apps: ['portfolio', 'workout', 'cards', 'media', 'tools'],
   created_at: '2026-10-01T10:00:00Z',
 };
 const BOB: AdminUser = {
@@ -64,7 +64,7 @@ describe('Users', () => {
     expect(boxes(row(el, 1))).toEqual([]);
     expect(row(el, 2).textContent).toContain('bob@example.com');
     expect(row(el, 2).textContent).toContain('Since 2026-10-05');
-    expect(boxes(row(el, 2)).map((b) => b.checked)).toEqual([false, false, true, false]);
+    expect(boxes(row(el, 2)).map((b) => b.checked)).toEqual([false, false, true, false, false]);
   });
 
   it('saves a toggled app at once', async () => {
@@ -77,7 +77,7 @@ describe('Users', () => {
     expect(req.request.body).toEqual({ apps: ['cards', 'workout'] });
     req.flush({ ...BOB, apps: ['workout', 'cards'] });
     await fixture.whenStable();
-    expect(boxes(row(fixture.nativeElement, 2)).map((b) => b.checked)).toEqual([false, true, true, false]);
+    expect(boxes(row(fixture.nativeElement, 2)).map((b) => b.checked)).toEqual([false, true, true, false, false]);
   });
 
   it('reverts the checkbox and shows an error when saving fails', async () => {

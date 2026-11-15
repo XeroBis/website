@@ -57,6 +57,7 @@
     "APP_WORKOUT": "Workout",
     "APP_CARDS": "Cards",
     "APP_MEDIA": "Media",
+    "APP_TOOLS": "Tools",
     "BACK": "← Retour à votre compte",
     "ERROR_LOAD": "Impossible de charger les utilisateurs.",
     "ERROR_SAVE": "Impossible d'enregistrer les accès.",
@@ -71,6 +72,8 @@
     "CARDS": "Pokemon Cards",
     "CARDS_DESC": "Collection de cartes & deck-building",
     "MEDIA": "Media",
-    "MEDIA_DESC": "Suivi de livres, films & séries"
+    "MEDIA_DESC": "Suivi de livres, films & séries",
+    "TOOLS": "Outils",
+    "TOOLS_DESC": "Outils PDF, dans votre navigateur"
   }
 }

@@ -2,7 +2,7 @@ import { Language } from '../i18n/language';
 import { Theme } from '../theme/theme';
 
 /** Apps access is granted to, per user (`core.user_apps`), in display order. */
-export const GRANTABLE_APPS = ['portfolio', 'workout', 'cards', 'media'] as const;
+export const GRANTABLE_APPS = ['portfolio', 'workout', 'cards', 'media', 'tools'] as const;
 export type GrantableApp = (typeof GRANTABLE_APPS)[number];
 
 /** `UserOut` from `/api/auth/me`, `/login`, `/register`. */

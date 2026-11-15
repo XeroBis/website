@@ -1,12 +1,12 @@
 import { Environment } from '@shared';
 
-const DEV_PORTS = { min: 4600, max: 4604 };
+const DEV_PORTS = { min: 4600, max: 4605 };
 const PROD_DOMAIN = 'alanbignon.com';
 
 /**
  * Whether `?redirect=` may be followed after login, so the login page can't
  * be used to bounce users to another site. Prod: https on alanbignon.com or
- * any subdomain. Dev: http://localhost on an app's port (4600-4604).
+ * any subdomain. Dev: http://localhost on an app's port (4600-4605).
  */
 export function isAllowedRedirect(url: URL, env: Environment): boolean {
   if (url.username || url.password) return false;

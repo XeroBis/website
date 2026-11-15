@@ -15,6 +15,7 @@ COPY --from=build /app/dist/portfolio/browser /usr/share/nginx/html/portfolio
 COPY --from=build /app/dist/workout/browser   /usr/share/nginx/html/workout
 COPY --from=build /app/dist/cards/browser     /usr/share/nginx/html/cards
 COPY --from=build /app/dist/media/browser     /usr/share/nginx/html/media
+COPY --from=build /app/dist/tools/browser     /usr/share/nginx/html/tools
 COPY --from=build /app/dist/auth/browser      /usr/share/nginx/html/auth
 COPY infra/nginx/nginx.conf /etc/nginx/conf.d/edge.conf
 COPY infra/nginx/snippets/  /etc/nginx/snippets/

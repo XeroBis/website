@@ -8,6 +8,7 @@ export const environment: Environment = {
     workout: 'https://workout.alanbignon.com',
     cards: 'https://cards.alanbignon.com',
     media: 'https://media.alanbignon.com',
+    tools: 'https://tools.alanbignon.com',
     auth: 'https://auth.alanbignon.com',
   },
 };

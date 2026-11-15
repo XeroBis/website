@@ -1,0 +1,125 @@
+{
+  "pageTitle": {
+    "home": "PDF tools",
+    "merge": "Merge",
+    "extract": "Extract",
+    "organize": "Organize",
+    "imagesToPdf": "Images → PDF",
+    "pdfToImages": "PDF → images"
+  },
+  "home": {
+    "title": "PDF tools",
+    "lead": "Merge, split, reorder and convert PDFs.",
+    "local": "Runs in your browser: files are never uploaded"
+  },
+  "tool": {
+    "merge": {
+      "name": "Merge",
+      "desc": "Combine several PDFs into one, in the order you choose, page by page.",
+      "title": "Merge PDFs",
+      "lead": "Drag files or single pages to set the order of the merged PDF."
+    },
+    "extract": {
+      "name": "Extract",
+      "desc": "Pick pages or ranges like 1-3, 7 and save them as one or several PDFs.",
+      "title": "Extract / split",
+      "lead": "Click pages or type ranges. Both stay in sync."
+    },
+    "organize": {
+      "name": "Organize",
+      "desc": "Reorder, rotate and delete pages, then save the cleaned-up PDF.",
+      "title": "Organize pages",
+      "lead": "Drag to reorder. Rotate or delete page by page."
+    },
+    "imagesToPdf": {
+      "name": "Images → PDF",
+      "desc": "Turn JPG and PNG files into a PDF, with page size, orientation and margins.",
+      "title": "Images → PDF",
+      "lead": "One image per page, in the order shown. JPG and PNG."
+    },
+    "pdfToImages": {
+      "name": "PDF → images",
+      "desc": "Export pages as PNG or JPG; several pages come as a zip.",
+      "title": "PDF → images",
+      "lead": "Choose the pages to export. Several pages download as a zip."
+    }
+  },
+  "common": {
+    "page": { "one": "{{count}} page", "other": "{{count}} pages" },
+    "file": { "one": "{{count}} file", "other": "{{count}} files" },
+    "pagesLabel": "Pages",
+    "pageN": "Page {{n}}",
+    "changeFile": "Change file",
+    "all": "All",
+    "none": "None",
+    "emptyOne": "Drop a PDF here, or choose one.",
+    "choosePdf": "Choose a PDF"
+  },
+  "merge": {
+    "add": "Add PDFs",
+    "files": "Files",
+    "removeFile": "Remove {{name}}",
+    "removePage": "Remove page {{page}} of {{name}}",
+    "empty": "Drop PDFs here, or choose them.",
+    "fileName": "File name",
+    "run": "Merge & download"
+  },
+  "extract": {
+    "pages": "Pages",
+    "placeholder": "e.g. 1-3, 7, 10-12",
+    "output": "Output",
+    "mode": { "one": "One PDF", "perRange": "One PDF per range" },
+    "invalid": "Ignored: {{parts}} (pages go from 1 to {{max}}).",
+    "toOne": "1 PDF",
+    "toMany": "{{count}} PDFs (zip)",
+    "run": "Extract pages"
+  },
+  "organize": {
+    "deleted": "Deleted",
+    "undo": "Undo",
+    "left": "Rotate page {{n}} left",
+    "right": "Rotate page {{n}} right",
+    "delete": "Delete page {{n}}",
+    "rotated": { "one": "{{count}} rotated", "other": "{{count}} rotated" },
+    "removed": { "one": "{{count}} deleted", "other": "{{count}} deleted" },
+    "reset": "Reset",
+    "run": "Save PDF"
+  },
+  "images": {
+    "add": "Add images",
+    "list": "Images",
+    "remove": "Remove {{name}}",
+    "empty": "Drop JPG or PNG images here, or choose them.",
+    "size": "Page size",
+    "sizes": { "a4": "A4", "letter": "Letter", "fit": "Fit image" },
+    "orientation": "Orientation",
+    "orientations": { "auto": "Auto", "portrait": "Portrait", "landscape": "Landscape" },
+    "margin": "Margins",
+    "margins": { "none": "None", "small": "Small", "large": "Large" },
+    "preview": "Preview: page 1",
+    "count": { "one": "{{count}} image", "other": "{{count}} images" },
+    "run": "Create PDF"
+  },
+  "toImages": {
+    "format": "Format",
+    "resolution": "Resolution",
+    "dpi": {
+      "72": "Screen, small files",
+      "150": "Good default",
+      "300": "Print quality, large files"
+    },
+    "quality": "JPG quality",
+    "file": "File",
+    "progress": "Page {{done}} / {{total}}…",
+    "selected": "{{count}} of {{total}} pages selected",
+    "runOne": "Download image",
+    "runMany": "Download {{count}} images (.zip)"
+  },
+  "error": {
+    "notPdf": "{{name}} isn't a PDF: skipped.",
+    "notImage": "{{name}} isn't a JPG or PNG image: skipped.",
+    "encrypted": "{{name}} is password-protected: skipped.",
+    "invalid": "{{name}} couldn't be read (damaged?): skipped.",
+    "failed": "Something went wrong. Nothing was downloaded."
+  }
+}

@@ -1,6 +1,6 @@
 # alanbignon.com monorepo
 
-One FastAPI backend, one Angular 22 workspace (one app per site), one Postgres database (one schema per app) and one edge nginx, serving `alanbignon.com` (portfolio), `workout.`, `cards.`, `media.` and `auth.alanbignon.com`.
+One FastAPI backend, one Angular 22 workspace (one app per site), one Postgres database (one schema per app) and one edge nginx, serving `alanbignon.com` (portfolio), `workout.`, `cards.`, `media.`, `tools.` and `auth.alanbignon.com`.
 
 Start with `documentation/architecture.md`.
 

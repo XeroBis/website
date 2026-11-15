@@ -1,0 +1,125 @@
+{
+  "pageTitle": {
+    "home": "Outils PDF",
+    "merge": "Fusionner",
+    "extract": "Extraire",
+    "organize": "Organiser",
+    "imagesToPdf": "Images → PDF",
+    "pdfToImages": "PDF → images"
+  },
+  "home": {
+    "title": "Outils PDF",
+    "lead": "Fusionner, découper, réordonner et convertir des PDF.",
+    "local": "Tout se passe dans votre navigateur : vos fichiers ne sont jamais envoyés"
+  },
+  "tool": {
+    "merge": {
+      "name": "Fusionner",
+      "desc": "Assemblez plusieurs PDF en un seul, dans l'ordre choisi, page par page.",
+      "title": "Fusionner des PDF",
+      "lead": "Glissez les fichiers ou les pages pour fixer l'ordre du PDF fusionné."
+    },
+    "extract": {
+      "name": "Extraire",
+      "desc": "Choisissez des pages ou des plages comme 1-3, 7 et enregistrez-les en un ou plusieurs PDF.",
+      "title": "Extraire / découper",
+      "lead": "Cliquez sur les pages ou tapez des plages : les deux restent synchronisés."
+    },
+    "organize": {
+      "name": "Organiser",
+      "desc": "Réordonnez, pivotez et supprimez des pages, puis enregistrez le PDF.",
+      "title": "Organiser les pages",
+      "lead": "Glissez pour réordonner. Pivotez ou supprimez page par page."
+    },
+    "imagesToPdf": {
+      "name": "Images → PDF",
+      "desc": "Transformez des JPG et PNG en PDF, avec format, orientation et marges.",
+      "title": "Images → PDF",
+      "lead": "Une image par page, dans l'ordre affiché. JPG et PNG."
+    },
+    "pdfToImages": {
+      "name": "PDF → images",
+      "desc": "Exportez des pages en PNG ou JPG ; plusieurs pages arrivent dans un zip.",
+      "title": "PDF → images",
+      "lead": "Choisissez les pages à exporter. Plusieurs pages sont téléchargées en zip."
+    }
+  },
+  "common": {
+    "page": { "one": "{{count}} page", "other": "{{count}} pages" },
+    "file": { "one": "{{count}} fichier", "other": "{{count}} fichiers" },
+    "pagesLabel": "Pages",
+    "pageN": "Page {{n}}",
+    "changeFile": "Changer de fichier",
+    "all": "Toutes",
+    "none": "Aucune",
+    "emptyOne": "Déposez un PDF ici, ou choisissez-en un.",
+    "choosePdf": "Choisir un PDF"
+  },
+  "merge": {
+    "add": "Ajouter des PDF",
+    "files": "Fichiers",
+    "removeFile": "Retirer {{name}}",
+    "removePage": "Retirer la page {{page}} de {{name}}",
+    "empty": "Déposez des PDF ici, ou choisissez-les.",
+    "fileName": "Nom du fichier",
+    "run": "Fusionner et télécharger"
+  },
+  "extract": {
+    "pages": "Pages",
+    "placeholder": "ex. 1-3, 7, 10-12",
+    "output": "Résultat",
+    "mode": { "one": "Un PDF", "perRange": "Un PDF par plage" },
+    "invalid": "Ignoré : {{parts}} (les pages vont de 1 à {{max}}).",
+    "toOne": "1 PDF",
+    "toMany": "{{count}} PDF (zip)",
+    "run": "Extraire les pages"
+  },
+  "organize": {
+    "deleted": "Supprimée",
+    "undo": "Annuler",
+    "left": "Pivoter la page {{n}} à gauche",
+    "right": "Pivoter la page {{n}} à droite",
+    "delete": "Supprimer la page {{n}}",
+    "rotated": { "one": "{{count}} pivotée", "other": "{{count}} pivotées" },
+    "removed": { "one": "{{count}} supprimée", "other": "{{count}} supprimées" },
+    "reset": "Réinitialiser",
+    "run": "Enregistrer le PDF"
+  },
+  "images": {
+    "add": "Ajouter des images",
+    "list": "Images",
+    "remove": "Retirer {{name}}",
+    "empty": "Déposez des images JPG ou PNG ici, ou choisissez-les.",
+    "size": "Format de page",
+    "sizes": { "a4": "A4", "letter": "Letter", "fit": "Taille de l'image" },
+    "orientation": "Orientation",
+    "orientations": { "auto": "Auto", "portrait": "Portrait", "landscape": "Paysage" },
+    "margin": "Marges",
+    "margins": { "none": "Aucune", "small": "Petites", "large": "Grandes" },
+    "preview": "Aperçu : page 1",
+    "count": { "one": "{{count}} image", "other": "{{count}} images" },
+    "run": "Créer le PDF"
+  },
+  "toImages": {
+    "format": "Format",
+    "resolution": "Résolution",
+    "dpi": {
+      "72": "Écran, fichiers légers",
+      "150": "Bon compromis",
+      "300": "Qualité impression, fichiers lourds"
+    },
+    "quality": "Qualité JPG",
+    "file": "Fichier",
+    "progress": "Page {{done}} / {{total}}…",
+    "selected": "{{count}} pages sur {{total}} sélectionnées",
+    "runOne": "Télécharger l'image",
+    "runMany": "Télécharger {{count}} images (.zip)"
+  },
+  "error": {
+    "notPdf": "{{name}} n'est pas un PDF : ignoré.",
+    "notImage": "{{name}} n'est pas une image JPG ou PNG : ignoré.",
+    "encrypted": "{{name}} est protégé par un mot de passe : ignoré.",
+    "invalid": "{{name}} est illisible (endommagé ?) : ignoré.",
+    "failed": "Une erreur est survenue. Rien n'a été téléchargé."
+  }
+}
