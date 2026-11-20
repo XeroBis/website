@@ -14,9 +14,11 @@ import {
   statusLabel,
   volumeFromTitle,
 } from '../../media/labels';
+import { canScan } from '../../media/barcode';
 import { normalizeIsbn } from '../../media/isbn';
 import { LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
+import { IsbnScanner } from '../../ui/isbn-scanner';
 import { Poster } from '../../ui/poster';
 import {
   AddOptions,
@@ -41,7 +43,16 @@ const BOOK_PAGE = 20;
  */
 @Component({
   selector: 'ab-add',
-  imports: [Icon, FormsModule, LocalTitlePipe, NgTemplateOutlet, Poster, RouterLink, TranslatePipe],
+  imports: [
+    Icon,
+    FormsModule,
+    IsbnScanner,
+    LocalTitlePipe,
+    NgTemplateOutlet,
+    Poster,
+    RouterLink,
+    TranslatePipe,
+  ],
   templateUrl: './add.html',
 })
 export class Add {
@@ -64,6 +75,9 @@ export class Add {
   protected readonly canSearch = computed(
     () => !!this.query().trim() || (this.type() === 'book' && !!this.isbn().trim()),
   );
+  /** The barcode scanner: offered where the browser can open a camera. */
+  protected readonly canScan = canScan();
+  protected readonly scanning = signal(false);
   /** What the shown results were searched with, for More results. */
   private searched: { q: string; isbn: string | null } | null = null;
   /** Books: the editions' language, the UI's by default (you may own either). */
@@ -239,6 +253,18 @@ export class Add {
     } finally {
       this.searching.set(false);
     }
+  }
+
+  /** A scanned barcode's ISBN: fills the field and searches it. */
+  protected onScanned(isbn: string): void {
+    this.scanning.set(false);
+    this.isbn.set(isbn);
+    this.search();
+  }
+
+  protected onScanClosed(error: string | null): void {
+    this.scanning.set(false);
+    if (error) this.error.set(error);
   }
 
   /** Books: the next 20 Google Books results, appended. */

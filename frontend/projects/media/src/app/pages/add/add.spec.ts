@@ -1,9 +1,11 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SearchResult } from '../../media/models';
+import { IsbnScanner } from '../../ui/isbn-scanner';
 import { BOOK, entry, flushMe, settle, setup } from '../../testing';
 import { Add } from './add';
 
@@ -333,6 +335,32 @@ describe('Add', () => {
     await fixture.whenStable();
     http.expectNone((r) => r.url === '/api/media/search');
     expect(el.querySelector('.error')?.textContent?.trim()).toBe('ISBN invalide.');
+  });
+
+  it('searches the ISBN a scan reads', async () => {
+    // A camera that never answers: the scanner just stays open.
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => new Promise(() => undefined) },
+    });
+    try {
+      (
+        fixture.componentInstance as unknown as { scanning: { set(v: boolean): void } }
+      ).scanning.set(true);
+      await fixture.whenStable();
+      const scanner = fixture.debugElement.query(By.directive(IsbnScanner));
+      (scanner.componentInstance as IsbnScanner).scanned.emit('9781635575637');
+      const req = http.expectOne((r) => r.url === '/api/media/search');
+      expect(req.request.params.get('isbn')).toBe('9781635575637');
+      req.flush([]);
+      await fixture.whenStable();
+      expect((el.querySelector('input[name="isbn"]') as HTMLInputElement).value).toBe(
+        '9781635575637',
+      );
+      expect(fixture.debugElement.query(By.directive(IsbnScanner))).toBeNull();
+    } finally {
+      delete (navigator as { mediaDevices?: unknown }).mediaDevices;
+    }
   });
 
   it('presets the type from the URL and links back to its shelf', async () => {

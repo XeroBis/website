@@ -96,6 +96,15 @@
     "dragHint": "glissez un livre sur un autre pour en faire une série",
     "newSeriesPrompt": "Nom de la série"
   },
+  "scan": {
+    "open": "Scanner un code-barres",
+    "title": "Scanner le code-barres",
+    "starting": "Démarrage de la caméra…",
+    "hint": "Visez le code-barres au dos du livre.",
+    "denied": "L'accès à la caméra a été refusé.",
+    "noCamera": "Aucune caméra disponible.",
+    "failed": "Le lecteur de code-barres n'a pas pu se charger."
+  },
   "add": {
     "title": "Ajouter à votre bibliothèque",
     "type": "Type",

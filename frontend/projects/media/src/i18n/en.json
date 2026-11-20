@@ -96,6 +96,15 @@
     "dragHint": "drag a book onto another to make a series",
     "newSeriesPrompt": "Series name"
   },
+  "scan": {
+    "open": "Scan a barcode",
+    "title": "Scan the barcode",
+    "starting": "Starting the camera…",
+    "hint": "Point the camera at the barcode on the back of the book.",
+    "denied": "Camera access was refused.",
+    "noCamera": "No camera available.",
+    "failed": "The barcode reader couldn't load."
+  },
   "add": {
     "title": "Add to your library",
     "type": "Type",

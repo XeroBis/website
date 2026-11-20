@@ -56,9 +56,7 @@
                 "input": "projects/portfolio/public"
               }
             ],
-            "styles": [
-              "projects/portfolio/src/styles.scss"
-            ]
+            "styles": ["projects/portfolio/src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -138,9 +136,7 @@
                 "input": "projects/shared/public"
               }
             ],
-            "styles": [
-              "projects/workout/src/styles.scss"
-            ]
+            "styles": ["projects/workout/src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -220,9 +216,7 @@
                 "input": "projects/shared/public"
               }
             ],
-            "styles": [
-              "projects/cards/src/styles.scss"
-            ]
+            "styles": ["projects/cards/src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -296,11 +290,14 @@
               {
                 "glob": "**/*",
                 "input": "projects/media/public"
+              },
+              {
+                "glob": "zxing_reader.wasm",
+                "input": "node_modules/zxing-wasm/dist/reader",
+                "output": "zxing"
               }
             ],
-            "styles": [
-              "projects/media/src/styles.scss"
-            ]
+            "styles": ["projects/media/src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -376,12 +373,8 @@
                 "input": "projects/tools/public"
               }
             ],
-            "styles": [
-              "projects/tools/src/styles.scss"
-            ],
-            "allowedCommonJsDependencies": [
-              "pako"
-            ]
+            "styles": ["projects/tools/src/styles.scss"],
+            "allowedCommonJsDependencies": ["pako"]
           },
           "configurations": {
             "production": {
@@ -457,9 +450,7 @@
                 "input": "projects/auth/public"
               }
             ],
-            "styles": [
-              "projects/auth/src/styles.scss"
-            ]
+            "styles": ["projects/auth/src/styles.scss"]
           },
           "configurations": {
             "production": {

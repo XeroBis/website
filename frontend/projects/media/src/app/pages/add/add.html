@@ -45,6 +45,18 @@
         [attr.aria-label]="'add.isbnLabel' | translate"
         [(ngModel)]="isbn"
       />
+      @if (canScan) {
+        <button
+          type="button"
+          class="btn soft scan"
+          data-testid="scan"
+          [attr.aria-label]="'scan.open' | translate"
+          [attr.title]="'scan.open' | translate"
+          (click)="error.set(null); scanning.set(true)"
+        >
+          <ab-icon name="scan-barcode" />
+        </button>
+      }
       <div class="chips lang" role="group" [attr.aria-label]="'add.bookLanguage' | translate">
         @for (l of bookLangs; track l) {
           <button
@@ -64,6 +76,9 @@
       {{ (searching() ? 'add.searching' : 'add.search') | translate }}
     </button>
   </form>
+  @if (scanning()) {
+    <ab-isbn-scanner (scanned)="onScanned($event)" (closed)="onScanClosed($event)" />
+  }
   <p class="source muted">
     {{ 'add.searchingIn' | translate: { source: type() === 'book' ? 'Google Books' : 'TMDB' } }}
   </p>

@@ -322,3 +322,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **What**: every browser `confirm()` / `prompt()` in media (remove an entry from its page or card, delete a read, delete a series, name a new series from the entry page or a drag and drop) goes through a `Dialogs` service (`ui/dialogs.ts`) whose `confirm()` / `prompt()` return a Promise, rendered by one `<ab-dialogs>` in the app shell.
 - **Native `<dialog>` with `showModal()`, over a hand-made overlay** (like workout's and cards' modals): the browser gives the focus trap, Escape (`cancel`), the `::backdrop` and the top layer for free. Media-only for now; the other apps keep their own modals.
 - **A service returning a Promise, over a modal per page**: the call sites keep the `if (!(await confirm(...))) return;` shape of the browser API they replace, and tests stub the service instead of `window`.
+
+## Media: ISBN search and barcode scan (2026-11-20)
+
+- **What**: the add page gets an ISBN field (books) that searches Google Books with `isbn:` only, and a camera button next to it that reads a book's EAN-13 barcode, fills the field and runs the search.
+- **`barcode-detector` (npm), over the native `BarcodeDetector` alone or `@zxing/browser`**: it uses the browser's `BarcodeDetector` where there is one (Chrome on Android) and otherwise ZXing compiled to WebAssembly, so it also works in Safari on iPhone, which has no native one; `@zxing/browser` is pure JS and in maintenance mode. The scanner and its decoder load only when the camera button is first tapped.
+- **The `.wasm` served by media itself, over the package's jsDelivr default**: `zxing_reader.wasm` is copied from `node_modules/zxing-wasm` into the build (`angular.json` assets) and pointed to with `setZXingModuleOverrides({ locateFile })`, so scanning makes no third-party request and the decoder always matches the installed JS.
