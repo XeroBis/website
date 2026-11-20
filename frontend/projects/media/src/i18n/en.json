@@ -116,7 +116,10 @@
     "searching": "Searching…",
     "searchingIn": "Searching {{source}}.",
     "bookLanguage": "Language of the editions",
-    "booksIn": { "en": "Books in English", "fr": "Books in French" },
+    "booksIn": {
+      "en": "Books in English",
+      "fr": "Books in French"
+    },
     "status": "Status",
     "ownership": "Ownership",
     "noResults": "No results.",
@@ -228,6 +231,19 @@
       "useUrl": "Use",
       "shared": "The new cover replaces the old one for everyone who has this title.",
       "cancel": "Cancel"
+    },
+    "details": {
+      "edit": "Edit details",
+      "title": "Title",
+      "creators": "Author(s)",
+      "year": "Year",
+      "isbn": "ISBN",
+      "genres": "Genres (comma-separated)",
+      "synopsis": "Description",
+      "save": "Save",
+      "shared": "These details are changed for everyone who has this book.",
+      "errorTitle": "A title is required.",
+      "errorYear": "The year must be a whole number from 0 to 9999."
     }
   },
   "series": {

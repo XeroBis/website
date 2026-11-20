@@ -24,7 +24,7 @@ docker compose -f docker-compose.prod.yml run --rm --no-deps -u root backend cho
 
 Migrations run automatically (`alembic upgrade head`) on backend start. The backend refuses to start if `SECRET_KEY` (≥ 32 chars) or `REGISTER_SECRET` (≥ 16 chars) is missing or too short. Changing `SECRET_KEY` logs everyone out. Without `TMDB_READ_ACCESS_TOKEN` or `GOOGLE_BOOKS_API_KEY` the backend still starts, but media's film and series search (TMDB) or book search (Google Books) answers 502. The Google Books key comes from the Google Cloud console (APIs & Services: enable the Books API, create an API key restricted to it).
 
-`make prod-media-refresh` re-fetches every TMDB / Google Books catalog row (e.g. after a column is added); covers are kept. Other accounts sign up at `auth.alanbignon.com/signup` with `REGISTER_SECRET` as the sign-up code; an admin then ticks their apps on `/admin/users`.
+Other accounts sign up at `auth.alanbignon.com/signup` with `REGISTER_SECRET` as the sign-up code; an admin then ticks their apps on `/admin/users`.
 
 Building the image compiles the six Angular apps on the VPS. Check `free -h` before the first build; if it runs out of memory, add swap (or move the build to CI, see ideas.md).
 

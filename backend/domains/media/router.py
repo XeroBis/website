@@ -428,6 +428,25 @@ def update_entry(
     return _commit_detail(db, entry)
 
 
+@router.put("/library/{entry_id}/item", response_model=schemas.EntryDetail)
+def edit_book_details(
+    entry_id: int,
+    body: schemas.BookDetailsIn,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    """Edits the book's shared catalog row, for everyone who has it."""
+    entry = _get_entry(db, user, entry_id)
+    item = entry.media_item
+    if item.type != MediaType.book:
+        raise HTTPException(
+            status_code=422, detail="Only a book's details can be edited"
+        )
+    for field, value in body.model_dump().items():
+        setattr(item, field, value)
+    return _commit_detail(db, entry)
+
+
 @router.delete("/library/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_entry(
     entry_id: int,

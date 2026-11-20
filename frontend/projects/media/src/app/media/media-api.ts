@@ -6,6 +6,7 @@ import { Language } from '@shared';
 
 import {
   AddOptions,
+  BookDetailsInput,
   BookSeries,
   BookSeriesDetail,
   EntryDetail,
@@ -135,6 +136,11 @@ export class MediaApi {
 
   update(id: number, changes: EntryUpdate): Promise<EntryDetail> {
     return this.run(this.http.patch<EntryDetail>(`${API}/library/${id}`, changes));
+  }
+
+  /** Edits a book's catalog row (for everyone who has it). */
+  editBookDetails(id: number, details: BookDetailsInput): Promise<EntryDetail> {
+    return this.run(this.http.put<EntryDetail>(`${API}/library/${id}/item`, details));
   }
 
   /** `undated` (finish only): the read has no date. */

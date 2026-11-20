@@ -31,7 +31,7 @@ website/
 │   │   ├── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`, `seed-basic-user`)
 │   │   ├── portfolio/          #   /api/portfolio routes, `portfolio` schema models
 │   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
-│   │   │                       #   catalog.py, sources/ (TMDB + Google Books via httpx2), refresh.py (`make media-refresh`)
+│   │   │                       #   catalog.py, sources/ (TMDB + Google Books via httpx2)
 │   │   ├── cards/              #   /api/cards routes, `cards` schema models,
 │   │   │                       #   variant_order.py (print variants + display order), access.py, names.py (name
 │   │   │                       #   normalization), display.py (FR/EN display fields), search.py (name match + sorts),

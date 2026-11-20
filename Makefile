@@ -1,4 +1,4 @@
-.PHONY: help up build down logs ps seed-user seed-basic-user media-refresh hooks lint test b-test f-test prod prod-down prod-seed-user prod-media-refresh prod-backup prod-restore
+.PHONY: help up build down logs ps seed-user seed-basic-user hooks lint test b-test f-test prod prod-down prod-seed-user prod-backup prod-restore
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -34,9 +34,6 @@ seed-user: ## Create or update the dev admin account
 seed-basic-user: ## Create or update a dev non-admin account (or reset its password)
 	@test -n "$(EMAIL)" -a -n "$(PASSWORD)" || { echo "EMAIL and PASSWORD are required"; exit 1; }
 	docker compose exec -e ADMIN_EMAIL="$(EMAIL)" -e ADMIN_PASSWORD="$(PASSWORD)" -e ADMIN_PSEUDO="$(or $(PSEUDO),User)" backend /opt/venv/bin/python -m domains.auth.seed --no-admin
-
-media-refresh: ## Re-fetch every TMDB / Google Books catalog row (dev)
-	docker compose exec backend /opt/venv/bin/python -m domains.media.refresh
 
 # Binder divider for a set, into documentation/docx/set_dividers (dev catalog
 # and scans), e.g.:
@@ -78,9 +75,6 @@ prod-down: ## Stop the prod stack
 prod-seed-user: ## Create or update the prod admin: make prod-seed-user ADMIN_EMAIL=… ADMIN_PASSWORD=…
 	@test -n "$(ADMIN_EMAIL)" -a -n "$(ADMIN_PASSWORD)" || { echo "ADMIN_EMAIL and ADMIN_PASSWORD are required"; exit 1; }
 	docker compose -f docker-compose.prod.yml exec -e ADMIN_EMAIL="$(ADMIN_EMAIL)" -e ADMIN_PASSWORD="$(ADMIN_PASSWORD)" $(if $(ADMIN_PSEUDO),-e ADMIN_PSEUDO="$(ADMIN_PSEUDO)" )backend /opt/venv/bin/python -m domains.auth.seed
-
-prod-media-refresh: ## Re-fetch every TMDB / Google Books catalog row (prod)
-	docker compose -f docker-compose.prod.yml exec backend /opt/venv/bin/python -m domains.media.refresh
 
 # Dumps go to infra/backups/dumps/ (newest 7 kept); cron runs the script
 # directly, see documentation/deployment.md "Backups".

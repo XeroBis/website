@@ -158,6 +158,57 @@ describe('EntryPage', () => {
     );
   });
 
+  it("edits a book's details, checking the year and ISBN in the page", async () => {
+    await render(entry({ item: BOOK }));
+    expect(button('Modifier les infos')).toBeDefined();
+    button('Modifier les infos').click();
+    await fixture.whenStable();
+    const form = el.querySelector('.details-form') as HTMLFormElement;
+    expect(el.querySelector('h1')).toBeNull();
+    const field = (name: string) =>
+      form.querySelector(`[name="${name}"]`) as HTMLInputElement | HTMLTextAreaElement;
+    expect(field('title').value).toBe('Dune');
+    expect(field('creators').value).toBe('Frank Herbert');
+    expect(field('isbn').value).toBe('9780441013593');
+    const type = (name: string, value: string) => {
+      field(name).value = value;
+      field(name).dispatchEvent(new Event('input'));
+    };
+
+    type('isbn', '978-0-441-01359-4');
+    form.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    expect(el.querySelector('.error')?.textContent).toBe('ISBN invalide.');
+    type('isbn', '978-0-441-01359-3');
+    type('year', '10000');
+    form.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    expect(el.querySelector('.error')?.textContent).toContain('0 à 9999');
+
+    type('year', '1965');
+    type('title', ' Dune (édition) ');
+    type('genres', 'SF, , Classique, SF');
+    type('synopsis', '  ');
+    form.dispatchEvent(new Event('submit'));
+    await settle();
+    const edited = { ...BOOK, title: 'Dune (édition)', year: 1965, genres: ['SF', 'Classique'] };
+    expect(await answer('PUT', '/api/media/library/3/item', entry({ item: edited }))).toEqual({
+      title: 'Dune (édition)',
+      creators: 'Frank Herbert',
+      year: 1965,
+      isbn: '9780441013593',
+      genres: ['SF', 'Classique'],
+      synopsis: null,
+    });
+    expect(el.querySelector('.details-form')).toBeNull();
+    expect(el.querySelector('h1')?.textContent).toBe('Dune (édition)');
+  });
+
+  it('offers no details edit for films', async () => {
+    await render();
+    expect(button('Modifier les infos')).toBeUndefined();
+  });
+
   it('creates a series from the select', async () => {
     const ask = vi.spyOn(TestBed.inject(Dialogs), 'prompt').mockResolvedValue('One Piece');
     await render(entry({ item: BOOK }));

@@ -57,50 +57,133 @@
         <span class="pill type" [attr.data-type]="e.item.type"
           ><ab-icon [name]="icon[e.item.type]" /> {{ typeLabel[e.item.type] | translate }}</span
         >
-        <h1 class="display">{{ e.item | localTitle: lang() }}</h1>
-        @if (otherTitles().length) {
-          <p class="original muted">{{ otherTitles().join(' · ') }}</p>
-        }
-        @if (e.series_id !== null) {
-          <p class="in-series">
-            <a [routerLink]="['/series', e.series_id]"
-              ><ab-icon name="layers" /> {{ e.series_name }}
-              @if (e.series_volume !== null) {
-                · {{ 'entry.volumeShort' | translate: { volume: e.series_volume } }}
-              }
-            </a>
-          </p>
-        }
-        <p class="facts">
-          @if (e.item.year) {
-            <span>{{ e.item.year }}</span>
+        @if (editingDetails()) {
+          <form class="details-form" (submit)="$event.preventDefault(); saveDetails()">
+            <label class="wide">
+              <span class="label">{{ 'entry.details.title' | translate }}</span>
+              <input
+                class="field"
+                name="title"
+                required
+                maxlength="500"
+                [value]="draft().title"
+                (input)="setDraft('title', $any($event.target).value)"
+              />
+            </label>
+            <label class="wide">
+              <span class="label">{{ 'entry.details.creators' | translate }}</span>
+              <input
+                class="field"
+                name="creators"
+                maxlength="500"
+                [value]="draft().creators"
+                (input)="setDraft('creators', $any($event.target).value)"
+              />
+            </label>
+            <label>
+              <span class="label">{{ 'entry.details.year' | translate }}</span>
+              <input
+                class="field"
+                name="year"
+                type="number"
+                min="0"
+                max="9999"
+                [value]="draft().year"
+                (input)="setDraft('year', $any($event.target).value)"
+              />
+            </label>
+            <label>
+              <span class="label">{{ 'entry.details.isbn' | translate }}</span>
+              <input
+                class="field"
+                name="isbn"
+                inputmode="numeric"
+                maxlength="30"
+                [value]="draft().isbn"
+                (input)="setDraft('isbn', $any($event.target).value)"
+              />
+            </label>
+            <label class="wide">
+              <span class="label">{{ 'entry.details.genres' | translate }}</span>
+              <input
+                class="field"
+                name="genres"
+                [value]="draft().genres"
+                (input)="setDraft('genres', $any($event.target).value)"
+              />
+            </label>
+            <label class="wide">
+              <span class="label">{{ 'entry.details.synopsis' | translate }}</span>
+              <textarea
+                class="field"
+                name="synopsis"
+                rows="6"
+                maxlength="10000"
+                [value]="draft().synopsis"
+                (input)="setDraft('synopsis', $any($event.target).value)"
+              ></textarea>
+            </label>
+            <p class="muted small wide">{{ 'entry.details.shared' | translate }}</p>
+            <div class="end wide">
+              <button class="btn" type="submit" [disabled]="busy()">
+                {{ 'entry.details.save' | translate }}
+              </button>
+              <button class="btn ghost" type="button" (click)="editingDetails.set(false)">
+                {{ 'entry.cancel' | translate }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <h1 class="display">{{ e.item | localTitle: lang() }}</h1>
+          @if (otherTitles().length) {
+            <p class="original muted">{{ otherTitles().join(' · ') }}</p>
           }
-          @if (e.item.creators) {
-            <span>{{ e.item.creators }}</span>
+          @if (e.series_id !== null) {
+            <p class="in-series">
+              <a [routerLink]="['/series', e.series_id]"
+                ><ab-icon name="layers" /> {{ e.series_name }}
+                @if (e.series_volume !== null) {
+                  · {{ 'entry.volumeShort' | translate: { volume: e.series_volume } }}
+                }
+              </a>
+            </p>
           }
-          @if (e.item.runtime_minutes) {
-            <span>{{ 'entry.minutes' | translate: { count: e.item.runtime_minutes } }}</span>
-          }
-          @if (e.item.season_episode_counts?.length) {
-            <span>{{
-              (e.item.season_episode_counts!.length === 1
-                ? 'entry.seasonsOne'
-                : 'entry.seasonsMany'
-              ) | translate: { count: e.item.season_episode_counts!.length }
-            }}</span>
-          }
-          @if (e.item.isbn) {
-            <span>{{ 'entry.isbn' | translate: { isbn: e.item.isbn } }}</span>
-          }
-        </p>
-        @if (e.item.genres.length) {
-          <div class="genres">
-            @for (g of e.item.genres; track g) {
-              <a class="pill" [routerLink]="shelfUrl(e.item.type)" [queryParams]="{ genre: g }">{{
-                g
-              }}</a>
+          <p class="facts">
+            @if (e.item.year) {
+              <span>{{ e.item.year }}</span>
             }
-          </div>
+            @if (e.item.creators) {
+              <span>{{ e.item.creators }}</span>
+            }
+            @if (e.item.runtime_minutes) {
+              <span>{{ 'entry.minutes' | translate: { count: e.item.runtime_minutes } }}</span>
+            }
+            @if (e.item.season_episode_counts?.length) {
+              <span>{{
+                (e.item.season_episode_counts!.length === 1
+                  ? 'entry.seasonsOne'
+                  : 'entry.seasonsMany'
+                ) | translate: { count: e.item.season_episode_counts!.length }
+              }}</span>
+            }
+            @if (e.item.isbn) {
+              <span>{{ 'entry.isbn' | translate: { isbn: e.item.isbn } }}</span>
+            }
+          </p>
+          @if (e.item.genres.length) {
+            <div class="genres">
+              @for (g of e.item.genres; track g) {
+                <a class="pill" [routerLink]="shelfUrl(e.item.type)" [queryParams]="{ genre: g }">{{
+                  g
+                }}</a>
+              }
+            </div>
+          }
+          @if (e.item.type === 'book') {
+            <button type="button" class="btn ghost small details-edit" (click)="openDetails()">
+              <ab-icon name="pencil" /> {{ 'entry.details.edit' | translate }}
+            </button>
+          }
         }
 
         <div class="status">

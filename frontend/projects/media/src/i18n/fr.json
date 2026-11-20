@@ -116,7 +116,10 @@
     "searching": "Recherche…",
     "searchingIn": "Recherche dans {{source}}.",
     "bookLanguage": "Langue des éditions",
-    "booksIn": { "en": "Livres en anglais", "fr": "Livres en français" },
+    "booksIn": {
+      "en": "Livres en anglais",
+      "fr": "Livres en français"
+    },
     "status": "Statut",
     "ownership": "Possession",
     "noResults": "Aucun résultat.",
@@ -228,6 +231,19 @@
       "useUrl": "Utiliser",
       "shared": "La nouvelle couverture remplace l'ancienne pour tous ceux qui ont ce titre.",
       "cancel": "Annuler"
+    },
+    "details": {
+      "edit": "Modifier les infos",
+      "title": "Titre",
+      "creators": "Auteur(s)",
+      "year": "Année",
+      "isbn": "ISBN",
+      "genres": "Genres (séparés par des virgules)",
+      "synopsis": "Description",
+      "save": "Enregistrer",
+      "shared": "Ces infos changent pour tous ceux qui ont ce livre.",
+      "errorTitle": "Le titre est obligatoire.",
+      "errorYear": "L'année doit être un nombre entier de 0 à 9999."
     }
   },
   "series": {

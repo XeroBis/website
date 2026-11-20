@@ -460,6 +460,7 @@ Partial unique index `uq_reading_sessions_one_open` on `library_entry_id` where 
 - **Displayed title** = `title_fr` for French viewers when set, else `title` (same for synopses). Text search matches `title`, `title_fr`, `original_title` and `creators`; the title sort uses the title in the user's saved language (`core.users.language`).
 - "Today" is the server's date (UTC in the containers).
 - Removing an entry deletes its sessions but keeps the catalog row and its cover.
+- **Editing a book's details** (from an entry): title, creators, year, ISBN, genres and synopsis are written to the shared `media_items` row (for everyone who has it), `source` and `external_id` unchanged. Nothing re-fetches a catalog row after it is added, so the edit sticks. Books only.
 - **Changing a cover** (from an entry): replaces the shared `media.covers` row (one cover per item, for everyone who has it) and bumps `media_items.updated_at`. Raster images only (JPEG, PNG, WebP, GIF, AVIF), ≤ 2 MB; a URL must resolve to public addresses only, redirects included.
 - **Ownership**: only books can be owned (`owned` true on a film or series is a 422).
 - **Shelves**: `books` = type `book`, `videos` = types `film` and `series`.

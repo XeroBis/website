@@ -17,6 +17,7 @@ import {
   statusLabel,
 } from '../../media/labels';
 import { LocalSynopsisPipe, LocalTitlePipe, localTitle } from '../../media/local-title';
+import { normalizeIsbn } from '../../media/isbn';
 import { MediaApi, errorMessage } from '../../media/media-api';
 import {
   BookSeries,
@@ -37,6 +38,16 @@ interface StatusButton {
   label: string;
   icon?: IconName;
   style: '' | 'soft' | 'ghost';
+}
+
+/** The book details form, as typed (genres comma-separated). */
+interface DetailsDraft {
+  title: string;
+  creators: string;
+  year: string;
+  isbn: string;
+  genres: string;
+  synopsis: string;
 }
 
 @Component({
@@ -74,6 +85,16 @@ export class EntryPage {
   /** The cover editor (file or URL) under the cover. */
   protected readonly coverOpen = signal(false);
   protected readonly coverUrl = signal('');
+  /** Books: the details form (title, author, year, ISBN, genres, description), open in place of the title. */
+  protected readonly editingDetails = signal(false);
+  protected readonly draft = signal<DetailsDraft>({
+    title: '',
+    creators: '',
+    year: '',
+    isbn: '',
+    genres: '',
+    synopsis: '',
+  });
   /** Books: the user's series, for the Series panel's select. */
   protected readonly allSeries = signal<BookSeries[]>([]);
 
@@ -380,6 +401,64 @@ export class EntryPage {
       ),
     );
     if (ok) this.closeNewSession();
+  }
+
+  protected openDetails(): void {
+    const item = this.entry()!.item;
+    this.draft.set({
+      title: item.title,
+      creators: item.creators ?? '',
+      year: item.year === null ? '' : String(item.year),
+      isbn: item.isbn ?? '',
+      genres: item.genres.join(', '),
+      synopsis: item.synopsis ?? '',
+    });
+    this.editingDetails.set(true);
+  }
+
+  protected setDraft(field: keyof DetailsDraft, value: string): void {
+    this.draft.update((d) => ({ ...d, [field]: value }));
+  }
+
+  /** Checked here too so the messages are in the UI language. */
+  protected async saveDetails(): Promise<void> {
+    const d = this.draft();
+    const title = d.title.trim();
+    if (!title) {
+      this.error.set('entry.details.errorTitle');
+      return;
+    }
+    const yearText = String(d.year).trim();
+    const year = yearText === '' ? null : Number(yearText);
+    if (year !== null && (!Number.isInteger(year) || year < 0 || year > 9999)) {
+      this.error.set('entry.details.errorYear');
+      return;
+    }
+    const isbnText = d.isbn.trim();
+    const isbn = isbnText ? normalizeIsbn(isbnText) : null;
+    if (isbnText && !isbn) {
+      this.error.set('add.errorIsbn');
+      return;
+    }
+    const id = this.entry()!.id;
+    const ok = await this.run(() =>
+      this.api.editBookDetails(id, {
+        title,
+        creators: d.creators.trim() || null,
+        year,
+        isbn,
+        genres: [
+          ...new Set(
+            d.genres
+              .split(',')
+              .map((g) => g.trim())
+              .filter(Boolean),
+          ),
+        ],
+        synopsis: d.synopsis.trim() || null,
+      }),
+    );
+    if (ok) this.editingDetails.set(false);
   }
 
   /** Replaces the cover with a file from the device (shared by everyone with the item). */

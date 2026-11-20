@@ -5,7 +5,7 @@ from domains.media.sources import Details
 
 
 def apply_details(item: MediaItem, details: Details) -> None:
-    """Copy a source's normalized fields onto a catalog row (new or refreshed)."""
+    """Copy a source's normalized fields onto a catalog row (on add)."""
     item.title = details.title
     item.title_fr = details.title_fr
     item.original_title = details.original_title

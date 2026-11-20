@@ -105,6 +105,16 @@ export interface EntryUpdate {
   series_volume?: number | null;
 }
 
+/** A book's catalog fields, edited by hand (full replace; null = none). */
+export interface BookDetailsInput {
+  title: string;
+  creators: string | null;
+  year: number | null;
+  isbn: string | null;
+  genres: string[];
+  synopsis: string | null;
+}
+
 export interface SessionInput {
   started_on: string | null;
   finished_on: string | null;

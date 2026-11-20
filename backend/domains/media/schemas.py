@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from domains.media.models import EntryStatus, MediaSource, MediaType
+from domains.media.sources import normalize_isbn
 
 Rating = Annotated[int, Field(ge=1, le=10)]
 NonEmpty = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -158,6 +159,38 @@ class EntryUpdate(BaseModel):
     current_episode: Annotated[int, Field(ge=0, le=9999)] | None = None
     series_id: int | None = None
     series_volume: Volume | None = None
+
+
+def _blank_to_none(value: str | None) -> str | None:
+    return (value or "").strip() or None
+
+
+class BookDetailsIn(BaseModel):
+    """A book's catalog fields, edited by hand (full replace; blank = none)."""
+
+    title: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)
+    ]
+    creators: Annotated[str, StringConstraints(max_length=500)] | None = None
+    year: Annotated[int, Field(ge=0, le=9999)] | None = None
+    isbn: Annotated[str, StringConstraints(max_length=30)] | None = None
+    genres: Annotated[
+        list[Annotated[str, StringConstraints(max_length=100)]], Field(max_length=20)
+    ] = []
+    synopsis: Annotated[str, StringConstraints(max_length=10000)] | None = None
+
+    @model_validator(mode="after")
+    def _normalize(self):
+        self.creators = _blank_to_none(self.creators)
+        self.synopsis = _blank_to_none(self.synopsis)
+        isbn = _blank_to_none(self.isbn)
+        if isbn is not None:
+            isbn = normalize_isbn(isbn)
+            if isbn is None:
+                raise ValueError("Not a valid ISBN")
+        self.isbn = isbn
+        self.genres = list(dict.fromkeys(g.strip() for g in self.genres if g.strip()))
+        return self
 
 
 class SessionIn(BaseModel):

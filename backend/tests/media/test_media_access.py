@@ -3,7 +3,6 @@ on unsafe methods. Anyone else's entries are covered in test_media_catalog."""
 
 import pytest
 
-from domains.media import refresh
 from tests.media.conftest import BOOKS, URL, tmdb_film
 
 FILM = {"source": "tmdb", "external_id": "603", "type": "film"}
@@ -18,6 +17,7 @@ ROUTES = [
     ("GET", "/library/{id}"),
     ("PATCH", "/library/{id}"),
     ("DELETE", "/library/{id}"),
+    ("PUT", "/library/{id}/item"),
     ("POST", "/library/{id}/start"),
     ("POST", "/library/{id}/finish"),
     ("POST", "/library/{id}/drop"),
@@ -118,24 +118,3 @@ def test_season_and_episode_are_for_series_only(client, add_manual):
     film = add_manual(type="film")
     r = client.patch(f"{URL}/library/{film['id']}", json={"current_season": 2})
     assert r.status_code == 422
-
-
-def test_refresh_updates_source_items_and_skips_manual(client, web, add_manual):
-    tmdb_film(web, 603)
-    film = client.post(f"{URL}/library/from-search", json=FILM).json()
-    manual = add_manual(title="Hand made")
-
-    tmdb_film(web, 603, title="The Matrix (Remastered)", title_fr="Matrix (Remaster)")
-    web.requests.clear()
-    refresh.main()
-
-    item = client.get(f"{URL}/library/{film['id']}").json()["item"]
-    assert (item["title"], item["title_fr"]) == (
-        "The Matrix (Remastered)",
-        "Matrix (Remaster)",
-    )
-    assert item["has_cover"] is True  # covers are left alone
-    assert not any("image" in r.url.host for r in web.requests)
-    assert client.get(f"{URL}/library/{manual['id']}").json()["item"]["title"] == (
-        "Hand made"
-    )
