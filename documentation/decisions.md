@@ -295,3 +295,13 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Volumes added from search, one tap each, over a range form creating manual volumes**: every volume keeps its Open Library cover and data. The series page's **Add volumes** opens the add page tied to the series; the volume number is read from the title, else the next one. The cost: one source lookup per volume (a few seconds each, run in parallel).
 - **Undated read as a session flag, over status only**: it still counts as a read in the history and can get dates later, and the Journal leaves it out. The entry page asks each time (Read today / date unknown); the search buttons and the series page's bulk marking always use date unknown, since bulk adds are mostly old reads.
 - **Paging books only**: TMDB's 10 results per search are enough for films and series.
+
+## Media: drag books into series, add library books to a series, change covers (2026-11-20)
+
+- **What**: on the Bibliothèque, dropping a book on another makes a series of the two (dropping on a series card adds it); the add page in series mode lists the library's books in no series, and search results already in the library get **Add to the series**; the entry page can replace the cover (file or URL); the series page becomes a poster grid. No migration.
+- **`@angular/cdk` drag-drop, over native HTML5 drag and drop**: same reason as tools (native doesn't work on touch screens), with a long-press start on touch so a swipe still scrolls. No drop list: a free drag, and the card under the pointer is the target.
+- **Drop runs the existing endpoints** (create series, then one PATCH per book), over a dedicated "merge" endpoint: two or three calls, and the series and volume rules stay in one place.
+- **A changed cover replaces the shared catalog cover, for everyone who has the item**, over a per-user override: simpler (no new table), and a better cover is better for everyone. The cost: one user's choice changes it for the others.
+- **Upload as the raw body, over multipart**: no `python-multipart` dependency, like the cards image import.
+- **Cover URLs fetched by the server, guarded**: http(s) only, every hop's host must resolve to public addresses (redirects followed by hand, 3 at most), raster types only, read up to 2 MB; the browser can't fetch most image hosts itself (CORS). DNS rebinding between the check and the request is not covered.
+- **Cover URL versioned by the item's `updated_at`** (`?v=`), over dropping the immutable cache: covers stay cached for a year, and a replaced one gets a new URL.

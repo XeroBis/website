@@ -5,7 +5,53 @@
 
   @if (entry(); as e) {
     <section class="top" [attr.data-type]="e.item.type" [style.--h]="hue()">
-      <div abPoster class="cover" [item]="e.item" [showText]="false"></div>
+      <div class="cover-col">
+        <div abPoster class="cover" [item]="e.item" [showText]="false"></div>
+        @if (!coverOpen()) {
+          <button type="button" class="btn ghost small cover-edit" (click)="coverOpen.set(true)">
+            <ab-icon name="pencil" /> {{ 'entry.cover.change' | translate }}
+          </button>
+        } @else {
+          <div class="cover-form">
+            <input
+              #coverFile
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              hidden
+              (change)="uploadCover(coverFile)"
+            />
+            <button
+              type="button"
+              class="btn soft small"
+              [disabled]="busy()"
+              (click)="coverFile.click()"
+            >
+              <ab-icon name="upload" /> {{ 'entry.cover.file' | translate }}
+            </button>
+            <form class="cover-url" (submit)="$event.preventDefault(); useCoverUrl()">
+              <input
+                class="field"
+                type="url"
+                name="coverUrl"
+                placeholder="https://…"
+                [attr.aria-label]="'entry.cover.url' | translate"
+                [(ngModel)]="coverUrl"
+              />
+              <button
+                class="btn soft small"
+                type="submit"
+                [disabled]="busy() || !coverUrl().trim()"
+              >
+                {{ 'entry.cover.useUrl' | translate }}
+              </button>
+            </form>
+            <p class="muted small">{{ 'entry.cover.shared' | translate }}</p>
+            <button type="button" class="btn ghost small" (click)="coverOpen.set(false)">
+              {{ 'entry.cover.cancel' | translate }}
+            </button>
+          </div>
+        }
+      </div>
 
       <div class="info">
         <span class="pill type" [attr.data-type]="e.item.type"
@@ -223,79 +269,93 @@
           {{ (e.item.type === 'book' ? 'entry.reads' : 'entry.watches') | translate }}
           <small>{{ e.sessions.length }}</small>
         </h2>
-        @if (e.sessions.length) {
-          <ul class="sessions">
-            @for (s of e.sessions; track s.id) {
-              <li>
-                <label>
-                  <span class="label">{{ 'entry.started' | translate }}</span>
-                  <input
-                    #start
-                    class="field"
-                    type="date"
-                    [value]="s.started_on ?? ''"
-                    (change)="saveSession(s, start.value, finish.value)"
-                  />
-                </label>
-                <label>
-                  <span class="label">{{ 'entry.finished' | translate }}</span>
-                  <input
-                    #finish
-                    class="field"
-                    type="date"
-                    [value]="s.finished_on ?? ''"
-                    (change)="saveSession(s, start.value, finish.value)"
-                  />
-                </label>
-                <span class="when muted">
-                  @if (s.undated) {
-                    {{ 'entry.dateUnknown' | translate }}
-                  } @else if (!s.finished_on) {
-                    {{ 'entry.ongoing' | translate }}
-                  } @else {
-                    {{ s.finished_on | date: 'MMM y' : undefined : lang() }}
-                  }
-                </span>
-                <button
-                  type="button"
-                  class="btn danger small"
-                  (click)="deleteSession(s)"
-                  [attr.aria-label]="'entry.deleteSession' | translate"
-                >
-                  <ab-icon name="x" />
-                </button>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="muted small">
-            {{ (e.item.type === 'book' ? 'entry.noReads' : 'entry.noWatches') | translate }}
-          </p>
-        }
-        <form class="new-session" (submit)="$event.preventDefault(); addSession()">
-          <label>
-            <span class="label">{{ 'entry.started' | translate }}</span>
-            <input class="field" type="date" name="start" [(ngModel)]="newStart" />
-          </label>
-          <label>
-            <span class="label">{{ 'entry.finished' | translate }}</span>
-            <input class="field" type="date" name="finish" [(ngModel)]="newFinish" />
-          </label>
-          <button
-            class="btn soft"
-            type="submit"
-            [disabled]="busy() || (!newStart() && !newFinish())"
-          >
-            <ab-icon name="plus" />
-            {{ (e.item.type === 'book' ? 'entry.addPastRead' : 'entry.addPastWatch') | translate }}
-          </button>
-          <button type="button" class="btn ghost" [disabled]="busy()" (click)="addUndatedSession()">
-            {{
-              (e.item.type === 'book' ? 'entry.addUndatedRead' : 'entry.addUndatedWatch')
-                | translate
-            }}
-          </button>
-        </form>
+        <div class="reads">
+          @if (e.sessions.length) {
+            <ul class="sessions">
+              @for (s of e.sessions; track s.id) {
+                <li>
+                  <label>
+                    <span class="label">{{ 'entry.started' | translate }}</span>
+                    <input
+                      #start
+                      class="field"
+                      type="date"
+                      [value]="s.started_on ?? ''"
+                      (change)="saveSession(s, start.value, finish.value)"
+                    />
+                  </label>
+                  <label>
+                    <span class="label">{{ 'entry.finished' | translate }}</span>
+                    <input
+                      #finish
+                      class="field"
+                      type="date"
+                      [value]="s.finished_on ?? ''"
+                      (change)="saveSession(s, start.value, finish.value)"
+                    />
+                  </label>
+                  <div class="end">
+                    <span class="when muted">
+                      @if (s.undated) {
+                        {{ 'entry.dateUnknown' | translate }}
+                      } @else if (!s.finished_on) {
+                        {{ 'entry.ongoing' | translate }}
+                      } @else {
+                        {{ s.finished_on | date: 'MMM y' : undefined : lang() }}
+                      }
+                    </span>
+                    <button
+                      type="button"
+                      class="btn danger small"
+                      (click)="deleteSession(s)"
+                      [attr.aria-label]="'entry.deleteSession' | translate"
+                    >
+                      <ab-icon name="x" />
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="muted small">
+              {{ (e.item.type === 'book' ? 'entry.noReads' : 'entry.noWatches') | translate }}
+            </p>
+          }
+          <form class="new-session" (submit)="$event.preventDefault(); addSession()">
+            <label>
+              <span class="label">{{ 'entry.started' | translate }}</span>
+              <input class="field" type="date" name="start" [(ngModel)]="newStart" />
+            </label>
+            <label>
+              <span class="label">{{ 'entry.finished' | translate }}</span>
+              <input class="field" type="date" name="finish" [(ngModel)]="newFinish" />
+            </label>
+            <div class="end">
+              <button
+                class="btn soft"
+                type="submit"
+                [disabled]="busy() || (!newStart() && !newFinish())"
+              >
+                <ab-icon name="plus" />
+                {{
+                  (e.item.type === 'book' ? 'entry.addPastRead' : 'entry.addPastWatch') | translate
+                }}
+              </button>
+              <button
+                type="button"
+                class="btn soft"
+                [disabled]="busy()"
+                (click)="addUndatedSession()"
+              >
+                <ab-icon name="plus" />
+                {{
+                  (e.item.type === 'book' ? 'entry.addUndatedRead' : 'entry.addUndatedWatch')
+                    | translate
+                }}
+              </button>
+            </div>
+          </form>
+        </div>
       </section>
     </div>
 

@@ -305,4 +305,40 @@ describe('EntryPage', () => {
     expect(el.querySelector('.error')?.textContent).toBe('Entrée introuvable.');
     expect(el.querySelector('h1')).toBeNull();
   });
+
+  it('replaces the cover with a file or an image URL', async () => {
+    await render();
+    expect(el.querySelector('.cover-form')).toBeNull();
+    button('Changer la couverture').click();
+    await fixture.whenStable();
+    expect(el.querySelector('.cover-form p')?.textContent).toContain('pour tous ceux');
+
+    const file = new File(['png'], 'cover.png', { type: 'image/png' });
+    const picker = el.querySelector('.cover-form input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(picker, 'files', { value: [file], configurable: true });
+    picker.dispatchEvent(new Event('change'));
+    const upload = http.expectOne({ method: 'PUT', url: '/api/media/library/3/cover' });
+    expect(upload.request.body).toBe(file);
+    expect(upload.request.headers.get('Content-Type')).toBe('image/png');
+    const updated = entry({ item: { ...entry().item, updated_at: '2026-11-20T10:00:00Z' } });
+    upload.flush(updated);
+    await settle();
+    await fixture.whenStable();
+    expect(el.querySelector('.cover-form')).toBeNull();
+    expect(el.querySelector('.cover img')?.getAttribute('src')).toBe(
+      `/api/media/items/${updated.item.id}/cover?v=${Date.parse('2026-11-20T10:00:00Z')}`,
+    );
+
+    button('Changer la couverture').click();
+    await fixture.whenStable();
+    const url = el.querySelector('input[name="coverUrl"]') as HTMLInputElement;
+    url.value = ' https://img.example/dune.jpg ';
+    url.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    button('Utiliser').click();
+    expect(await answer('POST', '/api/media/library/3/cover/from-url', updated)).toEqual({
+      url: 'https://img.example/dune.jpg',
+    });
+    expect(el.querySelector('.cover-form')).toBeNull();
+  });
 });

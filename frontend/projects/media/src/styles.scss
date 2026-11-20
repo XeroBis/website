@@ -571,11 +571,26 @@ a.poster:hover {
       }
     }
   }
-  .count {
+  .count-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
     margin: 0 0 1rem;
+  }
+  .count,
+  .drag-hint {
+    margin: 0;
     font-size: 0.8rem;
     font-style: italic;
     font-family: var(--font-serif);
+  }
+  /* Drag and drop needs a pointer. */
+  @media (pointer: coarse) {
+    .drag-hint {
+      display: none;
+    }
   }
   .empty {
     padding: 2.5rem 0;
@@ -595,6 +610,28 @@ a.poster:hover {
     flex-direction: column;
     gap: 0.5rem;
     min-width: 0;
+    border-radius: 8px;
+    transition:
+      opacity 0.15s,
+      outline-color 0.15s;
+    outline: 2px dashed transparent;
+    outline-offset: 5px;
+
+    /* Follows the pointer; ignores it, so the card underneath can be found. */
+    &.cdk-drag-dragging {
+      z-index: 10;
+      opacity: 0.85;
+      pointer-events: none;
+      cursor: grabbing;
+    }
+    /* A book being dragged over this card: dropping makes or joins a series. */
+    &.drop-target {
+      outline-color: var(--ab-accent);
+    }
+  }
+  .grid.busy {
+    opacity: 0.6;
+    pointer-events: none;
   }
   .meta {
     display: flex;
@@ -713,57 +750,49 @@ a.poster:hover {
     }
   }
   .volumes {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: 1.75rem 1.1rem;
     margin: 0 0 1.5rem;
     padding: 0;
     list-style: none;
+
+    @media (max-width: 400px) {
+      grid-template-columns: 1fr 1fr;
+    }
   }
-  li {
+  .volume {
+    position: relative;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.85rem;
-    padding: 0.45rem 0.75rem 0.45rem 0.5rem;
-    border: 1px solid var(--ab-border);
-    border-radius: 10px;
-    background: var(--ab-surface);
-  }
-  .thumb {
-    flex: 0 0 2.5rem;
-    width: 2.5rem;
-    border-radius: 4px;
-  }
-  .number {
-    flex: 0 0 3.5rem;
-    color: var(--ab-muted);
-    font-family: var(--font-serif);
-    font-weight: 600;
-  }
-  .text {
-    display: flex;
-    flex: 1 1 10rem;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.5rem;
     min-width: 0;
   }
-  .title {
-    overflow: hidden;
-    color: var(--ab-text);
+  /* The volume number, over the poster's top-left corner. */
+  .number {
+    position: absolute;
+    top: 0.45rem;
+    left: 0.45rem;
+    z-index: 2;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: rgb(30 20 10 / 70%);
+    color: #fbf8f1;
+    font-family: var(--font-serif);
+    font-size: 0.8rem;
     font-weight: 600;
-    text-decoration: none;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    pointer-events: none;
+  }
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0 2px;
+    font-size: 0.78rem;
+    font-weight: 600;
   }
   .status {
     color: var(--ab-muted);
-    font-size: 0.78rem;
-    font-weight: 600;
 
     &.in_progress {
       color: var(--media-ok);
@@ -773,10 +802,13 @@ a.poster:hover {
     }
   }
   .done {
-    display: inline-grid;
-    place-items: center;
-    width: 2rem;
+    display: inline-flex;
     color: var(--media-ok);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
   }
   .empty {
     padding: 2rem 0;
@@ -1009,6 +1041,66 @@ a.poster:hover {
       font-size: 0.8rem;
     }
   }
+  /* Series mode: library books not in a series yet. */
+  .from-library {
+    display: grid;
+    gap: 0.6rem;
+    max-width: 52rem;
+    margin: 0 0 1.5rem;
+
+    .section-title {
+      margin: 0;
+    }
+    > .field {
+      max-width: 22rem;
+    }
+  }
+  .loose {
+    display: grid;
+    gap: 0.4rem;
+    max-height: 26rem;
+    margin: 0;
+    padding: 0 0.2rem 0 0;
+    overflow-y: auto;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+      border: 1px solid var(--ab-border);
+      border-radius: var(--radius);
+      background: var(--ab-surface);
+    }
+    .thumb {
+      flex: 0 0 2.2rem;
+      padding: 0;
+      border-radius: 2px 4px 4px 2px;
+    }
+    .text {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-width: 0;
+      line-height: 1.3;
+    }
+    strong {
+      overflow: hidden;
+      font-family: var(--font-serif);
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .muted {
+      font-size: 0.78rem;
+    }
+  }
+  .quick .in-series {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
   .series-note {
     display: inline-flex;
     align-items: center;
@@ -1117,16 +1209,41 @@ a.poster:hover {
     @media (max-width: 640px) {
       grid-template-columns: 1fr;
 
-      .cover {
-        width: 10rem;
+      .cover-col {
+        width: 12rem;
       }
     }
+  }
+  .cover-col {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
   }
   .cover {
     width: 100%;
 
     &::after {
       display: none;
+    }
+  }
+  .cover-edit {
+    justify-self: center;
+  }
+  .cover-form {
+    display: grid;
+    gap: 0.5rem;
+
+    .cover-url {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.4rem;
+    }
+    .small {
+      margin: 0;
+      font-size: 0.78rem;
+    }
+    > .btn.ghost {
+      justify-self: center;
     }
   }
   .info {
@@ -1255,27 +1372,69 @@ a.poster:hover {
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
   }
-  .sessions {
+  /* Past reads and the add row share one set of columns, so the dates line up. */
+  .reads {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: 0.6rem;
-    margin: 0 0 1rem;
-    padding: 0;
+
+    > .small {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+    @media (max-width: 560px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+  .sessions,
+  .sessions li,
+  .new-session {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: end;
+    gap: 0.6rem;
+  }
+  .sessions {
+    margin: 0;
+    padding: 0 0 0.4rem;
     list-style: none;
 
-    li {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto auto;
-      align-items: end;
+    li + li {
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--ab-border);
+    }
+    .end {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
       gap: 0.6rem;
-
-      @media (max-width: 560px) {
-        grid-template-columns: 1fr 1fr;
-      }
     }
     .when {
-      padding-bottom: 0.6rem;
       font-size: 0.8rem;
       font-weight: 600;
+    }
+  }
+  .new-session {
+    padding-top: 1rem;
+    border-top: 1px dashed var(--ab-border);
+
+    .end {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .end .btn {
+      justify-content: flex-start;
+    }
+  }
+  @media (max-width: 560px) {
+    .sessions .end,
+    .new-session .end {
+      grid-column: 1 / -1;
+    }
+    .new-session .end .btn {
+      justify-content: center;
     }
   }
   .in-series {
@@ -1293,26 +1452,6 @@ a.poster:hover {
     display: grid;
     grid-template-columns: 1fr 6rem;
     gap: 0.6rem;
-  }
-  .new-session > .btn.ghost {
-    grid-column: 1 / -1;
-    justify-self: start;
-  }
-  .new-session {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    align-items: end;
-    gap: 0.6rem;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--ab-border);
-
-    @media (max-width: 560px) {
-      grid-template-columns: 1fr 1fr;
-
-      .btn {
-        grid-column: 1 / -1;
-      }
-    }
   }
   .remove {
     margin-top: 2rem;

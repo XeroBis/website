@@ -63,6 +63,9 @@ export class EntryPage {
   protected readonly notesSaved = signal(false);
   protected readonly newStart = signal('');
   protected readonly newFinish = signal('');
+  /** The cover editor (file or URL) under the cover. */
+  protected readonly coverOpen = signal(false);
+  protected readonly coverUrl = signal('');
   /** Books: the user's series, for the Series panel's select. */
   protected readonly allSeries = signal<BookSeries[]>([]);
 
@@ -319,6 +322,25 @@ export class EntryPage {
   protected addUndatedSession(): void {
     const id = this.entry()!.id;
     this.run(() => this.api.addSession(id, { started_on: null, finished_on: null, undated: true }));
+  }
+
+  /** Replaces the cover with a file from the device (shared by everyone with the item). */
+  protected async uploadCover(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const id = this.entry()!.id;
+    if (await this.run(() => this.api.uploadCover(id, file))) this.coverOpen.set(false);
+  }
+
+  protected async useCoverUrl(): Promise<void> {
+    const url = this.coverUrl().trim();
+    if (!url) return;
+    const id = this.entry()!.id;
+    if (await this.run(() => this.api.coverFromUrl(id, url))) {
+      this.coverOpen.set(false);
+      this.coverUrl.set('');
+    }
   }
 
   protected async remove(): Promise<void> {

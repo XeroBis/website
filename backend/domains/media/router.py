@@ -8,7 +8,16 @@ import calendar
 import logging
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import any_, func, literal, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, contains_eager, selectinload
@@ -16,7 +25,7 @@ from sqlalchemy.orm import Session, contains_eager, selectinload
 from core.database import get_db
 from core.deps import require_app
 from core.models import User
-from domains.media import catalog, rules, schemas, sources
+from domains.media import catalog, covers, rules, schemas, sources
 from domains.media.models import (
     BookSeries,
     Cover,
@@ -213,6 +222,7 @@ def search(
             LibraryEntry.id,
             LibraryEntry.status,
             LibraryEntry.owned,
+            LibraryEntry.series_id,
         )
         .join(LibraryEntry, LibraryEntry.media_item_id == MediaItem.id)
         .filter(
@@ -231,6 +241,7 @@ def search(
                 library_entry_id=row.id if row else None,
                 library_status=row.status if row else None,
                 library_owned=row.owned if row else None,
+                library_series_id=row.series_id if row else None,
             )
         )
     return results
@@ -726,6 +737,70 @@ def journal(
 # ── covers ───────────────────────────────────────────────────────────────────
 
 
+def _set_cover(
+    db: Session, user: User, entry_id: int, get_image
+) -> schemas.EntryDetail:
+    """Replaces the entry's catalog cover, for everyone who has the item."""
+    entry = _get_entry(db, user, entry_id)
+    try:
+        content_type, data = get_image()
+    except covers.CoverError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    item = entry.media_item
+    row = db.get(Cover, item.id)
+    if row is None:
+        db.add(Cover(media_item_id=item.id, content_type=content_type, data=data))
+    else:
+        row.content_type, row.data = content_type, data
+    # New `updated_at` = new cover URL, past the immutable cache.
+    item.updated_at = func.now()
+    db.commit()
+    db.expire_all()
+    return _detail(_get_entry(db, user, entry_id))
+
+
+@router.put("/library/{entry_id}/cover", response_model=schemas.EntryDetail)
+async def upload_cover(
+    entry_id: int,
+    request: Request,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    """The body is the image itself, with its `Content-Type`."""
+    # Not held for the upload (see _item_from_source).
+    await run_in_threadpool(db.close)
+    data = bytearray()
+    async for chunk in request.stream():
+        data += chunk
+        if len(data) > sources.MAX_COVER_BYTES:
+            break
+    content_type = request.headers.get("content-type")
+    return await run_in_threadpool(
+        _set_cover,
+        db,
+        user,
+        entry_id,
+        lambda: covers.check(content_type, bytes(data)),
+    )
+
+
+@router.post("/library/{entry_id}/cover/from-url", response_model=schemas.EntryDetail)
+def cover_from_url(
+    entry_id: int,
+    body: schemas.CoverFromUrl,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    _get_entry(db, user, entry_id)  # 404 before fetching anything
+    # Not held while the image downloads (see _item_from_source).
+    db.close()
+    try:
+        image = covers.download(body.url)
+    except covers.CoverError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return _set_cover(db, user, entry_id, lambda: image)
+
+
 @router.get("/items/{media_item_id}/cover")
 def cover(
     media_item_id: int,
@@ -735,7 +810,7 @@ def cover(
     row = db.get(Cover, media_item_id)
     if row is None:
         raise HTTPException(status_code=404, detail="No cover")
-    # A cover never changes once stored.
+    # Its URL carries the item's `updated_at`, which a new cover changes.
     return Response(
         content=row.data,
         media_type=row.content_type,

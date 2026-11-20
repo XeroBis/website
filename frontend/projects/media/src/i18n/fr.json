@@ -84,7 +84,9 @@
     "nothing": "Aucun résultat.",
     "addSomething": "Ajouter quelque chose",
     "add": "Ajouter",
-    "seriesRead": "{{read}} / {{volumes}} lus"
+    "seriesRead": "{{read}} / {{volumes}} lus",
+    "dragHint": "glissez un livre sur un autre pour en faire une série",
+    "newSeriesPrompt": "Nom de la série :"
   },
   "add": {
     "title": "Ajouter à votre bibliothèque",
@@ -136,7 +138,14 @@
       "wantWatch": "À voir",
       "watched": "Vu"
     },
-    "saving": "Enregistrement…"
+    "saving": "Enregistrement…",
+    "addToSeries": "Ajouter à la série",
+    "inThisSeries": "Dans la série",
+    "fromLibrary": {
+      "title": "Depuis votre bibliothèque",
+      "filter": "Filtrer vos livres hors série…",
+      "add": "Ajouter"
+    }
   },
   "entry": {
     "minutes": "{{count}} min",
@@ -181,7 +190,15 @@
     "errorVolume": "Le tome doit être un nombre entier de 0 à 9999.",
     "dateUnknown": "Date inconnue",
     "addUndatedRead": "Ajouter une lecture, date inconnue",
-    "addUndatedWatch": "Ajouter un visionnage, date inconnue"
+    "addUndatedWatch": "Ajouter un visionnage, date inconnue",
+    "cover": {
+      "change": "Changer la couverture",
+      "file": "Choisir une image",
+      "url": "Adresse de l'image",
+      "useUrl": "Utiliser",
+      "shared": "La nouvelle couverture remplace l'ancienne pour tous ceux qui ont ce titre.",
+      "cancel": "Annuler"
+    }
   },
   "series": {
     "kind": "Série",
@@ -196,7 +213,7 @@
     "markNotOwned": "Marquer non possédés",
     "bulkHint": "Laissez la plage vide pour tous les tomes. Les lectures sont enregistrées sans date.",
     "read": "Lu",
-    "empty": "Aucun tome pour l'instant. Ajoutez-en, ou rangez dans cette série des livres déjà présents depuis leur page.",
+    "empty": "Aucun tome pour l'instant. Ajoutez-en, y compris des livres déjà dans votre bibliothèque.",
     "delete": "Supprimer la série",
     "confirmDelete": "Supprimer la série « {{name}} » ? Ses tomes restent dans votre bibliothèque.",
     "notFound": "Série introuvable.",

@@ -78,12 +78,17 @@
   }
 
   @if (cards(); as list) {
-    <p class="count muted">
-      {{
-        (list.length === 1 ? 'library.countOne' : 'library.countMany')
-          | translate: { count: list.length }
-      }}
-    </p>
+    <div class="count-row">
+      <p class="count muted">
+        {{
+          (list.length === 1 ? 'library.countOne' : 'library.countMany')
+            | translate: { count: list.length }
+        }}
+      </p>
+      @if (books && list.length > 1) {
+        <p class="drag-hint muted">{{ 'library.dragHint' | translate }}</p>
+      }
+    </div>
     @if (list.length === 0) {
       <div class="empty">
         <p class="muted">{{ 'library.nothing' | translate }}</p>
@@ -92,10 +97,15 @@
         >
       </div>
     }
-    <div class="grid">
+    <div class="grid" [class.busy]="filing()">
       @for (card of list; track card.entry?.id ?? 's' + card.series!.id) {
         @if (card.series; as sr) {
-          <div class="cell series-card" data-testid="series">
+          <div
+            class="cell series-card"
+            data-testid="series"
+            [attr.data-drop]="cardKey(card)"
+            [class.drop-target]="dropTarget() === 's' + sr.id"
+          >
             @if (sr.cover_item) {
               <a
                 abPoster
@@ -121,7 +131,19 @@
           </div>
         } @else {
           @let e = card.entry!;
-          <div class="cell" data-testid="entry">
+          <div
+            class="cell"
+            data-testid="entry"
+            [attr.data-drop]="cardKey(card)"
+            [class.drop-target]="dropTarget() === 'e' + e.id"
+            cdkDrag
+            [cdkDragData]="e"
+            [cdkDragDisabled]="!books || filing()"
+            [cdkDragStartDelay]="dragDelay"
+            (cdkDragStarted)="dragStarted(e)"
+            (cdkDragMoved)="dragMoved($event)"
+            (cdkDragEnded)="dragEnded($event)"
+          >
             <a abPoster [item]="e.item" [routerLink]="['/entries', e.id]"></a>
             <div class="meta">
               <span class="status" [class]="e.status">{{ caption(e) | translate }}</span>

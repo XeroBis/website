@@ -73,7 +73,7 @@ describe('Library', () => {
     expect(el.querySelector('.count')?.textContent?.trim()).toBe('2 éléments');
     expect(cells(el)[0].querySelector('a.poster')?.getAttribute('href')).toBe('/entries/1');
     expect(cells(el)[0].querySelector('a.poster img')?.getAttribute('src')).toBe(
-      `/api/media/items/${FILM.id}/cover`,
+      `/api/media/items/${FILM.id}/cover?v=${Date.parse(FILM.updated_at)}`,
     );
 
     await switchToEnglish(http);
@@ -191,5 +191,87 @@ describe('Library series cards', () => {
     expect(cells[0].querySelector('.status')?.textContent?.trim()).toBe('60 / 100 lus');
     expect(cells[0].querySelector('.owned')).not.toBeNull();
     expect(el.querySelector('.count')?.textContent?.trim()).toBe('2 éléments');
+  });
+
+  it('drops a book on another to make a series, and one on a series to join it', async () => {
+    const book = (id: number, title: string, overrides = {}) =>
+      entry({ id, item: { ...BOOK, id: 50 + id, title }, ...overrides });
+    const naruto = [book(9, 'Naruto T1'), book(10, 'Naruto, tome 2'), book(11, 'Saga')];
+    const navigation = harness.navigateByUrl('/books');
+    await settle();
+    http.expectOne((r) => r.url === '/api/media/library').flush(naruto);
+    http.expectOne('/api/media/series').flush([]);
+    http.expectOne((r) => r.url === '/api/media/library/genres').flush([]);
+    await navigation;
+    await harness.fixture.whenStable();
+    const el = harness.routeNativeElement as HTMLElement;
+    const cells = () => [...el.querySelectorAll('.grid > .cell')] as HTMLElement[];
+    const page = harness.routeDebugElement!.componentInstance as {
+      dragStarted(e: EntrySummary): void;
+      dragMoved(e: unknown): void;
+      dragEnded(e: unknown): Promise<void>;
+    };
+    /** Drags `from` (an entry) and releases it over the cell `to`. */
+    const dragOnto = async (from: EntrySummary, to: HTMLElement) => {
+      document.elementFromPoint = () => to.querySelector('.poster');
+      page.dragStarted(from);
+      page.dragMoved({ pointerPosition: { x: 1, y: 1 } });
+      await harness.fixture.whenStable();
+      expect(to.classList).toContain('drop-target');
+      // Wrapped, so awaiting dragOnto doesn't wait for the whole drop.
+      return { done: page.dragEnded({ source: { reset: () => {} }, dropPoint: { x: 1, y: 1 } }) };
+    };
+    expect(cells()[0].classList).toContain('cdk-drag');
+
+    // Naruto, tome 2 onto Naruto T1: a new series, named after the target.
+    const ask = vi.spyOn(window, 'prompt').mockReturnValue(' Naruto ');
+    const first = (await dragOnto(naruto[1], cells()[0])).done;
+    expect(ask).toHaveBeenCalledWith('Nom de la série :', 'Naruto');
+    const create = http.expectOne({ method: 'POST', url: '/api/media/series' });
+    expect(create.request.body).toEqual({ name: 'Naruto' });
+    create.flush({ id: 7, name: 'Naruto', volumes: 0, read: 0, owned: 0, cover_item: null });
+    await settle();
+    const target = http.expectOne({ method: 'PATCH', url: '/api/media/library/9' });
+    expect(target.request.body).toEqual({ series_id: 7, series_volume: 1 });
+    target.flush(naruto[0]);
+    await settle();
+    const dragged = http.expectOne({ method: 'PATCH', url: '/api/media/library/10' });
+    expect(dragged.request.body).toEqual({ series_id: 7, series_volume: 2 });
+    dragged.flush(naruto[1]);
+    await settle();
+    const series = {
+      id: 7,
+      name: 'Naruto',
+      volumes: 2,
+      read: 0,
+      owned: 0,
+      cover_item: naruto[0].item,
+    };
+    const filed = { series_id: 7, series_name: 'Naruto' };
+    http
+      .expectOne((r) => r.url === '/api/media/library')
+      .flush([book(9, 'Naruto T1', filed), book(10, 'Naruto, tome 2', filed), naruto[2]]);
+    http.expectOne('/api/media/series').flush([series]);
+    await first;
+    await harness.fixture.whenStable();
+    expect(cells().map((c) => c.getAttribute('data-testid'))).toEqual(['series', 'entry']);
+
+    // Saga onto the series card: joins it after its highest volume.
+    const second = (await dragOnto(naruto[2], cells()[0])).done;
+    await settle();
+    http.expectOne('/api/media/series/7').flush({
+      ...series,
+      entries: [book(9, 'Naruto T1', { ...filed, series_volume: 1 })],
+    });
+    await settle();
+    const join = http.expectOne({ method: 'PATCH', url: '/api/media/library/11' });
+    expect(join.request.body).toEqual({ series_id: 7, series_volume: 2 });
+    join.flush(naruto[2]);
+    await settle();
+    http.expectOne((r) => r.url === '/api/media/library').flush([]);
+    http.expectOne('/api/media/series').flush([series]);
+    await settle();
+    await second;
+    expect(ask).toHaveBeenCalledTimes(1);
   });
 });

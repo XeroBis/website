@@ -13,6 +13,7 @@ import {
   JournalEntry,
   JournalQuery,
   LibraryFilters,
+  MediaItem,
   MediaType,
   QuickAction,
   SearchResult,
@@ -51,8 +52,25 @@ export class MediaApi {
     return firstValueFrom(request);
   }
 
-  coverUrl(mediaItemId: number): string {
-    return `${API}/items/${mediaItemId}/cover`;
+  /** Versioned by `updated_at`, so a replaced cover gets a new URL. */
+  coverUrl(item: Pick<MediaItem, 'id' | 'updated_at'>): string {
+    return `${API}/items/${item.id}/cover?v=${Date.parse(item.updated_at) || 0}`;
+  }
+
+  /** Replaces the item's cover (for everyone who has it) with a file from the device. */
+  uploadCover(entryId: number, file: Blob): Promise<EntryDetail> {
+    return this.run(
+      this.http.put<EntryDetail>(`${API}/library/${entryId}/cover`, file, {
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      }),
+    );
+  }
+
+  /** Same, from an image URL the server downloads. */
+  coverFromUrl(entryId: number, url: string): Promise<EntryDetail> {
+    return this.run(
+      this.http.post<EntryDetail>(`${API}/library/${entryId}/cover/from-url`, { url }),
+    );
   }
 
   /** `page` > 1 for books only (Open Library's next 20). */

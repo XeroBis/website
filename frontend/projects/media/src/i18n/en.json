@@ -84,7 +84,9 @@
     "nothing": "Nothing matches.",
     "addSomething": "Add something",
     "add": "Add",
-    "seriesRead": "{{read}} / {{volumes}} read"
+    "seriesRead": "{{read}} / {{volumes}} read",
+    "dragHint": "drag a book onto another to make a series",
+    "newSeriesPrompt": "Series name:"
   },
   "add": {
     "title": "Add to your library",
@@ -136,7 +138,14 @@
       "wantWatch": "To watch",
       "watched": "Watched"
     },
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "addToSeries": "Add to the series",
+    "inThisSeries": "In the series",
+    "fromLibrary": {
+      "title": "From your library",
+      "filter": "Filter your books not in a series…",
+      "add": "Add"
+    }
   },
   "entry": {
     "minutes": "{{count}} min",
@@ -181,7 +190,15 @@
     "errorVolume": "The volume must be a whole number from 0 to 9999.",
     "dateUnknown": "Date unknown",
     "addUndatedRead": "Add a read, date unknown",
-    "addUndatedWatch": "Add a watch, date unknown"
+    "addUndatedWatch": "Add a watch, date unknown",
+    "cover": {
+      "change": "Change cover",
+      "file": "Choose an image",
+      "url": "Image address",
+      "useUrl": "Use",
+      "shared": "The new cover replaces the old one for everyone who has this title.",
+      "cancel": "Cancel"
+    }
   },
   "series": {
     "kind": "Series",
@@ -196,7 +213,7 @@
     "markNotOwned": "Mark not owned",
     "bulkHint": "Leave the range empty for every volume. Reads are recorded with the date unknown.",
     "read": "Read",
-    "empty": "No volumes yet. Add some, or put books you already have in this series from their page.",
+    "empty": "No volumes yet. Add some, including books already in your library.",
     "delete": "Delete series",
     "confirmDelete": "Delete the series “{{name}}”? Its volumes stay in your library.",
     "notFound": "Series not found.",

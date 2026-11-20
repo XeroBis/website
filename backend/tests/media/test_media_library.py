@@ -248,6 +248,7 @@ def test_search_film_marks_items_already_in_library(client, web):
     assert hits[0]["thumb_url"] == "https://image.tmdb.org/t/p/w154/p.jpg"
     assert hits[0]["library_entry_id"] is not None
     assert (hits[0]["library_status"], hits[0]["library_owned"]) == ("want", False)
+    assert hits[0]["library_series_id"] is None
     assert hits[1]["library_entry_id"] is None
     assert (hits[1]["library_status"], hits[1]["library_owned"]) == (None, None)
 
@@ -295,6 +296,7 @@ def test_search_book_open_library(client, web):
             "library_entry_id": None,
             "library_status": None,
             "library_owned": None,
+            "library_series_id": None,
         }
     ]
 

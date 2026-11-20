@@ -60,6 +60,7 @@ class SearchResult(BaseModel):
     library_entry_id: int | None = None
     library_status: EntryStatus | None = None
     library_owned: bool | None = None
+    library_series_id: int | None = None
 
 
 class AddFromSearch(_AddOptions):
@@ -100,6 +101,8 @@ class MediaItemOut(BaseModel):
     source: MediaSource
     external_id: str | None
     has_cover: bool
+    # Changes with the cover (the cover URL is cached as immutable).
+    updated_at: datetime
 
 
 class SeriesProgress(BaseModel):
@@ -175,6 +178,12 @@ class JournalEntry(BaseModel):
     event: JournalEvent
     session_id: int
     entry: EntrySummary
+
+
+class CoverFromUrl(BaseModel):
+    url: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+    ]
 
 
 class SeriesIn(BaseModel):

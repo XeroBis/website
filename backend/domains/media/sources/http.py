@@ -18,10 +18,10 @@ class SourceError(Exception):
 
 def client(**kwargs) -> httpx2.Client:
     headers = {"User-Agent": USER_AGENT, **kwargs.pop("headers", {})}
+    kwargs.setdefault("follow_redirects", True)
     return httpx2.Client(
         transport=transport,
         timeout=TIMEOUT,
-        follow_redirects=True,
         headers=headers,
         **kwargs,
     )

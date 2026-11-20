@@ -44,6 +44,7 @@ export const FILM: MediaItem = {
   source: 'tmdb',
   external_id: '603',
   has_cover: true,
+  updated_at: '2026-10-01T10:00:00Z',
 };
 
 export const SERIES: MediaItem = {

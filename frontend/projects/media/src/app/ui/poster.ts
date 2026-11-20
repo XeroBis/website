@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 
 import { Icon, LanguageService } from '@shared';
 
@@ -41,8 +41,9 @@ export class Poster {
   /** Replaces the item's title in the overlay (a series card shows the series name). */
   readonly label = input<string | null>(null);
 
-  protected readonly failed = signal(false);
   protected readonly icon = TYPE_ICON;
   protected readonly hue = computed(() => hue(this.item()));
-  protected readonly coverUrl = computed(() => this.api.coverUrl(this.item().id));
+  protected readonly coverUrl = computed(() => this.api.coverUrl(this.item()));
+  /** The image failed to load; a new cover gets another try. */
+  protected readonly failed = linkedSignal({ source: this.coverUrl, computation: () => false });
 }

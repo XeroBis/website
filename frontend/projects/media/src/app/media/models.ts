@@ -26,6 +26,8 @@ export interface MediaItem {
   source: MediaSource;
   external_id: string | null;
   has_cover: boolean;
+  /** Changes with the cover: part of its URL, which is cached as immutable. */
+  updated_at: string;
 }
 
 export interface Session {
@@ -74,6 +76,8 @@ export interface SearchResult {
   /** The entry's state, when it's in the library. */
   library_status: EntryStatus | null;
   library_owned: boolean | null;
+  /** Books: the entry's series, when it's in the library. */
+  library_series_id: number | null;
 }
 
 export interface LibraryFilters {

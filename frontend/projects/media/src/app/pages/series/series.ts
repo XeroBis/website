@@ -4,10 +4,9 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { Icon, LanguageService, httpStatus } from '@shared';
+import { Icon, httpStatus } from '@shared';
 
 import { statusLabel } from '../../media/labels';
-import { LocalTitlePipe } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
 import { BookSeriesDetail, EntrySummary, SeriesMark } from '../../media/models';
 import { Poster } from '../../ui/poster';
@@ -15,7 +14,7 @@ import { Poster } from '../../ui/poster';
 /** A book series: its volumes in order, with one-tap and bulk read/owned. */
 @Component({
   selector: 'ab-series',
-  imports: [FormsModule, Icon, LocalTitlePipe, Poster, RouterLink, TranslatePipe],
+  imports: [FormsModule, Icon, Poster, RouterLink, TranslatePipe],
   templateUrl: './series.html',
 })
 export class SeriesPage {
@@ -23,7 +22,6 @@ export class SeriesPage {
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly translate = inject(TranslateService);
-  protected readonly lang = inject(LanguageService).current;
 
   /** Route param. */
   readonly id = input.required<string>();

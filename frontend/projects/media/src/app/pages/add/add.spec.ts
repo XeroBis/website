@@ -19,6 +19,7 @@ const RESULTS: SearchResult[] = [
     library_entry_id: null,
     library_status: null,
     library_owned: null,
+    library_series_id: null,
   },
   {
     source: 'tmdb',
@@ -31,6 +32,7 @@ const RESULTS: SearchResult[] = [
     library_entry_id: 42,
     library_status: 'done',
     library_owned: false,
+    library_series_id: null,
   },
 ];
 
@@ -299,6 +301,13 @@ describe('Add volumes to a series', () => {
       cover_item: null,
       entries: [entry({ id: 1, series_id: 4, series_volume: 3 })],
     });
+    const library = http.expectOne((r) => r.url === '/api/media/library');
+    expect(library.request.params.toString()).toBe('shelf=books&sort=title');
+    library.flush([
+      entry({ id: 1, series_id: 4, series_volume: 3 }),
+      entry({ id: 20, item: { ...BOOK, id: 60, title: 'One Piece, tome 5' } }),
+      entry({ id: 21, item: { ...BOOK, id: 61, title: 'Dune', creators: 'Frank Herbert' } }),
+    ]);
     await navigation;
     await harness.fixture.whenStable();
     root = harness.routeNativeElement as HTMLElement;
@@ -340,5 +349,60 @@ describe('Add volumes to a series', () => {
     first.flush(entry({ id: 30 }));
     second.flush(entry({ id: 31 }));
     await settle();
+  });
+
+  it('files books already in the library under the series', async () => {
+    const loose = () => [...root.querySelectorAll('[data-testid="loose"]')] as HTMLElement[];
+    // Only books in no series.
+    expect(loose().map((li) => li.querySelector('strong')?.textContent)).toEqual([
+      'One Piece, tome 5',
+      'Dune',
+    ]);
+    const filter = root.querySelector('input[name="looseFilter"]') as HTMLInputElement;
+    filter.value = 'DUNE';
+    filter.dispatchEvent(new Event('input'));
+    await harness.fixture.whenStable();
+    expect(loose().map((li) => li.querySelector('strong')?.textContent)).toEqual(['Dune']);
+    filter.value = '';
+    filter.dispatchEvent(new Event('input'));
+    await harness.fixture.whenStable();
+
+    (loose()[0].querySelector('button') as HTMLButtonElement).click();
+    const patch = http.expectOne({ method: 'PATCH', url: '/api/media/library/20' });
+    expect(patch.request.body).toEqual({ series_id: 4, series_volume: 5 });
+    patch.flush(entry({ id: 20, series_id: 4, series_volume: 5 }));
+    await settle();
+    await harness.fixture.whenStable();
+    expect(loose().map((li) => li.querySelector('strong')?.textContent)).toEqual(['Dune']);
+  });
+
+  it('files a search result already in the library under the series', async () => {
+    const input = root.querySelector('input[name="q"]') as HTMLInputElement;
+    input.value = 'dune';
+    input.dispatchEvent(new Event('input'));
+    await harness.fixture.whenStable();
+    (root.querySelector('form.search button') as HTMLButtonElement).click();
+    const inLibrary: SearchResult = {
+      ...RESULTS[1],
+      source: 'openlibrary',
+      type: 'book',
+      title: 'Dune',
+      library_entry_id: 21,
+    };
+    http.expectOne((r) => r.url === '/api/media/search').flush([inLibrary]);
+    await settle();
+    await harness.fixture.whenStable();
+
+    const row = root.querySelector('[data-testid="result"]') as HTMLElement;
+    (row.querySelector('[data-quick="file"]') as HTMLButtonElement).click();
+    const patch = http.expectOne({ method: 'PATCH', url: '/api/media/library/21' });
+    // No number in the title: after the series' highest (3).
+    expect(patch.request.body).toEqual({ series_id: 4, series_volume: 4 });
+    patch.flush(entry({ id: 21, series_id: 4, series_volume: 4 }));
+    await settle();
+    await harness.fixture.whenStable();
+    expect(row.querySelector('[data-quick="file"]')).toBeNull();
+    expect(row.querySelector('.in-series')?.textContent?.trim()).toBe('Dans la série');
+    expect(root.querySelectorAll('[data-testid="loose"]').length).toBe(1);
   });
 });

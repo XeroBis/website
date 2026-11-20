@@ -45,3 +45,16 @@ describe('volumeFromTitle', () => {
     expect(volumeFromTitle('Romance Dawn')).toBeNull();
   });
 });
+
+describe('seriesNameFromTitle', () => {
+  it('keeps what comes before the volume marker', async () => {
+    const { seriesNameFromTitle } = await import('./labels');
+    expect(seriesNameFromTitle('One Piece, tome 1')).toBe('One Piece');
+    expect(seriesNameFromTitle('One Piece, Vol. 12: The Legend')).toBe('One Piece');
+    expect(seriesNameFromTitle('Naruto T27')).toBe('Naruto');
+    expect(seriesNameFromTitle('Saga #4')).toBe('Saga');
+    expect(seriesNameFromTitle('One Piece 100')).toBe('One Piece');
+    expect(seriesNameFromTitle('Romance Dawn')).toBe('Romance Dawn');
+    expect(seriesNameFromTitle('1984')).toBe('1984');
+  });
+});

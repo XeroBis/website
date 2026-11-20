@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { Icon } from '@shared';
+import { Icon, LanguageService } from '@shared';
 
 import {
   TYPES,
@@ -14,12 +14,15 @@ import {
   statusLabel,
   volumeFromTitle,
 } from '../../media/labels';
+import { LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
+import { Poster } from '../../ui/poster';
 import {
   AddOptions,
   BookSeriesDetail,
   EntryDetail,
   EntryStatus,
+  EntrySummary,
   MediaType,
   SearchResult,
 } from '../../media/models';
@@ -32,17 +35,19 @@ const BOOK_PAGE = 20;
 
 /**
  * Search and add. `?type=` presets the type; `?series=<id>` (the series page's
- * Add volumes) ties every add to that series, numbering volumes from titles.
+ * Add volumes) ties every add to that series, numbering volumes from titles,
+ * and also offers the library's books that aren't in a series yet.
  */
 @Component({
   selector: 'ab-add',
-  imports: [Icon, FormsModule, NgTemplateOutlet, RouterLink, TranslatePipe],
+  imports: [Icon, FormsModule, LocalTitlePipe, NgTemplateOutlet, Poster, RouterLink, TranslatePipe],
   templateUrl: './add.html',
 })
 export class Add {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
   private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected readonly lang = inject(LanguageService).current;
 
   /** Set when adding volumes to a series. */
   protected readonly series = signal<BookSeriesDetail | null>(null);
@@ -91,6 +96,22 @@ export class Add {
     this.seriesId ? `/series/${this.seriesId}` : shelfUrl(this.type()),
   );
 
+  /** Series mode: the library's books in no series, to file under this one. */
+  protected readonly loose = signal<EntrySummary[] | null>(null);
+  protected readonly looseFilter = signal('');
+  protected readonly shownLoose = computed(() => {
+    const q = this.looseFilter().trim().toLowerCase();
+    const list = this.loose() ?? [];
+    if (!q) return list;
+    return list.filter((e) =>
+      [localTitle(e.item, this.lang()), e.item.title, e.item.creators ?? ''].some((t) =>
+        t.toLowerCase().includes(q),
+      ),
+    );
+  });
+  /** Entries (library list) or results (by external id) being filed under the series. */
+  protected readonly filing = signal<ReadonlySet<number | string>>(new Set());
+
   /** Volume numbers given during this visit, so "next number" keeps counting. */
   private readonly usedVolumes: number[] = [];
 
@@ -100,7 +121,56 @@ export class Add {
         (s) => this.series.set(s),
         (e) => this.error.set(errorMessage(e)),
       );
+      this.api.library({ shelf: 'books', sort: 'title' }).then(
+        (list) => this.loose.set(list.filter((e) => e.series_id === null)),
+        (e) => this.error.set(errorMessage(e)),
+      );
     }
+  }
+
+  /** Series mode: files a library book under the series, numbered from its title. */
+  protected async fileLoose(entry: EntrySummary): Promise<void> {
+    if (this.filing().has(entry.id)) return;
+    this.setFiling(entry.id, true);
+    this.error.set(null);
+    try {
+      await this.api.update(entry.id, this.fileOptions(entry.item.title));
+      this.loose.update((list) => (list ?? []).filter((e) => e.id !== entry.id));
+    } catch (e) {
+      this.error.set(errorMessage(e));
+    } finally {
+      this.setFiling(entry.id, false);
+    }
+  }
+
+  /** Series mode: a search result already in the library, filed under the series. */
+  protected fileResult(result: SearchResult): Promise<void> {
+    const id = result.library_entry_id;
+    if (id === null) return Promise.resolve();
+    return this.onRow(result, async () => {
+      const entry = await this.api.update(id, this.fileOptions(result.title));
+      this.loose.update((list) => (list ?? []).filter((e) => e.id !== id));
+      return { ...result, library_series_id: entry.series_id };
+    });
+  }
+
+  protected inThisSeries(result: SearchResult): boolean {
+    return this.seriesId !== null && result.library_series_id === this.seriesId;
+  }
+
+  private fileOptions(title: string): { series_id: number; series_volume: number } {
+    const volume = this.volumeFor(title);
+    this.usedVolumes.push(volume);
+    return { series_id: this.seriesId!, series_volume: volume };
+  }
+
+  private setFiling(id: number, on: boolean): void {
+    this.filing.update((s) => {
+      const next = new Set(s);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   }
 
   protected statusText(s: InitialStatus): string {

@@ -82,47 +82,43 @@
 
       <ul class="volumes">
         @for (e of s.entries; track e.id) {
-          <li data-testid="volume">
-            <a
-              abPoster
-              class="thumb"
-              [item]="e.item"
-              [showText]="false"
-              [showType]="false"
-              [routerLink]="['/entries', e.id]"
-              tabindex="-1"
-              aria-hidden="true"
-            ></a>
+          <li class="volume" data-testid="volume">
+            <a abPoster [item]="e.item" [showType]="false" [routerLink]="['/entries', e.id]"></a>
             <span class="number">{{
               e.series_volume === null
                 ? '—'
                 : ('entry.volumeShort' | translate: { volume: e.series_volume })
             }}</span>
-            <div class="text">
-              <a class="title" [routerLink]="['/entries', e.id]">{{
-                e.item | localTitle: lang()
-              }}</a>
+            <div class="meta">
               <span class="status" [class]="e.status">{{
                 statusLabel(e.status, 'book') | translate
               }}</span>
+              @if (e.status === 'done') {
+                <span class="done"><ab-icon name="check" /></span>
+              }
             </div>
-            <button
-              type="button"
-              class="chip"
-              [class.on]="e.owned"
-              [attr.aria-pressed]="e.owned"
-              [disabled]="busy()"
-              (click)="toggleOwned(e)"
-            >
-              {{ 'entry.ownIt' | translate }}
-            </button>
-            @if (e.status !== 'done') {
-              <button type="button" class="btn soft small" [disabled]="busy()" (click)="readOne(e)">
-                <ab-icon name="check" /> {{ 'series.read' | translate }}
+            <div class="actions">
+              <button
+                type="button"
+                class="chip"
+                [class.on]="e.owned"
+                [attr.aria-pressed]="e.owned"
+                [disabled]="busy()"
+                (click)="toggleOwned(e)"
+              >
+                {{ 'entry.ownIt' | translate }}
               </button>
-            } @else {
-              <span class="done"><ab-icon name="check" /></span>
-            }
+              @if (e.status !== 'done') {
+                <button
+                  type="button"
+                  class="btn soft small"
+                  [disabled]="busy()"
+                  (click)="readOne(e)"
+                >
+                  <ab-icon name="check" /> {{ 'series.read' | translate }}
+                </button>
+              }
+            </div>
           </li>
         }
       </ul>

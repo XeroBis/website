@@ -120,6 +120,23 @@
               }
             </button>
             <div class="quick" role="group" [attr.aria-label]="'add.quickAdd' | translate">
+              @if (series() && r.library_entry_id !== null) {
+                @if (inThisSeries(r)) {
+                  <span class="pill in-series"
+                    ><ab-icon name="check" /> {{ 'add.inThisSeries' | translate }}</span
+                  >
+                } @else {
+                  <button
+                    type="button"
+                    class="btn soft small"
+                    data-quick="file"
+                    [disabled]="adding().has(r.external_id)"
+                    (click)="fileResult(r)"
+                  >
+                    <ab-icon name="layers" /> {{ 'add.addToSeries' | translate }}
+                  </button>
+                }
+              }
               @if (r.library_entry_id === null) {
                 <button
                   type="button"
@@ -191,6 +208,43 @@
         </button>
       </p>
     }
+  }
+
+  @if (series() && loose()?.length) {
+    <section class="from-library">
+      <h2 class="section-title">{{ 'add.fromLibrary.title' | translate }}</h2>
+      <input
+        class="field"
+        type="search"
+        name="looseFilter"
+        [placeholder]="'add.fromLibrary.filter' | translate"
+        [attr.aria-label]="'add.fromLibrary.filter' | translate"
+        [(ngModel)]="looseFilter"
+      />
+      <ul class="loose">
+        @for (e of shownLoose(); track e.id) {
+          <li data-testid="loose">
+            <div abPoster class="thumb" [item]="e.item" [showText]="false" [showType]="false"></div>
+            <span class="text">
+              <strong>{{ e.item | localTitle: lang() }}</strong>
+              @if (e.item.creators) {
+                <span class="muted">{{ e.item.creators }}</span>
+              }
+            </span>
+            <button
+              type="button"
+              class="btn soft small"
+              [disabled]="filing().has(e.id)"
+              (click)="fileLoose(e)"
+            >
+              <ab-icon name="plus" /> {{ 'add.fromLibrary.add' | translate }}
+            </button>
+          </li>
+        } @empty {
+          <li class="muted small">{{ 'library.nothing' | translate }}</li>
+        }
+      </ul>
+    </section>
   }
 
   @if (!manual()) {

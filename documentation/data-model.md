@@ -386,7 +386,7 @@ Partial unique index `uq_media_items_source_external_id` on `(source, external_i
 
 ### `media.covers`
 
-Cover image downloaded once when an item is added, kept in Postgres so the database backup includes it (see decisions.md).
+Cover image downloaded once when an item is added, kept in Postgres so the database backup includes it (see decisions.md). A user who has the item can replace it (upload or URL); the item's `updated_at` is bumped so the cached cover URL changes.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -459,6 +459,7 @@ Partial unique index `uq_reading_sessions_one_open` on `library_entry_id` where 
 - **Displayed title** = `title_fr` for French viewers when set, else `title` (same for synopses). Text search matches `title`, `title_fr`, `original_title` and `creators`; the title sort uses the title in the user's saved language (`core.users.language`).
 - "Today" is the server's date (UTC in the containers).
 - Removing an entry deletes its sessions but keeps the catalog row and its cover.
+- **Changing a cover** (from an entry): replaces the shared `media.covers` row (one cover per item, for everyone who has it) and bumps `media_items.updated_at`. Raster images only (JPEG, PNG, WebP, GIF, AVIF), ≤ 2 MB; a URL must resolve to public addresses only, redirects included.
 - **Ownership**: only books can be owned (`owned` true on a film or series is a 422).
 - **Shelves**: `books` = type `book`, `videos` = types `film` and `series`.
 - **Journal**: each session gives a "started" event on `started_on` and a "finished" event on `finished_on`, when set and inside the period (a month, or a whole year). Open sessions only give their start; undated ones only give their start, if they have one. Events are sorted newest first (then finished before started, then newest session).

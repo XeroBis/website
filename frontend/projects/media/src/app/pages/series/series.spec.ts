@@ -69,7 +69,8 @@ describe('SeriesPage', () => {
     ]);
     expect(rows[0].querySelector('.status')?.textContent).toBe('Lu');
     expect(rows[0].querySelector('.btn')).toBeNull();
-    expect(rows[1].querySelector('.title')?.getAttribute('href')).toBe('/entries/2');
+    expect(rows[1].querySelector('a.poster')?.getAttribute('href')).toBe('/entries/2');
+    expect(rows[1].querySelector('a.poster strong')?.textContent).toBe('One Piece 2');
     expect(el.querySelector('.head a.btn')?.getAttribute('href')).toBe('/add?type=book&series=4');
   });
 

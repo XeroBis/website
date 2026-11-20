@@ -66,3 +66,15 @@ export function volumeFromTitle(title: string): number | null {
     /(?:^|\D)(\d{1,4})\s*$/.exec(title);
   return match ? Number(match[1]) : null;
 }
+
+/**
+ * A series name guessed from a volume's title: what comes before its volume
+ * marker ("One Piece, tome 1" → "One Piece"), else the whole title.
+ */
+export function seriesNameFromTitle(title: string): string {
+  const marker = /[\s,.:;–—-]*(?:\bvol(?:ume)?\.?|\btome|\bt\.?|#)\s*\d{1,4}\b.*$/i;
+  const name = marker.test(title)
+    ? title.replace(marker, '')
+    : title.replace(/[\s,.:;–—-]+\d{1,4}\s*$/, '');
+  return name.trim() || title.trim();
+}
