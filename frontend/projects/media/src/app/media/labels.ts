@@ -55,3 +55,14 @@ export function progressPercent(entry: EntrySummary): number | null {
   if (!entry.progress || entry.progress.total === 0) return null;
   return Math.round((entry.progress.watched / entry.progress.total) * 100);
 }
+
+/**
+ * The volume number in a title: "Vol. 12", "Volume 12", "Tome 12", "T12", "#12",
+ * else a trailing number ("One Piece 12"). Null when there's none.
+ */
+export function volumeFromTitle(title: string): number | null {
+  const match =
+    /(?:\bvol(?:ume)?\.?|\btome|\bt\.?|#)\s*(\d{1,4})\b/i.exec(title) ??
+    /(?:^|\D)(\d{1,4})\s*$/.exec(title);
+  return match ? Number(match[1]) : null;
+}

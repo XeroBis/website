@@ -15,6 +15,16 @@
         @if (otherTitles().length) {
           <p class="original muted">{{ otherTitles().join(' · ') }}</p>
         }
+        @if (e.series_id !== null) {
+          <p class="in-series">
+            <a [routerLink]="['/series', e.series_id]"
+              ><ab-icon name="layers" /> {{ e.series_name }}
+              @if (e.series_volume !== null) {
+                · {{ 'entry.volumeShort' | translate: { volume: e.series_volume } }}
+              }
+            </a>
+          </p>
+        }
         <p class="facts">
           @if (e.item.year) {
             <span>{{ e.item.year }}</span>
@@ -66,14 +76,14 @@
           }
         </div>
         <div class="buttons">
-          @for (b of buttons(); track b.action) {
+          @for (b of buttons(); track b.label) {
             <button
               type="button"
               class="btn"
               [class.soft]="b.style === 'soft'"
               [class.ghost]="b.style === 'ghost'"
               [disabled]="busy()"
-              (click)="act(b.action)"
+              (click)="act(b)"
             >
               @if (b.icon) {
                 <ab-icon [name]="b.icon" />
@@ -119,6 +129,43 @@
           @if (!e.owned) {
             <p class="muted small">{{ 'entry.notOwned' | translate }}</p>
           }
+        </section>
+      }
+
+      @if (e.item.type === 'book') {
+        <section class="panel">
+          <h2 class="section-title">{{ 'entry.series' | translate }}</h2>
+          <div class="series-fields">
+            <label>
+              <span class="label">{{ 'entry.series' | translate }}</span>
+              <select
+                #seriesSelect
+                class="field"
+                [disabled]="busy()"
+                (change)="setSeries(seriesSelect.value, seriesSelect)"
+              >
+                <option value="" [selected]="e.series_id === null">
+                  {{ 'entry.noSeries' | translate }}
+                </option>
+                @for (s of allSeries(); track s.id) {
+                  <option [value]="s.id" [selected]="s.id === e.series_id">{{ s.name }}</option>
+                }
+                <option value="new">{{ 'entry.newSeries' | translate }}</option>
+              </select>
+            </label>
+            <label>
+              <span class="label">{{ 'entry.volume' | translate }}</span>
+              <input
+                #volumeInput
+                class="field"
+                type="number"
+                min="0"
+                max="9999"
+                [value]="e.series_volume ?? ''"
+                (change)="saveVolume(volumeInput.value)"
+              />
+            </label>
+          </div>
         </section>
       }
 
@@ -201,7 +248,9 @@
                   />
                 </label>
                 <span class="when muted">
-                  @if (!s.finished_on) {
+                  @if (s.undated) {
+                    {{ 'entry.dateUnknown' | translate }}
+                  } @else if (!s.finished_on) {
                     {{ 'entry.ongoing' | translate }}
                   } @else {
                     {{ s.finished_on | date: 'MMM y' : undefined : lang() }}
@@ -239,6 +288,12 @@
           >
             <ab-icon name="plus" />
             {{ (e.item.type === 'book' ? 'entry.addPastRead' : 'entry.addPastWatch') | translate }}
+          </button>
+          <button type="button" class="btn ghost" [disabled]="busy()" (click)="addUndatedSession()">
+            {{
+              (e.item.type === 'book' ? 'entry.addUndatedRead' : 'entry.addUndatedWatch')
+                | translate
+            }}
           </button>
         </form>
       </section>

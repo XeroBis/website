@@ -38,6 +38,11 @@ export const routes: Routes = [
         title: 'pageTitle.pdfToImages',
         loadComponent: () => import('./pages/pdf-to-images').then((m) => m.PdfToImages),
       },
+      {
+        path: 'sign',
+        title: 'pageTitle.sign',
+        loadComponent: () => import('./pages/sign').then((m) => m.Sign),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -18,12 +18,14 @@ import {
 } from '../../media/labels';
 import { LocalSynopsisPipe, LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { EntryDetail, EntryUpdate, QuickAction, Session } from '../../media/models';
+import { BookSeries, EntryDetail, EntryUpdate, QuickAction, Session } from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { StarRating } from '../../ui/star-rating';
 
 interface StatusButton {
   action: QuickAction;
+  /** Finish with the date unknown. */
+  undated?: boolean;
   label: string;
   icon?: IconName;
   style: '' | 'soft' | 'ghost';
@@ -61,6 +63,8 @@ export class EntryPage {
   protected readonly notesSaved = signal(false);
   protected readonly newStart = signal('');
   protected readonly newFinish = signal('');
+  /** Books: the user's series, for the Series panel's select. */
+  protected readonly allSeries = signal<BookSeries[]>([]);
 
   protected readonly icon = TYPE_ICON;
   protected readonly typeLabel = TYPE_LABEL;
@@ -112,7 +116,14 @@ export class EntryPage {
           },
           {
             action: 'finish',
-            label: book ? 'action.alreadyRead' : 'action.alreadyWatched',
+            label: book ? 'action.readToday' : 'action.watchedToday',
+            icon: 'check',
+            style: 'soft',
+          },
+          {
+            action: 'finish',
+            undated: true,
+            label: book ? 'action.readUndated' : 'action.watchedUndated',
             icon: 'check',
             style: 'soft',
           },
@@ -155,7 +166,9 @@ export class EntryPage {
     effect(() => {
       const id = Number(this.id());
       this.entry.set(null);
-      this.run(() => this.api.entry(id));
+      this.run(() => this.api.entry(id)).then((ok) => {
+        if (ok && this.entry()?.item.type === 'book') this.loadSeries();
+      });
     });
     // The tab shows the title in the current language, also after a switch.
     effect(() => {
@@ -185,9 +198,50 @@ export class EntryPage {
     return this.run(() => this.api.update(id, changes));
   }
 
-  protected act(action: QuickAction): void {
+  protected act(button: StatusButton): void {
     const id = this.entry()!.id;
-    this.run(() => this.api.act(id, action));
+    this.run(() => this.api.act(id, button.action, button.undated));
+  }
+
+  private loadSeries(): void {
+    this.api.allSeries().then(
+      (list) => this.allSeries.set(list),
+      () => {},
+    );
+  }
+
+  /** The select's value: a series id, '' for none, or 'new' (asks for a name). */
+  protected async setSeries(value: string, select: HTMLSelectElement): Promise<void> {
+    const e = this.entry()!;
+    if (value === 'new') {
+      const name = prompt(this.translate.instant('entry.newSeriesPrompt'))?.trim();
+      if (!name) {
+        select.value = e.series_id === null ? '' : String(e.series_id);
+        return;
+      }
+      try {
+        const created = await this.api.createSeries(name);
+        this.allSeries.update((list) => [...list, created]);
+        value = String(created.id);
+      } catch (err) {
+        this.error.set(errorMessage(err));
+        select.value = e.series_id === null ? '' : String(e.series_id);
+        return;
+      }
+    }
+    const seriesId = value === '' ? null : Number(value);
+    if (seriesId === e.series_id) return;
+    if (await this.update({ series_id: seriesId })) this.loadSeries();
+  }
+
+  protected saveVolume(value: string): void {
+    const volume = value.trim() === '' ? null : Number(value);
+    if (volume !== null && (!Number.isInteger(volume) || volume < 0 || volume > 9999)) {
+      this.error.set('entry.errorVolume');
+      return;
+    }
+    if (volume === this.entry()!.series_volume) return;
+    this.update({ series_volume: volume });
   }
 
   protected rate(rating: number | null): void {
@@ -235,6 +289,8 @@ export class EntryPage {
       this.api.updateSession(id, session.id, {
         started_on: started || null,
         finished_on: finished || null,
+        // A finish date makes it a dated read (the server clears it too).
+        undated: session.undated && !finished,
       }),
     );
   }
@@ -258,6 +314,11 @@ export class EntryPage {
       this.newStart.set('');
       this.newFinish.set('');
     }
+  }
+
+  protected addUndatedSession(): void {
+    const id = this.entry()!.id;
+    this.run(() => this.api.addSession(id, { started_on: null, finished_on: null, undated: true }));
   }
 
   protected async remove(): Promise<void> {

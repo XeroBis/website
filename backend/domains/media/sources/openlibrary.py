@@ -98,10 +98,16 @@ def _work_doc(external_id: str, lang: str) -> dict:
     return docs[0] if docs else {}
 
 
-def search(query: str, lang: str) -> list[SearchHit]:
-    """Titles in the viewer's language when an edition in it exists."""
+def search(query: str, lang: str, page: int = 1) -> list[SearchHit]:
+    """Titles in the viewer's language when an edition in it exists; `page`
+    is 1-based, SEARCH_LIMIT results each."""
     data = _get(
-        "/search.json", q=query, fields=SEARCH_FIELDS, lang=lang, limit=SEARCH_LIMIT
+        "/search.json",
+        q=query,
+        fields=SEARCH_FIELDS,
+        lang=lang,
+        limit=SEARCH_LIMIT,
+        page=page,
     )
     return [
         SearchHit(

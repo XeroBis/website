@@ -7,4 +7,5 @@ export const TOOLS: readonly { path: string; icon: IconName; key: string }[] = [
   { path: '/organize', icon: 'grid', key: 'organize' },
   { path: '/images-to-pdf', icon: 'image', key: 'imagesToPdf' },
   { path: '/pdf-to-images', icon: 'file-image', key: 'pdfToImages' },
+  { path: '/sign', icon: 'signature', key: 'sign' },
 ];

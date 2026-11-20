@@ -1,7 +1,18 @@
-import { PDFDocument, degrees } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFRawStream, degrees } from 'pdf-lib';
 
 import { PNG, describePdf, numbered } from '../testing';
-import { ImageError, PdfError, assemble, imageLayout, imagesToPdf, pageCount, split } from './ops';
+import {
+  ImageError,
+  PdfError,
+  assemble,
+  imageLayout,
+  imagesToPdf,
+  pageBoxes,
+  pageCount,
+  split,
+  stampPdf,
+  stampPlacement,
+} from './ops';
 
 describe('pageCount', () => {
   it('counts pages', async () => {
@@ -113,5 +124,80 @@ describe('imagesToPdf', () => {
         margin: 'none',
       }),
     ).rejects.toEqual(new ImageError(1));
+  });
+});
+
+describe('pageBoxes', () => {
+  it('gives each page as shown, turned pages swapped', async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage([100, 200]);
+    doc.addPage([100, 200]).setRotation(degrees(90));
+    expect(await pageBoxes(await doc.save())).toEqual([
+      { width: 100, height: 200 },
+      { width: 200, height: 100 },
+    ]);
+  });
+});
+
+describe('stampPlacement', () => {
+  // A 100×200 page; the image covers the top left tenth by fifth of the page as shown.
+  const box = { x: 0, y: 0, width: 100, height: 200 };
+  const rect = { x: 0.1, y: 0.2, width: 0.3, height: 0.1 };
+
+  it('flips y on an unturned page', () => {
+    expect(stampPlacement(rect, box, 0)).toEqual({
+      x: 10,
+      y: 200 - 60, // the image's bottom is 30% down the page
+      width: 30,
+      height: 20,
+      rotate: 0,
+    });
+  });
+
+  it('offsets by the crop box', () => {
+    const at = stampPlacement(rect, { ...box, x: 5, y: 7 }, 0);
+    expect([at.x, at.y]).toEqual([15, 147]);
+  });
+
+  // Shown turned, the page is 200×100: the image is 60×10, its bottom left at (20, 30) as shown.
+  it.each([
+    [90, { x: 30, y: 20 }],
+    [180, { x: 100 - 10, y: 60 }],
+    [270, { x: 100 - 30, y: 200 - 20 }],
+    [-90, { x: 100 - 30, y: 200 - 20 }],
+  ])('turns with the page (%i°)', (rotation, corner) => {
+    const at = stampPlacement(rect, box, rotation);
+    const shownW = rotation % 180 ? 200 : 100;
+    const shownH = rotation % 180 ? 100 : 200;
+    const round = (v: number) => Math.round(v * 1000) / 1000;
+    expect(Object.fromEntries(Object.entries(at).map(([k, v]) => [k, round(v)]))).toEqual({
+      ...corner,
+      width: round(0.3 * shownW),
+      height: round(0.1 * shownH),
+      rotate: ((rotation % 360) + 360) % 360,
+    });
+  });
+});
+
+describe('stampPdf', () => {
+  it('draws each image on its pages, embedding it once', async () => {
+    const out = await stampPdf(await numbered(3), { sig: { bytes: PNG, type: 'png' } }, [
+      { image: 'sig', page: 0, x: 0, y: 0, width: 0.5, height: 0.1 },
+      { image: 'sig', page: 2, x: 0.5, y: 0.9, width: 0.5, height: 0.1 },
+    ]);
+    const doc = await PDFDocument.load(out);
+    expect(doc.getPageCount()).toBe(3);
+    const images = doc.context
+      .enumerateIndirectObjects()
+      .filter(
+        ([, obj]) =>
+          obj instanceof PDFRawStream &&
+          obj.dict.get(PDFName.of('Subtype')) === PDFName.of('Image'),
+      );
+    expect(images).toHaveLength(1);
+    const xobjects = doc
+      .getPages()
+      .map((p) => p.node.Resources()?.lookup(PDFName.of('XObject')) !== undefined);
+    expect(xobjects).toEqual([true, false, true]);
   });
 });

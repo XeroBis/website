@@ -3,6 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 
 import {
+  AddOptions,
+  BookSeries,
+  BookSeriesDetail,
   EntryDetail,
   EntryStatus,
   EntrySummary,
@@ -13,6 +16,7 @@ import {
   MediaType,
   QuickAction,
   SearchResult,
+  SeriesMark,
   SessionInput,
   Shelf,
 } from './models';
@@ -51,31 +55,34 @@ export class MediaApi {
     return `${API}/items/${mediaItemId}/cover`;
   }
 
-  search(type: MediaType, q: string): Promise<SearchResult[]> {
-    const params = new HttpParams().set('type', type).set('q', q);
-    return this.run(this.http.get<SearchResult[]>(`${API}/search`, { params }));
+  /** `page` > 1 for books only (Open Library's next 20). */
+  search(type: MediaType, q: string, page = 1): Promise<SearchResult[]> {
+    return this.run(
+      this.http.get<SearchResult[]>(`${API}/search`, {
+        params: params({ type, q, page: page > 1 ? page : null }),
+      }),
+    );
   }
 
-  addFromSearch(result: SearchResult, status: EntryStatus, owned: boolean): Promise<EntryDetail> {
+  addFromSearch(result: SearchResult, options: AddOptions): Promise<EntryDetail> {
     const body = {
       source: result.source,
       external_id: result.external_id,
       type: result.type,
-      status,
-      owned,
+      ...options,
     };
     return this.run(this.http.post<EntryDetail>(`${API}/library/from-search`, body));
   }
 
-  addManual(body: {
-    type: MediaType;
-    title: string;
-    creators: string | null;
-    year: number | null;
-    genres: string[];
-    status: EntryStatus;
-    owned: boolean;
-  }): Promise<EntryDetail> {
+  addManual(
+    body: {
+      type: MediaType;
+      title: string;
+      creators: string | null;
+      year: number | null;
+      genres: string[];
+    } & AddOptions,
+  ): Promise<EntryDetail> {
     return this.run(this.http.post<EntryDetail>(`${API}/library/manual`, body));
   }
 
@@ -101,8 +108,15 @@ export class MediaApi {
     return this.run(this.http.patch<EntryDetail>(`${API}/library/${id}`, changes));
   }
 
-  act(id: number, action: QuickAction): Promise<EntryDetail> {
-    return this.run(this.http.post<EntryDetail>(`${API}/library/${id}/${action}`, {}));
+  /** `undated` (finish only): the read has no date. */
+  act(id: number, action: QuickAction, undated = false): Promise<EntryDetail> {
+    return this.run(
+      this.http.post<EntryDetail>(
+        `${API}/library/${id}/${action}`,
+        {},
+        { params: params({ undated: undated || null }) },
+      ),
+    );
   }
 
   remove(id: number): Promise<void> {
@@ -121,5 +135,29 @@ export class MediaApi {
 
   deleteSession(id: number, sessionId: number): Promise<EntryDetail> {
     return this.run(this.http.delete<EntryDetail>(`${API}/library/${id}/sessions/${sessionId}`));
+  }
+
+  allSeries(): Promise<BookSeries[]> {
+    return this.run(this.http.get<BookSeries[]>(`${API}/series`));
+  }
+
+  createSeries(name: string): Promise<BookSeries> {
+    return this.run(this.http.post<BookSeries>(`${API}/series`, { name }));
+  }
+
+  series(id: number): Promise<BookSeriesDetail> {
+    return this.run(this.http.get<BookSeriesDetail>(`${API}/series/${id}`));
+  }
+
+  renameSeries(id: number, name: string): Promise<BookSeriesDetail> {
+    return this.run(this.http.patch<BookSeriesDetail>(`${API}/series/${id}`, { name }));
+  }
+
+  deleteSeries(id: number): Promise<void> {
+    return this.run(this.http.delete<void>(`${API}/series/${id}`));
+  }
+
+  markSeries(id: number, mark: SeriesMark): Promise<BookSeriesDetail> {
+    return this.run(this.http.post<BookSeriesDetail>(`${API}/series/${id}/mark`, mark));
   }
 }

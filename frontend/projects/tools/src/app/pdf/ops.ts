@@ -158,6 +158,105 @@ export class ImageError extends Error {
   }
 }
 
+// Images placed on pages (signatures).
+
+/** A page as it is shown (its /Rotate applied), in points. */
+export interface PageBox {
+  width: number;
+  height: number;
+}
+
+const quarterTurns = (angle: number) => normalize(Math.round(angle / 90) * 90);
+
+/** Each page's size as shown, for laying images out over pdf.js' rendering. */
+export async function pageBoxes(bytes: Uint8Array): Promise<PageBox[]> {
+  return (await load(bytes)).getPages().map((page) => {
+    const { width, height } = page.getCropBox();
+    return quarterTurns(page.getRotation().angle) % 180
+      ? { width: height, height: width }
+      : { width, height };
+  });
+}
+
+/** A box as fractions (0–1) of the page as shown, from its top left corner. */
+export interface ShownRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Where pdf-lib draws an image: its bottom left corner, size, and counter-clockwise turn. */
+export interface Placement {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotate: number;
+}
+
+/**
+ * Maps `rect`, seen on a page shown turned clockwise by `rotation`, onto the
+ * page's own coordinates (`box`, its crop box: y up, from the bottom left), so
+ * the image ends up where it was placed and upright as shown.
+ */
+export function stampPlacement(
+  rect: ShownRect,
+  box: { x: number; y: number; width: number; height: number },
+  rotation: number,
+): Placement {
+  const turn = quarterTurns(rotation);
+  const [shownW, shownH] = turn % 180 ? [box.height, box.width] : [box.width, box.height];
+  const left = rect.x * shownW;
+  const bottom = (rect.y + rect.height) * shownH; // from the top, as shown
+  const { width: W, height: H } = box;
+  const [x, y] =
+    turn === 0
+      ? [left, H - bottom]
+      : turn === 90
+        ? [bottom, left]
+        : turn === 180
+          ? [W - left, bottom]
+          : [W - bottom, H - left];
+  return {
+    x: box.x + x,
+    y: box.y + y,
+    width: rect.width * shownW,
+    height: rect.height * shownH,
+    rotate: turn,
+  };
+}
+
+/** An image to draw on page `page` (0-based), at `rect`. */
+export interface Stamp extends ShownRect {
+  image: string;
+  page: number;
+}
+
+/** The PDF with `stamps` drawn on its pages; `images` by id, each embedded once. */
+export async function stampPdf(
+  bytes: Uint8Array,
+  images: Record<string, ImageInput>,
+  stamps: readonly Stamp[],
+): Promise<Uint8Array> {
+  const doc = await load(bytes);
+  const pages = doc.getPages();
+  const embedded = new Map<string, Awaited<ReturnType<PDFDocument['embedPng']>>>();
+  for (const stamp of stamps) {
+    let image = embedded.get(stamp.image);
+    if (!image) {
+      const input = images[stamp.image];
+      image =
+        input.type === 'jpg' ? await doc.embedJpg(input.bytes) : await doc.embedPng(input.bytes);
+      embedded.set(stamp.image, image);
+    }
+    const page = pages[stamp.page];
+    const at = stampPlacement(stamp, page.getCropBox(), page.getRotation().angle);
+    page.drawImage(image, { ...at, rotate: degrees(at.rotate) });
+  }
+  return doc.save();
+}
+
 /** One page per image, in order. Throws `ImageError` on an unreadable image. */
 export async function imagesToPdf(
   images: readonly ImageInput[],

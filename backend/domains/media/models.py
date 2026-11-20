@@ -116,6 +116,28 @@ class MediaItem(Base):
     )
 
 
+class BookSeries(Base):
+    """A user's own grouping of books; the volumes are their library entries."""
+
+    __tablename__ = "book_series"
+    __table_args__ = (
+        Index(
+            "uq_book_series_user_id_name",
+            "user_id",
+            func.lower(text("name")),
+            unique=True,
+        ),
+        {"schema": "media"},
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("core.users.id"))
+    name: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class LibraryEntry(Base):
     """A user's relation to a catalog item: status, rating, notes, ownership."""
 
@@ -141,6 +163,11 @@ class LibraryEntry(Base):
     owned: Mapped[bool] = mapped_column(default=False, server_default=false())
     current_season: Mapped[int | None] = mapped_column(SmallInteger)
     current_episode: Mapped[int | None] = mapped_column(SmallInteger)
+    # Books only: the user's series and the volume number in it.
+    series_id: Mapped[int | None] = mapped_column(
+        ForeignKey("media.book_series.id", ondelete="SET NULL"), index=True
+    )
+    series_volume: Mapped[int | None] = mapped_column(SmallInteger)
     added_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -149,12 +176,14 @@ class LibraryEntry(Base):
     )
 
     media_item: Mapped[MediaItem] = relationship(lazy="joined")
+    series: Mapped[BookSeries | None] = relationship(lazy="joined")
     sessions: Mapped[list[ReadingSession]] = relationship(
         back_populates="entry",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        # Open session first, then most recently finished.
-        order_by="(ReadingSession.finished_on.desc().nulls_first(), "
+        # Open session first, then most recently finished, undated ones last.
+        order_by="(ReadingSession.undated, "
+        "ReadingSession.finished_on.desc().nulls_first(), "
         "ReadingSession.started_on.desc().nulls_last(), ReadingSession.id.desc())",
     )
 
@@ -169,8 +198,9 @@ class ReadingSession(Base):
             "uq_reading_sessions_one_open",
             "library_entry_id",
             unique=True,
-            postgresql_where=text("finished_on IS NULL"),
+            postgresql_where=text("finished_on IS NULL AND NOT undated"),
         ),
+        CheckConstraint("NOT undated OR finished_on IS NULL", name="undated"),
         {"schema": "media"},
     )
 
@@ -180,5 +210,7 @@ class ReadingSession(Base):
     )
     started_on: Mapped[date | None]
     finished_on: Mapped[date | None]
+    # Finished, but when is unknown (finished_on stays null).
+    undated: Mapped[bool] = mapped_column(default=False, server_default=false())
 
     entry: Mapped[LibraryEntry] = relationship(back_populates="sessions")

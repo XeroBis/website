@@ -23,7 +23,7 @@ import { MediaItem } from '../media/models';
       <span class="type-pill"><ab-icon [name]="icon[item().type]" /></span>
     }
     @if (showText()) {
-      <strong>{{ item() | localTitle: lang() }}</strong>
+      <strong>{{ label() ?? (item() | localTitle: lang()) }}</strong>
       @if (item().creators) {
         <span class="who">{{ item().creators }}</span>
       }
@@ -38,6 +38,8 @@ export class Poster {
   /** Title/creator overlay (off for the detail page's big cover). */
   readonly showText = input(true);
   readonly showType = input(true);
+  /** Replaces the item's title in the overlay (a series card shows the series name). */
+  readonly label = input<string | null>(null);
 
   protected readonly failed = signal(false);
   protected readonly icon = TYPE_ICON;

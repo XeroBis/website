@@ -51,12 +51,14 @@
     "resume": "Reprendre",
     "finish": "Terminer",
     "nextEpisode": "+1 épisode",
-    "alreadyRead": "Déjà lu",
-    "alreadyWatched": "Déjà vu",
     "notForMe": "Pas pour moi",
     "drop": "Abandonner",
     "readAgain": "Relire",
-    "watchAgain": "Revoir"
+    "watchAgain": "Revoir",
+    "readToday": "Lu aujourd'hui",
+    "readUndated": "Lu, date inconnue",
+    "watchedToday": "Vu aujourd'hui",
+    "watchedUndated": "Vu, date inconnue"
   },
   "library": {
     "search": "Rechercher un titre, un auteur…",
@@ -81,7 +83,8 @@
     "countMany": "{{count}} éléments",
     "nothing": "Aucun résultat.",
     "addSomething": "Ajouter quelque chose",
-    "add": "Ajouter"
+    "add": "Ajouter",
+    "seriesRead": "{{read}} / {{volumes}} lus"
   },
   "add": {
     "title": "Ajouter à votre bibliothèque",
@@ -116,7 +119,24 @@
     "cancel": "Annuler",
     "errorTitle": "Le titre est obligatoire.",
     "backBooks": "Retour à la bibliothèque",
-    "backVideos": "Retour à la vidéothèque"
+    "backVideos": "Retour à la vidéothèque",
+    "addingTo": "Ajout de tomes à {{name}}",
+    "quickAdd": "Ajout rapide",
+    "more": "Plus de résultats",
+    "volume": "Tome",
+    "readToday": "Lu aujourd'hui",
+    "readUndated": "Lu, date inconnue",
+    "watchedToday": "Vu aujourd'hui",
+    "watchedUndated": "Vu, date inconnue",
+    "backSeries": "Retour à la série",
+    "quick": {
+      "want": "À lire",
+      "owned": "Possédé",
+      "read": "Lu",
+      "wantWatch": "À voir",
+      "watched": "Vu"
+    },
+    "saving": "Enregistrement…"
   },
   "entry": {
     "minutes": "{{count}} min",
@@ -151,7 +171,36 @@
     "errorSessionOrder": "La date de fin ne peut pas précéder la date de début.",
     "notFound": "Entrée introuvable.",
     "owned": "Possédé",
-    "ownIt": "Je l'ai"
+    "ownIt": "Je l'ai",
+    "volumeShort": "t. {{volume}}",
+    "series": "Série",
+    "noSeries": "Aucune série",
+    "newSeries": "Nouvelle série…",
+    "newSeriesPrompt": "Nom de la nouvelle série :",
+    "volume": "Tome",
+    "errorVolume": "Le tome doit être un nombre entier de 0 à 9999.",
+    "dateUnknown": "Date inconnue",
+    "addUndatedRead": "Ajouter une lecture, date inconnue",
+    "addUndatedWatch": "Ajouter un visionnage, date inconnue"
+  },
+  "series": {
+    "kind": "Série",
+    "name": "Nom de la série",
+    "counts": "{{volumes}} tomes · {{read}} lus · {{owned}} possédés",
+    "addVolumes": "Ajouter des tomes",
+    "bulk": "Tomes",
+    "from": "Du",
+    "to": "Au",
+    "markRead": "Marquer lus",
+    "markOwned": "Marquer possédés",
+    "markNotOwned": "Marquer non possédés",
+    "bulkHint": "Laissez la plage vide pour tous les tomes. Les lectures sont enregistrées sans date.",
+    "read": "Lu",
+    "empty": "Aucun tome pour l'instant. Ajoutez-en, ou rangez dans cette série des livres déjà présents depuis leur page.",
+    "delete": "Supprimer la série",
+    "confirmDelete": "Supprimer la série « {{name}} » ? Ses tomes restent dans votre bibliothèque.",
+    "notFound": "Série introuvable.",
+    "errorRange": "Le premier tome ne peut pas être après le dernier."
   },
   "journal": {
     "title": "Journal",

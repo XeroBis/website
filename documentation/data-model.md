@@ -411,7 +411,23 @@ No row = the frontend draws a generated placeholder.
 | `current_episode` | smallint, null | Series only; last episode watched in `current_season` (0 = none yet), 0–9999. |
 | `added_at` / `updated_at` | timestamptz, not null, default `now()` | |
 
+| `series_id` | integer, FK → `media.book_series.id` `ON DELETE SET NULL`, null, indexed | Books only; the series must be the entry owner's. |
+| `series_volume` | smallint, null | Volume number in the series, 0–9999; null = unnumbered. |
+
 Unique `(user_id, media_item_id)` (`uq_library_entries_user_id`).
+
+### `media.book_series`
+
+A user's own grouping of books (One Piece, Dune…); the volumes are their library entries. Per user, not in the shared catalog: Open Library has no reliable series data.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | integer, PK | |
+| `user_id` | integer, FK → `core.users.id`, not null | |
+| `name` | text, not null | Trimmed, 1–200 chars. |
+| `created_at` | timestamptz, not null, default `now()` | |
+
+Unique index `uq_book_series_user_id_name` on `(user_id, lower(name))`.
 
 ### `media.reading_sessions`
 
@@ -422,27 +438,30 @@ One read / watch of an entry (also used for films and series). Re-reads and re-w
 | `id` | integer, PK | |
 | `library_entry_id` | integer, FK → `media.library_entries.id` `ON DELETE CASCADE`, indexed | |
 | `started_on` | date, null | |
-| `finished_on` | date, null | null = still open. Not before `started_on`. |
+| `finished_on` | date, null | null = still open (unless `undated`). Not before `started_on`. |
+| `undated` | boolean, not null, default false | A finished read whose finish date is unknown ("I've read it, I don't remember when"). Requires `finished_on` null (`ck_reading_sessions_undated`). |
 
-Partial unique index `uq_reading_sessions_one_open` on `library_entry_id` where `finished_on` is null.
+Partial unique index `uq_reading_sessions_one_open` on `library_entry_id` where `finished_on` is null and not `undated`.
 
 ### Rules
 
 - **Scoping**: every route needs the `media` app (grant or admin). Library routes only see the current user's entries; anyone else's entry is a 404. The catalog and covers are shared by every media user.
-- **At most one open session** (`finished_on` null) per entry.
+- **At most one open session** (`finished_on` null and not `undated`) per entry.
 - **Start** (from `want`, `done` or `dropped`; refused when already `in_progress`): status → `in_progress`. Opens a session with `started_on = today` unless one is open (resuming a dropped item reuses it). For series, a new session resets progress to S1 E0.
-- **Finish** (from any status but `done`): status → `done`; the open session gets `finished_on = today`, or a finish-only session is created.
+- **Finish** (from any status but `done`): status → `done`; the open session gets `finished_on = today`, or a finish-only session is created. **Finish, date unknown** (`undated`): the open session is marked `undated` instead (keeping its `started_on`), or an undated session is created.
 - **Drop** (from `want` or `in_progress`): status → `dropped`; the open session stays open.
 - **+1 episode** (series, `in_progress`): `current_episode + 1`, rolling to the next season's E1 when the season's count is known and reached. On the last known episode of the last season it is refused (409) and the app offers Finish instead (new seasons may come). With unknown counts it just increments.
 - Refused transitions are 409. Editing sessions never changes the status.
-- **Initial status** on add goes through the same transitions from `want` (adding as Done records a finish-only session today).
+- **Initial status** on add goes through the same transitions from `want` (adding as Done records a finish-only session today, or an undated one with `undated`).
+- **Sessions saved by hand**: a finish date clears `undated`. Undated sessions sort after dated ones and don't count for `last_finished_on`.
+- **Series**: books only, and only the user's own (anyone else's id is a 404). Deleting a series detaches its volumes. **Mark** applies to the series' volumes in the range (`from_volume`–`to_volume`, inclusive; a range leaves unnumbered ones out; none = all): `read` finishes undated each that isn't `done`; `owned` sets ownership. Series counts: `volumes` = entries, `read` = `done` ones, `owned` = owned ones; `cover_item` = the lowest-numbered volume with a cover, else the lowest-numbered one.
 - **Series progress** = episodes of earlier seasons + current episode, over the sum of all seasons; only when every season's count is known.
 - **Displayed title** = `title_fr` for French viewers when set, else `title` (same for synopses). Text search matches `title`, `title_fr`, `original_title` and `creators`; the title sort uses the title in the user's saved language (`core.users.language`).
 - "Today" is the server's date (UTC in the containers).
 - Removing an entry deletes its sessions but keeps the catalog row and its cover.
 - **Ownership**: only books can be owned (`owned` true on a film or series is a 422).
 - **Shelves**: `books` = type `book`, `videos` = types `film` and `series`.
-- **Journal**: each session gives a "started" event on `started_on` and a "finished" event on `finished_on`, when set and inside the period (a month, or a whole year). Open sessions only give their start. Events are sorted newest first (then finished before started, then newest session).
+- **Journal**: each session gives a "started" event on `started_on` and a "finished" event on `finished_on`, when set and inside the period (a month, or a whole year). Open sessions only give their start; undated ones only give their start, if they have one. Events are sorted newest first (then finished before started, then newest session).
 
 ## Business rules (cross-schema)
 

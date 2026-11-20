@@ -1,0 +1,242 @@
+<section class="tool" abFileDrop (abFileDrop)="dropped($event)">
+  <header class="tool-head">
+    <div>
+      <h1>{{ 'tool.sign.title' | translate }}</h1>
+      <p class="lead">{{ 'tool.sign.lead' | translate }}</p>
+    </div>
+    @if (source(); as source) {
+      <ab-file-head [source]="source" (picked)="open($event)" />
+    }
+  </header>
+
+  <ab-skipped [skipped]="skipped()" [error]="job.error()" />
+
+  <div class="split">
+    @if (source(); as source) {
+      <div class="sign-work">
+        @if (source.pages > 1) {
+          <div class="sign-strip" role="group" [attr.aria-label]="'common.pagesLabel' | translate">
+            @for (i of pageIndices(); track i) {
+              <button
+                type="button"
+                class="sign-thumb"
+                [attr.aria-pressed]="current() === i"
+                [attr.aria-label]="'common.pageN' | translate: { n: i + 1 }"
+                (click)="goTo(i)"
+              >
+                <ab-page-thumb [bytes]="source.bytes" [index]="i" />
+                <span class="caption">{{ i + 1 }}</span>
+                @if (perPage().get(i); as count) {
+                  <span class="sign-count">{{ count }}</span>
+                }
+              </button>
+            }
+          </div>
+        }
+
+        <div class="sign-view">
+          @if (box(); as box) {
+            <div
+              class="sign-page"
+              [style.aspect-ratio]="box.width + ' / ' + box.height"
+              [style.width]="'min(100%, calc(75vh * ' + box.width / box.height + '))'"
+              (pointerdown)="selected.set(null)"
+              (pointermove)="dragTo($event)"
+              (pointerup)="letGo()"
+              (pointercancel)="letGo()"
+            >
+              @if (pageUrl(); as url) {
+                <img class="sign-sheet" [src]="url" alt="" draggable="false" />
+              }
+              @for (s of shown(); track s.id) {
+                <div
+                  class="stamp"
+                  tabindex="0"
+                  role="button"
+                  [class.selected]="selected() === s.id"
+                  [attr.aria-label]="'sign.stampLabel' | translate"
+                  [style.left.%]="s.x * 100"
+                  [style.top.%]="s.y * 100"
+                  [style.width.%]="s.width * 100"
+                  [style.height.%]="s.height * 100"
+                  (pointerdown)="grab($event, s, 'move')"
+                  (keydown)="key($event, s)"
+                  (focus)="selected.set(s.id)"
+                >
+                  <img [src]="s.url" alt="" draggable="false" />
+                  @if (selected() === s.id) {
+                    <button
+                      type="button"
+                      class="stamp-remove"
+                      [attr.aria-label]="'sign.removeStamp' | translate"
+                      (pointerdown)="$event.stopPropagation()"
+                      (click)="removeStamp(s.id)"
+                    >
+                      <ab-icon name="x" />
+                    </button>
+                    <span
+                      class="stamp-resize"
+                      [attr.aria-label]="'sign.resize' | translate"
+                      (pointerdown)="grab($event, s, 'resize')"
+                    ></span>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <span class="thumb-blank"></span>
+          }
+          <div class="sign-nav">
+            <button
+              type="button"
+              class="icon-btn raised"
+              [attr.aria-label]="'sign.prev' | translate"
+              [disabled]="current() === 0"
+              (click)="goTo(current() - 1)"
+            >
+              <ab-icon name="chevron-left" />
+            </button>
+            <span class="mono">{{ current() + 1 }} / {{ source.pages }}</span>
+            <button
+              type="button"
+              class="icon-btn raised"
+              [attr.aria-label]="'sign.next' | translate"
+              [disabled]="current() === source.pages - 1"
+              (click)="goTo(current() + 1)"
+            >
+              <ab-icon name="chevron-right" />
+            </button>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="empty">
+        <ab-icon name="signature" class="empty-icon" />
+        <p>{{ 'common.emptyOne' | translate }}</p>
+        <ab-file-button
+          [label]="'common.choosePdf' | translate"
+          accept="application/pdf,.pdf"
+          [primary]="true"
+          (picked)="open($event)"
+        />
+      </div>
+    }
+
+    <aside class="options">
+      <div class="option">
+        <span class="option-label">{{ 'sign.images' | translate }}</span>
+        <div class="sign-adds">
+          <ab-file-button
+            [label]="'sign.addImage' | translate"
+            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+            [multiple]="true"
+            (picked)="addImages($event)"
+          />
+          <button type="button" class="btn-add" (click)="drawing.set(true)">
+            <ab-icon name="signature" /> {{ 'sign.draw' | translate }}
+          </button>
+        </div>
+        @if (images().length) {
+          <p class="hint">
+            {{ (source() ? 'sign.placeHint' : 'sign.openFirst') | translate }}
+          </p>
+          <ul class="sign-images">
+            @for (image of images(); track image.id) {
+              <li class="sign-image">
+                <button
+                  type="button"
+                  class="sign-image-pick"
+                  [disabled]="!source()"
+                  [attr.aria-label]="'sign.place' | translate: { name: image.name }"
+                  (click)="place(image)"
+                >
+                  <img [src]="image.url" alt="" />
+                </button>
+                <div class="sign-image-info">
+                  <span class="chip-name">{{ image.name }}</span>
+                  @if (!image.drawn) {
+                    <label class="sign-check">
+                      <input
+                        type="checkbox"
+                        [checked]="image.clearWhite"
+                        (change)="setClearWhite(image, $any($event.target).checked)"
+                      />
+                      {{ 'sign.clearWhite' | translate }}
+                    </label>
+                    @if (image.clearWhite) {
+                      <label class="sign-strength">
+                        <span class="muted">{{ 'sign.strength' | translate }}</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          [value]="image.strength"
+                          (change)="setStrength(image, $event)"
+                        />
+                      </label>
+                    }
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="icon-btn danger"
+                  [attr.aria-label]="'sign.removeImage' | translate: { name: image.name }"
+                  (click)="removeImage(image)"
+                >
+                  <ab-icon name="trash" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (selectedStamp(); as stamp) {
+        <div class="option">
+          <span class="option-label">{{ 'sign.selected' | translate }}</span>
+          <p class="hint">{{ 'sign.keys' | translate }}</p>
+          <div class="sign-adds">
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="(source()?.pages ?? 1) < 2"
+              (click)="copyToAll(stamp)"
+            >
+              <ab-icon name="copy" /> {{ 'sign.copyAll' | translate }}
+            </button>
+            <button type="button" class="btn-secondary" (click)="removeStamp(stamp.id)">
+              <ab-icon name="trash" /> {{ 'sign.removeStamp' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </aside>
+  </div>
+
+  @if (source(); as source) {
+    <footer class="action-bar">
+      <span class="summary">
+        <strong>{{
+          'sign.placed' | plural: stamps().length | translate: { count: stamps().length }
+        }}</strong>
+        @if (stamps().length) {
+          · {{ 'sign.onPages' | plural: pagesUsed() | translate: { count: pagesUsed() } }}
+        }
+      </span>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="job.busy() || !stamps().length"
+        (click)="save(source)"
+      >
+        <ab-icon [name]="job.busy() ? 'loader' : 'download'" [class.spin]="job.busy()" />
+        {{ 'sign.run' | translate }}
+      </button>
+    </footer>
+  }
+
+  @if (drawing()) {
+    <ab-signature-pad (done)="addDrawing($event)" (closed)="drawing.set(false)" />
+  }
+</section>

@@ -32,3 +32,16 @@ describe('media labels', () => {
     expect(localTitle(SERIES, 'fr')).toBe('Severance');
   });
 });
+
+describe('volumeFromTitle', () => {
+  it('reads the volume number from a title', async () => {
+    const { volumeFromTitle } = await import('./labels');
+    expect(volumeFromTitle('One Piece, Vol. 12: The Legend')).toBe(12);
+    expect(volumeFromTitle('One Piece - Tome 3')).toBe(3);
+    expect(volumeFromTitle('Naruto T27')).toBe(27);
+    expect(volumeFromTitle('Berserk Volume 41')).toBe(41);
+    expect(volumeFromTitle('Saga #4')).toBe(4);
+    expect(volumeFromTitle('One Piece 100')).toBe(100);
+    expect(volumeFromTitle('Romance Dawn')).toBeNull();
+  });
+});

@@ -14,7 +14,9 @@ class RuleError(Exception):
 
 
 def open_session(entry: LibraryEntry) -> ReadingSession | None:
-    return next((s for s in entry.sessions if s.finished_on is None), None)
+    return next(
+        (s for s in entry.sessions if s.finished_on is None and not s.undated), None
+    )
 
 
 def _is_series(entry: LibraryEntry) -> bool:
@@ -34,14 +36,19 @@ def start(entry: LibraryEntry, today: date) -> None:
             entry.current_season, entry.current_episode = 1, 0
 
 
-def finish(entry: LibraryEntry, today: date) -> None:
-    """→ done. Closes the open session today, or records a finish-only session."""
+def finish(entry: LibraryEntry, today: date, undated: bool = False) -> None:
+    """→ done. Closes the open session today, or records a finish-only session.
+    `undated`: the finish date is unknown, so the session is marked undated
+    instead."""
     if entry.status == EntryStatus.done:
         raise RuleError("Already done")
     entry.status = EntryStatus.done
     session = open_session(entry)
     if session is None:
-        entry.sessions.append(ReadingSession(started_on=None, finished_on=today))
+        session = ReadingSession(started_on=None)
+        entry.sessions.append(session)
+    if undated:
+        session.finished_on, session.undated = None, True
     else:
         session.finished_on = max(today, session.started_on or today)
 
@@ -102,11 +109,13 @@ def series_progress(entry: LibraryEntry) -> tuple[int, int] | None:
     return min(watched, total), total
 
 
-def apply_initial_status(entry: LibraryEntry, status: EntryStatus, today: date) -> None:
+def apply_initial_status(
+    entry: LibraryEntry, status: EntryStatus, today: date, undated: bool = False
+) -> None:
     """Status chosen on the add form, reached through the normal transitions."""
     if status == EntryStatus.in_progress:
         start(entry, today)
     elif status == EntryStatus.done:
-        finish(entry, today)
+        finish(entry, today, undated)
     elif status == EntryStatus.dropped:
         drop(entry)

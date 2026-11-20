@@ -4,7 +4,7 @@ import { setup, text } from '../testing';
 import { Home } from './home';
 
 describe('Home', () => {
-  it('lists the five tools', async () => {
+  it('lists the six tools', async () => {
     setup();
     const fixture = TestBed.createComponent(Home);
     await fixture.whenStable();
@@ -16,6 +16,7 @@ describe('Home', () => {
       '/organize',
       '/images-to-pdf',
       '/pdf-to-images',
+      '/sign',
     ]);
     expect(text(cards[0].querySelector('.tool-name'))).toBe('Fusionner');
   });

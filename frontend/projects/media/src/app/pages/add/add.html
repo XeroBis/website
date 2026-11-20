@@ -1,21 +1,28 @@
 <div class="add-page">
   <header>
     <h1 class="display">{{ 'add.title' | translate }}</h1>
+    @if (series(); as s) {
+      <p class="series-note">
+        <ab-icon name="layers" /> {{ 'add.addingTo' | translate: { name: s.name } }}
+      </p>
+    }
   </header>
 
-  <div class="chips types" role="group" [attr.aria-label]="'add.type' | translate">
-    @for (t of types; track t) {
-      <button
-        type="button"
-        class="chip"
-        [attr.data-type]="t"
-        [class.on]="type() === t"
-        (click)="setType(t)"
-      >
-        <ab-icon [name]="icon[t]" /> {{ typeLabel[t] | translate }}
-      </button>
-    }
-  </div>
+  @if (!series()) {
+    <div class="chips types" role="group" [attr.aria-label]="'add.type' | translate">
+      @for (t of types; track t) {
+        <button
+          type="button"
+          class="chip"
+          [attr.data-type]="t"
+          [class.on]="type() === t"
+          (click)="setType(t)"
+        >
+          <ab-icon [name]="icon[t]" /> {{ typeLabel[t] | translate }}
+        </button>
+      }
+    </div>
+  }
 
   <form class="search" role="search" (submit)="$event.preventDefault(); search()">
     <input
@@ -46,7 +53,7 @@
         <div class="chips">
           @for (s of initialStatuses; track s) {
             <button type="button" class="chip" [class.on]="status() === s" (click)="status.set(s)">
-              {{ statusLabel(s, type()) | translate }}
+              {{ statusText(s) | translate }}
             </button>
           }
         </div>
@@ -67,6 +74,19 @@
           </div>
         </div>
       }
+      @if (series()) {
+        <label class="volume">
+          <span class="label">{{ 'add.volume' | translate }}</span>
+          <input
+            class="field"
+            type="number"
+            name="volume"
+            min="0"
+            max="9999"
+            [(ngModel)]="volume"
+          />
+        </label>
+      }
     </div>
   </ng-template>
 
@@ -76,28 +96,80 @@
     }
     <ul class="results">
       @for (r of list; track r.external_id) {
-        <li [class.open]="selected() === r">
-          <button type="button" class="result" (click)="choose(r)">
-            @if (r.thumb_url) {
-              <img [src]="r.thumb_url" alt="" loading="lazy" />
-            } @else {
-              <span class="noimg"><ab-icon [name]="icon[r.type]" /></span>
-            }
-            <span class="text">
-              <strong>{{ r.title }}</strong>
-              <span class="muted"
-                >{{ r.year ?? '—' }}
-                @if (r.creators) {
-                  · {{ r.creators }}
-                }
+        <li [class.open]="selected() === r" data-testid="result">
+          <div class="row-main">
+            <button type="button" class="result" (click)="choose(r)">
+              @if (r.thumb_url) {
+                <img [src]="r.thumb_url" alt="" loading="lazy" />
+              } @else {
+                <span class="noimg"><ab-icon [name]="icon[r.type]" /></span>
+              }
+              <span class="text">
+                <strong>{{ r.title }}</strong>
+                <span class="muted"
+                  >{{ r.year ?? '—' }}
+                  @if (r.creators) {
+                    · {{ r.creators }}
+                  }
+                </span>
               </span>
-            </span>
-            @if (r.library_entry_id !== null) {
-              <span class="pill"
-                >{{ 'add.inLibrary' | translate }} <ab-icon name="arrow-right"
-              /></span>
-            }
-          </button>
+              @if (r.library_entry_id !== null) {
+                <span class="pill"
+                  >{{ 'add.inLibrary' | translate }} <ab-icon name="arrow-right"
+                /></span>
+              }
+            </button>
+            <div class="quick" role="group" [attr.aria-label]="'add.quickAdd' | translate">
+              @if (r.library_entry_id === null) {
+                <button
+                  type="button"
+                  class="btn soft small"
+                  data-quick="want"
+                  [disabled]="adding().has(r.external_id)"
+                  (click)="addWant(r)"
+                >
+                  <ab-icon name="plus" />
+                  {{ (type() === 'book' ? 'add.quick.want' : 'add.quick.wantWatch') | translate }}
+                </button>
+              }
+              <button
+                type="button"
+                class="chip"
+                data-quick="read"
+                [class.on]="r.library_status === 'done'"
+                [attr.aria-pressed]="r.library_status === 'done'"
+                [disabled]="adding().has(r.external_id) || r.library_status === 'done'"
+                (click)="markRead(r)"
+              >
+                @if (r.library_status === 'done') {
+                  <ab-icon name="check" />
+                }
+                {{ (type() === 'book' ? 'add.quick.read' : 'add.quick.watched') | translate }}
+              </button>
+              @if (type() === 'book') {
+                <button
+                  type="button"
+                  class="chip"
+                  data-quick="owned"
+                  [class.on]="!!r.library_owned"
+                  [attr.aria-pressed]="!!r.library_owned"
+                  [disabled]="adding().has(r.external_id)"
+                  (click)="toggleOwned(r)"
+                >
+                  @if (r.library_owned) {
+                    <ab-icon name="check" />
+                  }
+                  {{ 'add.quick.owned' | translate }}
+                </button>
+              }
+              @if (adding().has(r.external_id)) {
+                <span class="muted small">{{ 'add.saving' | translate }}</span>
+              }
+            </div>
+          </div>
+          @if (rowErrors()[r.external_id]; as message) {
+            <p class="error small" role="alert">{{ message | translate }}</p>
+          }
           @if (selected() === r) {
             <div class="confirm">
               <ng-container *ngTemplateOutlet="options" />
@@ -112,6 +184,13 @@
         </li>
       }
     </ul>
+    @if (hasMore()) {
+      <p class="more">
+        <button type="button" class="btn ghost" [disabled]="loadingMore()" (click)="more()">
+          {{ (loadingMore() ? 'add.searching' : 'add.more') | translate }}
+        </button>
+      </p>
+    }
   }
 
   @if (!manual()) {
@@ -165,9 +244,12 @@
   }
 
   <p class="back">
-    <a [routerLink]="shelfUrl(type())" class="muted"
+    <a [routerLink]="backUrl()" class="muted"
       ><ab-icon name="arrow-left" />
-      {{ (type() === 'book' ? 'add.backBooks' : 'add.backVideos') | translate }}</a
+      {{
+        (series() ? 'add.backSeries' : type() === 'book' ? 'add.backBooks' : 'add.backVideos')
+          | translate
+      }}</a
     >
   </p>
 </div>

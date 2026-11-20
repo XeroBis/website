@@ -10,6 +10,7 @@ import { LanguageService, User, provideI18n } from '@shared';
 
 import en from '../i18n/en.json';
 import fr from '../i18n/fr.json';
+import { Raster } from './pdf/raster';
 import { PdfRenderer } from './pdf/renderer';
 
 // Spec helpers.
@@ -49,6 +50,20 @@ export class FakeRenderer {
   }
 }
 
+/** No canvas in specs: every image is 200×100, cleaning returns the PNG fixture. */
+export class FakeRaster {
+  readonly cleaned: { strength: number }[] = [];
+
+  size(blob: Blob): Promise<{ width: number; height: number } | null> {
+    return Promise.resolve(blob.size ? { width: 200, height: 100 } : null);
+  }
+
+  clearWhite(_blob: Blob, strength: number): Promise<Blob> {
+    this.cleaned.push({ strength });
+    return Promise.resolve(new Blob([PNG.slice()], { type: 'image/png' }));
+  }
+}
+
 /** The app's real providers, a fake backend and a fake renderer. Language starts as French. */
 export function setup(
   routes: Routes = [],
@@ -56,9 +71,11 @@ export function setup(
 ): {
   http: HttpTestingController;
   renderer: FakeRenderer;
+  raster: FakeRaster;
 } {
   localStorage.setItem('language', 'fr');
   const renderer = new FakeRenderer();
+  const raster = new FakeRaster();
   TestBed.configureTestingModule({
     providers: [
       provideRouter(routes),
@@ -66,10 +83,11 @@ export function setup(
       provideHttpClientTesting(),
       provideI18n({ en, fr }),
       { provide: PdfRenderer, useValue: renderer },
+      { provide: Raster, useValue: raster },
       ...providers,
     ],
   });
-  return { http: TestBed.inject(HttpTestingController), renderer };
+  return { http: TestBed.inject(HttpTestingController), renderer, raster };
 }
 
 /** Answers the session check made at startup. */

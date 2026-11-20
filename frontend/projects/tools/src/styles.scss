@@ -42,6 +42,8 @@
   --tl-images-bg: #f1eafb;
   --tl-to-images: #b0274f;
   --tl-to-images-bg: #fbe9ee;
+  --tl-sign: #2f7a3a;
+  --tl-sign-bg: #e7f4e9;
 
   --radius-sm: 8px;
   --radius: 12px;
@@ -89,6 +91,8 @@
   --tl-images-bg: rgb(185 155 245 / 14%);
   --tl-to-images: #f07fa0;
   --tl-to-images-bg: rgb(240 127 160 / 14%);
+  --tl-sign: #7fd08b;
+  --tl-sign-bg: rgb(127 208 139 / 14%);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
   --shadow-sheet: 0 1px 2px rgb(0 0 0 / 50%), 0 4px 12px -6px rgb(0 0 0 / 70%);
@@ -508,6 +512,10 @@ ab-header {
   &[data-tool='pdfToImages'] {
     --tint: var(--tl-to-images);
     --tint-bg: var(--tl-to-images-bg);
+  }
+  &[data-tool='sign'] {
+    --tint: var(--tl-sign);
+    --tint-bg: var(--tl-sign-bg);
   }
 }
 
@@ -979,6 +987,307 @@ ab-header {
     width: 100%;
     height: 100%;
     object-fit: fill;
+  }
+}
+
+/* Sign: a strip of pages, the page shown large with its images over it. */
+
+.sign-work {
+  flex: 999 1 34rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.sign-strip {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--tl-tray);
+}
+
+.sign-thumb {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 5rem;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ab-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  ab-page-thumb {
+    height: 5.5rem;
+  }
+  &[aria-pressed='true'] {
+    background: var(--tl-accent-soft);
+    color: var(--tl-accent-strong);
+  }
+  &[aria-pressed='true'] ab-page-thumb img {
+    box-shadow: 0 0 0 3px var(--ab-accent);
+  }
+}
+
+.sign-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--tl-sign);
+  color: var(--ab-surface);
+  font-size: 0.7rem;
+}
+
+.sign-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--tl-tray);
+
+  > .thumb-blank {
+    width: min(100%, 30rem);
+  }
+}
+
+.sign-page {
+  position: relative;
+  background: #fff;
+  box-shadow: var(--shadow-sheet);
+  touch-action: none;
+  user-select: none;
+}
+
+.sign-sheet {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sign-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ab-muted);
+  font-size: 0.85rem;
+}
+
+.stamp {
+  position: absolute;
+  outline: 1px dashed transparent;
+  cursor: move;
+  touch-action: none;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  &:hover {
+    outline-color: color-mix(in srgb, var(--ab-accent) 60%, transparent);
+  }
+  &.selected,
+  &:focus-visible {
+    outline: 2px solid var(--ab-accent);
+    outline-offset: 1px;
+  }
+}
+
+.stamp-remove {
+  position: absolute;
+  top: -0.9rem;
+  right: -0.9rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ab-surface);
+  color: var(--ab-muted);
+  box-shadow: var(--shadow-sheet);
+
+  &:hover {
+    color: var(--tl-danger);
+  }
+}
+
+.stamp-resize {
+  position: absolute;
+  right: -0.55rem;
+  bottom: -0.55rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--ab-surface);
+  border-radius: 999px;
+  background: var(--ab-accent);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+@media (hover: none) {
+  .stamp-resize {
+    right: -0.8rem;
+    bottom: -0.8rem;
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+}
+
+.sign-adds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sign-images {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sign-image {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: var(--tl-raised);
+}
+
+// A checkerboard behind the image, so a transparent background shows as such.
+.sign-image-pick {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 4rem;
+  padding: 0.25rem;
+  border: 1px solid var(--tl-line);
+  border-radius: var(--radius-sm);
+  background: repeating-conic-gradient(#e6e9ee 0 25%, #fff 0 50%) 0 0 / 12px 12px;
+  cursor: copy;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  &:hover:not(:disabled) {
+    border-color: var(--ab-accent);
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+.sign-image-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.8rem;
+}
+
+.sign-check,
+.sign-strength {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  input {
+    accent-color: var(--ab-accent);
+  }
+  input[type='range'] {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* The signature pad, a dialog over the page. */
+
+.pad-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(10 12 18 / 55%);
+}
+
+.pad {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(44rem, 100%);
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--ab-surface);
+  box-shadow: var(--shadow-lift);
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+// Always a white sheet, so blue and black ink read the same in either theme.
+.pad-canvas {
+  width: 100%;
+  height: clamp(10rem, 40vh, 16rem);
+  border: 1px solid var(--tl-line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(#c7ced9, #c7ced9) 1.5rem calc(100% - 3rem) / calc(100% - 3rem) 1px no-repeat,
+    #fff;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.pad-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pad-spacer {
+  flex: 1;
+}
+
+.ink-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.3rem;
+  border-radius: 999px;
+  background: #111;
+
+  &[data-ink='blue'] {
+    background: #1a3fb0;
   }
 }
 

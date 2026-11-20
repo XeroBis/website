@@ -1,0 +1,141 @@
+<div class="series-page">
+  @if (error()) {
+    <p class="error" role="alert">{{ error()! | translate }}</p>
+  }
+
+  @if (series(); as s) {
+    <header class="head">
+      <div class="title">
+        <span class="pill type" data-type="book"
+          ><ab-icon name="layers" /> {{ 'series.kind' | translate }}</span
+        >
+        <input
+          class="display name"
+          [attr.aria-label]="'series.name' | translate"
+          [(ngModel)]="name"
+          (blur)="rename()"
+          (keydown.enter)="$any($event.target).blur()"
+        />
+        <p class="counts muted">
+          {{ 'series.counts' | translate: { volumes: s.volumes, read: s.read, owned: s.owned } }}
+        </p>
+      </div>
+      <a class="btn" routerLink="/add" [queryParams]="{ type: 'book', series: s.id }"
+        ><ab-icon name="plus" /> {{ 'series.addVolumes' | translate }}</a
+      >
+    </header>
+
+    @if (s.volumes) {
+      <form class="bulk panel" (submit)="$event.preventDefault()">
+        <span class="label">{{ 'series.bulk' | translate }}</span>
+        <div class="range">
+          <input
+            class="field"
+            type="number"
+            name="from"
+            [attr.aria-label]="'series.from' | translate"
+            min="0"
+            max="9999"
+            [placeholder]="'series.from' | translate"
+            [(ngModel)]="from"
+          />
+          <span aria-hidden="true">–</span>
+          <input
+            class="field"
+            type="number"
+            name="to"
+            [attr.aria-label]="'series.to' | translate"
+            min="0"
+            max="9999"
+            [placeholder]="'series.to' | translate"
+            [(ngModel)]="to"
+          />
+        </div>
+        <div class="actions">
+          <button
+            type="button"
+            class="btn soft small"
+            [disabled]="busy()"
+            (click)="mark({ read: true })"
+          >
+            <ab-icon name="check" /> {{ 'series.markRead' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn soft small"
+            [disabled]="busy()"
+            (click)="mark({ owned: true })"
+          >
+            {{ 'series.markOwned' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn ghost small"
+            [disabled]="busy()"
+            (click)="mark({ owned: false })"
+          >
+            {{ 'series.markNotOwned' | translate }}
+          </button>
+        </div>
+        <p class="muted small hint">{{ 'series.bulkHint' | translate }}</p>
+      </form>
+
+      <ul class="volumes">
+        @for (e of s.entries; track e.id) {
+          <li data-testid="volume">
+            <a
+              abPoster
+              class="thumb"
+              [item]="e.item"
+              [showText]="false"
+              [showType]="false"
+              [routerLink]="['/entries', e.id]"
+              tabindex="-1"
+              aria-hidden="true"
+            ></a>
+            <span class="number">{{
+              e.series_volume === null
+                ? '—'
+                : ('entry.volumeShort' | translate: { volume: e.series_volume })
+            }}</span>
+            <div class="text">
+              <a class="title" [routerLink]="['/entries', e.id]">{{
+                e.item | localTitle: lang()
+              }}</a>
+              <span class="status" [class]="e.status">{{
+                statusLabel(e.status, 'book') | translate
+              }}</span>
+            </div>
+            <button
+              type="button"
+              class="chip"
+              [class.on]="e.owned"
+              [attr.aria-pressed]="e.owned"
+              [disabled]="busy()"
+              (click)="toggleOwned(e)"
+            >
+              {{ 'entry.ownIt' | translate }}
+            </button>
+            @if (e.status !== 'done') {
+              <button type="button" class="btn soft small" [disabled]="busy()" (click)="readOne(e)">
+                <ab-icon name="check" /> {{ 'series.read' | translate }}
+              </button>
+            } @else {
+              <span class="done"><ab-icon name="check" /></span>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty muted">{{ 'series.empty' | translate }}</p>
+    }
+
+    <p class="remove">
+      <button type="button" class="btn danger" (click)="remove()">
+        {{ 'series.delete' | translate }}
+      </button>
+    </p>
+  } @else if (!error()) {
+    <p class="muted">{{ 'entry.loading' | translate }}</p>
+  }
+</div>

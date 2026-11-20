@@ -1,15 +1,39 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Icon } from '@shared';
 
-import { TYPES, TYPE_ICON, TYPE_LABEL, shelfUrl, statusLabel } from '../../media/labels';
+import {
+  TYPES,
+  TYPE_ICON,
+  TYPE_LABEL,
+  shelfUrl,
+  statusLabel,
+  volumeFromTitle,
+} from '../../media/labels';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { EntryDetail, EntryStatus, MediaType, SearchResult } from '../../media/models';
+import {
+  AddOptions,
+  BookSeriesDetail,
+  EntryDetail,
+  EntryStatus,
+  MediaType,
+  SearchResult,
+} from '../../media/models';
 
+/** The confirm panel's status choices: "done" today, or with the date unknown. */
+type InitialStatus = EntryStatus | 'done_undated';
+
+/** Open Library's page size: a full page means there may be more. */
+const BOOK_PAGE = 20;
+
+/**
+ * Search and add. `?type=` presets the type; `?series=<id>` (the series page's
+ * Add volumes) ties every add to that series, numbering volumes from titles.
+ */
 @Component({
   selector: 'ab-add',
   imports: [Icon, FormsModule, NgTemplateOutlet, RouterLink, TranslatePipe],
@@ -18,21 +42,34 @@ import { EntryDetail, EntryStatus, MediaType, SearchResult } from '../../media/m
 export class Add {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
+  private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
 
-  /** Preset by the shelf's Add button (`?type=`). */
+  /** Set when adding volumes to a series. */
+  protected readonly series = signal<BookSeriesDetail | null>(null);
+  private readonly seriesId = Number(this.params.get('series')) || null;
+
+  /** Preset by the shelf's Add button (`?type=`); a series means books. */
   protected readonly type = signal<MediaType>(
-    initialType(inject(ActivatedRoute).snapshot.queryParamMap.get('type')),
+    this.seriesId ? 'book' : initialType(this.params.get('type')),
   );
   protected readonly query = signal('');
   protected readonly results = signal<SearchResult[] | null>(null);
   protected readonly searching = signal(false);
+  protected readonly loadingMore = signal(false);
+  protected readonly hasMore = signal(false);
+  private page = 1;
   protected readonly error = signal<string | null>(null);
+
+  /** Results being added by a quick button (by external id), and their errors. */
+  protected readonly adding = signal<ReadonlySet<string>>(new Set());
+  protected readonly rowErrors = signal<Readonly<Record<string, string>>>({});
 
   /** The result being confirmed, with the options chosen for it. */
   protected readonly selected = signal<SearchResult | null>(null);
-  protected readonly status = signal<EntryStatus>('want');
+  protected readonly status = signal<InitialStatus>('want');
   /** Books only. */
   protected readonly owned = signal(false);
+  protected readonly volume = signal<number | null>(null);
   protected readonly saving = signal(false);
 
   protected readonly manual = signal(false);
@@ -44,12 +81,37 @@ export class Add {
   protected readonly types = TYPES;
   protected readonly typeLabel = TYPE_LABEL;
   protected readonly icon = TYPE_ICON;
-  protected readonly shelfUrl = shelfUrl;
-  protected readonly statusLabel = statusLabel;
-  protected readonly initialStatuses: EntryStatus[] = ['want', 'in_progress', 'done'];
+  protected readonly initialStatuses: InitialStatus[] = [
+    'want',
+    'in_progress',
+    'done',
+    'done_undated',
+  ];
+  protected readonly backUrl = computed(() =>
+    this.seriesId ? `/series/${this.seriesId}` : shelfUrl(this.type()),
+  );
+
+  /** Volume numbers given during this visit, so "next number" keeps counting. */
+  private readonly usedVolumes: number[] = [];
+
+  constructor() {
+    if (this.seriesId) {
+      this.api.series(this.seriesId).then(
+        (s) => this.series.set(s),
+        (e) => this.error.set(errorMessage(e)),
+      );
+    }
+  }
+
+  protected statusText(s: InitialStatus): string {
+    if (s === 'done_undated')
+      return this.type() === 'book' ? 'add.readUndated' : 'add.watchedUndated';
+    if (s === 'done') return this.type() === 'book' ? 'add.readToday' : 'add.watchedToday';
+    return statusLabel(s, this.type());
+  }
 
   protected setType(type: MediaType): void {
-    if (type === this.type()) return;
+    if (type === this.type() || this.seriesId) return;
     this.type.set(type);
     this.results.set(null);
     this.selected.set(null);
@@ -63,13 +125,40 @@ export class Add {
     this.searching.set(true);
     this.error.set(null);
     this.selected.set(null);
+    this.rowErrors.set({});
+    this.page = 1;
     try {
-      this.results.set(await this.api.search(this.type(), q));
+      const hits = await this.api.search(this.type(), q);
+      this.results.set(hits);
+      this.hasMore.set(this.type() === 'book' && hits.length >= BOOK_PAGE);
     } catch (e) {
       this.results.set(null);
+      this.hasMore.set(false);
       this.error.set(errorMessage(e));
     } finally {
       this.searching.set(false);
+    }
+  }
+
+  /** Books: the next 20 Open Library results, appended. */
+  protected async more(): Promise<void> {
+    const q = this.query().trim();
+    if (!q) return;
+    this.loadingMore.set(true);
+    this.error.set(null);
+    try {
+      const hits = await this.api.search(this.type(), q, this.page + 1);
+      this.page += 1;
+      const seen = new Set(this.results()?.map((r) => r.external_id));
+      this.results.update((list) => [
+        ...(list ?? []),
+        ...hits.filter((h) => !seen.has(h.external_id)),
+      ]);
+      this.hasMore.set(hits.length >= BOOK_PAGE);
+    } catch (e) {
+      this.error.set(errorMessage(e));
+    } finally {
+      this.loadingMore.set(false);
     }
   }
 
@@ -81,6 +170,97 @@ export class Add {
     this.selected.set(this.selected() === result ? null : result);
     this.status.set('want');
     this.owned.set(false);
+    this.volume.set(this.seriesId ? this.volumeFor(result.title) : null);
+  }
+
+  /** The number in the title, else the next after the series' highest. */
+  private volumeFor(title: string): number {
+    const found = volumeFromTitle(title);
+    if (found !== null) return found;
+    const numbers = [
+      ...(this.series()?.entries.map((e) => e.series_volume ?? 0) ?? []),
+      ...this.usedVolumes,
+    ];
+    return Math.max(0, ...numbers) + 1;
+  }
+
+  private seriesOptions(volume: number | null): Partial<AddOptions> {
+    if (!this.seriesId) return {};
+    if (volume !== null) this.usedVolumes.push(volume);
+    return { series_id: this.seriesId, series_volume: volume };
+  }
+
+  /**
+   * The row's toggles: the first tap adds the result (staying on the page),
+   * later taps change that entry, so Read and Owned combine in any order.
+   */
+  protected addWant(result: SearchResult): Promise<void> {
+    return this.onRow(result, () => this.add(result, 'want', false));
+  }
+
+  /** Read / Watched, with the date unknown (bulk adds are mostly old reads). */
+  protected markRead(result: SearchResult): Promise<void> {
+    if (result.library_status === 'done') return Promise.resolve();
+    return this.onRow(result, async () => {
+      if (result.library_entry_id === null) return this.add(result, 'done', false);
+      const entry = await this.api.act(result.library_entry_id, 'finish', true);
+      return { ...result, library_status: entry.status };
+    });
+  }
+
+  /** Books: toggles ownership (adding the book, to read, if it's new). */
+  protected toggleOwned(result: SearchResult): Promise<void> {
+    return this.onRow(result, async () => {
+      if (result.library_entry_id === null) return this.add(result, 'want', true);
+      const entry = await this.api.update(result.library_entry_id, {
+        owned: !result.library_owned,
+      });
+      return { ...result, library_owned: entry.owned };
+    });
+  }
+
+  private async add(
+    result: SearchResult,
+    status: EntryStatus,
+    owned: boolean,
+  ): Promise<SearchResult> {
+    const entry = await this.api.addFromSearch(result, {
+      status,
+      undated: status === 'done',
+      owned: result.type === 'book' && owned,
+      ...this.seriesOptions(this.seriesId ? this.volumeFor(result.title) : null),
+    });
+    if (this.selected() === result) this.selected.set(null);
+    return {
+      ...result,
+      library_entry_id: entry.id,
+      library_status: entry.status,
+      library_owned: entry.owned,
+    };
+  }
+
+  /** Runs one change on a row (one at a time per row), then swaps in its new state. */
+  private async onRow(result: SearchResult, change: () => Promise<SearchResult>): Promise<void> {
+    const id = result.external_id;
+    if (this.adding().has(id)) return;
+    this.adding.update((s) => new Set(s).add(id));
+    this.rowErrors.update((errors) => {
+      const next = { ...errors };
+      delete next[id];
+      return next;
+    });
+    try {
+      const updated = await change();
+      this.results.update((list) => (list ?? []).map((r) => (r.external_id === id ? updated : r)));
+    } catch (e) {
+      this.rowErrors.update((errors) => ({ ...errors, [id]: errorMessage(e) }));
+    } finally {
+      this.adding.update((s) => {
+        const next = new Set(s);
+        next.delete(id);
+        return next;
+      });
+    }
   }
 
   protected openManual(): void {
@@ -88,13 +268,25 @@ export class Add {
     this.selected.set(null);
     this.status.set('want');
     this.owned.set(false);
+    this.volume.set(this.seriesId ? this.volumeFor(this.query()) : null);
     if (!this.manualTitle()) this.manualTitle.set(this.query().trim());
+  }
+
+  private options(): AddOptions {
+    const status = this.status();
+    const volume = this.volume();
+    return {
+      status: status === 'done_undated' ? 'done' : status,
+      undated: status === 'done_undated',
+      owned: this.type() === 'book' && this.owned(),
+      ...this.seriesOptions(volume === null || String(volume) === '' ? null : Number(volume)),
+    };
   }
 
   protected addSelected(): Promise<void> {
     const result = this.selected();
     if (!result) return Promise.resolve();
-    return this.save(() => this.api.addFromSearch(result, this.status(), this.ownedIfBook()));
+    return this.save(() => this.api.addFromSearch(result, this.options()));
   }
 
   protected addManual(): Promise<void> {
@@ -114,14 +306,9 @@ export class Add {
           .split(',')
           .map((g) => g.trim())
           .filter(Boolean),
-        status: this.status(),
-        owned: this.ownedIfBook(),
+        ...this.options(),
       }),
     );
-  }
-
-  private ownedIfBook(): boolean {
-    return this.type() === 'book' && this.owned();
   }
 
   private async save(request: () => Promise<EntryDetail>): Promise<void> {

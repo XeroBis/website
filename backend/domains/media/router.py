@@ -18,6 +18,7 @@ from core.deps import require_app
 from core.models import User
 from domains.media import catalog, rules, schemas, sources
 from domains.media.models import (
+    BookSeries,
     Cover,
     EntryStatus,
     LibraryEntry,
@@ -48,6 +49,9 @@ def _summary_fields(entry: LibraryEntry) -> dict:
         owned=entry.owned,
         current_season=entry.current_season,
         current_episode=entry.current_episode,
+        series_id=entry.series_id,
+        series_name=entry.series.name if entry.series else None,
+        series_volume=entry.series_volume,
         added_at=entry.added_at,
         updated_at=entry.updated_at,
         last_finished_on=max(finished, default=None),
@@ -99,21 +103,31 @@ def _commit_detail(db: Session, entry: LibraryEntry) -> schemas.EntryDetail:
     return _detail(entry)
 
 
+def _get_series(db: Session, user: User, series_id: int) -> BookSeries:
+    series = db.get(BookSeries, series_id)
+    if series is None or series.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Series not found")
+    return series
+
+
 def _create_entry(
-    db: Session,
-    user: User,
-    item: MediaItem,
-    initial_status: EntryStatus,
-    owned: bool,
+    db: Session, user: User, item: MediaItem, options: schemas._AddOptions
 ) -> LibraryEntry:
+    series = (
+        _get_series(db, user, options.series_id)
+        if options.series_id is not None
+        else None
+    )
     entry = LibraryEntry(
         user_id=user.id,
         media_item=item,
         status=EntryStatus.want,
-        owned=owned,
+        owned=options.owned,
+        series=series,
+        series_volume=options.series_volume,
         sessions=[],
     )
-    rules.apply_initial_status(entry, initial_status, date.today())
+    rules.apply_initial_status(entry, options.status, date.today(), options.undated)
     db.add(entry)
     return entry
 
@@ -176,20 +190,30 @@ def _item_from_source(
 def search(
     type: MediaType,
     q: str = Query(min_length=1, max_length=200),
+    page: int = Query(default=1, ge=1, le=100),
     user: User = Depends(media_user),
     db: Session = Depends(get_db),
 ):
+    """`page` > 1 (the next 20 Open Library results) is for books only."""
+    if page > 1 and type != MediaType.book:
+        raise HTTPException(status_code=422, detail="Only book searches have pages")
     language = sources.language(user.language)
     # Not held while the source answers (see _item_from_source).
     db.close()
     try:
-        hits = sources.search(type, q.strip(), language)
+        hits = sources.search(type, q.strip(), language, page)
     except sources.SourceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     source = sources.source_for(type)
-    in_library = dict(
-        db.query(MediaItem.external_id, LibraryEntry.id)
+    in_library = {
+        row.external_id: row
+        for row in db.query(
+            MediaItem.external_id,
+            LibraryEntry.id,
+            LibraryEntry.status,
+            LibraryEntry.owned,
+        )
         .join(LibraryEntry, LibraryEntry.media_item_id == MediaItem.id)
         .filter(
             LibraryEntry.user_id == user.id,
@@ -197,11 +221,19 @@ def search(
             MediaItem.external_id.in_([h.external_id for h in hits]),
         )
         .all()
-    )
-    return [
-        schemas.SearchResult(**vars(h), library_entry_id=in_library.get(h.external_id))
-        for h in hits
-    ]
+    }
+    results = []
+    for h in hits:
+        row = in_library.get(h.external_id)
+        results.append(
+            schemas.SearchResult(
+                **vars(h),
+                library_entry_id=row.id if row else None,
+                library_status=row.status if row else None,
+                library_owned=row.owned if row else None,
+            )
+        )
+    return results
 
 
 @router.post("/library/from-search", response_model=schemas.EntryDetail)
@@ -213,11 +245,13 @@ def add_from_search(
 ):
     """201 with the new entry, or 200 with the existing one if it's already in
     the library."""
+    if body.series_id is not None:
+        _get_series(db, user, body.series_id)  # 404 before any slow source call
     item = _item_from_source(db, user, body)
     existing = _entries(db, user).filter(LibraryEntry.media_item_id == item.id).first()
     if existing is not None:
         return _detail(existing)
-    entry = _create_entry(db, user, item, body.status, body.owned)
+    entry = _create_entry(db, user, item, body)
     response.status_code = status.HTTP_201_CREATED
     return _commit_detail(db, entry)
 
@@ -243,7 +277,7 @@ def add_manual(
         created_by_user_id=user.id,
     )
     db.add(item)
-    entry = _create_entry(db, user, item, body.status, body.owned)
+    entry = _create_entry(db, user, item, body)
     return _commit_detail(db, entry)
 
 
@@ -350,10 +384,16 @@ def update_entry(
             raise HTTPException(
                 status_code=422, detail="Season and episode are for series only"
             )
+    book = entry.media_item.type == MediaType.book
     if "owned" in changes:
         changes["owned"] = bool(changes["owned"])
-        if changes["owned"] and entry.media_item.type != MediaType.book:
+        if changes["owned"] and not book:
             raise HTTPException(status_code=422, detail=schemas.OWNED_BOOKS_ONLY)
+    if {"series_id", "series_volume"} & changes.keys():
+        if not book and (changes.get("series_id") or changes.get("series_volume")):
+            raise HTTPException(status_code=422, detail=schemas.SERIES_BOOKS_ONLY)
+        if changes.get("series_id") is not None:
+            _get_series(db, user, changes["series_id"])
     if "notes" in changes:
         changes["notes"] = (changes["notes"] or "").strip() or None
     for field, value in changes.items():
@@ -396,10 +436,12 @@ def start(
 @router.post("/library/{entry_id}/finish", response_model=schemas.EntryDetail)
 def finish(
     entry_id: int,
+    undated: bool = False,
     user: User = Depends(media_user),
     db: Session = Depends(get_db),
 ):
-    return _act(db, user, entry_id, lambda e: rules.finish(e, date.today()))
+    """`undated`: finished on an unknown date."""
+    return _act(db, user, entry_id, lambda e: rules.finish(e, date.today(), undated))
 
 
 @router.post("/library/{entry_id}/drop", response_model=schemas.EntryDetail)
@@ -426,10 +468,12 @@ def next_episode(
 def _check_single_open(
     entry: LibraryEntry, body: schemas.SessionIn, editing_id: int | None = None
 ) -> None:
-    if body.finished_on is not None:
+    if body.finished_on is not None or body.undated:
         return
     other_open = [
-        s for s in entry.sessions if s.finished_on is None and s.id != editing_id
+        s
+        for s in entry.sessions
+        if s.finished_on is None and not s.undated and s.id != editing_id
     ]
     if other_open:
         raise HTTPException(
@@ -458,7 +502,11 @@ def add_session(
     entry = _get_entry(db, user, entry_id)
     _check_single_open(entry, body)
     entry.sessions.append(
-        ReadingSession(started_on=body.started_on, finished_on=body.finished_on)
+        ReadingSession(
+            started_on=body.started_on,
+            finished_on=body.finished_on,
+            undated=body.undated,
+        )
     )
     return _commit_detail(db, entry)
 
@@ -477,6 +525,7 @@ def update_session(
     session = _get_session(entry, session_id)
     _check_single_open(entry, body, editing_id=session.id)
     session.started_on, session.finished_on = body.started_on, body.finished_on
+    session.undated = body.undated
     return _commit_detail(db, entry)
 
 
@@ -492,6 +541,137 @@ def delete_session(
     entry = _get_entry(db, user, entry_id)
     entry.sessions.remove(_get_session(entry, session_id))
     return _commit_detail(db, entry)
+
+
+# ── series ───────────────────────────────────────────────────────────────────
+
+
+def _volume_order(entry: LibraryEntry):
+    # By number, unnumbered last by title.
+    volume = entry.series_volume
+    return (volume is None, volume or 0, entry.media_item.title.lower(), entry.id)
+
+
+def _series_out(series: BookSeries, entries: list[LibraryEntry]) -> dict:
+    entries = sorted(entries, key=_volume_order)
+    cover = next((e for e in entries if e.media_item.has_cover), None) or next(
+        iter(entries), None
+    )
+    return dict(
+        id=series.id,
+        name=series.name,
+        volumes=len(entries),
+        read=sum(e.status == EntryStatus.done for e in entries),
+        owned=sum(e.owned for e in entries),
+        cover_item=(
+            schemas.MediaItemOut.model_validate(cover.media_item) if cover else None
+        ),
+    )
+
+
+def _series_detail(db: Session, user: User, series: BookSeries):
+    entries = sorted(
+        _entries(db, user).filter(LibraryEntry.series_id == series.id).all(),
+        key=_volume_order,
+    )
+    return schemas.SeriesDetail(
+        **_series_out(series, entries), entries=[_summary(e) for e in entries]
+    )
+
+
+def _save_series(db: Session, series: BookSeries) -> None:
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409, detail="You already have a series with that name"
+        ) from exc
+
+
+@router.get("/series", response_model=list[schemas.SeriesOut])
+def list_series(user: User = Depends(media_user), db: Session = Depends(get_db)):
+    all_series = (
+        db.query(BookSeries)
+        .filter(BookSeries.user_id == user.id)
+        .order_by(func.lower(BookSeries.name), BookSeries.id)
+        .all()
+    )
+    by_series: dict[int, list[LibraryEntry]] = {s.id: [] for s in all_series}
+    for entry in _entries(db, user).filter(LibraryEntry.series_id.isnot(None)):
+        by_series[entry.series_id].append(entry)
+    return [schemas.SeriesOut(**_series_out(s, by_series[s.id])) for s in all_series]
+
+
+@router.post(
+    "/series", response_model=schemas.SeriesOut, status_code=status.HTTP_201_CREATED
+)
+def create_series(
+    body: schemas.SeriesIn,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    series = BookSeries(user_id=user.id, name=body.name)
+    db.add(series)
+    _save_series(db, series)
+    return schemas.SeriesOut(**_series_out(series, []))
+
+
+@router.get("/series/{series_id}", response_model=schemas.SeriesDetail)
+def get_series(
+    series_id: int,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    return _series_detail(db, user, _get_series(db, user, series_id))
+
+
+@router.patch("/series/{series_id}", response_model=schemas.SeriesDetail)
+def rename_series(
+    series_id: int,
+    body: schemas.SeriesIn,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    series = _get_series(db, user, series_id)
+    series.name = body.name
+    _save_series(db, series)
+    return _series_detail(db, user, series)
+
+
+@router.delete("/series/{series_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_series(
+    series_id: int,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    """The volumes stay in the library, outside any series."""
+    db.delete(_get_series(db, user, series_id))
+    db.commit()
+
+
+@router.post("/series/{series_id}/mark", response_model=schemas.SeriesDetail)
+def mark_series(
+    series_id: int,
+    body: schemas.SeriesMark,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    series = _get_series(db, user, series_id)
+    query = _entries(db, user).filter(LibraryEntry.series_id == series.id)
+    if body.from_volume is not None:
+        query = query.filter(LibraryEntry.series_volume >= body.from_volume)
+    if body.to_volume is not None:
+        query = query.filter(LibraryEntry.series_volume <= body.to_volume)
+    today = date.today()
+    for entry in query.all():
+        if body.read and entry.status != EntryStatus.done:
+            rules.finish(entry, today, undated=True)
+        if body.owned is not None:
+            entry.owned = body.owned
+    db.commit()
+    db.expire_all()
+    return _series_detail(db, user, series)
 
 
 # ── journal ──────────────────────────────────────────────────────────────────

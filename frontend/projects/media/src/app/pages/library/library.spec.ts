@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { EntrySummary } from '../../media/models';
+import { BookSeries, EntrySummary } from '../../media/models';
 import { BOOK, FILM, SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
 import { Library } from './library';
 
@@ -38,12 +38,14 @@ describe('Library', () => {
   async function open(
     url = '/videos',
     entries = ENTRIES,
+    series: BookSeries[] = [],
   ): Promise<{ el: HTMLElement; params: URLSearchParams }> {
     const navigation = harness.navigateByUrl(url);
     await settle();
     const req = libraryRequest();
     const params = new URLSearchParams(req.request.params.toString());
     req.flush(entries);
+    if (url.startsWith('/books')) http.expectOne('/api/media/series').flush(series);
     const genres = http.expectOne((r) => r.url === '/api/media/library/genres');
     expect(genres.request.params.get('shelf')).toBe(url.startsWith('/books') ? 'books' : 'videos');
     genres.flush(['Action', 'Drama']);
@@ -140,5 +142,54 @@ describe('Library', () => {
     await settle();
     await harness.fixture.whenStable();
     expect(cells(el)[0].querySelector('.status')?.textContent).toBe('En cours');
+  });
+});
+
+describe('Library series cards', () => {
+  let http: HttpTestingController;
+  let harness: RouterTestingHarness;
+
+  beforeEach(async () => {
+    http = setup([{ path: 'books', component: Library, data: { shelf: 'books' } }]);
+    harness = await RouterTestingHarness.create();
+    flushMe(http);
+  });
+  afterEach(() => http.verify());
+
+  it('collapses the volumes of a series into one card', async () => {
+    const vol = (id: number, volume: number) =>
+      entry({
+        id,
+        item: { ...BOOK, id: 20 + id, title: `One Piece ${volume}` },
+        series_id: 4,
+        series_name: 'One Piece',
+        series_volume: volume,
+      });
+    const navigation = harness.navigateByUrl('/books');
+    await settle();
+    http
+      .expectOne((r) => r.url === '/api/media/library')
+      .flush([vol(1, 2), entry({ id: 9, item: BOOK }), vol(2, 1)]);
+    http.expectOne('/api/media/series').flush([
+      {
+        id: 4,
+        name: 'One Piece',
+        volumes: 100,
+        read: 60,
+        owned: 100,
+        cover_item: { ...BOOK, id: 22, title: 'One Piece 1' },
+      },
+    ]);
+    http.expectOne((r) => r.url === '/api/media/library/genres').flush([]);
+    await navigation;
+    await harness.fixture.whenStable();
+    const el = harness.routeNativeElement as HTMLElement;
+    const cells = [...el.querySelectorAll('.grid > .cell')];
+    expect(cells.map((c) => c.getAttribute('data-testid'))).toEqual(['series', 'entry']);
+    expect(cells[0].querySelector('.poster strong')?.textContent).toBe('One Piece');
+    expect(cells[0].querySelector('a.poster')?.getAttribute('href')).toBe('/series/4');
+    expect(cells[0].querySelector('.status')?.textContent?.trim()).toBe('60 / 100 lus');
+    expect(cells[0].querySelector('.owned')).not.toBeNull();
+    expect(el.querySelector('.count')?.textContent?.trim()).toBe('2 éléments');
   });
 });

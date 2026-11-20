@@ -20,7 +20,12 @@ def test_start_opens_a_session_today(client, add_manual):
     entry = act(client, add_manual()["id"], "start")
     assert entry["status"] == "in_progress"
     assert entry["sessions"] == [
-        {"id": entry["sessions"][0]["id"], "started_on": TODAY, "finished_on": None}
+        {
+            "id": entry["sessions"][0]["id"],
+            "started_on": TODAY,
+            "finished_on": None,
+            "undated": False,
+        }
     ]
 
 
@@ -103,6 +108,7 @@ def test_initial_status_goes_through_the_rules(add_manual, add_series):
         "id": done["sessions"][0]["id"],
         "started_on": None,
         "finished_on": TODAY,
+        "undated": False,
     }
 
     series = add_series([4], status="in_progress")
@@ -186,3 +192,54 @@ def test_season_fields_are_series_only(client, add_manual):
         f"/api/media/library/{add_manual()['id']}", json={"current_episode": 3}
     )
     assert r.status_code == 422
+
+
+# ── undated reads ───────────────────────────────────────────────────────────
+
+
+def test_finish_undated_records_a_read_without_date(client, add_manual):
+    entry = act(client, add_manual()["id"], "finish?undated=true")
+    assert entry["status"] == "done"
+    assert [
+        (s["started_on"], s["finished_on"], s["undated"]) for s in entry["sessions"]
+    ] == [(None, None, True)]
+    assert entry["last_finished_on"] is None
+    # Read again: the undated read isn't an open session.
+    entry = act(client, entry["id"], "start")
+    assert [s["undated"] for s in entry["sessions"]] == [False, True]
+
+
+def test_finish_undated_keeps_the_start_of_the_open_session(client, add_manual):
+    entry_id = add_manual()["id"]
+    act(client, entry_id, "start")
+    entry = act(client, entry_id, "finish?undated=true")
+    assert [
+        (s["started_on"], s["finished_on"], s["undated"]) for s in entry["sessions"]
+    ] == [(TODAY, None, True)]
+
+
+def test_add_as_read_undated(client, add_manual):
+    entry = add_manual(status="done", undated=True)
+    assert entry["sessions"][0]["undated"] is True
+    r = client.post(
+        "/api/media/library/manual",
+        json={"type": "book", "title": "X", "status": "want", "undated": True},
+    )
+    assert r.status_code == 422
+
+
+def test_sessions_by_hand_can_be_undated(client, add_manual):
+    entry_id = add_manual()["id"]
+    base = f"/api/media/library/{entry_id}/sessions"
+    e = client.post(base, json={"undated": True}).json()
+    # Doesn't block an open session.
+    e = client.post(base, json={"started_on": "2026-01-01"}).json()
+    assert len(e["sessions"]) == 2
+    undated = next(s for s in e["sessions"] if s["undated"])
+    # A finish date makes it a dated read.
+    e = client.put(
+        f"{base}/{undated['id']}", json={"finished_on": "2020-05-05", "undated": True}
+    ).json()
+    assert (
+        next(s for s in e["sessions"] if s["id"] == undated["id"])["undated"] is False
+    )

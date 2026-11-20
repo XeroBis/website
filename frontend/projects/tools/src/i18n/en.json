@@ -5,11 +5,12 @@
     "extract": "Extract",
     "organize": "Organize",
     "imagesToPdf": "Images → PDF",
-    "pdfToImages": "PDF → images"
+    "pdfToImages": "PDF → images",
+    "sign": "Sign / add image"
   },
   "home": {
     "title": "PDF tools",
-    "lead": "Merge, split, reorder and convert PDFs."
+    "lead": "Merge, split, reorder, convert and sign PDFs."
   },
   "tool": {
     "merge": {
@@ -41,6 +42,12 @@
       "desc": "Export pages as PNG or JPG; several pages come as a zip.",
       "title": "PDF → images",
       "lead": "Choose the pages to export. Several pages download as a zip."
+    },
+    "sign": {
+      "name": "Sign",
+      "desc": "Place a signature or any JPG/PNG image on the pages of a PDF.",
+      "title": "Sign / add an image",
+      "lead": "Upload a JPG or PNG, or draw your signature, then drag it into place."
     }
   },
   "common": {
@@ -113,6 +120,35 @@
     "selected": "{{count}} of {{total}} pages selected",
     "runOne": "Download image",
     "runMany": "Download {{count}} images (.zip)"
+  },
+  "sign": {
+    "images": "Images",
+    "addImage": "Add image",
+    "draw": "Draw signature",
+    "placeHint": "Click an image to place it on the page shown.",
+    "openFirst": "Open a PDF to place them.",
+    "place": "Place {{name}} on the page",
+    "removeImage": "Remove {{name}}",
+    "clearWhite": "Remove white background",
+    "strength": "Strength",
+    "stampLabel": "Placed image: drag to move",
+    "resize": "Resize",
+    "removeStamp": "Remove from page",
+    "selected": "Selected image",
+    "keys": "Drag to move, pull the corner to resize. Keyboard: arrows, + and −, Delete.",
+    "copyAll": "Copy to every page",
+    "prev": "Previous page",
+    "next": "Next page",
+    "drawTitle": "Draw your signature",
+    "drawArea": "Signature area",
+    "ink": "Ink",
+    "inks": { "black": "Black", "blue": "Blue" },
+    "clear": "Clear",
+    "cancel": "Cancel",
+    "use": "Use",
+    "placed": { "one": "{{count}} image placed", "other": "{{count}} images placed" },
+    "onPages": { "one": "on {{count}} page", "other": "on {{count}} pages" },
+    "run": "Save PDF"
   },
   "error": {
     "notPdf": "{{name}} isn't a PDF: skipped.",

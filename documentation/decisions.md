@@ -277,3 +277,21 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Statuses unchanged** (want / in progress / done / dropped for every type), independent of ownership: any combination is possible.
 - **One `library_entries` table and one `/add` page, over separate book and video tables**: the split is only in the pages and a `shelf` filter on the API, so sessions, rules and the catalog stay shared.
 - **Journal from the existing sessions**, over a separate log table: each session's start and finish dates are the events, so editing a session's dates updates the journal. It shows both starts and finishes.
+
+## Tools: sign / add an image to a PDF (2026-11-20)
+
+- **What**: a sixth tool, `/sign`: place uploaded JPG/PNG images or a signature drawn on a pad onto any pages of a PDF, move and resize them, save the PDF with them drawn on top. In the browser like the other tools; no new library.
+- **Drawn on the existing pages with pdf-lib**, over flattening pages to images: the text stays text and the file stays small. Placement is stored as fractions of the page as shown (pdf.js applies `/Rotate`) and mapped onto the page's crop box at save, so images land upright on rotated pages.
+- **Our own drawing pad** (a canvas and pointer events, ~150 lines), over the `signature_pad` library: plain strokes are enough, and it saves a dependency. Output is a transparent PNG cropped to the strokes.
+- **"Remove white background" on a canvas**, on by default for JPGs: a signature photographed on paper otherwise comes with a white box. A threshold with a soft edge, over a full background-removal model, which would be far heavier for no gain on ink on paper.
+- **Nothing remembered**, over an opt-in "remember in this browser": a stored signature is sensitive, and the app's rule is that a reload forgets everything.
+- **Not a digital signature**: it's a picture of a signature, with no certificate or tamper-proofing (see ideas.md for form filling and text fields).
+
+## Media: book series, quick add, undated reads (2026-11-20)
+
+- **What**: per-user book series (`media.book_series`, `library_entries.series_id` / `series_volume`), one card per series on the Bibliothèque and a series page with bulk marking; one-tap add buttons on search results and a **More results** page for Open Library; undated reads (`reading_sessions.undated`). Migration `0016`.
+- **Series per user, over the shared catalog**: Open Library's series data is sparse and inconsistent, so the grouping is the user's own, like their notes. Books only for now (film sagas stay in ideas.md).
+- **Read and Owned as toggles on each result, over one button per combination**: a combined "+ Read & owned" button vanished after the first tap, so the other half couldn't be added; the toggles stay and change the same entry (search results carry the entry's status and ownership for that).
+- **Volumes added from search, one tap each, over a range form creating manual volumes**: every volume keeps its Open Library cover and data. The series page's **Add volumes** opens the add page tied to the series; the volume number is read from the title, else the next one. The cost: one source lookup per volume (a few seconds each, run in parallel).
+- **Undated read as a session flag, over status only**: it still counts as a read in the history and can get dates later, and the Journal leaves it out. The entry page asks each time (Read today / date unknown); the search buttons and the series page's bulk marking always use date unknown, since bulk adds are mostly old reads.
+- **Paging books only**: TMDB's 10 results per search are enough for films and series.

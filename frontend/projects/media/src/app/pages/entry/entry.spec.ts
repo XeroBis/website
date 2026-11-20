@@ -27,6 +27,12 @@ describe('EntryPage', () => {
     if (detail) req.flush(detail);
     else req.flush({ detail: 'Entry not found' }, { status: 404, statusText: 'Not Found' });
     await settle();
+    if (detail?.item.type === 'book') {
+      http
+        .expectOne('/api/media/series')
+        .flush([{ id: 5, name: 'Dune', volumes: 1, read: 0, owned: 0, cover_item: null }]);
+      await settle();
+    }
     await fixture.whenStable();
     el = fixture.nativeElement;
   }
@@ -61,7 +67,9 @@ describe('EntryPage', () => {
     expect(button("Je l'ai")).toBeUndefined();
     expect(el.querySelector('.synopsis')?.textContent).toBe('Néo.');
     expect(TestBed.inject(Title).getTitle()).toBe('Matrix · Media');
-    expect(buttons()).toEqual(['Commencer', 'Déjà vu', 'Pas pour moi']);
+    expect(buttons()).toEqual(['Commencer', "Vu aujourd'hui", 'Vu, date inconnue', 'Pas pour moi']);
+    // Films have no series panel.
+    expect(el.querySelector('.series-fields')).toBeNull();
 
     await switchToEnglish(http);
     await fixture.whenStable();
@@ -78,12 +86,101 @@ describe('EntryPage', () => {
       '/api/media/library/3/start',
       entry({
         status: 'in_progress',
-        sessions: [{ id: 1, started_on: '2026-10-17', finished_on: null }],
+        sessions: [{ id: 1, started_on: '2026-10-17', finished_on: null, undated: false }],
       }),
     );
     expect(el.querySelector('.state')?.textContent).toBe('En cours');
     expect(buttons()).toEqual(['Terminer', 'Abandonner']);
     expect(el.querySelector('.sessions .when')?.textContent?.trim()).toBe('En cours');
+  });
+
+  it('records a read with the date unknown', async () => {
+    await render(entry({ item: BOOK }));
+    expect(buttons()).toEqual([
+      'Commencer la lecture',
+      "Lu aujourd'hui",
+      'Lu, date inconnue',
+      'Pas pour moi',
+    ]);
+    button('Lu, date inconnue').click();
+    const req = http.expectOne((r) => r.url === '/api/media/library/3/finish');
+    expect(req.request.params.get('undated')).toBe('true');
+    req.flush(
+      entry({
+        item: BOOK,
+        status: 'done',
+        sessions: [{ id: 2, started_on: null, finished_on: null, undated: true }],
+      }),
+    );
+    await settle();
+    await fixture.whenStable();
+    expect(el.querySelector('.sessions .when')?.textContent?.trim()).toBe('Date inconnue');
+  });
+
+  it('puts a book in a series, with its volume', async () => {
+    await render(entry({ item: BOOK }));
+    const select = el.querySelector('.series-fields select') as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent?.trim())).toEqual([
+      'Aucune série',
+      'Dune',
+      'Nouvelle série…',
+    ]);
+    select.value = '5';
+    select.dispatchEvent(new Event('change'));
+    await settle();
+    expect(
+      await answer(
+        'PATCH',
+        '/api/media/library/3',
+        entry({ item: BOOK, series_id: 5, series_name: 'Dune' }),
+      ),
+    ).toEqual({ series_id: 5 });
+    http.expectOne('/api/media/series').flush([]);
+    await settle();
+    await fixture.whenStable();
+    expect(el.querySelector('.in-series a')?.getAttribute('href')).toBe('/series/5');
+
+    const volume = el.querySelector('.series-fields input') as HTMLInputElement;
+    volume.value = '2';
+    volume.dispatchEvent(new Event('change'));
+    expect(
+      await answer(
+        'PATCH',
+        '/api/media/library/3',
+        entry({ item: BOOK, series_id: 5, series_name: 'Dune', series_volume: 2 }),
+      ),
+    ).toEqual({ series_volume: 2 });
+    expect(el.querySelector('.in-series')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Dune · t. 2',
+    );
+  });
+
+  it('creates a series from the select', async () => {
+    vi.spyOn(window, 'prompt').mockReturnValue(' One Piece ');
+    await render(entry({ item: BOOK }));
+    const select = el.querySelector('.series-fields select') as HTMLSelectElement;
+    select.value = 'new';
+    select.dispatchEvent(new Event('change'));
+    const create = http.expectOne({ method: 'POST', url: '/api/media/series' });
+    expect(create.request.body).toEqual({ name: 'One Piece' });
+    create.flush({ id: 6, name: 'One Piece', volumes: 0, read: 0, owned: 0, cover_item: null });
+    await settle();
+    expect(
+      await answer('PATCH', '/api/media/library/3', entry({ item: BOOK, series_id: 6 })),
+    ).toEqual({ series_id: 6 });
+    http.expectOne('/api/media/series').flush([]);
+  });
+
+  it('adds a read with the date unknown from the history', async () => {
+    await render();
+    button('Ajouter un visionnage, date inconnue').click();
+    expect(
+      await answer(
+        'POST',
+        '/api/media/library/3/sessions',
+        entry({ sessions: [{ id: 4, started_on: null, finished_on: null, undated: true }] }),
+      ),
+    ).toEqual({ started_on: null, finished_on: null, undated: true });
   });
 
   it('shows a refused transition', async () => {
@@ -181,7 +278,9 @@ describe('EntryPage', () => {
     const body = await answer(
       'POST',
       '/api/media/library/3/sessions',
-      entry({ sessions: [{ id: 4, started_on: '2020-01-01', finished_on: '2020-01-10' }] }),
+      entry({
+        sessions: [{ id: 4, started_on: '2020-01-01', finished_on: '2020-01-10', undated: false }],
+      }),
     );
     expect(body).toEqual({ started_on: '2020-01-01', finished_on: '2020-01-10' });
     expect(el.querySelectorAll('.sessions li').length).toBe(1);

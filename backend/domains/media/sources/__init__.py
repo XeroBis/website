@@ -37,10 +37,13 @@ def language(user_language: str | None) -> str:
     return "fr" if (user_language or "").lower().startswith("fr") else "en"
 
 
-def search(media_type: MediaType, query: str, lang: str) -> list[SearchHit]:
-    """Result titles in `lang` ("en" / "fr") where the source has them."""
+def search(
+    media_type: MediaType, query: str, lang: str, page: int = 1
+) -> list[SearchHit]:
+    """Result titles in `lang` ("en" / "fr") where the source has them. `page`
+    is Open Library's (books); TMDB always answers its first page."""
     if media_type == MediaType.book:
-        return openlibrary.search(query, lang)
+        return openlibrary.search(query, lang, page)
     return tmdb.search(media_type, query, "fr-FR" if lang == "fr" else "en-US")
 
 

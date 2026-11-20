@@ -28,6 +28,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/journal/journal').then((m) => m.Journal),
       },
       {
+        path: 'series/:id',
+        loadComponent: () => import('./pages/series/series').then((m) => m.SeriesPage),
+      },
+      {
         path: 'entries/:id',
         loadComponent: () => import('./pages/entry/entry').then((m) => m.EntryPage),
       },

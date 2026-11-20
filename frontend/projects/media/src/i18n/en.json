@@ -51,12 +51,14 @@
     "resume": "Resume",
     "finish": "Finish",
     "nextEpisode": "+1 episode",
-    "alreadyRead": "Already read",
-    "alreadyWatched": "Already watched",
     "notForMe": "Not for me",
     "drop": "Drop",
     "readAgain": "Read again",
-    "watchAgain": "Watch again"
+    "watchAgain": "Watch again",
+    "readToday": "Read today",
+    "readUndated": "Read, date unknown",
+    "watchedToday": "Watched today",
+    "watchedUndated": "Watched, date unknown"
   },
   "library": {
     "search": "Search titles and creators…",
@@ -81,7 +83,8 @@
     "countMany": "{{count}} items",
     "nothing": "Nothing matches.",
     "addSomething": "Add something",
-    "add": "Add"
+    "add": "Add",
+    "seriesRead": "{{read}} / {{volumes}} read"
   },
   "add": {
     "title": "Add to your library",
@@ -116,7 +119,24 @@
     "cancel": "Cancel",
     "errorTitle": "A title is required.",
     "backBooks": "Back to the library",
-    "backVideos": "Back to the videos"
+    "backVideos": "Back to the videos",
+    "addingTo": "Adding volumes to {{name}}",
+    "quickAdd": "Quick add",
+    "more": "More results",
+    "volume": "Volume",
+    "readToday": "Read today",
+    "readUndated": "Read, date unknown",
+    "watchedToday": "Watched today",
+    "watchedUndated": "Watched, date unknown",
+    "backSeries": "Back to the series",
+    "quick": {
+      "want": "To read",
+      "owned": "Owned",
+      "read": "Read",
+      "wantWatch": "To watch",
+      "watched": "Watched"
+    },
+    "saving": "Saving…"
   },
   "entry": {
     "minutes": "{{count}} min",
@@ -151,7 +171,36 @@
     "errorSessionOrder": "The finish date can't be before the start date.",
     "notFound": "Entry not found.",
     "owned": "Owned",
-    "ownIt": "I own it"
+    "ownIt": "I own it",
+    "volumeShort": "vol. {{volume}}",
+    "series": "Series",
+    "noSeries": "No series",
+    "newSeries": "New series…",
+    "newSeriesPrompt": "Name of the new series:",
+    "volume": "Volume",
+    "errorVolume": "The volume must be a whole number from 0 to 9999.",
+    "dateUnknown": "Date unknown",
+    "addUndatedRead": "Add a read, date unknown",
+    "addUndatedWatch": "Add a watch, date unknown"
+  },
+  "series": {
+    "kind": "Series",
+    "name": "Series name",
+    "counts": "{{volumes}} volumes · {{read}} read · {{owned}} owned",
+    "addVolumes": "Add volumes",
+    "bulk": "Volumes",
+    "from": "From",
+    "to": "To",
+    "markRead": "Mark read",
+    "markOwned": "Mark owned",
+    "markNotOwned": "Mark not owned",
+    "bulkHint": "Leave the range empty for every volume. Reads are recorded with the date unknown.",
+    "read": "Read",
+    "empty": "No volumes yet. Add some, or put books you already have in this series from their page.",
+    "delete": "Delete series",
+    "confirmDelete": "Delete the series “{{name}}”? Its volumes stay in your library.",
+    "notFound": "Series not found.",
+    "errorRange": "The first volume can't be after the last one."
   },
   "journal": {
     "title": "Journal",

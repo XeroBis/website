@@ -32,6 +32,8 @@ export interface Session {
   id: number;
   started_on: string | null;
   finished_on: string | null;
+  /** Finished on an unknown date (`finished_on` is null). */
+  undated: boolean;
 }
 
 export interface EntrySummary {
@@ -43,6 +45,10 @@ export interface EntrySummary {
   owned: boolean;
   current_season: number | null;
   current_episode: number | null;
+  /** Books only. */
+  series_id: number | null;
+  series_name: string | null;
+  series_volume: number | null;
   added_at: string;
   updated_at: string;
   last_finished_on: string | null;
@@ -65,6 +71,9 @@ export interface SearchResult {
   creators: string | null;
   thumb_url: string | null;
   library_entry_id: number | null;
+  /** The entry's state, when it's in the library. */
+  library_status: EntryStatus | null;
+  library_owned: boolean | null;
 }
 
 export interface LibraryFilters {
@@ -83,11 +92,44 @@ export interface EntryUpdate {
   owned?: boolean;
   current_season?: number;
   current_episode?: number;
+  series_id?: number | null;
+  series_volume?: number | null;
 }
 
 export interface SessionInput {
   started_on: string | null;
   finished_on: string | null;
+  undated?: boolean;
+}
+
+/** How an entry is added (both add routes). */
+export interface AddOptions {
+  status: EntryStatus;
+  /** With status `done`: the read has no date. */
+  undated?: boolean;
+  owned: boolean;
+  series_id?: number | null;
+  series_volume?: number | null;
+}
+
+export interface BookSeries {
+  id: number;
+  name: string;
+  volumes: number;
+  read: number;
+  owned: number;
+  cover_item: MediaItem | null;
+}
+
+export interface BookSeriesDetail extends BookSeries {
+  entries: EntrySummary[];
+}
+
+export interface SeriesMark {
+  from_volume?: number | null;
+  to_volume?: number | null;
+  read?: true;
+  owned?: boolean;
 }
 
 export interface JournalEntry {

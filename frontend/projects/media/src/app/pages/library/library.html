@@ -77,7 +77,7 @@
     <p class="error" role="alert">{{ error()! | translate }}</p>
   }
 
-  @if (entries(); as list) {
+  @if (cards(); as list) {
     <p class="count muted">
       {{
         (list.length === 1 ? 'library.countOne' : 'library.countMany')
@@ -93,26 +93,54 @@
       </div>
     }
     <div class="grid">
-      @for (e of list; track e.id) {
-        <div class="cell" data-testid="entry">
-          <a abPoster [item]="e.item" [routerLink]="['/entries', e.id]"></a>
-          <div class="meta">
-            <span class="status" [class]="e.status">{{ caption(e) | translate }}</span>
-            @if (e.rating) {
-              <span class="rating"
-                ><ab-icon name="star" /> {{ e.rating / 2 | number: '1.0-1' : lang() }}</span
-              >
+      @for (card of list; track card.entry?.id ?? 's' + card.series!.id) {
+        @if (card.series; as sr) {
+          <div class="cell series-card" data-testid="series">
+            @if (sr.cover_item) {
+              <a
+                abPoster
+                class="stacked"
+                [item]="sr.cover_item"
+                [label]="sr.name"
+                [routerLink]="['/series', sr.id]"
+              ></a>
             }
-            @if (e.owned) {
-              <span
-                class="owned"
-                [title]="'library.ownedYes' | translate"
-                [attr.aria-label]="'library.ownedYes' | translate"
-              ></span>
-            }
+            <div class="meta">
+              <span class="status">
+                <ab-icon name="layers" />
+                {{ 'library.seriesRead' | translate: { read: sr.read, volumes: sr.volumes } }}
+              </span>
+              @if (sr.volumes && sr.owned === sr.volumes) {
+                <span
+                  class="owned"
+                  [title]="'library.ownedYes' | translate"
+                  [attr.aria-label]="'library.ownedYes' | translate"
+                ></span>
+              }
+            </div>
           </div>
-          <ab-quick-actions [entry]="e" [soft]="true" (changed)="load()" />
-        </div>
+        } @else {
+          @let e = card.entry!;
+          <div class="cell" data-testid="entry">
+            <a abPoster [item]="e.item" [routerLink]="['/entries', e.id]"></a>
+            <div class="meta">
+              <span class="status" [class]="e.status">{{ caption(e) | translate }}</span>
+              @if (e.rating) {
+                <span class="rating"
+                  ><ab-icon name="star" /> {{ e.rating / 2 | number: '1.0-1' : lang() }}</span
+                >
+              }
+              @if (e.owned) {
+                <span
+                  class="owned"
+                  [title]="'library.ownedYes' | translate"
+                  [attr.aria-label]="'library.ownedYes' | translate"
+                ></span>
+              }
+            </div>
+            <ab-quick-actions [entry]="e" [soft]="true" (changed)="load()" />
+          </div>
+        }
       }
     </div>
   }

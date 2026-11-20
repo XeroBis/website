@@ -18,6 +18,34 @@ SHELF_TYPES: dict[str, tuple[MediaType, ...]] = {
     "videos": (MediaType.film, MediaType.series),
 }
 OWNED_BOOKS_ONLY = "Only books can be owned"
+SERIES_BOOKS_ONLY = "Only books can be in a series"
+Volume = Annotated[int, Field(ge=0, le=9999)]
+SeriesName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+]
+
+
+class _AddOptions(BaseModel):
+    """Options shared by both add routes."""
+
+    type: MediaType
+    status: EntryStatus = EntryStatus.want
+    # With status done: the read has no date.
+    undated: bool = False
+    owned: bool = False
+    series_id: int | None = None
+    series_volume: Volume | None = None
+
+    @model_validator(mode="after")
+    def _check_options(self):
+        book = self.type == MediaType.book
+        if self.owned and not book:
+            raise ValueError(OWNED_BOOKS_ONLY)
+        if (self.series_id is not None or self.series_volume is not None) and not book:
+            raise ValueError(SERIES_BOOKS_ONLY)
+        if self.undated and self.status != EntryStatus.done:
+            raise ValueError("undated is only for a finished read")
+        return self
 
 
 class SearchResult(BaseModel):
@@ -30,39 +58,27 @@ class SearchResult(BaseModel):
     thumb_url: str | None
     # Set when this result is already in the user's library.
     library_entry_id: int | None = None
+    library_status: EntryStatus | None = None
+    library_owned: bool | None = None
 
 
-class AddFromSearch(BaseModel):
+class AddFromSearch(_AddOptions):
     source: Literal[MediaSource.tmdb, MediaSource.openlibrary]
     external_id: NonEmpty
-    type: MediaType
-    status: EntryStatus = EntryStatus.want
-    owned: bool = False
 
     @model_validator(mode="after")
     def _source_matches_type(self):
         book = self.type == MediaType.book
         if book != (self.source == MediaSource.openlibrary):
             raise ValueError("Books come from Open Library, films and series from TMDB")
-        if self.owned and not book:
-            raise ValueError(OWNED_BOOKS_ONLY)
         return self
 
 
-class AddManual(BaseModel):
-    type: MediaType
+class AddManual(_AddOptions):
     title: NonEmpty
     creators: str | None = None
     year: Annotated[int, Field(ge=0, le=9999)] | None = None
     genres: list[NonEmpty] = []
-    status: EntryStatus = EntryStatus.want
-    owned: bool = False
-
-    @model_validator(mode="after")
-    def _owned_books_only(self):
-        if self.owned and self.type != MediaType.book:
-            raise ValueError(OWNED_BOOKS_ONLY)
-        return self
 
 
 class MediaItemOut(BaseModel):
@@ -97,6 +113,7 @@ class SessionOut(BaseModel):
     id: int
     started_on: date | None
     finished_on: date | None
+    undated: bool
 
 
 class EntrySummary(BaseModel):
@@ -106,6 +123,9 @@ class EntrySummary(BaseModel):
     owned: bool
     current_season: int | None
     current_episode: int | None
+    series_id: int | None
+    series_name: str | None
+    series_volume: int | None
     added_at: datetime
     updated_at: datetime
     last_finished_on: date | None
@@ -129,16 +149,22 @@ class EntryUpdate(BaseModel):
     owned: bool | None = None
     current_season: Annotated[int, Field(ge=1, le=999)] | None = None
     current_episode: Annotated[int, Field(ge=0, le=9999)] | None = None
+    series_id: int | None = None
+    series_volume: Volume | None = None
 
 
 class SessionIn(BaseModel):
     started_on: date | None = None
     finished_on: date | None = None
+    # Finished on an unknown date (a finish date clears it).
+    undated: bool = False
 
     @model_validator(mode="after")
     def _finish_after_start(self):
         if self.started_on and self.finished_on and self.finished_on < self.started_on:
             raise ValueError("finished_on must not be before started_on")
+        if self.finished_on is not None:
+            self.undated = False
         return self
 
 
@@ -149,3 +175,41 @@ class JournalEntry(BaseModel):
     event: JournalEvent
     session_id: int
     entry: EntrySummary
+
+
+class SeriesIn(BaseModel):
+    name: SeriesName
+
+
+class SeriesOut(BaseModel):
+    id: int
+    name: str
+    volumes: int
+    read: int
+    owned: int
+    cover_item: MediaItemOut | None
+
+
+class SeriesDetail(SeriesOut):
+    entries: list[EntrySummary]
+
+
+class SeriesMark(BaseModel):
+    """Bulk change on the series' volumes in a range (none = all of them)."""
+
+    from_volume: Volume | None = None
+    to_volume: Volume | None = None
+    read: Literal[True] | None = None
+    owned: bool | None = None
+
+    @model_validator(mode="after")
+    def _check(self):
+        if self.read is None and self.owned is None:
+            raise ValueError("Nothing to do: send read and/or owned")
+        if (
+            self.from_volume is not None
+            and self.to_volume is not None
+            and self.from_volume > self.to_volume
+        ):
+            raise ValueError("from_volume must not be after to_volume")
+        return self

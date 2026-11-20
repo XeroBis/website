@@ -5,11 +5,12 @@
     "extract": "Extraire",
     "organize": "Organiser",
     "imagesToPdf": "Images → PDF",
-    "pdfToImages": "PDF → images"
+    "pdfToImages": "PDF → images",
+    "sign": "Signer / ajouter une image"
   },
   "home": {
     "title": "Outils PDF",
-    "lead": "Fusionner, découper, réordonner et convertir des PDF."
+    "lead": "Fusionner, découper, réordonner, convertir et signer des PDF."
   },
   "tool": {
     "merge": {
@@ -41,6 +42,12 @@
       "desc": "Exportez des pages en PNG ou JPG ; plusieurs pages arrivent dans un zip.",
       "title": "PDF → images",
       "lead": "Choisissez les pages à exporter. Plusieurs pages sont téléchargées en zip."
+    },
+    "sign": {
+      "name": "Signer",
+      "desc": "Placez une signature ou une image JPG/PNG sur les pages d'un PDF.",
+      "title": "Signer / ajouter une image",
+      "lead": "Importez un JPG ou un PNG, ou dessinez votre signature, puis glissez-la en place."
     }
   },
   "common": {
@@ -113,6 +120,35 @@
     "selected": "{{count}} pages sur {{total}} sélectionnées",
     "runOne": "Télécharger l'image",
     "runMany": "Télécharger {{count}} images (.zip)"
+  },
+  "sign": {
+    "images": "Images",
+    "addImage": "Ajouter une image",
+    "draw": "Dessiner une signature",
+    "placeHint": "Cliquez sur une image pour la placer sur la page affichée.",
+    "openFirst": "Ouvrez un PDF pour les placer.",
+    "place": "Placer {{name}} sur la page",
+    "removeImage": "Retirer {{name}}",
+    "clearWhite": "Retirer le fond blanc",
+    "strength": "Intensité",
+    "stampLabel": "Image placée : glissez pour la déplacer",
+    "resize": "Redimensionner",
+    "removeStamp": "Retirer de la page",
+    "selected": "Image sélectionnée",
+    "keys": "Glissez pour déplacer, tirez le coin pour redimensionner. Clavier : flèches, + et −, Suppr.",
+    "copyAll": "Copier sur toutes les pages",
+    "prev": "Page précédente",
+    "next": "Page suivante",
+    "drawTitle": "Dessinez votre signature",
+    "drawArea": "Zone de signature",
+    "ink": "Encre",
+    "inks": { "black": "Noire", "blue": "Bleue" },
+    "clear": "Effacer",
+    "cancel": "Annuler",
+    "use": "Utiliser",
+    "placed": { "one": "{{count}} image placée", "other": "{{count}} images placées" },
+    "onPages": { "one": "sur {{count}} page", "other": "sur {{count}} pages" },
+    "run": "Enregistrer le PDF"
   },
   "error": {
     "notPdf": "{{name}} n'est pas un PDF : ignoré.",

@@ -18,6 +18,7 @@ describe('App', () => {
       '/organize',
       '/images-to-pdf',
       '/pdf-to-images',
+      '/sign',
     ]);
     expect(links.map((a) => a.textContent?.trim())).toEqual([
       'Fusionner',
@@ -25,6 +26,7 @@ describe('App', () => {
       'Organiser',
       'Images → PDF',
       'PDF → images',
+      'Signer',
     ]);
     http.verify();
   });

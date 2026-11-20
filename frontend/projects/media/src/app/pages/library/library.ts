@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -15,11 +15,21 @@ import {
   statusLabel,
 } from '../../media/labels';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { EntryStatus, EntrySummary, LibrarySort, MediaType, Shelf } from '../../media/models';
+import {
+  BookSeries,
+  EntryStatus,
+  EntrySummary,
+  LibrarySort,
+  MediaType,
+  Shelf,
+} from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { QuickActions } from '../../ui/quick-actions';
 
 type Owned = '' | 'true' | 'false';
+
+/** A grid cell: an entry, or (books) one card for a whole series. */
+type Card = { entry: EntrySummary; series?: never } | { series: BookSeries; entry?: never };
 
 /**
  * A shelf: Bibliothèque (books, with ownership) or Vidéothèque (films and
@@ -41,6 +51,8 @@ export class Library {
 
   protected readonly lang = inject(LanguageService).current;
   protected readonly entries = signal<EntrySummary[] | null>(null);
+  /** Books shelf: the user's series, for the series cards' counts and covers. */
+  private readonly allSeries = signal<BookSeries[]>([]);
   protected readonly genres = signal<string[]>([]);
   protected readonly error = signal<string | null>(null);
 
@@ -58,6 +70,27 @@ export class Library {
   protected readonly icon = TYPE_ICON;
   protected readonly statusLabel = statusLabel;
   protected readonly sorts: LibrarySort[] = ['added', 'title', 'year', 'rating', 'finished'];
+
+  /**
+   * Volumes of a series collapse into one card, where its first matching
+   * volume is in the sort.
+   */
+  protected readonly cards = computed((): Card[] | null => {
+    const list = this.entries();
+    if (!list) return null;
+    const series = new Map(this.allSeries().map((s) => [s.id, s]));
+    const shown = new Set<number>();
+    const cards: Card[] = [];
+    for (const entry of list) {
+      const s = entry.series_id === null ? undefined : series.get(entry.series_id);
+      if (!s) cards.push({ entry });
+      else if (!shown.has(s.id)) {
+        shown.add(s.id);
+        cards.push({ series: s });
+      }
+    }
+    return cards;
+  });
 
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -80,6 +113,7 @@ export class Library {
 
   protected async load(): Promise<void> {
     try {
+      const series = this.books ? this.api.allSeries() : Promise.resolve([]);
       this.entries.set(
         await this.api.library({
           shelf: this.shelf,
@@ -91,6 +125,7 @@ export class Library {
           sort: this.sort(),
         }),
       );
+      this.allSeries.set(await series);
       this.error.set(null);
     } catch (e) {
       this.error.set(errorMessage(e));
