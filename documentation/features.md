@@ -334,7 +334,7 @@ A personal tracker for books, films and series: which books I own, what I've rea
 
 ### Look
 
-"Library paper": cream paper background, ink text, Fraunces serif headings, Inter for the UI, an oxblood accent. Dark ("library at night"): ink-brown paper, cream text, lighter oxblood, teal and ochre. Each type has its own accent (books oxblood, films teal, series ochre) on its chips, type pill and the placeholder covers. Posters are 2:3 with a soft shadow; without a cover, a placeholder in the item's own hue (stable per item) shows the type icon, title and creators. Icons are inline SVGs (`ab-icon` from `@shared`). The footer credits TMDB ("This product uses the TMDB API but is not endorsed or certified by TMDB", required by TMDB's terms) and Open Library.
+"Library paper": cream paper background, ink text, Fraunces serif headings, Inter for the UI, an oxblood accent. Dark ("library at night"): ink-brown paper, cream text, lighter oxblood, teal and ochre. Each type has its own accent (books oxblood, films teal, series ochre) on its chips, type pill and the placeholder covers. Posters are 2:3 with a soft shadow; without a cover, a placeholder in the item's own hue (stable per item) shows the type icon, title and creators. Icons are inline SVGs (`ab-icon` from `@shared`). The footer credits TMDB ("This product uses the TMDB API but is not endorsed or certified by TMDB", required by TMDB's terms) and Open Library. Installable to the phone's home screen (web manifest, the shelf icon), where it opens without the browser bar.
 
 ### Language
 
@@ -398,7 +398,7 @@ Everyday PDF tools. Every page is behind `appGuard('tools')` (logged out → por
 
 ### Look
 
-"Workbench": a cool grey ground (`#f3f5f8`), white surfaces, a cobalt accent (`#2b56e0`), Space Grotesk headings, Inter for the UI, JetBrains Mono for page ranges and file names. Dark: near-black blue-grey, lighter cobalt. Each tool has its own icon tint on the home page (merge cobalt, extract orange, organize teal, images → PDF purple, PDF → images raspberry). Pages are drawn as thumbnails on a grey tray; selected pages get a cobalt ring and a check badge; the main action sits in a bar fixed to the bottom of the screen.
+"Workbench": a cool grey ground (`#f3f5f8`), white surfaces, a cobalt accent (`#2b56e0`), Space Grotesk headings, Inter for the UI, JetBrains Mono for page ranges and file names. Dark: near-black blue-grey, lighter cobalt. Each tool has its own icon tint on the home page (merge cobalt, extract orange, organize teal, images → PDF purple, PDF → images raspberry). Pages are drawn as thumbnails on a grey tray; selected pages get a cobalt ring and a check badge; the main action sits in a bar fixed to the bottom of the screen. Installable to the phone's home screen (web manifest, the wrench icon), where it opens without the browser bar.
 
 ### Pages
 
