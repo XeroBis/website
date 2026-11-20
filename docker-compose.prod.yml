@@ -28,6 +28,7 @@ services:
       COOKIE_DOMAIN: .alanbignon.com
       COOKIE_SECURE: "true"
       TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
       CARDS_DATA_DIR: /data/cards
     volumes:
       # Cards: downloaded scans, thumbnails, logos, variant badges (~2 GB).

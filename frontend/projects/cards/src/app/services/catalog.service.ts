@@ -123,9 +123,11 @@ export class CatalogService {
     rarities: string[] = [],
     variant: VariantType | VariantType[] | 'all' | null = null,
     includeIncoming = false,
+    excludeDeckAllocated = false,
   ): Observable<CardSet[]> {
     let params = new HttpParams();
     if (includeIncoming) params = params.set('include_incoming', true);
+    if (excludeDeckAllocated) params = params.set('exclude_deck_allocated', true);
     for (const rarity of rarities) {
       params = params.append('rarity', rarity);
     }

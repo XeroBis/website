@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { Icon, LanguageService } from '@shared';
+import { Icon, Language, LanguageService } from '@shared';
 
 import {
   TYPES,
@@ -30,7 +30,7 @@ import {
 /** The confirm panel's status choices: "done" today, or with the date unknown. */
 type InitialStatus = EntryStatus | 'done_undated';
 
-/** Open Library's page size: a full page means there may be more. */
+/** Google Books' page size: a full page means there may be more. */
 const BOOK_PAGE = 20;
 
 /**
@@ -58,6 +58,9 @@ export class Add {
     this.seriesId ? 'book' : initialType(this.params.get('type')),
   );
   protected readonly query = signal('');
+  /** Books: the editions' language, the UI's by default (you may own either). */
+  protected readonly bookLang = signal<Language>(this.lang());
+  protected readonly bookLangs: Language[] = ['en', 'fr'];
   protected readonly results = signal<SearchResult[] | null>(null);
   protected readonly searching = signal(false);
   protected readonly loadingMore = signal(false);
@@ -189,6 +192,17 @@ export class Add {
     if (this.query().trim()) this.search();
   }
 
+  protected setBookLang(lang: Language): void {
+    if (lang === this.bookLang()) return;
+    this.bookLang.set(lang);
+    if (this.results() !== null && this.query().trim()) this.search();
+  }
+
+  /** The `lang` sent with a search: books only. */
+  private searchLang(): Language | null {
+    return this.type() === 'book' ? this.bookLang() : null;
+  }
+
   protected async search(): Promise<void> {
     const q = this.query().trim();
     if (!q) return;
@@ -198,7 +212,7 @@ export class Add {
     this.rowErrors.set({});
     this.page = 1;
     try {
-      const hits = await this.api.search(this.type(), q);
+      const hits = await this.api.search(this.type(), q, 1, this.searchLang());
       this.results.set(hits);
       this.hasMore.set(this.type() === 'book' && hits.length >= BOOK_PAGE);
     } catch (e) {
@@ -210,14 +224,14 @@ export class Add {
     }
   }
 
-  /** Books: the next 20 Open Library results, appended. */
+  /** Books: the next 20 Google Books results, appended. */
   protected async more(): Promise<void> {
     const q = this.query().trim();
     if (!q) return;
     this.loadingMore.set(true);
     this.error.set(null);
     try {
-      const hits = await this.api.search(this.type(), q, this.page + 1);
+      const hits = await this.api.search(this.type(), q, this.page + 1, this.searchLang());
       this.page += 1;
       const seen = new Set(this.results()?.map((r) => r.external_id));
       this.results.update((list) => [

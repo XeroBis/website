@@ -34,12 +34,28 @@
       [(ngModel)]="query"
       autofocus
     />
+    @if (type() === 'book') {
+      <div class="chips lang" role="group" [attr.aria-label]="'add.bookLanguage' | translate">
+        @for (l of bookLangs; track l) {
+          <button
+            type="button"
+            class="chip"
+            [class.on]="bookLang() === l"
+            [attr.aria-pressed]="bookLang() === l"
+            [attr.title]="'add.booksIn.' + l | translate"
+            (click)="setBookLang(l)"
+          >
+            {{ l.toUpperCase() }}
+          </button>
+        }
+      </div>
+    }
     <button class="btn" type="submit" [disabled]="searching() || !query().trim()">
       {{ (searching() ? 'add.searching' : 'add.search') | translate }}
     </button>
   </form>
   <p class="source muted">
-    {{ 'add.searchingIn' | translate: { source: type() === 'book' ? 'Open Library' : 'TMDB' } }}
+    {{ 'add.searchingIn' | translate: { source: type() === 'book' ? 'Google Books' : 'TMDB' } }}
   </p>
 
   @if (error()) {

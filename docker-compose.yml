@@ -33,9 +33,10 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin-password}
       ADMIN_PSEUDO: ${ADMIN_PSEUDO:-Admin}
-      # Media: real TMDB token from the gitignored root .env; empty = film and
-      # series search answer 502 (books need no key).
+      # Media: real TMDB token and Google Books key from the gitignored root
+      # .env; empty = film and series (TMDB) or book search answer 502.
       TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
       # Cards: downloaded scans, thumbnails, logos, variant badges (~2 GB).
       CARDS_DATA_DIR: /data/cards
     ports:

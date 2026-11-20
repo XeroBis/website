@@ -18,7 +18,14 @@ import {
 } from '../../media/labels';
 import { LocalSynopsisPipe, LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { BookSeries, EntryDetail, EntryUpdate, QuickAction, Session } from '../../media/models';
+import {
+  BookSeries,
+  EntryDetail,
+  EntryUpdate,
+  MediaType,
+  QuickAction,
+  Session,
+} from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { StarRating } from '../../ui/star-rating';
 
@@ -285,10 +292,23 @@ export class EntryPage {
     return false;
   }
 
-  protected saveSession(session: Session, started: string, finished: string): void {
+  /** The read being edited in place (its dates as form fields). */
+  protected readonly editingId = signal<number | null>(null);
+  protected readonly editStart = signal('');
+  protected readonly editFinish = signal('');
+
+  protected editSession(session: Session): void {
+    this.editStart.set(session.started_on ?? '');
+    this.editFinish.set(session.finished_on ?? '');
+    this.editingId.set(session.id);
+  }
+
+  protected async saveEdit(session: Session): Promise<void> {
+    const started = this.editStart();
+    const finished = this.editFinish();
     if (this.finishesBeforeStart(started, finished)) return;
     const id = this.entry()!.id;
-    this.run(() =>
+    const ok = await this.run(() =>
       this.api.updateSession(id, session.id, {
         started_on: started || null,
         finished_on: finished || null,
@@ -296,6 +316,21 @@ export class EntryPage {
         undated: session.undated && !finished,
       }),
     );
+    if (ok) this.editingId.set(null);
+  }
+
+  /** "1re lecture", "2e visionnage"…: reads are numbered oldest first. */
+  protected ordinal(n: number, type: MediaType): string {
+    const kind = type === 'book' ? 'read' : 'watch';
+    return `entry.${kind}${n === 1 ? 'First' : 'Nth'}`;
+  }
+
+  /** Days from start to finish, when both are known and differ. */
+  protected days(session: Session): number | null {
+    if (!session.started_on || !session.finished_on) return null;
+    const ms = Date.parse(session.finished_on) - Date.parse(session.started_on);
+    const d = Math.round(ms / 86_400_000);
+    return d > 0 ? d : null;
   }
 
   protected deleteSession(session: Session): void {
@@ -304,24 +339,36 @@ export class EntryPage {
     this.run(() => this.api.deleteSession(id, session.id));
   }
 
-  protected async addSession(): Promise<void> {
-    if (this.finishesBeforeStart(this.newStart(), this.newFinish())) return;
-    const id = this.entry()!.id;
-    const ok = await this.run(() =>
-      this.api.addSession(id, {
-        started_on: this.newStart() || null,
-        finished_on: this.newFinish() || null,
-      }),
-    );
-    if (ok) {
-      this.newStart.set('');
-      this.newFinish.set('');
-    }
+  /** The add form, closed behind one button until needed. */
+  protected readonly addingSession = signal(false);
+  protected readonly newUndated = signal(false);
+
+  protected openNewSession(): void {
+    this.addingSession.set(true);
   }
 
-  protected addUndatedSession(): void {
+  protected closeNewSession(): void {
+    this.addingSession.set(false);
+    this.newStart.set('');
+    this.newFinish.set('');
+    this.newUndated.set(false);
+  }
+
+  protected async addSession(): Promise<void> {
+    const undated = this.newUndated();
+    const started = undated ? '' : this.newStart();
+    const finished = undated ? '' : this.newFinish();
+    if (this.finishesBeforeStart(started, finished)) return;
     const id = this.entry()!.id;
-    this.run(() => this.api.addSession(id, { started_on: null, finished_on: null, undated: true }));
+    const ok = await this.run(() =>
+      this.api.addSession(
+        id,
+        undated
+          ? { started_on: null, finished_on: null, undated: true }
+          : { started_on: started || null, finished_on: finished || null },
+      ),
+    );
+    if (ok) this.closeNewSession();
   }
 
   /** Replaces the cover with a file from the device (shared by everyone with the item). */

@@ -67,18 +67,20 @@ describe('Add', () => {
     button(kind).click();
     type('input[name="q"]', q);
     await fixture.whenStable();
-    (el.querySelector('form.search button') as HTMLButtonElement).click();
+    (el.querySelector('form.search button[type="submit"]') as HTMLButtonElement).click();
     const req = http.expectOne((r) => r.url === '/api/media/search');
     expect(req.request.params.get('type')).toBe(
       kind === 'Livre' ? 'book' : kind === 'Film' ? 'film' : 'series',
     );
     expect(req.request.params.get('q')).toBe(q.trim());
+    // Books are searched in the UI's language by default; films and series have no `lang`.
+    expect(req.request.params.get('lang')).toBe(kind === 'Livre' ? 'fr' : null);
     req.flush(results);
     await fixture.whenStable();
   }
 
   it('says which source it searches', async () => {
-    expect(el.querySelector('.source')?.textContent?.trim()).toBe('Recherche dans Open Library.');
+    expect(el.querySelector('.source')?.textContent?.trim()).toBe('Recherche dans Google Books.');
     button('Film').click();
     await fixture.whenStable();
     expect(el.querySelector('.source')?.textContent?.trim()).toBe('Recherche dans TMDB.');
@@ -126,7 +128,7 @@ describe('Add', () => {
     button('Série').click();
     type('input[name="q"]', 'x');
     await fixture.whenStable();
-    (el.querySelector('form.search button') as HTMLButtonElement).click();
+    (el.querySelector('form.search button[type="submit"]') as HTMLButtonElement).click();
     http
       .expectOne((r) => r.url === '/api/media/search')
       .flush({ detail: 'TMDB request failed' }, { status: 502, statusText: 'Bad Gateway' });
@@ -166,9 +168,9 @@ describe('Add', () => {
   it('adds a result in one tap, then combines Read and Owned on it', async () => {
     const book: SearchResult = {
       ...RESULTS[0],
-      source: 'openlibrary',
+      source: 'googlebooks',
       type: 'book',
-      external_id: 'OL1W',
+      external_id: 'vol1',
     };
     await search('Livre', 'one piece', [book]);
     const row = el.querySelector('[data-testid="result"]') as HTMLElement;
@@ -181,8 +183,8 @@ describe('Add', () => {
     expect(row.querySelector('.quick .muted')?.textContent?.trim()).toBe('Enregistrement…');
     const add = http.expectOne({ method: 'POST', url: '/api/media/library/from-search' });
     expect(add.request.body).toEqual({
-      source: 'openlibrary',
-      external_id: 'OL1W',
+      source: 'googlebooks',
+      external_id: 'vol1',
       type: 'book',
       status: 'done',
       undated: true,
@@ -209,9 +211,9 @@ describe('Add', () => {
   it('marks an owned result read afterwards', async () => {
     const book: SearchResult = {
       ...RESULTS[0],
-      source: 'openlibrary',
+      source: 'googlebooks',
       type: 'book',
-      external_id: 'OL1W',
+      external_id: 'vol1',
       library_entry_id: 12,
       library_status: 'want',
       library_owned: true,
@@ -252,19 +254,38 @@ describe('Add', () => {
     const page = (n: number): SearchResult[] =>
       Array.from({ length: 20 }, (_, i) => ({
         ...RESULTS[0],
-        source: 'openlibrary',
+        source: 'googlebooks',
         type: 'book',
-        external_id: `OL${n * 100 + i}W`,
+        external_id: `vol${n * 100 + i}`,
       }));
     await search('Livre', 'one piece', page(1));
     button('Plus de résultats').click();
     const req = http.expectOne((r) => r.url === '/api/media/search');
     expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('lang')).toBe('fr');
     req.flush(page(2).slice(0, 5));
     await settle();
     await fixture.whenStable();
     expect(el.querySelectorAll('[data-testid="result"]').length).toBe(25);
     expect(button('Plus de résultats')).toBeUndefined();
+  });
+
+  it('searches books in the picked edition language', async () => {
+    expect(button('FR')?.getAttribute('aria-pressed')).toBe('true');
+    await search('Livre', 'piranesi');
+    button('EN').click();
+    await fixture.whenStable();
+    expect(button('EN')?.getAttribute('aria-pressed')).toBe('true');
+    // The shown results are re-searched in English.
+    const req = http.expectOne((r) => r.url === '/api/media/search');
+    expect(req.request.params.get('lang')).toBe('en');
+    expect(req.request.params.get('q')).toBe('piranesi');
+    req.flush([]);
+    await fixture.whenStable();
+    button('Film').click();
+    await fixture.whenStable();
+    http.expectOne((r) => r.url === '/api/media/search').flush([]);
+    expect(button('EN')).toBeUndefined();
   });
 
   it('presets the type from the URL and links back to its shelf', async () => {
@@ -325,17 +346,17 @@ describe('Add volumes to a series', () => {
     input.value = 'one piece';
     input.dispatchEvent(new Event('input'));
     await harness.fixture.whenStable();
-    (root.querySelector('form.search button') as HTMLButtonElement).click();
+    (root.querySelector('form.search button[type="submit"]') as HTMLButtonElement).click();
     const book = (id: string, title: string): SearchResult => ({
       ...RESULTS[0],
-      source: 'openlibrary',
+      source: 'googlebooks',
       type: 'book',
       external_id: id,
       title,
     });
     http
       .expectOne((r) => r.url === '/api/media/search')
-      .flush([book('OL1W', 'One Piece, Vol. 12: The Legend Begins'), book('OL2W', 'Romance Dawn')]);
+      .flush([book('vol1', 'One Piece, Vol. 12: The Legend Begins'), book('vol2', 'Romance Dawn')]);
     await settle();
     await harness.fixture.whenStable();
 
@@ -381,10 +402,10 @@ describe('Add volumes to a series', () => {
     input.value = 'dune';
     input.dispatchEvent(new Event('input'));
     await harness.fixture.whenStable();
-    (root.querySelector('form.search button') as HTMLButtonElement).click();
+    (root.querySelector('form.search button[type="submit"]') as HTMLButtonElement).click();
     const inLibrary: SearchResult = {
       ...RESULTS[1],
-      source: 'openlibrary',
+      source: 'googlebooks',
       type: 'book',
       title: 'Dune',
       library_entry_id: 21,

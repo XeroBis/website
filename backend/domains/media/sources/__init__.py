@@ -1,4 +1,4 @@
-"""Metadata sources: TMDB (films, series) and Open Library (books).
+"""Metadata sources: TMDB (films, series) and Google Books (books).
 
 Only the backend talks to these APIs (see documentation/decisions.md's
 "Metadata sources"). Each source returns results already normalized to
@@ -8,7 +8,7 @@ Only the backend talks to these APIs (see documentation/decisions.md's
 import httpx2
 
 from domains.media.models import MediaSource, MediaType
-from domains.media.sources import http, openlibrary, tmdb
+from domains.media.sources import googlebooks, http, tmdb
 from domains.media.sources.http import SourceError
 from domains.media.sources.types import Details, SearchHit
 
@@ -29,7 +29,7 @@ MAX_COVER_BYTES = 2 * 1024 * 1024
 
 
 def source_for(media_type: MediaType) -> MediaSource:
-    return MediaSource.openlibrary if media_type == MediaType.book else MediaSource.tmdb
+    return MediaSource.googlebooks if media_type == MediaType.book else MediaSource.tmdb
 
 
 def language(user_language: str | None) -> str:
@@ -40,17 +40,18 @@ def language(user_language: str | None) -> str:
 def search(
     media_type: MediaType, query: str, lang: str, page: int = 1
 ) -> list[SearchHit]:
-    """Result titles in `lang` ("en" / "fr") where the source has them. `page`
-    is Open Library's (books); TMDB always answers its first page."""
+    """Result titles in `lang` ("en" / "fr") where the source has them; books
+    are editions in that language. `page` is Google Books' (books); TMDB always
+    answers its first page."""
     if media_type == MediaType.book:
-        return openlibrary.search(query, lang, page)
+        return googlebooks.search(query, lang, page)
     return tmdb.search(media_type, query, "fr-FR" if lang == "fr" else "en-US")
 
 
 def details(source: MediaSource, media_type: MediaType, external_id: str) -> Details:
     """Catalog fields in English, plus the French title/synopsis when known."""
-    if source == MediaSource.openlibrary:
-        return openlibrary.details(external_id)
+    if source == MediaSource.googlebooks:
+        return googlebooks.details(external_id)
     if source == MediaSource.tmdb:
         return tmdb.details(media_type, external_id)
     raise SourceError(f"No details for source {source}")

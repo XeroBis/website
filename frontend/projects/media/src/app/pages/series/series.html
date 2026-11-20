@@ -26,60 +26,6 @@
     </header>
 
     @if (s.volumes) {
-      <form class="bulk panel" (submit)="$event.preventDefault()">
-        <span class="label">{{ 'series.bulk' | translate }}</span>
-        <div class="range">
-          <input
-            class="field"
-            type="number"
-            name="from"
-            [attr.aria-label]="'series.from' | translate"
-            min="0"
-            max="9999"
-            [placeholder]="'series.from' | translate"
-            [(ngModel)]="from"
-          />
-          <span aria-hidden="true">–</span>
-          <input
-            class="field"
-            type="number"
-            name="to"
-            [attr.aria-label]="'series.to' | translate"
-            min="0"
-            max="9999"
-            [placeholder]="'series.to' | translate"
-            [(ngModel)]="to"
-          />
-        </div>
-        <div class="actions">
-          <button
-            type="button"
-            class="btn soft small"
-            [disabled]="busy()"
-            (click)="mark({ read: true })"
-          >
-            <ab-icon name="check" /> {{ 'series.markRead' | translate }}
-          </button>
-          <button
-            type="button"
-            class="btn soft small"
-            [disabled]="busy()"
-            (click)="mark({ owned: true })"
-          >
-            {{ 'series.markOwned' | translate }}
-          </button>
-          <button
-            type="button"
-            class="btn ghost small"
-            [disabled]="busy()"
-            (click)="mark({ owned: false })"
-          >
-            {{ 'series.markNotOwned' | translate }}
-          </button>
-        </div>
-        <p class="muted small hint">{{ 'series.bulkHint' | translate }}</p>
-      </form>
-
       <ul class="volumes">
         @for (e of s.entries; track e.id) {
           <li class="volume" data-testid="volume">

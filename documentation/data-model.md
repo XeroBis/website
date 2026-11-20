@@ -336,6 +336,7 @@ Cards the user is selling ("Liste des ventes"), in named lists created empty, th
   - *Create*: an empty list (name unique per owner) with an optional total, its cards added by hand.
   - *Import*: a Cardmarket order's article table, saved as HTML (the `<tr data-article-id>` rows). Each row gives a quantity, a card matched by the set code and number in its name (`Gyarados ex (SVI 045)` → `SVI` / `45`, padding and case ignored), a print (the reverse extra, `Reverse Holo` on the English site and `Reverse` on the French one → `reverse`, else `standard`) and a unit price. A row linking to a set's Cardmarket Additionals expansion (`…/Black-Bolt-Additionals/Victini-V1-xBLK012`, labelled `Victini (xBLK 012)`) is that set's card (the `x` dropped) in the print its version names (see "Cardmarket Additionals" below). Repeated lines add up. A row with no catalog match, or a print the card doesn't come in, is left out and reported once in the import result. An import matching nothing is refused. The list's `price` is the total entered (pre-filled with Σ quantity × unit price; shipping isn't in the table).
   - *Incoming* copies of a (catalog card, print) = Σ `quantity` over the user's lists not received. The missing views (set page missing filter, missing text exports, `/missing` intervals) count them as owned unless told not to (`include_incoming=false`); set completion (`/catalog/sets`, a card or print with incoming copies counts as owned) only when asked (`include_incoming=true`, which the Sets page sends while its toggle is on). The collection and decks never count them.
+  - *Deck copies* of a print = Σ `quantity_in_deck` over the user's normal decks (phantom decks hold none). Set completion (`/catalog/sets`) and the missing views leave them out when asked (`exclude_deck_allocated=true`, which the Sets pages and missing exports send unless "Count cards in decks as owned" is on): a print then needs copies left outside decks.
   - *Editing* (incoming lists only): a line's quantity (≥ 1) or print (one the card comes in; merged into an existing line of that print), removing a line, adding a card by hand (onto an existing line of that print). The total is never changed by these edits.
   - *Mark received*: every line is added on top of the collection (like `POST /collection`), logged with source `purchase`, and `received_at` is set, all in one transaction. A received list can't be edited or received again; it stays as history until deleted.
 - **Sale lists**:
@@ -366,23 +367,23 @@ Books, films and series (ported from `media`). Metadata lives once in a shared c
 |---|---|---|
 | `id` | integer, PK | |
 | `type` | enum `book` / `film` / `series` | |
-| `title` | text, not null | English title, or the source's default when it has no English one: TMDB `en-US`, an Open Library English edition's title else the work's own title, or as typed for `manual`. |
-| `title_fr` | text, null | French title when the source has one: TMDB `fr-FR` (the original title when TMDB has no translation), or a French Open Library edition's title. Null for `manual`. |
+| `title` | text, not null | English title, or the source's default when it has no English one: TMDB `en-US`, the Google Books edition's own title (in the edition's language), or as typed for `manual`. |
+| `title_fr` | text, null | French title when the source has one: TMDB `fr-FR` (the original title when TMDB has no translation). Null for books (a Google Books volume is one edition in one language, its title is `title`) and `manual`. |
 | `original_title` | text, null | When it differs from `title` (TMDB only). |
 | `year` | smallint, null | Publication / release / first air year. |
 | `creators` | text, null | Author(s), director(s) or creator(s), as one comma-separated display string. |
-| `genres` | text[], not null, default `{}` | TMDB genre names (English), or up to 5 Open Library subjects (`genre:` tagged ones first, noise filtered out). |
-| `synopsis` | text, null | English (TMDB `en-US`, or the Open Library work's description). |
+| `genres` | text[], not null, default `{}` | TMDB genre names (English), or up to 5 parts of the Google Books categories (BISAC paths split on `/`, "General" and repeats dropped). |
+| `synopsis` | text, null | English (TMDB `en-US`), or the Google Books edition's description as plain text (HTML stripped), in the edition's language. |
 | `synopsis_fr` | text, null | TMDB `fr-FR`; null for books and manual items. |
 | `runtime_minutes` | smallint, null | Films only. |
 | `isbn` | text, null | Books only (ISBN-13 preferred). |
 | `season_episode_counts` | smallint[], null | Series only; index 0 = season 1. Specials and trailing announced seasons with 0 episodes are left out. Null for manual series. |
-| `source` | enum `tmdb` / `openlibrary` / `manual` | |
-| `external_id` | text, null | TMDB id (`603`) or Open Library work id without `/works/` (`OL20893680W`); null for `manual`. |
+| `source` | enum `tmdb` / `googlebooks` / `manual` | `googlebooks` replaced `openlibrary` (migration `0017`, which turned the existing Open Library books into `manual` items). |
+| `external_id` | text, null | TMDB id (`603`) or Google Books volume id (`zyTCAlFPjgYC`); null for `manual`. |
 | `created_by_user_id` | integer, FK → `core.users.id`, not null | Who first added it. |
 | `created_at` / `updated_at` | timestamptz, not null, default `now()` | `updated_at` set on every update. |
 
-Partial unique index `uq_media_items_source_external_id` on `(source, external_id)` where `external_id` is not null: adding the same TMDB/Open Library item twice reuses the row. Books have **no page count**: book progress is status only.
+Partial unique index `uq_media_items_source_external_id` on `(source, external_id)` where `external_id` is not null: adding the same TMDB/Google Books item twice reuses the row. Two editions of a book (e.g. English and French) are two Google Books volumes, so two rows. Books have **no page count**: book progress is status only.
 
 ### `media.covers`
 
@@ -418,7 +419,7 @@ Unique `(user_id, media_item_id)` (`uq_library_entries_user_id`).
 
 ### `media.book_series`
 
-A user's own grouping of books (One Piece, Dune…); the volumes are their library entries. Per user, not in the shared catalog: Open Library has no reliable series data.
+A user's own grouping of books (One Piece, Dune…); the volumes are their library entries. Per user, not in the shared catalog: the book sources have no reliable series data.
 
 | Column | Type | Notes |
 |---|---|---|

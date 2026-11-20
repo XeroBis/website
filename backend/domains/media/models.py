@@ -34,7 +34,7 @@ class MediaType(enum.StrEnum):
 
 class MediaSource(enum.StrEnum):
     tmdb = "tmdb"
-    openlibrary = "openlibrary"
+    googlebooks = "googlebooks"
     manual = "manual"
 
 

@@ -556,7 +556,7 @@
     "completionNotApplicable": "Aucune carte ne correspond à la rareté et à la variante sélectionnées.",
     "completionFilter": "Complétion :",
     "reverseOnly": "Reverse",
-    "excludeInDeck": "Ne pas compter les cartes allouées à un deck comme possédées",
+    "countDeckCards": "Compter les cartes dans les decks comme possédées",
     "missingOnly": "Afficher uniquement les cartes manquantes",
     "duplicatesOnly": "Afficher uniquement les variantes possédées en 2 exemplaires ou plus",
     "exportMissing": "Exporter les cartes manquantes",

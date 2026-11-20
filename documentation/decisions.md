@@ -305,3 +305,14 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Upload as the raw body, over multipart**: no `python-multipart` dependency, like the cards image import.
 - **Cover URLs fetched by the server, guarded**: http(s) only, every hop's host must resolve to public addresses (redirects followed by hand, 3 at most), raster types only, read up to 2 MB; the browser can't fetch most image hosts itself (CORS). DNS rebinding between the check and the request is not covered.
 - **Cover URL versioned by the item's `updated_at`** (`?v=`), over dropping the immutable cache: covers stay cached for a year, and a replaced one gets a new URL.
+
+## Media: Google Books replaces Open Library (2026-11-20)
+
+- **What**: book search, details and covers come from the Google Books API (`/volumes`, `/volumes/{id}`) instead of Open Library; `media_source` value `openlibrary` renamed to `googlebooks`. Migration `0017` turns the existing Open Library books into `manual` items (data and covers kept, no longer refreshed), since a work id has no Google Books equivalent and there was almost no data to carry over.
+- **Key required** (`GOOGLE_BOOKS_API_KEY`, sent as the `X-Goog-Api-Key` header so it never shows in logged URLs), over anonymous calls: the anonymous quota is shared and low. Without it book search answers 502, like TMDB without its token.
+- **One edition per row, over a work with EN/FR titles**: a Google Books volume is one edition in one language, so its title and description are stored as they are (`title_fr` / `synopsis_fr` stay null for books). An **EN / FR** toggle in the add page's search bar restricts results to that language (`langRestrict`), defaulting to the UI's, because the user owns books in either language.
+
+## Media: series page without bulk marking (2026-11-20)
+
+- **What**: the series page's bulk bar (volumes from – to, Mark read / owned / not owned) and its `POST /series/{id}/mark` endpoint are removed. Volumes are marked one at a time on the series page (Read, owned toggle), or in one tap each when added from search.
+- **Why**: the user didn't want the bar on the page; nothing else used the endpoint, so it went too rather than staying as dead code.

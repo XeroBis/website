@@ -19,6 +19,7 @@ import {
 } from '../../../models/card.model';
 import { CardsService } from '../../../services/cards.service';
 import { CountIncomingService } from '../../../services/count-incoming.service';
+import { CountDeckCardsService } from '../../../services/count-deck-cards.service';
 import { PurchaseListsService } from '../../../services/purchase-lists.service';
 import { CatalogService } from '../../../services/catalog.service';
 import { SharesService } from '../../../services/shares.service';
@@ -114,7 +115,6 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   }
   search = signal('');
   selectedRarities = signal(new Set(DEFAULT_SET_RARITIES));
-  excludeInDeck = signal(false);
   missingOnly = signal(false);
   duplicatesOnly = signal(false);
   /** Selected print controls the grid layout. */
@@ -159,6 +159,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     private readonly sharesService: SharesService,
     private readonly purchaseListsService: PurchaseListsService,
     readonly countIncoming: CountIncomingService,
+    readonly countDeckCards: CountDeckCardsService,
     private readonly toastService: ToastService,
     private readonly translate: TranslateService,
   ) {}
@@ -208,11 +209,11 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     if (!card) {
       return 0;
     }
-    const allocated = this.excludeInDeck() ? this.allocatedVariantQuantity(card, 'standard') : 0;
+    const allocated = !this.countDeckCards.enabled() ? this.allocatedVariantQuantity(card, 'standard') : 0;
     return Math.max(0, this.variantQuantity(card, 'standard') - allocated);
   }
-  toggleExcludeInDeck(): void {
-    this.excludeInDeck.set(!this.excludeInDeck());
+  toggleCountDeckCards(): void {
+    this.countDeckCards.toggle();
     this.recomputeFilteredCards();
   }
   toggleDuplicatesOnly(): void {
@@ -343,7 +344,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     if (!card) {
       return 0;
     }
-    const allocated = this.excludeInDeck()
+    const allocated = !this.countDeckCards.enabled()
       ? this.allocatedVariantQuantity(card, variant.variant_type)
       : 0;
     return Math.max(0, this.variantQuantity(card, variant.variant_type) - allocated);
@@ -475,7 +476,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
           Math.max(
             0,
             v.quantity -
-              (this.excludeInDeck() ? this.allocatedVariantQuantity(card, v.variant_type) : 0),
+              (!this.countDeckCards.enabled() ? this.allocatedVariantQuantity(card, v.variant_type) : 0),
           ),
         0,
       );

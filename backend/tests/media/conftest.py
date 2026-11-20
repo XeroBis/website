@@ -1,5 +1,5 @@
 """Fixtures for the media tests: logged-in clients with the `media` app, and a
-fake TMDB / Open Library (no test ever reaches the real APIs)."""
+fake TMDB / Google Books (no test ever reaches the real APIs)."""
 
 import httpx2
 import pytest
@@ -60,7 +60,7 @@ def anon():
 
 
 class FakeWeb:
-    """Stands in for TMDB/Open Library: tests register responses per path.
+    """Stands in for TMDB/Google Books: tests register responses per path.
 
     Any request without a registered response fails the test.
     """
@@ -81,12 +81,12 @@ class FakeWeb:
 
     def handle(self, request: httpx2.Request) -> httpx2.Response:
         """Routes are `host/path`, optionally with `?language=` (TMDB) or
-        `?lang=` (Open Library) to answer per language."""
+        `?langRestrict=` (Google Books) to answer per language."""
         self.connections.append(database.engine.pool.checkedout())
         self.requests.append(request)
         key = f"{request.url.host}{request.url.path}"
         params = request.url.params
-        for name in ("language", "lang"):
+        for name in ("language", "langRestrict"):
             if name in params and f"{key}?{name}={params[name]}" in self.routes:
                 return self.routes[f"{key}?{name}={params[name]}"]
         if key not in self.routes:
@@ -101,12 +101,16 @@ def web(monkeypatch):
     monkeypatch.setattr(
         "domains.media.sources.tmdb.settings.tmdb_read_access_token", "test-token"
     )
+    monkeypatch.setattr(
+        "domains.media.sources.googlebooks.settings.google_books_api_key", "test-key"
+    )
     return fake
 
 
 # ── fake source payloads ─────────────────────────────────────────────────────
 
 TMDB = "api.themoviedb.org/3"
+BOOKS = "www.googleapis.com/books/v1/volumes"
 TMDB_IMG = "image.tmdb.org/t/p"
 URL = "/api/media"
 
@@ -134,6 +138,16 @@ def tmdb_series(web: FakeWeb, tmdb_id: int, counts: list[int], title="Show"):
         },
     )
     web.image(f"{TMDB_IMG}/w342/tv{tmdb_id}.jpg")
+
+
+def gb_volume(volume_id: str, title: str = "Piranesi", **info) -> dict:
+    """A Google Books volume as `/volumes` lists it and `/volumes/{id}` answers."""
+    return {"id": volume_id, "volumeInfo": {"title": title, **info}}
+
+
+def gb_book(web: FakeWeb, volume_id: str, title: str = "Piranesi", **info) -> None:
+    """Register a volume's details (`/volumes/{id}`)."""
+    web.json(f"{BOOKS}/{volume_id}", gb_volume(volume_id, title, **info))
 
 
 def tmdb_film(

@@ -556,7 +556,7 @@
     "completionNotApplicable": "No cards match the selected rarity and variant.",
     "completionFilter": "Completion:",
     "reverseOnly": "Reverse",
-    "excludeInDeck": "Don't count cards allocated to a deck as owned",
+    "countDeckCards": "Count cards in decks as owned",
     "missingOnly": "Show only missing cards",
     "duplicatesOnly": "Show only variants owned in quantity 2 or more",
     "exportMissing": "Export missing cards",

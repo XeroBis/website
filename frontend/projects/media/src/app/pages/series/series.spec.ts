@@ -74,41 +74,6 @@ describe('SeriesPage', () => {
     expect(el.querySelector('.head a.btn')?.getAttribute('href')).toBe('/add?type=book&series=4');
   });
 
-  it('marks a range read, and owned', async () => {
-    const [from, to] = [...el.querySelectorAll('.bulk input')] as HTMLInputElement[];
-    from.value = '1';
-    from.dispatchEvent(new Event('input'));
-    to.value = '2';
-    to.dispatchEvent(new Event('input'));
-    await fixture.whenStable();
-    button('Marquer lus').click();
-    expect(await answer('POST', '/api/media/series/4/mark')).toEqual({
-      from_volume: 1,
-      to_volume: 2,
-      read: true,
-    });
-    button('Marquer possédés').click();
-    expect(await answer('POST', '/api/media/series/4/mark')).toEqual({
-      from_volume: 1,
-      to_volume: 2,
-      owned: true,
-    });
-  });
-
-  it('refuses a reversed range in the page', async () => {
-    const [from, to] = [...el.querySelectorAll('.bulk input')] as HTMLInputElement[];
-    from.value = '5';
-    from.dispatchEvent(new Event('input'));
-    to.value = '2';
-    to.dispatchEvent(new Event('input'));
-    await fixture.whenStable();
-    button('Marquer non possédés').click();
-    await fixture.whenStable();
-    expect(el.querySelector('.error')?.textContent).toBe(
-      'Le premier tome ne peut pas être après le dernier.',
-    );
-  });
-
   it('reads one volume undated and toggles one owned, then refreshes', async () => {
     const rows = [...el.querySelectorAll('[data-testid="volume"]')];
     (rows[1].querySelector('.btn') as HTMLButtonElement).click();

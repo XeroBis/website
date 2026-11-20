@@ -606,6 +606,7 @@ a.poster:hover {
     }
   }
   .cell {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -628,6 +629,48 @@ a.poster:hover {
     &.drop-target {
       outline-color: var(--ab-accent);
     }
+  }
+  /* Trash on the poster's corner: always shown on touch, on hover elsewhere. */
+  .cell .remove {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--ab-border);
+    border-radius: 50%;
+    background: var(--ab-surface);
+    color: var(--ab-muted);
+    cursor: pointer;
+    box-shadow: var(--shadow-book);
+    transition:
+      opacity 0.15s,
+      color 0.15s;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--media-danger);
+      color: var(--media-danger);
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    @media (hover: hover) {
+      opacity: 0;
+    }
+  }
+  @media (hover: hover) {
+    .cell:hover .remove,
+    .cell .remove:focus-visible {
+      opacity: 1;
+    }
+  }
+  .cdk-drag-dragging .remove {
+    display: none;
   }
   .grid.busy {
     opacity: 0.6;
@@ -721,33 +764,6 @@ a.poster:hover {
     margin: 0;
     font-family: var(--font-serif);
     font-style: italic;
-  }
-  .bulk {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6rem 1rem;
-    margin-bottom: 1.25rem;
-
-    .range {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-
-      input {
-        width: 5.5rem;
-      }
-    }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
-    .hint {
-      flex-basis: 100%;
-      margin: 0;
-      font-size: 0.78rem;
-    }
   }
   .volumes {
     display: grid;
@@ -971,8 +987,25 @@ a.poster:hover {
   }
   .search {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     max-width: 35rem;
+
+    .field {
+      flex: 1;
+      min-width: 0;
+    }
+    .lang {
+      flex: none;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+
+      .chip {
+        padding: 0 0.6rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+      }
+    }
   }
   .source {
     margin: 0.5rem 0 1.25rem;
@@ -1372,70 +1405,88 @@ a.poster:hover {
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
   }
-  /* Past reads and the add row share one set of columns, so the dates line up. */
+  /* Past reads as lines of text; a read's dates become fields only while edited. */
   .reads {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: 0.6rem;
 
     > .small {
-      grid-column: 1 / -1;
       margin: 0;
     }
-    @media (max-width: 560px) {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-  }
-  .sessions,
-  .sessions li,
-  .new-session {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    align-items: end;
-    gap: 0.6rem;
   }
   .sessions {
     margin: 0;
-    padding: 0 0 0.4rem;
+    padding: 0;
     list-style: none;
 
+    li {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem 0.75rem;
+      min-height: 2.6rem;
+      padding: 0.35rem 0;
+    }
     li + li {
-      padding-top: 0.6rem;
       border-top: 1px solid var(--ab-border);
+    }
+    .ordinal {
+      flex: none;
+      min-width: 6.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .when {
+      flex: 1;
+      min-width: 0;
+      font-weight: 600;
     }
     .end {
       display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 0.6rem;
+      gap: 0.3rem;
+      margin-left: auto;
     }
-    .when {
-      font-size: 0.8rem;
+  }
+  /* One row: two compact dates, the "Date unknown" box, then the buttons; wraps on phones. */
+  .session-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.6rem 0.75rem;
+    width: 100%;
+
+    > label:not(.check) {
+      display: grid;
+      flex: 0 1 10.5rem;
+    }
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      height: 2.4rem;
+      font-size: 0.85rem;
       font-weight: 600;
+      white-space: nowrap;
+    }
+    .end {
+      display: flex;
+      gap: 0.4rem;
+      margin-left: auto;
+    }
+    @media (max-width: 560px) {
+      > label:not(.check) {
+        flex: 1 1 8rem;
+      }
     }
   }
   .new-session {
-    padding-top: 1rem;
+    padding-top: 0.75rem;
     border-top: 1px dashed var(--ab-border);
-
-    .end {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-    .end .btn {
-      justify-content: flex-start;
-    }
   }
-  @media (max-width: 560px) {
-    .sessions .end,
-    .new-session .end {
-      grid-column: 1 / -1;
-    }
-    .new-session .end .btn {
-      justify-content: center;
-    }
+  .add-session {
+    margin: 0;
   }
   .in-series {
     margin: 0.25rem 0 0.5rem;

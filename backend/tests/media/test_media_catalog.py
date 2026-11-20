@@ -2,7 +2,7 @@
 
 import httpx2
 
-from tests.media.conftest import TMDB, tmdb_film
+from tests.media.conftest import TMDB, gb_book, tmdb_film
 
 FILM = {"source": "tmdb", "external_id": "603", "type": "film"}
 
@@ -47,103 +47,61 @@ def test_add_film_from_tmdb_fills_metadata_and_cover(client, web):
     assert cover.content == b"\xff\xd8fake-jpeg"
 
 
-def test_add_book_from_open_library(client, web):
-    web.json(
-        "openlibrary.org/search.json",
-        {
-            "docs": [
-                {
-                    "key": "/works/OL20893680W",
-                    "title": "Piranesi",
-                    "author_name": ["Susanna Clarke"],
-                    "first_publish_year": 2020,
-                    "cover_i": 10226290,
-                    "isbn": ["1635575648", "9781526622440"],
-                    "subject": [
-                        "form:novel",
-                        "genre:fantasy",
-                        "Fiction",
-                        "nyt:x=2020",
-                        "Accessible book",
-                    ],
-                }
-            ]
+def test_add_book_from_google_books(client, web):
+    gb_book(
+        web,
+        "zyTCAlFPjgYC",
+        publishedDate="2020-09-15",
+        authors=["Susanna Clarke"],
+        industryIdentifiers=[
+            {"type": "ISBN_10", "identifier": "1635575648"},
+            {"type": "ISBN_13", "identifier": "9781526622440"},
+        ],
+        categories=["Fiction / Fantasy / General", "Fiction / Literary"],
+        description="<p>A house of <b>halls</b>.</p><p>Tides &amp; statues. </p>",
+        imageLinks={
+            "thumbnail": "http://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=1&edge=curl",
+            "medium": "http://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=3&edge=curl",
         },
     )
-    web.json(
-        "openlibrary.org/works/OL20893680W.json",
-        {"title": "Piranesi", "description": {"value": "A house of halls. "}},
-    )
-    web.image("covers.openlibrary.org/b/id/10226290-M.jpg")
+    web.image("books.google.com/books/content")
 
     r = client.post(
         "/api/media/library/from-search",
-        json={"source": "openlibrary", "external_id": "OL20893680W", "type": "book"},
+        json={"source": "googlebooks", "external_id": "zyTCAlFPjgYC", "type": "book"},
     )
     assert r.status_code == 201, r.text
     item = r.json()["item"]
+    # The edition's own title, whatever the viewer's language.
+    assert (item["title"], item["title_fr"]) == ("Piranesi", None)
     assert item["creators"] == "Susanna Clarke"
+    assert item["year"] == 2020
     assert item["isbn"] == "9781526622440"
-    assert item["genres"] == ["Fantasy", "Fiction"]
-    assert item["synopsis"] == "A house of halls."
+    assert item["genres"] == ["Fiction", "Fantasy", "Literary"]
+    assert item["synopsis"] == "A house of halls.\nTides & statues."
     assert item["has_cover"] is True
     assert item["runtime_minutes"] is None
-    # No edition matches either language: the work's own title, no French title.
-    assert (item["title"], item["title_fr"]) == ("Piranesi", None)
+    details = next(r for r in web.requests if r.url.path.endswith("/zyTCAlFPjgYC"))
+    assert details.headers["x-goog-api-key"] == "test-key"
+    assert "test-key" not in str(details.url)
+    cover = next(r for r in web.requests if r.url.host == "books.google.com")
+    # The largest image, over HTTPS, without the page curl.
+    assert (
+        str(cover.url)
+        == "https://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=3"
+    )
 
 
-def _ol_work(web, work_id: str, title: str, editions: dict[str, tuple[str, str]]):
-    """`editions`: lang param → (edition title, MARC language) Open Library picks."""
-    for lang, (edition_title, marc) in editions.items():
-        web.json(
-            f"openlibrary.org/search.json?lang={lang}",
-            {
-                "docs": [
-                    {
-                        "key": f"/works/{work_id}",
-                        "title": title,
-                        "editions": {
-                            "docs": [{"title": edition_title, "language": [marc]}]
-                        },
-                    }
-                ]
-            },
-        )
-    web.json(f"openlibrary.org/works/{work_id}.json", {"title": title})
-
-
-def test_book_gets_english_and_french_edition_titles(client, web):
-    _ol_work(
-        web,
-        "OL82563W",
-        "Harry Potter and the Philosopher's Stone",
-        {
-            "en": ("Harry Potter and the Sorcerer's Stone", "eng"),
-            "fr": ("Harry Potter à l'école des sorciers", "fre"),
-        },
+def test_book_without_key_is_502(client, monkeypatch):
+    monkeypatch.setattr(
+        "domains.media.sources.googlebooks.settings.google_books_api_key", ""
     )
     r = client.post(
         "/api/media/library/from-search",
-        json={"source": "openlibrary", "external_id": "OL82563W", "type": "book"},
+        json={"source": "googlebooks", "external_id": "zyTCAlFPjgYC", "type": "book"},
     )
-    item = r.json()["item"]
-    assert item["title"] == "Harry Potter and the Sorcerer's Stone"
-    assert item["title_fr"] == "Harry Potter à l'école des sorciers"
-
-
-def test_book_french_title_only_from_a_french_edition(client, web):
-    # Open Library falls back to another language's edition: not a French title.
-    _ol_work(
-        web,
-        "OL1W",
-        "Piranesi",
-        {"en": ("Piranesi", "eng"), "fr": ("Piranesi (Large print)", "eng")},
-    )
-    r = client.post(
-        "/api/media/library/from-search",
-        json={"source": "openlibrary", "external_id": "OL1W", "type": "book"},
-    )
-    assert r.json()["item"]["title_fr"] is None
+    assert r.status_code == 502
+    assert r.json()["detail"] == "GOOGLE_BOOKS_API_KEY is not configured"
 
 
 def test_missing_cover_falls_back_to_placeholder(client, web):

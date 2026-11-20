@@ -8,10 +8,10 @@ import { Icon, httpStatus } from '@shared';
 
 import { statusLabel } from '../../media/labels';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { BookSeriesDetail, EntrySummary, SeriesMark } from '../../media/models';
+import { BookSeriesDetail, EntrySummary } from '../../media/models';
 import { Poster } from '../../ui/poster';
 
-/** A book series: its volumes in order, with one-tap and bulk read/owned. */
+/** A book series: its volumes in order, with one-tap read/owned per volume. */
 @Component({
   selector: 'ab-series',
   imports: [FormsModule, Icon, Poster, RouterLink, TranslatePipe],
@@ -30,8 +30,6 @@ export class SeriesPage {
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly name = signal('');
-  protected readonly from = signal<number | null>(null);
-  protected readonly to = signal<number | null>(null);
 
   protected readonly statusLabel = statusLabel;
 
@@ -74,23 +72,6 @@ export class SeriesPage {
       return;
     }
     this.run(() => this.api.renameSeries(this.seriesId, name));
-  }
-
-  /** The bulk bar: the from-to range (empty = every volume). */
-  protected mark(change: Pick<SeriesMark, 'read' | 'owned'>): void {
-    const from = this.number(this.from());
-    const to = this.number(this.to());
-    if (from !== null && to !== null && from > to) {
-      this.error.set('series.errorRange');
-      return;
-    }
-    this.run(() =>
-      this.api.markSeries(this.seriesId, { from_volume: from, to_volume: to, ...change }),
-    );
-  }
-
-  private number(value: number | null): number | null {
-    return value === null || String(value) === '' ? null : Number(value);
   }
 
   /** One volume: an undated read, or flip ownership. Then refresh the counts. */

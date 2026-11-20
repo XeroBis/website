@@ -69,8 +69,8 @@ export const BOOK: MediaItem = {
   creators: 'Frank Herbert',
   runtime_minutes: null,
   isbn: '9780441013593',
-  source: 'openlibrary',
-  external_id: 'OL893415W',
+  source: 'googlebooks',
+  external_id: 'yng_CwAAQBAJ',
   has_cover: false,
 };
 

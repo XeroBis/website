@@ -1,7 +1,7 @@
 """Shared httpx2 client for the metadata sources.
 
 Tests replace `transport` with an `httpx2.MockTransport`, so no test ever
-reaches TMDB or Open Library.
+reaches TMDB or Google Books.
 """
 
 import httpx2

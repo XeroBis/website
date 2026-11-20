@@ -2,7 +2,7 @@ from datetime import date
 
 import httpx2
 
-from tests.media.conftest import TMDB, tmdb_film
+from tests.media.conftest import BOOKS, TMDB, gb_volume, tmdb_film
 
 TODAY = date.today()
 
@@ -264,62 +264,65 @@ def test_search_source_failure_is_502(client, web):
     assert r.status_code == 502
 
 
-def test_search_book_open_library(client, web):
+def test_search_book_google_books(client, web):
     web.json(
-        "openlibrary.org/search.json",
+        BOOKS,
         {
-            "docs": [
-                {
-                    "key": "/works/OL1W",
-                    "title": "Piranesi",
-                    "author_name": ["S. Clarke"],
-                    "first_publish_year": 2020,
-                    "cover_i": 42,
-                    # Open Library's pick for lang=fr is an English edition.
-                    "editions": {"docs": [{"title": "Piranesi", "language": ["eng"]}]},
-                },
+            "items": [
+                gb_volume(
+                    "zyTCAlFPjgYC",
+                    authors=["S. Clarke"],
+                    publishedDate="2020-09",
+                    imageLinks={
+                        "smallThumbnail": "http://books.google.com/b?id=1&zoom=5&edge=curl",
+                        "thumbnail": "http://books.google.com/b?id=1&zoom=1&edge=curl",
+                    },
+                ),
+                gb_volume("noInfo1", title=""),
             ]
         },
     )
     hits = client.get(
         "/api/media/search", params={"type": "book", "q": "piranesi"}
     ).json()
-    assert hits == [
-        {
-            "source": "openlibrary",
-            "external_id": "OL1W",
-            "type": "book",
-            "title": "Piranesi",
-            "year": 2020,
-            "creators": "S. Clarke",
-            "thumb_url": "https://covers.openlibrary.org/b/id/42-M.jpg?default=false",
-            "library_entry_id": None,
-            "library_status": None,
-            "library_owned": None,
-            "library_series_id": None,
-        }
-    ]
-
-
-def test_search_book_titles_follow_the_viewer_language(client, other_client, web):
-    doc = {
-        "key": "/works/OL82563W",
-        "title": "Harry Potter and the Philosopher's Stone",
-        "editions": {
-            "docs": [
-                {"title": "Harry Potter à l'école des sorciers", "language": ["fre"]}
-            ]
-        },
+    assert hits[0] == {
+        "source": "googlebooks",
+        "external_id": "zyTCAlFPjgYC",
+        "type": "book",
+        "title": "Piranesi",
+        "year": 2020,
+        "creators": "S. Clarke",
+        "thumb_url": "https://books.google.com/b?id=1&zoom=1",
+        "library_entry_id": None,
+        "library_status": None,
+        "library_owned": None,
+        "library_series_id": None,
     }
-    web.json("openlibrary.org/search.json", {"docs": [doc]})
-    fr = client.get("/api/media/search", params={"type": "book", "q": "harry"}).json()
-    en = other_client.get(
-        "/api/media/search", params={"type": "book", "q": "harry"}
-    ).json()
-    assert fr[0]["title"] == "Harry Potter à l'école des sorciers"
-    # The French edition isn't used for an English viewer.
-    assert en[0]["title"] == "Harry Potter and the Philosopher's Stone"
-    assert [r.url.params["lang"] for r in web.requests] == ["fr", "en"]
+    assert (hits[1]["year"], hits[1]["creators"], hits[1]["thumb_url"]) == (
+        None,
+        None,
+        None,
+    )
+    request = web.requests[-1]
+    assert request.headers["x-goog-api-key"] == "test-key"
+    assert request.url.params["printType"] == "books"
+    assert request.url.params["maxResults"] == "20"
+    assert request.url.params["startIndex"] == "0"
+
+
+def test_search_book_language_defaults_to_the_viewer_and_can_be_picked(
+    client, other_client, web
+):
+    web.json(BOOKS, {"items": []})
+    # `client` is French, `other_client` English.
+    client.get("/api/media/search", params={"type": "book", "q": "harry"})
+    other_client.get("/api/media/search", params={"type": "book", "q": "harry"})
+    client.get("/api/media/search", params={"type": "book", "q": "harry", "lang": "en"})
+    assert [r.url.params["langRestrict"] for r in web.requests] == ["fr", "en", "en"]
+    r = client.get("/api/media/search", params={"type": "book", "q": "x", "lang": "de"})
+    assert r.status_code == 422
+    r = client.get("/api/media/search", params={"type": "film", "q": "x", "lang": "en"})
+    assert r.status_code == 422
 
 
 def _set_title_fr(entry: dict, title_fr: str) -> None:
@@ -349,9 +352,9 @@ def test_text_search_and_title_sort_use_the_viewer_language(client, other_client
 
 
 def test_search_book_pages(client, web):
-    web.json("openlibrary.org/search.json", {"docs": []})
+    web.json(BOOKS, {"totalItems": 0})
     r = client.get("/api/media/search", params={"type": "book", "q": "x", "page": 3})
     assert r.status_code == 200
-    assert web.requests[-1].url.params["page"] == "3"
+    assert web.requests[-1].url.params["startIndex"] == "40"
     r = client.get("/api/media/search", params={"type": "film", "q": "x", "page": 2})
     assert r.status_code == 422

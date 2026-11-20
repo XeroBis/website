@@ -7,16 +7,19 @@ from fastapi.testclient import TestClient
 import app
 from core.security import CSRF_COOKIE
 from tests.conftest import REGISTER_SECRET
-from tests.media.conftest import URL, tmdb_film
+from tests.media.conftest import BOOKS, URL, gb_book, gb_volume, tmdb_film
 
 
 def _book(web):
-    web.json(
-        "openlibrary.org/search.json",
-        {"docs": [{"key": "/works/OL20893680W", "title": "Piranesi", "cover_i": 1}]},
+    web.json(BOOKS, {"items": [gb_volume("zyTCAlFPjgYC")]})
+    gb_book(
+        web,
+        "zyTCAlFPjgYC",
+        imageLinks={
+            "thumbnail": "http://books.google.com/books/content?id=zyTCAlFPjgYC"
+        },
     )
-    web.json("openlibrary.org/works/OL20893680W.json", {"title": "Piranesi"})
-    web.image("covers.openlibrary.org/b/id/1-M.jpg")
+    web.image("books.google.com/books/content")
 
 
 def test_add_progress_and_isolation(media_client, anon, web):
@@ -28,7 +31,7 @@ def test_add_progress_and_isolation(media_client, anon, web):
     book = admin.post(
         f"{URL}/library/from-search",
         json={
-            "source": "openlibrary",
+            "source": "googlebooks",
             "external_id": hits[0]["external_id"],
             "type": "book",
         },

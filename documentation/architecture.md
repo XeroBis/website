@@ -31,7 +31,7 @@ website/
 │   │   ├── auth/               #   /api/auth routes, schemas, seed.py (`make seed-user`, `seed-basic-user`)
 │   │   ├── portfolio/          #   /api/portfolio routes, `portfolio` schema models
 │   │   ├── media/              #   /api/media routes, `media` schema models, rules.py (status transitions),
-│   │   │                       #   catalog.py, sources/ (TMDB + Open Library via httpx2), refresh.py (`make media-refresh`)
+│   │   │                       #   catalog.py, sources/ (TMDB + Google Books via httpx2), refresh.py (`make media-refresh`)
 │   │   ├── cards/              #   /api/cards routes, `cards` schema models,
 │   │   │                       #   variant_order.py (print variants + display order), access.py, names.py (name
 │   │   │                       #   normalization), display.py (FR/EN display fields), search.py (name match + sorts),
@@ -107,7 +107,7 @@ website/
 
 **Dev.** Browser → `ng serve` for that app (`localhost:460x`) → its dev-server proxy sends `/api` to the backend (`API_TARGET`, `http://backend:8000` inside compose). Same-origin as in prod. Cookies aren't scoped by port, so a session cookie set on `localhost:4604` (auth) is also sent to `localhost:4602` (cards).
 
-**Outbound calls.** Only the backend talks to TMDB (films, series; Bearer `TMDB_READ_ACCESS_TOKEN`) and Open Library (books), for media's search and details, and it downloads covers into `media.covers` when an item is added. The one exception: search result thumbnails on media's Add page are `<img>`s pointing at those CDNs, since nothing is stored before an item is added. Stored covers are always served by `/api/media/items/{id}/cover`. Cards' catalog refresh (admin-triggered only, never while browsing) downloads scans, set logos/symbols and variant badges from pokecardex's CDN and card text from TCGdex (`api.tcgdex.net`) into `CARDS_DATA_DIR`.
+**Outbound calls.** Only the backend talks to TMDB (films, series; Bearer `TMDB_READ_ACCESS_TOKEN`) and Google Books (books; `X-Goog-Api-Key: GOOGLE_BOOKS_API_KEY`), for media's search and details, and it downloads covers into `media.covers` when an item is added. The one exception: search result thumbnails on media's Add page are `<img>`s pointing at those CDNs, since nothing is stored before an item is added. Stored covers are always served by `/api/media/items/{id}/cover`. Cards' catalog refresh (admin-triggered only, never while browsing) downloads scans, set logos/symbols and variant badges from pokecardex's CDN and card text from TCGdex (`api.tcgdex.net`) into `CARDS_DATA_DIR`.
 
 ### Cards frontend
 

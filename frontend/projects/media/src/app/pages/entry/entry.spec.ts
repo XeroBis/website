@@ -91,7 +91,9 @@ describe('EntryPage', () => {
     );
     expect(el.querySelector('.state')?.textContent).toBe('En cours');
     expect(buttons()).toEqual(['Terminer', 'Abandonner']);
-    expect(el.querySelector('.sessions .when')?.textContent?.trim()).toBe('En cours');
+    expect(el.querySelector('.sessions .when')?.textContent?.trim()).toBe(
+      'En cours depuis le 17 oct. 2026',
+    );
   });
 
   it('records a read with the date unknown', async () => {
@@ -173,7 +175,15 @@ describe('EntryPage', () => {
 
   it('adds a read with the date unknown from the history', async () => {
     await render();
-    button('Ajouter un visionnage, date inconnue').click();
+    button('Ajouter un visionnage').click();
+    await fixture.whenStable();
+    const undated = el.querySelector('.new-session input[type="checkbox"]') as HTMLInputElement;
+    undated.click();
+    await fixture.whenStable();
+    expect(
+      (el.querySelector('.new-session input[name="start"]') as HTMLInputElement).disabled,
+    ).toBe(true);
+    button('Ajouter').click();
     expect(
       await answer(
         'POST',
@@ -253,6 +263,8 @@ describe('EntryPage', () => {
 
   it('refuses a session finishing before it starts, in the page', async () => {
     await render();
+    button('Ajouter un visionnage').click();
+    await fixture.whenStable();
     const [start, finish] = [...el.querySelectorAll('.new-session input')] as HTMLInputElement[];
     start.value = '2026-05-02';
     start.dispatchEvent(new Event('input'));
@@ -268,6 +280,9 @@ describe('EntryPage', () => {
 
   it('adds a past session', async () => {
     await render();
+    expect(el.querySelector('.new-session')).toBeNull();
+    button('Ajouter un visionnage').click();
+    await fixture.whenStable();
     const [start, finish] = [...el.querySelectorAll('.new-session input')] as HTMLInputElement[];
     start.value = '2020-01-01';
     start.dispatchEvent(new Event('input'));
@@ -284,6 +299,54 @@ describe('EntryPage', () => {
     );
     expect(body).toEqual({ started_on: '2020-01-01', finished_on: '2020-01-10' });
     expect(el.querySelectorAll('.sessions li').length).toBe(1);
+    expect(el.querySelector('.sessions .when')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '1 janv. 2020 → 10 janv. 2020 · 9 j',
+    );
+    // The form closes once the read is added.
+    expect(el.querySelector('.new-session')).toBeNull();
+  });
+
+  it('numbers reads oldest first and edits one in place', async () => {
+    await render(
+      entry({
+        item: BOOK,
+        status: 'done',
+        sessions: [
+          { id: 5, started_on: '2024-03-01', finished_on: '2024-03-20', undated: false },
+          { id: 6, started_on: null, finished_on: null, undated: true },
+        ],
+      }),
+    );
+    const rows = () => [...el.querySelectorAll('.sessions li')] as HTMLElement[];
+    expect(rows().map((li) => li.querySelector('.ordinal')?.textContent?.trim())).toEqual([
+      '2e lecture',
+      '1re lecture',
+    ]);
+    expect(rows()[1].querySelector('.when')?.textContent?.trim()).toBe('Date inconnue');
+    expect(rows()[0].querySelector('input')).toBeNull();
+
+    (rows()[1].querySelector('[data-testid="edit-session"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    const finish = rows()[1].querySelector('input[name="finish"]') as HTMLInputElement;
+    finish.value = '2019-06-01';
+    finish.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    button('Enregistrer').click();
+    const body = await answer(
+      'PUT',
+      '/api/media/library/3/sessions/6',
+      entry({
+        item: BOOK,
+        status: 'done',
+        sessions: [
+          { id: 5, started_on: '2024-03-01', finished_on: '2024-03-20', undated: false },
+          { id: 6, started_on: null, finished_on: '2019-06-01', undated: false },
+        ],
+      }),
+    );
+    expect(body).toEqual({ started_on: null, finished_on: '2019-06-01', undated: false });
+    expect(rows()[1].querySelector('input')).toBeNull();
+    expect(rows()[1].querySelector('.when')?.textContent?.trim()).toBe('Fini le 1 juin 2019');
   });
 
   it('removes the entry after confirmation', async () => {

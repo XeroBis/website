@@ -2,6 +2,8 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 
+import { Language } from '@shared';
+
 import {
   AddOptions,
   BookSeries,
@@ -17,7 +19,6 @@ import {
   MediaType,
   QuickAction,
   SearchResult,
-  SeriesMark,
   SessionInput,
   Shelf,
 } from './models';
@@ -73,11 +74,19 @@ export class MediaApi {
     );
   }
 
-  /** `page` > 1 for books only (Open Library's next 20). */
-  search(type: MediaType, q: string, page = 1): Promise<SearchResult[]> {
+  /**
+   * `page` > 1 (Google Books' next 20) and `lang` (the editions' language,
+   * default the user's) are for books only.
+   */
+  search(
+    type: MediaType,
+    q: string,
+    page = 1,
+    lang: Language | null = null,
+  ): Promise<SearchResult[]> {
     return this.run(
       this.http.get<SearchResult[]>(`${API}/search`, {
-        params: params({ type, q, page: page > 1 ? page : null }),
+        params: params({ type, q, page: page > 1 ? page : null, lang }),
       }),
     );
   }
@@ -173,9 +182,5 @@ export class MediaApi {
 
   deleteSeries(id: number): Promise<void> {
     return this.run(this.http.delete<void>(`${API}/series/${id}`));
-  }
-
-  markSeries(id: number, mark: SeriesMark): Promise<BookSeriesDetail> {
-    return this.run(this.http.post<BookSeriesDetail>(`${API}/series/${id}/mark`, mark));
   }
 }

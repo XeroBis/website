@@ -17,7 +17,7 @@ import {
   statusLabel,
   volumeFromTitle,
 } from '../../media/labels';
-import { localTitle } from '../../media/local-title';
+import { LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
 import {
   BookSeries,
@@ -48,6 +48,7 @@ type Card = { entry: EntrySummary; series?: never } | { series: BookSeries; entr
     DecimalPipe,
     Icon,
     FormsModule,
+    LocalTitlePipe,
     RouterLink,
     Poster,
     QuickActions,
@@ -158,6 +159,31 @@ export class Library {
       this.error.set(null);
     } catch (e) {
       this.error.set(errorMessage(e));
+    }
+  }
+
+  /** Entries being removed from the card's trash button. */
+  protected readonly removing = signal<ReadonlySet<number>>(new Set());
+
+  /** Removes an entry straight from its card, after the same confirm as its page. */
+  protected async remove(entry: EntrySummary): Promise<void> {
+    if (this.removing().has(entry.id)) return;
+    const title = localTitle(entry.item, this.lang());
+    if (!confirm(this.translate.instant('entry.confirmRemove', { title }))) return;
+    this.removing.update((s) => new Set(s).add(entry.id));
+    try {
+      await this.api.remove(entry.id);
+      this.entries.update((list) => (list ?? []).filter((e) => e.id !== entry.id));
+      // Genres and series counts may have changed.
+      await this.load();
+    } catch (e) {
+      this.error.set(errorMessage(e));
+    } finally {
+      this.removing.update((s) => {
+        const next = new Set(s);
+        next.delete(entry.id);
+        return next;
+      });
     }
   }
 

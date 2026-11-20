@@ -78,12 +78,13 @@
         <button
           type="button"
           class="btn btn-secondary btn-icon"
-          [class.active]="excludeInDeck()"
-          [attr.aria-label]="'sets.excludeInDeck' | translate"
-          [title]="'sets.excludeInDeck' | translate"
-          (click)="toggleExcludeInDeck()"
+          [class.active]="countDeckCards.enabled()"
+          [attr.aria-label]="'sets.countDeckCards' | translate"
+          [title]="'sets.countDeckCards' | translate"
+          [attr.aria-pressed]="countDeckCards.enabled()"
+          (click)="toggleCountDeckCards()"
         >
-          <ab-icon name="eye-off" />
+          <ab-icon name="deck-box" />
         </button>
         <div class="view-toggle">
           <button

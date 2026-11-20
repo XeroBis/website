@@ -4,7 +4,7 @@ on unsafe methods. Anyone else's entries are covered in test_media_catalog."""
 import pytest
 
 from domains.media import refresh
-from tests.media.conftest import URL, tmdb_film
+from tests.media.conftest import BOOKS, URL, tmdb_film
 
 FILM = {"source": "tmdb", "external_id": "603", "type": "film"}
 
@@ -95,7 +95,7 @@ def test_search_without_tmdb_token_is_502_books_still_work(client, web, monkeypa
     assert r.status_code == 502
     assert r.json()["detail"] == "TMDB_READ_ACCESS_TOKEN is not configured"
 
-    web.json("openlibrary.org/search.json", {"docs": []})
+    web.json(BOOKS, {"totalItems": 0})
     r = client.get(f"{URL}/search", params={"type": "book", "q": "piranesi"})
     assert r.status_code == 200
 

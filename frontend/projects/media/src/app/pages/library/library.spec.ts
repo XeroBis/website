@@ -143,6 +143,26 @@ describe('Library', () => {
     await harness.fixture.whenStable();
     expect(cells(el)[0].querySelector('.status')?.textContent).toBe('En cours');
   });
+
+  it('removes an entry from its card after confirmation', async () => {
+    const { el } = await open();
+    const ask = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const trash = () => cells(el)[0].querySelector('[data-testid="remove"]') as HTMLButtonElement;
+    trash().click();
+    expect(ask).toHaveBeenCalledWith(
+      'Retirer « Matrix » de votre bibliothèque ? Ses sessions, sa note et ses notes seront supprimées.',
+    );
+    http.expectNone({ method: 'DELETE' });
+
+    ask.mockReturnValue(true);
+    trash().click();
+    http.expectOne({ method: 'DELETE', url: '/api/media/library/1' }).flush(null);
+    await settle();
+    libraryRequest().flush([ENTRIES[1]]);
+    await settle();
+    await harness.fixture.whenStable();
+    expect(cells(el).length).toBe(1);
+  });
 });
 
 describe('Library series cards', () => {

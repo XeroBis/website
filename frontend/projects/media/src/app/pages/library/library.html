@@ -145,6 +145,21 @@
             (cdkDragEnded)="dragEnded($event)"
           >
             <a abPoster [item]="e.item" [routerLink]="['/entries', e.id]"></a>
+            <button
+              type="button"
+              class="remove"
+              data-testid="remove"
+              [disabled]="removing().has(e.id)"
+              [title]="'entry.remove' | translate"
+              [attr.aria-label]="
+                'library.removeTitle' | translate: { title: e.item | localTitle: lang() }
+              "
+              (mousedown)="$event.stopPropagation()"
+              (touchstart)="$event.stopPropagation()"
+              (click)="remove(e)"
+            >
+              <ab-icon name="trash" />
+            </button>
             <div class="meta">
               <span class="status" [class]="e.status">{{ caption(e) | translate }}</span>
               @if (e.rating) {

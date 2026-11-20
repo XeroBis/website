@@ -64,14 +64,14 @@ class SearchResult(BaseModel):
 
 
 class AddFromSearch(_AddOptions):
-    source: Literal[MediaSource.tmdb, MediaSource.openlibrary]
+    source: Literal[MediaSource.tmdb, MediaSource.googlebooks]
     external_id: NonEmpty
 
     @model_validator(mode="after")
     def _source_matches_type(self):
         book = self.type == MediaType.book
-        if book != (self.source == MediaSource.openlibrary):
-            raise ValueError("Books come from Open Library, films and series from TMDB")
+        if book != (self.source == MediaSource.googlebooks):
+            raise ValueError("Books come from Google Books, films and series from TMDB")
         return self
 
 
@@ -201,24 +201,3 @@ class SeriesOut(BaseModel):
 
 class SeriesDetail(SeriesOut):
     entries: list[EntrySummary]
-
-
-class SeriesMark(BaseModel):
-    """Bulk change on the series' volumes in a range (none = all of them)."""
-
-    from_volume: Volume | None = None
-    to_volume: Volume | None = None
-    read: Literal[True] | None = None
-    owned: bool | None = None
-
-    @model_validator(mode="after")
-    def _check(self):
-        if self.read is None and self.owned is None:
-            raise ValueError("Nothing to do: send read and/or owned")
-        if (
-            self.from_volume is not None
-            and self.to_volume is not None
-            and self.from_volume > self.to_volume
-        ):
-            raise ValueError("from_volume must not be after to_volume")
-        return self

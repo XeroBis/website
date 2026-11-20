@@ -35,7 +35,7 @@ seed-basic-user: ## Create or update a dev non-admin account (or reset its passw
 	@test -n "$(EMAIL)" -a -n "$(PASSWORD)" || { echo "EMAIL and PASSWORD are required"; exit 1; }
 	docker compose exec -e ADMIN_EMAIL="$(EMAIL)" -e ADMIN_PASSWORD="$(PASSWORD)" -e ADMIN_PSEUDO="$(or $(PSEUDO),User)" backend /opt/venv/bin/python -m domains.auth.seed --no-admin
 
-media-refresh: ## Re-fetch every TMDB / Open Library catalog row (dev)
+media-refresh: ## Re-fetch every TMDB / Google Books catalog row (dev)
 	docker compose exec backend /opt/venv/bin/python -m domains.media.refresh
 
 # Binder divider for a set, into documentation/docx/set_dividers (dev catalog
@@ -79,7 +79,7 @@ prod-seed-user: ## Create or update the prod admin: make prod-seed-user ADMIN_EM
 	@test -n "$(ADMIN_EMAIL)" -a -n "$(ADMIN_PASSWORD)" || { echo "ADMIN_EMAIL and ADMIN_PASSWORD are required"; exit 1; }
 	docker compose -f docker-compose.prod.yml exec -e ADMIN_EMAIL="$(ADMIN_EMAIL)" -e ADMIN_PASSWORD="$(ADMIN_PASSWORD)" $(if $(ADMIN_PSEUDO),-e ADMIN_PSEUDO="$(ADMIN_PSEUDO)" )backend /opt/venv/bin/python -m domains.auth.seed
 
-prod-media-refresh: ## Re-fetch every TMDB / Open Library catalog row (prod)
+prod-media-refresh: ## Re-fetch every TMDB / Google Books catalog row (prod)
 	docker compose -f docker-compose.prod.yml exec backend /opt/venv/bin/python -m domains.media.refresh
 
 # Dumps go to infra/backups/dumps/ (newest 7 kept); cron runs the script

@@ -6,7 +6,14 @@ import pytest
 
 from core import database
 from domains.cards import models as m
-from tests.cards.conftest import URL, add_catalog_card, own, set_language
+from tests.cards.conftest import (
+    URL,
+    add_catalog_card,
+    make_deck,
+    own,
+    put_in_deck,
+    set_language,
+)
 
 CATALOG = f"{URL}/catalog"
 
@@ -220,6 +227,38 @@ def test_completion_by_exact_rarity_and_print(client):
     assert completion(reverse=True) == 50
     response = client.get(f"{CATALOG}/sets", params={"variant_type": "unknown"})
     assert response.status_code == 422
+
+
+def test_completion_can_leave_out_deck_copies(client):
+    first = add_catalog_card(card_number="1", card_count=2)
+    second = add_catalog_card(card_number="2", card_count=2)
+    in_deck = own(client.user_id, first, standard=1)
+    spare = own(client.user_id, second, standard=2)
+    deck = make_deck(client.user_id)
+    put_in_deck(deck, in_deck, 1)
+    put_in_deck(deck, spare, 1)
+    # A phantom deck's rows don't take copies.
+    phantom = make_deck(client.user_id, "Phantom", "phantom")
+    with database.SessionLocal() as db:
+        db.add(
+            m.DeckCard(
+                deck_id=phantom,
+                catalog_id=second,
+                variant_type="standard",
+                quantity_in_deck=4,
+            )
+        )
+        db.commit()
+
+    def completion(**params):
+        return sets(client, **params)["SVI"]["completion_percent"]
+
+    assert completion() == 100
+    assert completion(exclude_deck_allocated=True) == 50
+    assert completion(variant_type="standard") == 100
+    assert completion(variant_type="standard", exclude_deck_allocated=True) == 50
+    # Every print: 1 of 4 (standard of the spare; no reverse owned).
+    assert completion(reverse=True, exclude_deck_allocated=True) == 25
 
 
 def test_selected_rarity_applies_to_sets_without_rarities(client):

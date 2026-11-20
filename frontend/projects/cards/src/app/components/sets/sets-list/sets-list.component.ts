@@ -8,6 +8,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CardSet, Share, VariantType, VARIANT_LABELS } from '../../../models/card.model';
 import { CatalogService } from '../../../services/catalog.service';
 import { CountIncomingService } from '../../../services/count-incoming.service';
+import { CountDeckCardsService } from '../../../services/count-deck-cards.service';
 import { SharesService } from '../../../services/shares.service';
 import { ToastService } from '../../../services/toast.service';
 import { loadStoredFilters, saveStoredFilters } from '../../../util/filter-storage.util';
@@ -97,6 +98,7 @@ export class SetsListComponent implements OnInit {
     private readonly toastService: ToastService,
     private readonly translate: TranslateService,
     readonly countIncoming: CountIncomingService,
+    readonly countDeckCards: CountDeckCardsService,
     @Inject(PLATFORM_ID)
     platformId: object,
   ) {
@@ -137,7 +139,12 @@ export class SetsListComponent implements OnInit {
       rawRaritiesForCategory(category),
     );
     this.catalogService
-      .listSets(rarities, this.selectedVariants(), this.countIncoming.enabled())
+      .listSets(
+        rarities,
+        this.selectedVariants(),
+        this.countIncoming.enabled(),
+        !this.countDeckCards.enabled(),
+      )
       .subscribe((sets) => {
         if (requestId !== this.reloadSetsRequestId) {
           return;
@@ -150,6 +157,10 @@ export class SetsListComponent implements OnInit {
    * exports and /missing): recomputes every set's completion. */
   toggleCountIncoming(): void {
     this.countIncoming.toggle();
+    this.reloadSets();
+  }
+  toggleCountDeckCards(): void {
+    this.countDeckCards.toggle();
     this.reloadSets();
   }
   toggleRarityCategory(category: string): void {

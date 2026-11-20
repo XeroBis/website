@@ -56,39 +56,6 @@ def test_volumes_counts_and_order(client, add_manual):
     assert (listed["volumes"], listed["read"]) == (4, 1)
 
 
-def test_mark_a_range_read_and_owned(client, add_manual):
-    s = _series(client)
-    for n in range(1, 6):
-        _volume(add_manual, s["id"], n)
-    _volume(add_manual, s["id"], None, title="Unnumbered")
-    r = client.post(
-        f"{URL}/series/{s['id']}/mark",
-        json={"from_volume": 2, "to_volume": 4, "read": True, "owned": True},
-    )
-    assert r.status_code == 200, r.text
-    entries = r.json()["entries"]
-    assert [e["status"] for e in entries] == [
-        "want",
-        "done",
-        "done",
-        "done",
-        "want",
-        "want",
-    ]
-    assert [e["owned"] for e in entries] == [False, True, True, True, False, False]
-    vol2 = client.get(f"{URL}/library/{entries[1]['id']}").json()
-    assert [s["undated"] for s in vol2["sessions"]] == [True]
-
-    # No range: every volume, unnumbered too; already read ones aren't touched.
-    r = client.post(f"{URL}/series/{s['id']}/mark", json={"read": True})
-    assert {e["status"] for e in r.json()["entries"]} == {"done"}
-    vol2 = client.get(f"{URL}/library/{entries[1]['id']}").json()
-    assert len(vol2["sessions"]) == 1
-
-    for body in ({}, {"from_volume": 3, "to_volume": 1, "owned": True}):
-        assert client.post(f"{URL}/series/{s['id']}/mark", json=body).status_code == 422
-
-
 def test_attach_rename_and_delete(client, add_manual):
     s = _series(client)
     book = add_manual(title="Loose")
@@ -129,18 +96,16 @@ def test_series_rules(client, other_client, add_manual):
         ("get", ""),
         ("patch", ""),
         ("delete", ""),
-        ("post", "/mark"),
     ):
-        body = {"name": "x"} if method == "patch" else {"read": True}
-        kwargs = {} if method in ("get", "delete") else {"json": body}
+        kwargs = {"json": {"name": "x"}} if method == "patch" else {}
         r = getattr(client, method)(f"{URL}/series/{theirs['id']}{path}", **kwargs)
         assert r.status_code == 404, (method, path)
     # The from-search route checks the series before calling the source.
     r = client.post(
         f"{URL}/library/from-search",
         json={
-            "source": "openlibrary",
-            "external_id": "OL1W",
+            "source": "googlebooks",
+            "external_id": "vol1",
             "type": "book",
             "series_id": theirs["id"],
         },

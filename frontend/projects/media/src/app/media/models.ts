@@ -1,7 +1,7 @@
 // Mirrors backend/domains/media/schemas.py (`/api/media`).
 
 export type MediaType = 'book' | 'film' | 'series';
-export type MediaSource = 'tmdb' | 'openlibrary' | 'manual';
+export type MediaSource = 'tmdb' | 'googlebooks' | 'manual';
 export type EntryStatus = 'want' | 'in_progress' | 'done' | 'dropped';
 /** `books` = books, `videos` = films and series. */
 export type Shelf = 'books' | 'videos';
@@ -65,7 +65,7 @@ export interface EntryDetail extends EntrySummary {
 }
 
 export interface SearchResult {
-  source: 'tmdb' | 'openlibrary';
+  source: 'tmdb' | 'googlebooks';
   external_id: string;
   type: MediaType;
   title: string;
@@ -127,13 +127,6 @@ export interface BookSeries {
 
 export interface BookSeriesDetail extends BookSeries {
   entries: EntrySummary[];
-}
-
-export interface SeriesMark {
-  from_volume?: number | null;
-  to_volume?: number | null;
-  read?: true;
-  owned?: boolean;
 }
 
 export interface JournalEntry {

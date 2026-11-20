@@ -272,89 +272,132 @@
         <div class="reads">
           @if (e.sessions.length) {
             <ul class="sessions">
-              @for (s of e.sessions; track s.id) {
-                <li>
-                  <label>
-                    <span class="label">{{ 'entry.started' | translate }}</span>
-                    <input
-                      #start
-                      class="field"
-                      type="date"
-                      [value]="s.started_on ?? ''"
-                      (change)="saveSession(s, start.value, finish.value)"
-                    />
-                  </label>
-                  <label>
-                    <span class="label">{{ 'entry.finished' | translate }}</span>
-                    <input
-                      #finish
-                      class="field"
-                      type="date"
-                      [value]="s.finished_on ?? ''"
-                      (change)="saveSession(s, start.value, finish.value)"
-                    />
-                  </label>
-                  <div class="end">
-                    <span class="when muted">
+              @for (s of e.sessions; track s.id; let i = $index; let count = $count) {
+                <li [class.editing]="editingId() === s.id">
+                  @if (editingId() === s.id) {
+                    <form class="session-form" (submit)="$event.preventDefault(); saveEdit(s)">
+                      <label>
+                        <span class="label">{{ 'entry.started' | translate }}</span>
+                        <input class="field" type="date" name="start" [(ngModel)]="editStart" />
+                      </label>
+                      <label>
+                        <span class="label">{{ 'entry.finished' | translate }}</span>
+                        <input class="field" type="date" name="finish" [(ngModel)]="editFinish" />
+                      </label>
+                      <div class="end">
+                        <button class="btn" type="submit" [disabled]="busy()">
+                          {{ 'entry.saveSession' | translate }}
+                        </button>
+                        <button class="btn ghost" type="button" (click)="editingId.set(null)">
+                          {{ 'entry.cancel' | translate }}
+                        </button>
+                      </div>
+                    </form>
+                  } @else {
+                    @if (count > 1) {
+                      <span class="ordinal muted">{{
+                        ordinal(count - i, e.item.type) | translate: { n: count - i }
+                      }}</span>
+                    }
+                    <span class="when">
+                      @let start = s.started_on | date: 'd MMM y' : undefined : lang();
+                      @let finish = s.finished_on | date: 'd MMM y' : undefined : lang();
                       @if (s.undated) {
-                        {{ 'entry.dateUnknown' | translate }}
-                      } @else if (!s.finished_on) {
-                        {{ 'entry.ongoing' | translate }}
+                        @if (start) {
+                          {{ start }} → {{ 'entry.dateUnknown' | translate }}
+                        } @else {
+                          {{ 'entry.dateUnknown' | translate }}
+                        }
+                      } @else if (finish && start) {
+                        {{ start }} → {{ finish }}
+                        @if (days(s); as d) {
+                          <span class="muted">· {{ 'entry.days' | translate: { n: d } }}</span>
+                        }
+                      } @else if (finish) {
+                        {{ 'entry.finishedOn' | translate: { date: finish } }}
+                      } @else if (start) {
+                        {{ 'entry.ongoingSince' | translate: { date: start } }}
                       } @else {
-                        {{ s.finished_on | date: 'MMM y' : undefined : lang() }}
+                        {{ 'entry.ongoing' | translate }}
                       }
                     </span>
-                    <button
-                      type="button"
-                      class="btn danger small"
-                      (click)="deleteSession(s)"
-                      [attr.aria-label]="'entry.deleteSession' | translate"
-                    >
-                      <ab-icon name="x" />
-                    </button>
-                  </div>
+                    <span class="end">
+                      <button
+                        type="button"
+                        class="btn ghost small"
+                        data-testid="edit-session"
+                        [disabled]="busy()"
+                        (click)="editSession(s)"
+                        [attr.aria-label]="'entry.editSession' | translate"
+                        [title]="'entry.editSession' | translate"
+                      >
+                        <ab-icon name="pencil" />
+                      </button>
+                      <button
+                        type="button"
+                        class="btn danger small"
+                        (click)="deleteSession(s)"
+                        [attr.aria-label]="'entry.deleteSession' | translate"
+                      >
+                        <ab-icon name="x" />
+                      </button>
+                    </span>
+                  }
                 </li>
               }
             </ul>
-          } @else {
+          } @else if (!addingSession()) {
             <p class="muted small">
               {{ (e.item.type === 'book' ? 'entry.noReads' : 'entry.noWatches') | translate }}
             </p>
           }
-          <form class="new-session" (submit)="$event.preventDefault(); addSession()">
-            <label>
-              <span class="label">{{ 'entry.started' | translate }}</span>
-              <input class="field" type="date" name="start" [(ngModel)]="newStart" />
-            </label>
-            <label>
-              <span class="label">{{ 'entry.finished' | translate }}</span>
-              <input class="field" type="date" name="finish" [(ngModel)]="newFinish" />
-            </label>
-            <div class="end">
-              <button
-                class="btn soft"
-                type="submit"
-                [disabled]="busy() || (!newStart() && !newFinish())"
-              >
+          @if (addingSession()) {
+            <form class="session-form new-session" (submit)="$event.preventDefault(); addSession()">
+              <label>
+                <span class="label">{{ 'entry.started' | translate }}</span>
+                <input
+                  class="field"
+                  type="date"
+                  name="start"
+                  [disabled]="newUndated()"
+                  [(ngModel)]="newStart"
+                />
+              </label>
+              <label>
+                <span class="label">{{ 'entry.finished' | translate }}</span>
+                <input
+                  class="field"
+                  type="date"
+                  name="finish"
+                  [disabled]="newUndated()"
+                  [(ngModel)]="newFinish"
+                />
+              </label>
+              <label class="check">
+                <input type="checkbox" name="undated" [(ngModel)]="newUndated" />
+                {{ 'entry.dateUnknown' | translate }}
+              </label>
+              <div class="end">
+                <button
+                  class="btn"
+                  type="submit"
+                  [disabled]="busy() || (!newUndated() && !newStart() && !newFinish())"
+                >
+                  {{ 'entry.addSession' | translate }}
+                </button>
+                <button class="btn ghost" type="button" (click)="closeNewSession()">
+                  {{ 'entry.cancel' | translate }}
+                </button>
+              </div>
+            </form>
+          } @else {
+            <p class="add-session">
+              <button type="button" class="btn soft small" (click)="openNewSession()">
                 <ab-icon name="plus" />
-                {{
-                  (e.item.type === 'book' ? 'entry.addPastRead' : 'entry.addPastWatch') | translate
-                }}
+                {{ (e.item.type === 'book' ? 'entry.addRead' : 'entry.addWatch') | translate }}
               </button>
-              <button
-                type="button"
-                class="btn soft"
-                [disabled]="busy()"
-                (click)="addUndatedSession()"
-              >
-                <ab-icon name="plus" />
-                {{
-                  (e.item.type === 'book' ? 'entry.addUndatedRead' : 'entry.addUndatedWatch')
-                    | translate
-                }}
-              </button>
-            </div>
-          </form>
+            </p>
+          }
         </div>
       </section>
     </div>

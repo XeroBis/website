@@ -20,6 +20,7 @@ import {
 } from '../../../models/card.model';
 import { CatalogService } from '../../../services/catalog.service';
 import { CountIncomingService } from '../../../services/count-incoming.service';
+import { CountDeckCardsService } from '../../../services/count-deck-cards.service';
 import { ToastService } from '../../../services/toast.service';
 import { rawRaritiesForCategory } from '../../../util/rarity-category.util';
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
@@ -64,7 +65,6 @@ export class MissingExportModalComponent implements OnInit {
   selectedRarities = signal(new Set<string>());
   format = signal<'tcgplayer' | 'cardmarket'>('cardmarket');
   language = signal<'en' | 'fr'>('en');
-  excludeInDeck = signal(false);
   otherVariantsOpen = signal(false);
   search = signal('');
   selectedCodes = signal(new Set<string>());
@@ -108,6 +108,7 @@ export class MissingExportModalComponent implements OnInit {
     private readonly toastService: ToastService,
     private readonly translate: TranslateService,
     readonly countIncoming: CountIncomingService,
+    readonly countDeckCards: CountDeckCardsService,
   ) {}
 
   ngOnInit(): void {
@@ -119,7 +120,7 @@ export class MissingExportModalComponent implements OnInit {
           return this.catalogService.missingSummary(
             this.rawRarities(),
             [...this.selectedVariants()],
-            this.excludeInDeck(),
+            !this.countDeckCards.enabled(),
             this.countIncoming.enabled(),
             this.setCode ? [this.setCode] : [],
           );
@@ -181,8 +182,8 @@ export class MissingExportModalComponent implements OnInit {
     this.selectedRarities.set(new Set());
     this.reload$.next();
   }
-  toggleExcludeInDeck(): void {
-    this.excludeInDeck.update((value) => !value);
+  toggleCountDeckCards(): void {
+    this.countDeckCards.toggle();
     this.reload$.next();
   }
   toggleCountIncoming(): void {
@@ -296,7 +297,7 @@ export class MissingExportModalComponent implements OnInit {
         [...this.selectedVariants()],
         this.format(),
         this.language(),
-        this.excludeInDeck(),
+        !this.countDeckCards.enabled(),
         this.countIncoming.enabled(),
       )
       .subscribe({

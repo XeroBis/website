@@ -1,4 +1,4 @@
-"""Re-fetch every TMDB / Open Library catalog row: `make media-refresh`
+"""Re-fetch every TMDB / Google Books catalog row: `make media-refresh`
 (`make prod-media-refresh` on the VPS).
 
 Fills fields added after an item was stored and picks up corrected source

@@ -86,8 +86,12 @@
     </div>
     <div class="export-missing-field">
       <label class="export-missing-checkbox">
-        <input type="checkbox" [checked]="excludeInDeck()" (change)="toggleExcludeInDeck()" />
-        {{ 'sets.excludeInDeck' | translate }}
+        <input
+          type="checkbox"
+          [checked]="countDeckCards.enabled()"
+          (change)="toggleCountDeckCards()"
+        />
+        {{ 'sets.countDeckCards' | translate }}
       </label>
       <label class="export-missing-checkbox">
         <input

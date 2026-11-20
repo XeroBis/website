@@ -109,13 +109,17 @@ def list_sets(
     include_incoming: bool = Query(
         False, description="Copies on incoming purchase lists count as owned"
     ),
+    exclude_deck_allocated: bool = Query(
+        False, description="Copies in normal decks don't count as owned"
+    ),
     user: User = Depends(cards_user),
     db: Session = Depends(get_db),
 ):
     """One row per set, newest first, World Championships sets last, with the
     user's completion of the selected cards (see data-model.md "Rules").
     `include_incoming`: a card (or print) on an incoming purchase list counts
-    as owned.
+    as owned. `exclude_deck_allocated`: copies (of a print) in normal decks
+    don't count, so a print is owned only with copies left outside decks.
 
     - No `variant_type`/`reverse`: a card counts when owned in any print;
       without `rarity`, only normal numbering (number ≤ card_count) counts.
@@ -159,6 +163,18 @@ def list_sets(
                 included, m.CardCatalogVariant.variant_type.in_(variant_type)
             )
         has = m.CardVariantQuantity.quantity > 0
+        if exclude_deck_allocated:
+            in_decks = _deck_copies_per_print()
+            query = query.outerjoin(
+                in_decks,
+                and_(
+                    in_decks.c.card_id == m.Card.id,
+                    in_decks.c.variant_type == m.CardCatalogVariant.variant_type,
+                ),
+            )
+            has = (
+                m.CardVariantQuantity.quantity - func.coalesce(in_decks.c.copies, 0) > 0
+            )
         if include_incoming:
             incoming = _incoming_per_print(user.id)
             query = query.outerjoin(
@@ -173,6 +189,24 @@ def list_sets(
         unit = m.CardCatalogVariant.id
     else:
         has = m.Card.variant_quantities.any(m.CardVariantQuantity.quantity > 0)
+        if exclude_deck_allocated:
+            vq = m.CardVariantQuantity
+            in_decks = _deck_copies_per_print()
+            has = (
+                select(vq.card_id)
+                .outerjoin(
+                    in_decks,
+                    and_(
+                        in_decks.c.card_id == vq.card_id,
+                        in_decks.c.variant_type == vq.variant_type,
+                    ),
+                )
+                .where(
+                    vq.card_id == m.Card.id,
+                    vq.quantity - func.coalesce(in_decks.c.copies, 0) > 0,
+                )
+                .exists()
+            )
         if include_incoming:
             incoming = incoming_copies(user.id)
             query = query.outerjoin(incoming, incoming.c.catalog_id == card.id)
@@ -206,6 +240,22 @@ def list_sets(
         )
         for row in rows
     ]
+
+
+def _deck_copies_per_print():
+    """Subquery `(card_id, variant_type, copies)`: copies in normal decks per
+    owned card and print (phantom deck rows have no `card_id`)."""
+    row = m.DeckCard
+    return (
+        select(
+            row.card_id,
+            row.variant_type,
+            func.sum(row.quantity_in_deck).label("copies"),
+        )
+        .where(row.card_id.isnot(None))
+        .group_by(row.card_id, row.variant_type)
+        .subquery()
+    )
 
 
 def _incoming_per_print(user_id: int):

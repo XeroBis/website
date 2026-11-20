@@ -7,6 +7,7 @@ scoped to the current user: anyone else's entry is a 404.
 import calendar
 import logging
 from datetime import date
+from typing import Literal
 
 from fastapi import (
     APIRouter,
@@ -200,13 +201,18 @@ def search(
     type: MediaType,
     q: str = Query(min_length=1, max_length=200),
     page: int = Query(default=1, ge=1, le=100),
+    lang: Literal["en", "fr"] | None = None,
     user: User = Depends(media_user),
     db: Session = Depends(get_db),
 ):
-    """`page` > 1 (the next 20 Open Library results) is for books only."""
-    if page > 1 and type != MediaType.book:
-        raise HTTPException(status_code=422, detail="Only book searches have pages")
-    language = sources.language(user.language)
+    """`page` > 1 (the next 20 Google Books results) is for books only.
+    `lang` picks the books' edition language (default: the user's); films and
+    series always use the user's language."""
+    if type != MediaType.book and (page > 1 or lang is not None):
+        raise HTTPException(
+            status_code=422, detail="Only book searches have pages and a language"
+        )
+    language = lang or sources.language(user.language)
     # Not held while the source answers (see _item_from_source).
     db.close()
     try:
@@ -659,30 +665,6 @@ def delete_series(
     """The volumes stay in the library, outside any series."""
     db.delete(_get_series(db, user, series_id))
     db.commit()
-
-
-@router.post("/series/{series_id}/mark", response_model=schemas.SeriesDetail)
-def mark_series(
-    series_id: int,
-    body: schemas.SeriesMark,
-    user: User = Depends(media_user),
-    db: Session = Depends(get_db),
-):
-    series = _get_series(db, user, series_id)
-    query = _entries(db, user).filter(LibraryEntry.series_id == series.id)
-    if body.from_volume is not None:
-        query = query.filter(LibraryEntry.series_volume >= body.from_volume)
-    if body.to_volume is not None:
-        query = query.filter(LibraryEntry.series_volume <= body.to_volume)
-    today = date.today()
-    for entry in query.all():
-        if body.read and entry.status != EntryStatus.done:
-            rules.finish(entry, today, undated=True)
-        if body.owned is not None:
-            entry.owned = body.owned
-    db.commit()
-    db.expire_all()
-    return _series_detail(db, user, series)
 
 
 # ── journal ──────────────────────────────────────────────────────────────────
