@@ -14,7 +14,6 @@ import { TOOLS } from '../tools';
     <section class="home">
       <h1>{{ 'home.title' | translate }}</h1>
       <p class="lead">{{ 'home.lead' | translate }}</p>
-      <p class="local"><ab-icon name="lock" /> {{ 'home.local' | translate }}</p>
       <div class="tool-cards">
         @for (tool of tools; track tool.path) {
           <a class="tool-card" [routerLink]="tool.path" [attr.data-tool]="tool.key">

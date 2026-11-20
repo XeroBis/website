@@ -397,7 +397,7 @@ Everyday PDF tools. Every page is behind `appGuard('tools')` (logged out → por
 
 ### Pages
 
-- `/`: the five tools as cards (icon, name, one-line description), with "Runs in your browser — files are never uploaded". The header links to each tool.
+- `/`: the five tools as cards (icon, name, one-line description). The header links to each tool.
 - `/merge`: add PDFs (button or drop on the page). Each file is a chip (colour tag, name, page count, remove) and its pages appear in the grid with a stripe of the file's colour. Drag chips to reorder whole files, or drag pages anywhere, across files. Remove single pages from the grid. Output file name (default `merged.pdf`), then "Merge & download". Needs at least one page.
 - `/extract`: one PDF. Pick pages by clicking thumbnails or by typing ranges (`1-3, 7, 10-12`); the two stay in sync (clicking rewrites the text as compact ranges). "All" / "None". Output: **One PDF** (the selected pages, in page order, `<name>-pages.pdf`) or **One PDF per range** (`<name>-1-3.pdf`, … in a zip, `<name>-split.zip`; a single range downloads its PDF directly).
 - `/organize`: one PDF. Drag pages to reorder; under each page: rotate left, rotate right, delete (the page dims, with Undo). The footer counts pages kept, rotated and deleted; "Reset" undoes everything, "Save PDF" downloads `<name>-organized.pdf`. Deleting every page disables saving.

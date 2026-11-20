@@ -17,7 +17,7 @@ import { TOOLS } from './tools';
         >
       }
     </ab-header>
-    <main class="page">
+    <main class="frame">
       <router-outlet />
     </main>
   `,

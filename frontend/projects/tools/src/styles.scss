@@ -252,13 +252,13 @@ ab-header {
   }
 }
 
-.page {
+.frame {
   flex: 1;
   display: flex;
   flex-direction: column;
-  width: min(75rem, 100%);
+  width: min(96rem, 100%);
   margin: 0 auto;
-  padding: 2rem 1rem 0;
+  padding: 2rem clamp(1rem, 3vw, 2.5rem) 0;
 }
 
 /* Buttons and fields. */
@@ -461,19 +461,6 @@ ab-header {
     margin: 0;
     color: var(--ab-muted);
     font-size: 1.05rem;
-  }
-  .local {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    align-self: flex-start;
-    margin: 0 0 1rem;
-    padding: 0.45rem 0.9rem;
-    border-radius: 999px;
-    background: var(--tl-ok-bg);
-    color: var(--tl-ok);
-    font-size: 0.85rem;
-    font-weight: 600;
   }
 }
 

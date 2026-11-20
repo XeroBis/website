@@ -9,8 +9,7 @@
   },
   "home": {
     "title": "Outils PDF",
-    "lead": "Fusionner, découper, réordonner et convertir des PDF.",
-    "local": "Tout se passe dans votre navigateur : vos fichiers ne sont jamais envoyés"
+    "lead": "Fusionner, découper, réordonner et convertir des PDF."
   },
   "tool": {
     "merge": {

@@ -9,8 +9,7 @@
   },
   "home": {
     "title": "PDF tools",
-    "lead": "Merge, split, reorder and convert PDFs.",
-    "local": "Runs in your browser: files are never uploaded"
+    "lead": "Merge, split, reorder and convert PDFs."
   },
   "tool": {
     "merge": {

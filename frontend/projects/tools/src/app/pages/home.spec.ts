@@ -4,7 +4,7 @@ import { setup, text } from '../testing';
 import { Home } from './home';
 
 describe('Home', () => {
-  it('lists the five tools and says files stay in the browser', async () => {
+  it('lists the five tools', async () => {
     setup();
     const fixture = TestBed.createComponent(Home);
     await fixture.whenStable();
@@ -18,6 +18,5 @@ describe('Home', () => {
       '/pdf-to-images',
     ]);
     expect(text(cards[0].querySelector('.tool-name'))).toBe('Fusionner');
-    expect(text(el.querySelector('.local'))).toContain('jamais envoyés');
   });
 });
