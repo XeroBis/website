@@ -76,17 +76,19 @@ export class MediaApi {
 
   /**
    * `page` > 1 (Google Books' next 20) and `lang` (the editions' language,
-   * default the user's) are for books only.
+   * default the user's) are for books only, as is `isbn`, which overrides `q`
+   * and `lang`.
    */
   search(
     type: MediaType,
     q: string,
     page = 1,
     lang: Language | null = null,
+    isbn: string | null = null,
   ): Promise<SearchResult[]> {
     return this.run(
       this.http.get<SearchResult[]>(`${API}/search`, {
-        params: params({ type, q, page: page > 1 ? page : null, lang }),
+        params: params({ type, q, isbn, page: page > 1 ? page : null, lang }),
       }),
     );
   }

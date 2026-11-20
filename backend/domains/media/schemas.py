@@ -56,6 +56,10 @@ class SearchResult(BaseModel):
     year: int | None
     creators: str | None
     thumb_url: str | None
+    # Google Books only.
+    publisher: str | None = None
+    language: str | None = None
+    isbn: str | None = None
     # Set when this result is already in the user's library.
     library_entry_id: int | None = None
     library_status: EntryStatus | None = None

@@ -273,6 +273,12 @@ def test_search_book_google_books(client, web):
                     "zyTCAlFPjgYC",
                     authors=["S. Clarke"],
                     publishedDate="2020-09",
+                    publisher="Bloomsbury",
+                    language="en",
+                    industryIdentifiers=[
+                        {"type": "ISBN_10", "identifier": "163557563X"},
+                        {"type": "ISBN_13", "identifier": "9781635575637"},
+                    ],
                     imageLinks={
                         "smallThumbnail": "http://books.google.com/b?id=1&zoom=5&edge=curl",
                         "thumbnail": "http://books.google.com/b?id=1&zoom=1&edge=curl",
@@ -293,16 +299,23 @@ def test_search_book_google_books(client, web):
         "year": 2020,
         "creators": "S. Clarke",
         "thumb_url": "https://books.google.com/b?id=1&zoom=1",
+        "publisher": "Bloomsbury",
+        "language": "en",
+        "isbn": "9781635575637",
         "library_entry_id": None,
         "library_status": None,
         "library_owned": None,
         "library_series_id": None,
     }
-    assert (hits[1]["year"], hits[1]["creators"], hits[1]["thumb_url"]) == (
-        None,
-        None,
-        None,
-    )
+    assert {
+        k: hits[1][k] for k in ("year", "creators", "thumb_url", "publisher", "isbn")
+    } == {
+        "year": None,
+        "creators": None,
+        "thumb_url": None,
+        "publisher": None,
+        "isbn": None,
+    }
     request = web.requests[-1]
     assert request.headers["x-goog-api-key"] == "test-key"
     assert request.url.params["printType"] == "books"
@@ -358,3 +371,39 @@ def test_search_book_pages(client, web):
     assert web.requests[-1].url.params["startIndex"] == "40"
     r = client.get("/api/media/search", params={"type": "film", "q": "x", "page": 2})
     assert r.status_code == 422
+
+
+def test_search_book_by_isbn(client, web):
+    web.json(BOOKS, {"items": []})
+    for isbn in ("978-1-63557-563-7", "1 63557 563 x", "080442957x"):
+        r = client.get("/api/media/search", params={"type": "book", "isbn": isbn})
+        assert r.status_code == 200
+    params = [r.url.params for r in web.requests]
+    assert [p["q"] for p in params] == [
+        "isbn:9781635575637",
+        "isbn:163557563X",
+        "isbn:080442957X",
+    ]
+    # An ISBN is one edition: no language filter, and it overrides the text.
+    assert all("langRestrict" not in p for p in params)
+    client.get(
+        "/api/media/search",
+        params={"type": "book", "q": "piranesi", "isbn": "9781635575637", "lang": "fr"},
+    )
+    assert web.requests[-1].url.params["q"] == "isbn:9781635575637"
+    assert "langRestrict" not in web.requests[-1].url.params
+
+
+def test_search_isbn_validation(client, web):
+    web.json(BOOKS, {"items": []})
+    for isbn in ("9781635575638", "1635575637", "12345", "97816355756370", "abc"):
+        r = client.get("/api/media/search", params={"type": "book", "isbn": isbn})
+        assert r.status_code == 422, isbn
+    r = client.get(
+        "/api/media/search", params={"type": "film", "isbn": "9781635575637"}
+    )
+    assert r.status_code == 422
+    assert client.get("/api/media/search", params={"type": "book"}).status_code == 422
+    r = client.get("/api/media/search", params={"type": "book", "q": "  "})
+    assert r.status_code == 422
+    assert web.requests == []

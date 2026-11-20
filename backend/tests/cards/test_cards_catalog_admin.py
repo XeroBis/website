@@ -410,8 +410,9 @@ def test_images_import_restores_selected_files_and_links_pending_scans(
     monkeypatch.setattr(
         archive,
         "is_zip",
-        lambda path: connections.append(database.engine.pool.checkedout())
-        or is_zip(path),
+        lambda path: (
+            connections.append(database.engine.pool.checkedout()) or is_zip(path)
+        ),
     )
     response = post_zip(admin, body, "?french=true&logos=false")
     assert response.status_code == 202

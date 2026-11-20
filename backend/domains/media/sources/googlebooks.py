@@ -23,6 +23,7 @@ MAX_GENRES = 5
 VOLUME_ID = re.compile(r"^[\w-]{4,32}$")
 # Largest first; search results only carry the two thumbnails.
 COVER_SIZES = ("medium", "small", "thumbnail", "smallThumbnail")
+_ISBN_SEPARATORS = re.compile(r"[\s-]")
 _TAG = re.compile(r"<[^>]+>")
 _BREAK = re.compile(r"<\s*(br|/p|/div|/li)\s*/?>", re.IGNORECASE)
 
@@ -83,6 +84,20 @@ def _isbn(info: dict) -> str | None:
     return ids.get("ISBN_13") or ids.get("ISBN_10")
 
 
+def normalize_isbn(value: str) -> str | None:
+    """An ISBN-10 or ISBN-13 without hyphens or spaces, or None when the
+    length or the check digit is wrong."""
+    isbn = _ISBN_SEPARATORS.sub("", value).upper()
+    if re.fullmatch(r"\d{9}[\dX]", isbn):
+        digits = [10 if c == "X" else int(c) for c in isbn]
+        total = sum((10 - i) * d for i, d in enumerate(digits))
+        return isbn if total % 11 == 0 else None
+    if re.fullmatch(r"\d{13}", isbn):
+        total = sum(int(c) * (3 if i % 2 else 1) for i, c in enumerate(isbn))
+        return isbn if total % 10 == 0 else None
+    return None
+
+
 def _text(description: str | None) -> str | None:
     """The description is HTML: plain text, paragraphs on their own lines."""
     if not description:
@@ -92,12 +107,15 @@ def _text(description: str | None) -> str | None:
     return "\n".join(line for line in lines if line).strip() or None
 
 
-def search(query: str, lang: str, page: int = 1) -> list[SearchHit]:
-    """Editions in `lang` ("en" / "fr"); `page` is 1-based, SEARCH_LIMIT each."""
+def search(
+    query: str, lang: str, page: int = 1, isbn: str | None = None
+) -> list[SearchHit]:
+    """Editions in `lang` ("en" / "fr"); `page` is 1-based, SEARCH_LIMIT each.
+    With `isbn` (normalized), only that edition, in whatever language."""
     data = _get(
         "/volumes",
-        q=query,
-        langRestrict=lang,
+        q=f"isbn:{isbn}" if isbn else query,
+        langRestrict=None if isbn else lang,
         printType="books",
         startIndex=(page - 1) * SEARCH_LIMIT,
         maxResults=SEARCH_LIMIT,
@@ -114,6 +132,9 @@ def search(query: str, lang: str, page: int = 1) -> list[SearchHit]:
                 year=_year(info.get("publishedDate")),
                 creators=_creators(info),
                 thumb_url=_image_url(info, ("thumbnail", "smallThumbnail")),
+                publisher=info.get("publisher") or None,
+                language=info.get("language") or None,
+                isbn=_isbn(info),
             )
         )
     return hits

@@ -35,6 +35,16 @@
       autofocus
     />
     @if (type() === 'book') {
+      <input
+        class="field isbn"
+        type="search"
+        name="isbn"
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="ISBN"
+        [attr.aria-label]="'add.isbnLabel' | translate"
+        [(ngModel)]="isbn"
+      />
       <div class="chips lang" role="group" [attr.aria-label]="'add.bookLanguage' | translate">
         @for (l of bookLangs; track l) {
           <button
@@ -50,7 +60,7 @@
         }
       </div>
     }
-    <button class="btn" type="submit" [disabled]="searching() || !query().trim()">
+    <button class="btn" type="submit" [disabled]="searching() || !canSearch()">
       {{ (searching() ? 'add.searching' : 'add.search') | translate }}
     </button>
   </form>
@@ -128,6 +138,19 @@
                     · {{ r.creators }}
                   }
                 </span>
+                @if (r.publisher || r.language || r.isbn) {
+                  <span class="muted edition" data-testid="edition">
+                    @if (r.publisher) {
+                      <span>{{ r.publisher }}</span>
+                    }
+                    @if (r.language) {
+                      <span class="lang-tag">{{ r.language.toUpperCase() }}</span>
+                    }
+                    @if (r.isbn) {
+                      <span>ISBN {{ r.isbn }}</span>
+                    }
+                  </span>
+                }
               </span>
               @if (r.library_entry_id !== null) {
                 <span class="pill"

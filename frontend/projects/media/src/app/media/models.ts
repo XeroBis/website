@@ -72,6 +72,11 @@ export interface SearchResult {
   year: number | null;
   creators: string | null;
   thumb_url: string | null;
+  /** Google Books only. */
+  publisher: string | null;
+  /** The edition's language code (`en`, `fr`…), Google Books only. */
+  language: string | null;
+  isbn: string | null;
   library_entry_id: number | null;
   /** The entry's state, when it's in the library. */
   library_status: EntryStatus | null;

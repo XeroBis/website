@@ -199,7 +199,8 @@ def _item_from_source(
 @router.get("/search", response_model=list[schemas.SearchResult])
 def search(
     type: MediaType,
-    q: str = Query(min_length=1, max_length=200),
+    q: str | None = Query(default=None, min_length=1, max_length=200),
+    isbn: str | None = Query(default=None, max_length=30),
     page: int = Query(default=1, ge=1, le=100),
     lang: Literal["en", "fr"] | None = None,
     user: User = Depends(media_user),
@@ -207,16 +208,25 @@ def search(
 ):
     """`page` > 1 (the next 20 Google Books results) is for books only.
     `lang` picks the books' edition language (default: the user's); films and
-    series always use the user's language."""
-    if type != MediaType.book and (page > 1 or lang is not None):
+    series always use the user's language. `isbn` (books) overrides `q` and
+    `lang`."""
+    if type != MediaType.book and (page > 1 or lang is not None or isbn is not None):
         raise HTTPException(
-            status_code=422, detail="Only book searches have pages and a language"
+            status_code=422,
+            detail="Only book searches have pages, a language and an ISBN",
         )
+    normalized_isbn = None
+    if isbn is not None:
+        normalized_isbn = sources.normalize_isbn(isbn)
+        if normalized_isbn is None:
+            raise HTTPException(status_code=422, detail="Not a valid ISBN")
+    elif q is None or not q.strip():
+        raise HTTPException(status_code=422, detail="Search text or ISBN required")
     language = lang or sources.language(user.language)
     # Not held while the source answers (see _item_from_source).
     db.close()
     try:
-        hits = sources.search(type, q.strip(), language, page)
+        hits = sources.search(type, (q or "").strip(), language, page, normalized_isbn)
     except sources.SourceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 

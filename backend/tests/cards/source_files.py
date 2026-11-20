@@ -62,14 +62,14 @@ def write_set(
         for c in cards:
             if language == "fr" and not c["fr"]:
                 continue
-            alt = f'{c["name" if language == "en" else "name_fr"]} {c["alt"]}/{count}'
+            alt = f"{c['name' if language == 'en' else 'name_fr']} {c['alt']}/{count}"
             for version in (None, *c["versions"]):
                 imgs.append(
                     f'<img alt="{alt}" src="{scan_url(code, cdn, c["number"], version)}">'
                 )
         (folder / f"{code}_{language}.html").write_text("".join(imgs), "utf-8")
     rows = ["id,rarity,supertype"] + [
-        f'{c["number"]},{c["rarity"]},{c["supertype"]}' for c in cards
+        f"{c['number']},{c['rarity']},{c['supertype']}" for c in cards
     ]
     (folder / f"{code}_rarity.txt").write_text("\n".join(rows), "utf-8")
     return folder

@@ -14,6 +14,7 @@ import {
   statusLabel,
   volumeFromTitle,
 } from '../../media/labels';
+import { normalizeIsbn } from '../../media/isbn';
 import { LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
 import { Poster } from '../../ui/poster';
@@ -58,6 +59,13 @@ export class Add {
     this.seriesId ? 'book' : initialType(this.params.get('type')),
   );
   protected readonly query = signal('');
+  /** Books: when filled, the search looks up this ISBN only. */
+  protected readonly isbn = signal('');
+  protected readonly canSearch = computed(
+    () => !!this.query().trim() || (this.type() === 'book' && !!this.isbn().trim()),
+  );
+  /** What the shown results were searched with, for More results. */
+  private searched: { q: string; isbn: string | null } | null = null;
   /** Books: the editions' language, the UI's by default (you may own either). */
   protected readonly bookLang = signal<Language>(this.lang());
   protected readonly bookLangs: Language[] = ['en', 'fr'];
@@ -189,30 +197,39 @@ export class Add {
     this.results.set(null);
     this.selected.set(null);
     this.owned.set(false);
-    if (this.query().trim()) this.search();
+    this.searched = null;
+    if (this.canSearch()) this.search();
   }
 
   protected setBookLang(lang: Language): void {
     if (lang === this.bookLang()) return;
     this.bookLang.set(lang);
-    if (this.results() !== null && this.query().trim()) this.search();
+    // An ISBN search has no language.
+    if (this.results() !== null && this.searched && !this.searched.isbn) this.search();
   }
 
-  /** The `lang` sent with a search: books only. */
-  private searchLang(): Language | null {
-    return this.type() === 'book' ? this.bookLang() : null;
+  /** The `lang` sent with a search: books only, and not with an ISBN. */
+  private searchLang(isbn: string | null): Language | null {
+    return this.type() === 'book' && !isbn ? this.bookLang() : null;
   }
 
   protected async search(): Promise<void> {
-    const q = this.query().trim();
-    if (!q) return;
+    if (!this.canSearch()) return;
+    const rawIsbn = this.type() === 'book' ? this.isbn().trim() : '';
+    const isbn = rawIsbn ? normalizeIsbn(rawIsbn) : null;
+    if (rawIsbn && !isbn) {
+      this.error.set('add.errorIsbn');
+      return;
+    }
+    const q = isbn ? '' : this.query().trim();
     this.searching.set(true);
     this.error.set(null);
     this.selected.set(null);
     this.rowErrors.set({});
     this.page = 1;
+    this.searched = { q, isbn };
     try {
-      const hits = await this.api.search(this.type(), q, 1, this.searchLang());
+      const hits = await this.api.search(this.type(), q, 1, this.searchLang(isbn), isbn);
       this.results.set(hits);
       this.hasMore.set(this.type() === 'book' && hits.length >= BOOK_PAGE);
     } catch (e) {
@@ -226,12 +243,18 @@ export class Add {
 
   /** Books: the next 20 Google Books results, appended. */
   protected async more(): Promise<void> {
-    const q = this.query().trim();
-    if (!q) return;
+    if (!this.searched) return;
+    const { q, isbn } = this.searched;
     this.loadingMore.set(true);
     this.error.set(null);
     try {
-      const hits = await this.api.search(this.type(), q, this.page + 1, this.searchLang());
+      const hits = await this.api.search(
+        this.type(),
+        q,
+        this.page + 1,
+        this.searchLang(isbn),
+        isbn,
+      );
       this.page += 1;
       const seen = new Set(this.results()?.map((r) => r.external_id));
       this.results.update((list) => [

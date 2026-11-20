@@ -16,6 +16,9 @@ const RESULTS: SearchResult[] = [
     year: 1999,
     creators: 'Lana Wachowski',
     thumb_url: 'https://image.tmdb.org/t/p/w154/p.jpg',
+    publisher: null,
+    language: null,
+    isbn: null,
     library_entry_id: null,
     library_status: null,
     library_owned: null,
@@ -29,6 +32,9 @@ const RESULTS: SearchResult[] = [
     year: null,
     creators: null,
     thumb_url: null,
+    publisher: null,
+    language: null,
+    isbn: null,
     library_entry_id: 42,
     library_status: 'done',
     library_owned: false,
@@ -286,6 +292,47 @@ describe('Add', () => {
     await fixture.whenStable();
     http.expectOne((r) => r.url === '/api/media/search').flush([]);
     expect(button('EN')).toBeUndefined();
+  });
+
+  it('searches books by ISBN only, without a language', async () => {
+    type('input[name="q"]', 'piranesi');
+    type('input[name="isbn"]', '978-1-63557-563-7');
+    await fixture.whenStable();
+    (el.querySelector('form.search button[type="submit"]') as HTMLButtonElement).click();
+    const req = http.expectOne((r) => r.url === '/api/media/search');
+    expect(req.request.params.get('isbn')).toBe('9781635575637');
+    expect(req.request.params.get('q')).toBeNull();
+    expect(req.request.params.get('lang')).toBeNull();
+    req.flush([
+      {
+        ...RESULTS[0],
+        source: 'googlebooks',
+        type: 'book',
+        external_id: 'zyTCAlFPjgYC',
+        title: 'Piranesi',
+        publisher: 'Bloomsbury',
+        language: 'en',
+        isbn: '9781635575637',
+      },
+    ]);
+    await fixture.whenStable();
+    const parts = [...el.querySelectorAll('[data-testid="edition"] > span')].map((e) =>
+      e.textContent?.trim(),
+    );
+    expect(parts).toEqual(['Bloomsbury', 'EN', 'ISBN 9781635575637']);
+    // An ISBN search isn't re-run in another language.
+    button('EN').click();
+    await fixture.whenStable();
+    http.expectNone((r) => r.url === '/api/media/search');
+  });
+
+  it('refuses an invalid ISBN without searching', async () => {
+    type('input[name="isbn"]', '9781635575638');
+    await fixture.whenStable();
+    (el.querySelector('form.search button[type="submit"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    http.expectNone((r) => r.url === '/api/media/search');
+    expect(el.querySelector('.error')?.textContent?.trim()).toBe('ISBN invalide.');
   });
 
   it('presets the type from the URL and links back to its shelf', async () => {

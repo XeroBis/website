@@ -19,6 +19,7 @@ __all__ = [
     "details",
     "download_cover",
     "language",
+    "normalize_isbn",
     "search",
     "source_for",
 ]
@@ -26,6 +27,10 @@ __all__ = [
 # Covers stored in Postgres are resized server-side by the CDN; these stay in
 # the tens of KB. Anything bigger is refused rather than stored.
 MAX_COVER_BYTES = 2 * 1024 * 1024
+
+
+def normalize_isbn(value: str) -> str | None:
+    return googlebooks.normalize_isbn(value)
 
 
 def source_for(media_type: MediaType) -> MediaSource:
@@ -38,13 +43,17 @@ def language(user_language: str | None) -> str:
 
 
 def search(
-    media_type: MediaType, query: str, lang: str, page: int = 1
+    media_type: MediaType,
+    query: str,
+    lang: str,
+    page: int = 1,
+    isbn: str | None = None,
 ) -> list[SearchHit]:
     """Result titles in `lang` ("en" / "fr") where the source has them; books
     are editions in that language. `page` is Google Books' (books); TMDB always
-    answers its first page."""
+    answers its first page. `isbn` (books, normalized) looks up that edition."""
     if media_type == MediaType.book:
-        return googlebooks.search(query, lang, page)
+        return googlebooks.search(query, lang, page, isbn)
     return tmdb.search(media_type, query, "fr-FR" if lang == "fr" else "en-US")
 
 
