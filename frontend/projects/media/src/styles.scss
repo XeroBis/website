@@ -334,6 +334,12 @@ h1.display {
       filter: none;
     }
   }
+  /* Confirms a deletion in a dialog. */
+  &.danger-solid {
+    border-color: var(--media-danger);
+    background: var(--media-danger);
+    color: var(--ab-surface);
+  }
   &.small {
     height: 1.85rem;
     padding: 0 0.7rem;
@@ -1507,5 +1513,46 @@ a.poster:hover {
   .remove {
     margin-top: 2rem;
     text-align: center;
+  }
+}
+
+/* Confirm / prompt dialogs (ui/dialogs.ts), on the native <dialog>. */
+.dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--ab-border);
+  border-radius: 12px;
+  background: var(--ab-surface);
+  color: var(--ab-text);
+  box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.25);
+
+  &::backdrop {
+    background: rgb(20 14 8 / 0.45);
+    backdrop-filter: blur(2px);
+  }
+  form {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.4rem 1.4rem 1.1rem;
+  }
+  .dialog-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+  }
+  .dialog-message {
+    margin: 0;
+    color: var(--ab-muted);
+    line-height: 1.45;
+  }
+  .dialog-field {
+    display: grid;
+    gap: 0.3rem;
+  }
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.3rem;
   }
 }

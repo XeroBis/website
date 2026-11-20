@@ -316,3 +316,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 
 - **What**: the series page's bulk bar (volumes from – to, Mark read / owned / not owned) and its `POST /series/{id}/mark` endpoint are removed. Volumes are marked one at a time on the series page (Read, owned toggle), or in one tap each when added from search.
 - **Why**: the user didn't want the bar on the page; nothing else used the endpoint, so it went too rather than staying as dead code.
+
+## Media: own confirm and prompt dialogs (2026-11-20)
+
+- **What**: every browser `confirm()` / `prompt()` in media (remove an entry from its page or card, delete a read, delete a series, name a new series from the entry page or a drag and drop) goes through a `Dialogs` service (`ui/dialogs.ts`) whose `confirm()` / `prompt()` return a Promise, rendered by one `<ab-dialogs>` in the app shell.
+- **Native `<dialog>` with `showModal()`, over a hand-made overlay** (like workout's and cards' modals): the browser gives the focus trap, Escape (`cancel`), the `::backdrop` and the top layer for free. Media-only for now; the other apps keep their own modals.
+- **A service returning a Promise, over a modal per page**: the call sites keep the `if (!(await confirm(...))) return;` shape of the browser API they replace, and tests stub the service instead of `window`.

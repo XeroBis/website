@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Icon, IconName, LanguageService, httpStatus } from '@shared';
 
@@ -28,6 +28,7 @@ import {
 } from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { StarRating } from '../../ui/star-rating';
+import { Dialogs } from '../../ui/dialogs';
 
 interface StatusButton {
   action: QuickAction;
@@ -57,7 +58,7 @@ export class EntryPage {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
-  private readonly translate = inject(TranslateService);
+  private readonly dialogs = inject(Dialogs);
   protected readonly lang = inject(LanguageService).current;
 
   /** Route param. */
@@ -224,7 +225,11 @@ export class EntryPage {
   protected async setSeries(value: string, select: HTMLSelectElement): Promise<void> {
     const e = this.entry()!;
     if (value === 'new') {
-      const name = prompt(this.translate.instant('entry.newSeriesPrompt'))?.trim();
+      const name = await this.dialogs.prompt({
+        title: 'dialog.newSeries',
+        label: 'entry.newSeriesPrompt',
+        confirm: 'dialog.create',
+      });
       if (!name) {
         select.value = e.series_id === null ? '' : String(e.series_id);
         return;
@@ -333,8 +338,14 @@ export class EntryPage {
     return d > 0 ? d : null;
   }
 
-  protected deleteSession(session: Session): void {
-    if (!confirm(this.translate.instant('entry.confirmDeleteSession'))) return;
+  protected async deleteSession(session: Session): Promise<void> {
+    const ok = await this.dialogs.confirm({
+      title: 'entry.deleteSession',
+      message: 'entry.confirmDeleteSession',
+      confirm: 'dialog.delete',
+      danger: true,
+    });
+    if (!ok) return;
     const id = this.entry()!.id;
     this.run(() => this.api.deleteSession(id, session.id));
   }
@@ -392,12 +403,14 @@ export class EntryPage {
 
   protected async remove(): Promise<void> {
     const e = this.entry()!;
-    if (
-      !confirm(
-        this.translate.instant('entry.confirmRemove', { title: localTitle(e.item, this.lang()) }),
-      )
-    )
-      return;
+    const ok = await this.dialogs.confirm({
+      title: 'entry.remove',
+      message: 'entry.confirmRemove',
+      params: { title: localTitle(e.item, this.lang()) },
+      confirm: 'dialog.remove',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await this.api.remove(e.id);
       this.router.navigate([shelfUrl(e.item.type)]);

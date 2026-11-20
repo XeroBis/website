@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { BookSeriesDetail } from '../../media/models';
 import { BOOK, entry, flushMe, settle, setup } from '../../testing';
 import { SeriesPage } from './series';
+import { Dialogs } from '../../ui/dialogs';
 
 const vol = (id: number, volume: number | null, overrides = {}) =>
   entry({
@@ -33,7 +34,7 @@ describe('SeriesPage', () => {
 
   beforeEach(async () => {
     http = setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(TestBed.inject(Dialogs), 'confirm').mockResolvedValue(true);
     fixture = TestBed.createComponent(SeriesPage);
     fixture.componentRef.setInput('id', '4');
     flushMe(http);
@@ -102,6 +103,14 @@ describe('SeriesPage', () => {
 
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     button('Supprimer la série').click();
+    expect(TestBed.inject(Dialogs).confirm).toHaveBeenCalledWith({
+      title: 'series.delete',
+      message: 'series.confirmDelete',
+      params: { name: 'ワンピース' },
+      confirm: 'dialog.delete',
+      danger: true,
+    });
+    await settle();
     http
       .expectOne({ method: 'DELETE', url: '/api/media/series/4' })
       .flush(null, { status: 204, statusText: '' });

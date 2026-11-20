@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { EntryDetail } from '../../media/models';
 import { BOOK, SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
 import { EntryPage } from './entry';
+import { Dialogs } from '../../ui/dialogs';
 
 describe('EntryPage', () => {
   let http: HttpTestingController;
@@ -14,7 +15,7 @@ describe('EntryPage', () => {
 
   beforeEach(() => {
     http = setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(TestBed.inject(Dialogs), 'confirm').mockResolvedValue(true);
   });
   afterEach(() => http.verify());
 
@@ -158,11 +159,17 @@ describe('EntryPage', () => {
   });
 
   it('creates a series from the select', async () => {
-    vi.spyOn(window, 'prompt').mockReturnValue(' One Piece ');
+    const ask = vi.spyOn(TestBed.inject(Dialogs), 'prompt').mockResolvedValue('One Piece');
     await render(entry({ item: BOOK }));
     const select = el.querySelector('.series-fields select') as HTMLSelectElement;
     select.value = 'new';
     select.dispatchEvent(new Event('change'));
+    await settle();
+    expect(ask).toHaveBeenCalledWith({
+      title: 'dialog.newSeries',
+      label: 'entry.newSeriesPrompt',
+      confirm: 'dialog.create',
+    });
     const create = http.expectOne({ method: 'POST', url: '/api/media/series' });
     expect(create.request.body).toEqual({ name: 'One Piece' });
     create.flush({ id: 6, name: 'One Piece', volumes: 0, read: 0, owned: 0, cover_item: null });
@@ -353,9 +360,14 @@ describe('EntryPage', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     await render();
     button('Retirer de la bibliothèque').click();
-    expect(window.confirm).toHaveBeenCalledWith(
-      'Retirer « Matrix » de votre bibliothèque ? Ses sessions, sa note et ses notes seront supprimées.',
-    );
+    expect(TestBed.inject(Dialogs).confirm).toHaveBeenCalledWith({
+      title: 'entry.remove',
+      message: 'entry.confirmRemove',
+      params: { title: 'Matrix' },
+      confirm: 'dialog.remove',
+      danger: true,
+    });
+    await settle();
     http
       .expectOne({ method: 'DELETE', url: '/api/media/library/3' })
       .flush(null, { status: 204, statusText: '' });

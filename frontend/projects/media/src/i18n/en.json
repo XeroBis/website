@@ -1,4 +1,11 @@
 {
+  "dialog": {
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "delete": "Delete",
+    "create": "Create",
+    "newSeries": "New series"
+  },
   "nav": {
     "books": "Library",
     "videos": "Videos",
@@ -87,7 +94,7 @@
     "add": "Add",
     "seriesRead": "{{read}} / {{volumes}} read",
     "dragHint": "drag a book onto another to make a series",
-    "newSeriesPrompt": "Series name:"
+    "newSeriesPrompt": "Series name"
   },
   "add": {
     "title": "Add to your library",
@@ -189,7 +196,7 @@
     "remove": "Remove from library",
     "loading": "Loading…",
     "confirmRemove": "Remove “{{title}}” from your library? Its sessions, rating and notes will be deleted.",
-    "confirmDeleteSession": "Delete this session?",
+    "confirmDeleteSession": "This read and its dates will be removed from the history.",
     "errorProgress": "Season must be 1 or more, episode 0 or more.",
     "errorSessionOrder": "The finish date can't be before the start date.",
     "notFound": "Entry not found.",
@@ -199,7 +206,7 @@
     "series": "Series",
     "noSeries": "No series",
     "newSeries": "New series…",
-    "newSeriesPrompt": "Name of the new series:",
+    "newSeriesPrompt": "Series name",
     "volume": "Volume",
     "errorVolume": "The volume must be a whole number from 0 to 9999.",
     "dateUnknown": "Date unknown",

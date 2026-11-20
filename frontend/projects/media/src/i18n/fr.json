@@ -1,4 +1,11 @@
 {
+  "dialog": {
+    "cancel": "Annuler",
+    "remove": "Retirer",
+    "delete": "Supprimer",
+    "create": "Créer",
+    "newSeries": "Nouvelle série"
+  },
   "nav": {
     "books": "Bibliothèque",
     "videos": "Vidéothèque",
@@ -87,7 +94,7 @@
     "add": "Ajouter",
     "seriesRead": "{{read}} / {{volumes}} lus",
     "dragHint": "glissez un livre sur un autre pour en faire une série",
-    "newSeriesPrompt": "Nom de la série :"
+    "newSeriesPrompt": "Nom de la série"
   },
   "add": {
     "title": "Ajouter à votre bibliothèque",
@@ -189,7 +196,7 @@
     "remove": "Retirer de la bibliothèque",
     "loading": "Chargement…",
     "confirmRemove": "Retirer « {{title}} » de votre bibliothèque ? Ses sessions, sa note et ses notes seront supprimées.",
-    "confirmDeleteSession": "Supprimer cette session ?",
+    "confirmDeleteSession": "Cette lecture et ses dates seront retirées de l'historique.",
     "errorProgress": "La saison doit être 1 ou plus, l'épisode 0 ou plus.",
     "errorSessionOrder": "La date de fin ne peut pas précéder la date de début.",
     "notFound": "Entrée introuvable.",
@@ -199,7 +206,7 @@
     "series": "Série",
     "noSeries": "Aucune série",
     "newSeries": "Nouvelle série…",
-    "newSeriesPrompt": "Nom de la nouvelle série :",
+    "newSeriesPrompt": "Nom de la série",
     "volume": "Tome",
     "errorVolume": "Le tome doit être un nombre entier de 0 à 9999.",
     "dateUnknown": "Date inconnue",

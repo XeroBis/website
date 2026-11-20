@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { BookSeries, EntrySummary } from '../../media/models';
 import { BOOK, FILM, SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
 import { Library } from './library';
+import { Dialogs } from '../../ui/dialogs';
 
 const ENTRIES: EntrySummary[] = [
   entry({ id: 1, status: 'done', rating: 7 }),
@@ -146,16 +147,22 @@ describe('Library', () => {
 
   it('removes an entry from its card after confirmation', async () => {
     const { el } = await open();
-    const ask = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const ask = vi.spyOn(TestBed.inject(Dialogs), 'confirm').mockResolvedValue(false);
     const trash = () => cells(el)[0].querySelector('[data-testid="remove"]') as HTMLButtonElement;
     trash().click();
-    expect(ask).toHaveBeenCalledWith(
-      'Retirer « Matrix » de votre bibliothèque ? Ses sessions, sa note et ses notes seront supprimées.',
-    );
+    expect(ask).toHaveBeenCalledWith({
+      title: 'entry.remove',
+      message: 'entry.confirmRemove',
+      params: { title: 'Matrix' },
+      confirm: 'dialog.remove',
+      danger: true,
+    });
+    await settle();
     http.expectNone({ method: 'DELETE' });
 
-    ask.mockReturnValue(true);
+    ask.mockResolvedValue(true);
     trash().click();
+    await settle();
     http.expectOne({ method: 'DELETE', url: '/api/media/library/1' }).flush(null);
     await settle();
     libraryRequest().flush([ENTRIES[1]]);
@@ -244,9 +251,15 @@ describe('Library series cards', () => {
     expect(cells()[0].classList).toContain('cdk-drag');
 
     // Naruto, tome 2 onto Naruto T1: a new series, named after the target.
-    const ask = vi.spyOn(window, 'prompt').mockReturnValue(' Naruto ');
+    const ask = vi.spyOn(TestBed.inject(Dialogs), 'prompt').mockResolvedValue('Naruto');
     const first = (await dragOnto(naruto[1], cells()[0])).done;
-    expect(ask).toHaveBeenCalledWith('Nom de la série :', 'Naruto');
+    expect(ask).toHaveBeenCalledWith({
+      title: 'dialog.newSeries',
+      label: 'library.newSeriesPrompt',
+      value: 'Naruto',
+      confirm: 'dialog.create',
+    });
+    await settle();
     const create = http.expectOne({ method: 'POST', url: '/api/media/series' });
     expect(create.request.body).toEqual({ name: 'Naruto' });
     create.flush({ id: 7, name: 'Naruto', volumes: 0, read: 0, owned: 0, cover_item: null });

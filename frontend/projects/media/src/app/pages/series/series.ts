@@ -2,7 +2,7 @@ import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Icon, httpStatus } from '@shared';
 
@@ -10,6 +10,7 @@ import { statusLabel } from '../../media/labels';
 import { MediaApi, errorMessage } from '../../media/media-api';
 import { BookSeriesDetail, EntrySummary } from '../../media/models';
 import { Poster } from '../../ui/poster';
+import { Dialogs } from '../../ui/dialogs';
 
 /** A book series: its volumes in order, with one-tap read/owned per volume. */
 @Component({
@@ -21,7 +22,7 @@ export class SeriesPage {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
-  private readonly translate = inject(TranslateService);
+  private readonly dialogs = inject(Dialogs);
 
   /** Route param. */
   readonly id = input.required<string>();
@@ -95,7 +96,14 @@ export class SeriesPage {
 
   protected async remove(): Promise<void> {
     const s = this.series()!;
-    if (!confirm(this.translate.instant('series.confirmDelete', { name: s.name }))) return;
+    const ok = await this.dialogs.confirm({
+      title: 'series.delete',
+      message: 'series.confirmDelete',
+      params: { name: s.name },
+      confirm: 'dialog.delete',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await this.api.deleteSeries(s.id);
       this.router.navigate(['/books']);

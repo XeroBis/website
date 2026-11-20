@@ -4,8 +4,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { Header, Icon } from '@shared';
 
+import { DialogHost } from './ui/dialogs';
+
 @Component({
-  imports: [Header, Icon, RouterLink, RouterLinkActive, RouterOutlet, TranslatePipe],
+  imports: [DialogHost, Header, Icon, RouterLink, RouterLinkActive, RouterOutlet, TranslatePipe],
   selector: 'ab-root',
   template: `
     <ab-header title="Media">
@@ -24,6 +26,7 @@ import { Header, Icon } from '@shared';
     </main>
     <!-- TMDB's terms require this credit. -->
     <footer class="credit" [innerHTML]="'credit' | translate"></footer>
+    <ab-dialogs />
   `,
 })
 export class App {}

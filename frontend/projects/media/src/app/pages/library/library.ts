@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Icon, LanguageService } from '@shared';
 
@@ -29,6 +29,7 @@ import {
 } from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { QuickActions } from '../../ui/quick-actions';
+import { Dialogs } from '../../ui/dialogs';
 
 type Owned = '' | 'true' | 'false';
 
@@ -60,7 +61,7 @@ export class Library {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly translate = inject(TranslateService);
+  private readonly dialogs = inject(Dialogs);
 
   protected readonly shelf: Shelf = this.route.snapshot.data['shelf'] ?? 'books';
   protected readonly books = this.shelf === 'books';
@@ -169,7 +170,14 @@ export class Library {
   protected async remove(entry: EntrySummary): Promise<void> {
     if (this.removing().has(entry.id)) return;
     const title = localTitle(entry.item, this.lang());
-    if (!confirm(this.translate.instant('entry.confirmRemove', { title }))) return;
+    const ok = await this.dialogs.confirm({
+      title: 'entry.remove',
+      message: 'entry.confirmRemove',
+      params: { title },
+      confirm: 'dialog.remove',
+      danger: true,
+    });
+    if (!ok) return;
     this.removing.update((s) => new Set(s).add(entry.id));
     try {
       await this.api.remove(entry.id);
@@ -288,10 +296,12 @@ export class Library {
    * that name is reused. False when cancelled.
    */
   private async makeSeries(target: EntrySummary, dragged: EntrySummary): Promise<boolean> {
-    const name = prompt(
-      this.translate.instant('library.newSeriesPrompt'),
-      seriesNameFromTitle(this.title(target)),
-    )?.trim();
+    const name = await this.dialogs.prompt({
+      title: 'dialog.newSeries',
+      label: 'library.newSeriesPrompt',
+      value: seriesNameFromTitle(this.title(target)),
+      confirm: 'dialog.create',
+    });
     if (!name) return false;
     const existing = this.allSeries().find((s) => s.name.toLowerCase() === name.toLowerCase());
     const seriesId = existing?.id ?? (await this.api.createSeries(name)).id;
