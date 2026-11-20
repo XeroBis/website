@@ -358,7 +358,7 @@ Cards the user is selling ("Liste des ventes"), in named lists created empty, th
 
 ## `media`
 
-Books, films and series (ported from `media`). Metadata lives once in a shared catalog (`media_items`), whoever added it. Everything personal (status, rating, notes, ownership, progress) is in a per-user `library_entries` row, and each read/watch is a `reading_sessions` row. Models in `backend/domains/media/models.py`. Enum types (`media.media_type`, `media.media_source`, `media.entry_status`) live in the schema too.
+Books, films and series (ported from `media`). Metadata lives once in a shared catalog (`media_items`), whoever added it. Everything personal (status, rating, notes, ownership of books, progress) is in a per-user `library_entries` row, and each read/watch is a `reading_sessions` row. Models in `backend/domains/media/models.py`. Enum types (`media.media_type`, `media.media_source`, `media.entry_status`) live in the schema too.
 
 ### `media.media_items`
 
@@ -406,7 +406,7 @@ No row = the frontend draws a generated placeholder.
 | `status` | enum `want` / `in_progress` / `done` / `dropped`, not null, default `want` | |
 | `rating` | smallint, null | 1–10 = 0.5–5 stars (`ck_library_entries_rating`); null = unrated. |
 | `notes` | text, null | Trimmed; blank → null. |
-| `owned_formats` | text[], not null, default `{}` | `{}` = not owned. Values: `paperback`, `hardcover`, `ebook`, `audiobook`, `dvd`, `bluray`, `bluray_4k`, `digital`. Repeats dropped. |
+| `owned` | boolean, not null, default false | Books only (a paper copy; no formats): always false for films and series. Independent of `status`. Replaced `owned_formats` in migration `0015` (a book with any format became owned, films' and series' formats were dropped). |
 | `current_season` | smallint, null | Series only, 1–999. |
 | `current_episode` | smallint, null | Series only; last episode watched in `current_season` (0 = none yet), 0–9999. |
 | `added_at` / `updated_at` | timestamptz, not null, default `now()` | |
@@ -440,6 +440,9 @@ Partial unique index `uq_reading_sessions_one_open` on `library_entry_id` where 
 - **Displayed title** = `title_fr` for French viewers when set, else `title` (same for synopses). Text search matches `title`, `title_fr`, `original_title` and `creators`; the title sort uses the title in the user's saved language (`core.users.language`).
 - "Today" is the server's date (UTC in the containers).
 - Removing an entry deletes its sessions but keeps the catalog row and its cover.
+- **Ownership**: only books can be owned (`owned` true on a film or series is a 422).
+- **Shelves**: `books` = type `book`, `videos` = types `film` and `series`.
+- **Journal**: each session gives a "started" event on `started_on` and a "finished" event on `finished_on`, when set and inside the period (a month, or a whole year). Open sessions only give their start. Events are sorted newest first (then finished before started, then newest session).
 
 ## Business rules (cross-schema)
 

@@ -3,8 +3,9 @@
 export type MediaType = 'book' | 'film' | 'series';
 export type MediaSource = 'tmdb' | 'openlibrary' | 'manual';
 export type EntryStatus = 'want' | 'in_progress' | 'done' | 'dropped';
-export type OwnedFormat =
-  'paperback' | 'hardcover' | 'ebook' | 'audiobook' | 'dvd' | 'bluray' | 'bluray_4k' | 'digital';
+/** `books` = books, `videos` = films and series. */
+export type Shelf = 'books' | 'videos';
+export type JournalEvent = 'started' | 'finished';
 export type LibrarySort = 'added' | 'title' | 'year' | 'rating' | 'finished';
 
 export interface MediaItem {
@@ -38,7 +39,8 @@ export interface EntrySummary {
   status: EntryStatus;
   /** 1-10 = 0.5-5 stars. */
   rating: number | null;
-  owned_formats: OwnedFormat[];
+  /** Books only (a paper copy). */
+  owned: boolean;
   current_season: number | null;
   current_episode: number | null;
   added_at: string;
@@ -66,6 +68,7 @@ export interface SearchResult {
 }
 
 export interface LibraryFilters {
+  shelf?: Shelf;
   type?: MediaType | null;
   status?: EntryStatus | null;
   owned?: boolean | null;
@@ -77,7 +80,7 @@ export interface LibraryFilters {
 export interface EntryUpdate {
   rating?: number | null;
   notes?: string | null;
-  owned_formats?: OwnedFormat[];
+  owned?: boolean;
   current_season?: number;
   current_episode?: number;
 }
@@ -85,6 +88,21 @@ export interface EntryUpdate {
 export interface SessionInput {
   started_on: string | null;
   finished_on: string | null;
+}
+
+export interface JournalEntry {
+  date: string;
+  event: JournalEvent;
+  session_id: number;
+  entry: EntrySummary;
+}
+
+export interface JournalQuery {
+  year: number;
+  /** 1-12; absent = the whole year. */
+  month?: number | null;
+  type?: MediaType | null;
+  event?: JournalEvent | null;
 }
 
 export type QuickAction = 'start' | 'finish' | 'drop' | 'next-episode';

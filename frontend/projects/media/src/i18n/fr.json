@@ -1,11 +1,18 @@
 {
   "nav": {
-    "library": "Bibliothèque",
-    "add": "Ajouter"
+    "books": "Bibliothèque",
+    "videos": "Vidéothèque",
+    "journal": "Journal"
   },
   "pageTitle": {
-    "library": "Bibliothèque",
+    "books": "Bibliothèque",
+    "videos": "Vidéothèque",
+    "journal": "Journal",
     "add": "Ajouter"
+  },
+  "shelf": {
+    "books": "Bibliothèque",
+    "videos": "Vidéothèque"
   },
   "credit": "Données des films et séries fournies par <a href=\"https://www.themoviedb.org\" target=\"_blank\" rel=\"noopener\">TMDB</a>. Ce produit utilise l'API TMDB mais n'est ni approuvé ni certifié par TMDB. Données des livres fournies par <a href=\"https://openlibrary.org\" target=\"_blank\" rel=\"noopener\">Open Library</a>.",
   "type": {
@@ -38,16 +45,6 @@
       "dropped": "Abandonné"
     }
   },
-  "format": {
-    "paperback": "Poche",
-    "hardcover": "Relié",
-    "ebook": "Ebook",
-    "audiobook": "Livre audio",
-    "dvd": "DVD",
-    "bluray": "Blu-ray",
-    "bluray_4k": "Blu-ray 4K",
-    "digital": "Numérique"
-  },
   "action": {
     "start": "Commencer",
     "startReading": "Commencer la lecture",
@@ -62,7 +59,6 @@
     "watchAgain": "Revoir"
   },
   "library": {
-    "title": "Bibliothèque",
     "search": "Rechercher un titre, un auteur…",
     "all": "Tout",
     "status": "Statut",
@@ -84,7 +80,8 @@
     "countOne": "1 élément",
     "countMany": "{{count}} éléments",
     "nothing": "Aucun résultat.",
-    "addSomething": "Ajouter quelque chose"
+    "addSomething": "Ajouter quelque chose",
+    "add": "Ajouter"
   },
   "add": {
     "title": "Ajouter à votre bibliothèque",
@@ -96,7 +93,7 @@
     "searching": "Recherche…",
     "searchingIn": "Recherche dans {{source}}.",
     "status": "Statut",
-    "ownIt": "Je le possède en",
+    "ownership": "Possession",
     "noResults": "Aucun résultat.",
     "inLibrary": "Déjà dans la bibliothèque",
     "addToLibrary": "Ajouter à la bibliothèque",
@@ -117,8 +114,9 @@
     "year": "Année",
     "genres": "Genres (séparés par des virgules)",
     "cancel": "Annuler",
-    "back": "Retour à la bibliothèque",
-    "errorTitle": "Le titre est obligatoire."
+    "errorTitle": "Le titre est obligatoire.",
+    "backBooks": "Retour à la bibliothèque",
+    "backVideos": "Retour à la vidéothèque"
   },
   "entry": {
     "minutes": "{{count}} min",
@@ -128,7 +126,6 @@
     "episodeOf": "sur {{count}}",
     "lastEpisodeHint": "C'était le dernier épisode connu. Terminez-la, ou passez à une nouvelle saison ci-dessous si elle est sortie.",
     "rating": "Votre note",
-    "ownedAs": "Possédé en",
     "notOwned": "Non possédé.",
     "whereYouAre": "Où vous en êtes",
     "season": "Saison",
@@ -152,7 +149,44 @@
     "confirmDeleteSession": "Supprimer cette session ?",
     "errorProgress": "La saison doit être 1 ou plus, l'épisode 0 ou plus.",
     "errorSessionOrder": "La date de fin ne peut pas précéder la date de début.",
-    "notFound": "Entrée introuvable."
+    "notFound": "Entrée introuvable.",
+    "owned": "Possédé",
+    "ownIt": "Je l'ai"
+  },
+  "journal": {
+    "title": "Journal",
+    "view": "Vue",
+    "month": "Mois",
+    "year": "Année",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "events": "Afficher",
+    "both": "Commencés et terminés",
+    "finishedOnly": "Terminés",
+    "startedOnly": "Commencés",
+    "started": {
+      "book": "Commencé",
+      "watch": "Commencé"
+    },
+    "finished": {
+      "book": "Lu",
+      "watch": "Vu"
+    },
+    "done": {
+      "book": {
+        "one": "1 livre lu",
+        "many": "{{count}} livres lus"
+      },
+      "film": {
+        "one": "1 film",
+        "many": "{{count}} films"
+      },
+      "series": {
+        "one": "1 série",
+        "many": "{{count}} séries"
+      }
+    },
+    "nothing": "Rien d'enregistré sur cette période."
   },
   "rating": {
     "label": "Note",

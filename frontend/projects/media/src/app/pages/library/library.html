@@ -1,6 +1,9 @@
 <div class="library-page">
   <header class="head">
-    <h1 class="display">{{ 'library.title' | translate }}</h1>
+    <h1 class="display">{{ 'shelf.' + shelf | translate }}</h1>
+    <a class="btn add" routerLink="/add" [queryParams]="addQuery()"
+      ><ab-icon name="plus" /> {{ 'library.add' | translate }}</a
+    >
     <input
       class="field search"
       type="search"
@@ -12,41 +15,45 @@
     />
   </header>
 
-  <div class="chips types">
-    <button type="button" class="chip" [class.on]="type() === ''" (click)="setType('')">
-      {{ 'library.all' | translate }}
-    </button>
-    @for (t of types; track t) {
-      <button
-        type="button"
-        class="chip"
-        [attr.data-type]="t"
-        [class.on]="type() === t"
-        (click)="setType(t)"
-      >
-        <ab-icon [name]="icon[t]" /> {{ typePlural[t] | translate }}
+  @if (types.length) {
+    <div class="chips types">
+      <button type="button" class="chip" [class.on]="type() === ''" (click)="setType('')">
+        {{ 'library.all' | translate }}
       </button>
-    }
-  </div>
+      @for (t of types; track t) {
+        <button
+          type="button"
+          class="chip"
+          [attr.data-type]="t"
+          [class.on]="type() === t"
+          (click)="setType(t)"
+        >
+          <ab-icon [name]="icon[t]" /> {{ typePlural[t] | translate }}
+        </button>
+      }
+    </div>
+  }
 
-  <div class="filters">
+  <div class="filters" [class.three]="!books">
     <label>
       <span class="label">{{ 'library.status' | translate }}</span>
       <select class="field" [(ngModel)]="status" (ngModelChange)="apply()">
         <option value="">{{ 'library.anyStatus' | translate }}</option>
         @for (s of statuses; track s) {
-          <option [value]="s">{{ statusLabel(s) | translate }}</option>
+          <option [value]="s">{{ statusLabel(s, books ? 'book' : 'film') | translate }}</option>
         }
       </select>
     </label>
-    <label>
-      <span class="label">{{ 'library.owned' | translate }}</span>
-      <select class="field" [(ngModel)]="owned" (ngModelChange)="apply()">
-        <option value="">{{ 'library.ownedAny' | translate }}</option>
-        <option value="true">{{ 'library.ownedYes' | translate }}</option>
-        <option value="false">{{ 'library.ownedNo' | translate }}</option>
-      </select>
-    </label>
+    @if (books) {
+      <label>
+        <span class="label">{{ 'library.owned' | translate }}</span>
+        <select class="field" [(ngModel)]="owned" (ngModelChange)="apply()">
+          <option value="">{{ 'library.ownedAny' | translate }}</option>
+          <option value="true">{{ 'library.ownedYes' | translate }}</option>
+          <option value="false">{{ 'library.ownedNo' | translate }}</option>
+        </select>
+      </label>
+    }
     <label>
       <span class="label">{{ 'library.genre' | translate }}</span>
       <select class="field" [(ngModel)]="genre" (ngModelChange)="apply()">
@@ -80,7 +87,7 @@
     @if (list.length === 0) {
       <div class="empty">
         <p class="muted">{{ 'library.nothing' | translate }}</p>
-        <a class="btn" routerLink="/add"
+        <a class="btn" routerLink="/add" [queryParams]="addQuery()"
           ><ab-icon name="plus" /> {{ 'library.addSomething' | translate }}</a
         >
       </div>
@@ -88,7 +95,7 @@
     <div class="grid">
       @for (e of list; track e.id) {
         <div class="cell" data-testid="entry">
-          <a abPoster [item]="e.item" [routerLink]="['/library', e.id]"></a>
+          <a abPoster [item]="e.item" [routerLink]="['/entries', e.id]"></a>
           <div class="meta">
             <span class="status" [class]="e.status">{{ caption(e) | translate }}</span>
             @if (e.rating) {
@@ -96,7 +103,7 @@
                 ><ab-icon name="star" /> {{ e.rating / 2 | number: '1.0-1' : lang() }}</span
               >
             }
-            @if (e.owned_formats.length) {
+            @if (e.owned) {
               <span
                 class="owned"
                 [title]="'library.ownedYes' | translate"

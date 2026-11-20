@@ -19,7 +19,7 @@ def test_add_film_from_tmdb_fills_metadata_and_cover(client, web):
     tmdb_film(web, 603)
     r = client.post(
         "/api/media/library/from-search",
-        json=FILM | {"status": "done", "owned_formats": ["bluray"]},
+        json=FILM | {"status": "done"},
     )
     assert r.status_code == 201
     e = r.json()
@@ -38,7 +38,7 @@ def test_add_film_from_tmdb_fills_metadata_and_cover(client, web):
     assert item["season_episode_counts"] is None
     assert item["has_cover"] is True
     assert e["status"] == "done"
-    assert e["owned_formats"] == ["bluray"]
+    assert e["owned"] is False
 
     cover = client.get(f"/api/media/items/{item['id']}/cover")
     assert cover.status_code == 200
@@ -188,7 +188,7 @@ def test_second_user_reuses_catalog_row(client, other_client, web):
 
 
 def test_user_isolation(client, other_client, add_manual):
-    entry_id = add_manual(title="Mine", owned_formats=["ebook"])["id"]
+    entry_id = add_manual(title="Mine", owned=True)["id"]
     client.post(f"/api/media/library/{entry_id}/finish")
     session_id = client.get(f"/api/media/library/{entry_id}").json()["sessions"][0][
         "id"

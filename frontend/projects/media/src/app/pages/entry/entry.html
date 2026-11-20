@@ -40,7 +40,9 @@
         @if (e.item.genres.length) {
           <div class="genres">
             @for (g of e.item.genres; track g) {
-              <a class="pill" routerLink="/library" [queryParams]="{ genre: g }">{{ g }}</a>
+              <a class="pill" [routerLink]="shelfUrl(e.item.type)" [queryParams]="{ genre: g }">{{
+                g
+              }}</a>
             }
           </div>
         }
@@ -96,26 +98,29 @@
         <ab-star-rating [value]="e.rating" (valueChange)="rate($event)" />
       </section>
 
-      <section class="panel">
-        <h2 class="section-title">{{ 'entry.ownedAs' | translate }}</h2>
-        <div class="chips">
-          @for (f of formats(); track f) {
+      @if (e.item.type === 'book') {
+        <section class="panel">
+          <h2 class="section-title">{{ 'entry.owned' | translate }}</h2>
+          <div class="chips">
             <button
               type="button"
               class="chip"
-              [class.on]="e.owned_formats.includes(f)"
+              [class.on]="e.owned"
               [disabled]="busy()"
-              (click)="toggleFormat(f)"
-              [attr.aria-pressed]="e.owned_formats.includes(f)"
+              (click)="toggleOwned()"
+              [attr.aria-pressed]="e.owned"
             >
-              {{ formatLabel(f) | translate }}
+              @if (e.owned) {
+                <ab-icon name="check" />
+              }
+              {{ 'entry.ownIt' | translate }}
             </button>
+          </div>
+          @if (!e.owned) {
+            <p class="muted small">{{ 'entry.notOwned' | translate }}</p>
           }
-        </div>
-        @if (!e.owned_formats.length) {
-          <p class="muted small">{{ 'entry.notOwned' | translate }}</p>
-        }
-      </section>
+        </section>
+      }
 
       @if (e.item.type === 'series') {
         <section class="panel">

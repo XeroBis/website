@@ -7,31 +7,31 @@ from tests.media.conftest import TMDB, tmdb_film
 TODAY = date.today()
 
 
-def test_update_rating_notes_formats(client, add_manual):
+def test_update_rating_notes_owned(client, add_manual):
     entry_id = add_manual()["id"]
     r = client.patch(
         f"/api/media/library/{entry_id}",
         json={
             "rating": 7,
             "notes": "  lovely  ",
-            "owned_formats": ["paperback", "ebook", "paperback"],
+            "owned": True,
         },
     )
     assert r.status_code == 200
     e = r.json()
-    assert (e["rating"], e["notes"], e["owned_formats"]) == (
-        7,
-        "lovely",
-        ["paperback", "ebook"],
-    )
+    assert (e["rating"], e["notes"], e["owned"]) == (7, "lovely", True)
 
     # Only sent fields change; null clears the rating.
     e = client.patch(f"/api/media/library/{entry_id}", json={"rating": None}).json()
     assert e["rating"] is None
     assert e["notes"] == "lovely"
+    assert e["owned"] is True
+
+    e = client.patch(f"/api/media/library/{entry_id}", json={"owned": False}).json()
+    assert e["owned"] is False
 
 
-def test_invalid_rating_and_format_are_rejected(client, add_manual):
+def test_invalid_rating_is_rejected(client, add_manual):
     entry_id = add_manual()["id"]
     assert (
         client.patch(f"/api/media/library/{entry_id}", json={"rating": 11}).status_code
@@ -41,7 +41,24 @@ def test_invalid_rating_and_format_are_rejected(client, add_manual):
         client.patch(f"/api/media/library/{entry_id}", json={"rating": 0}).status_code
         == 422
     )
-    r = client.patch(f"/api/media/library/{entry_id}", json={"owned_formats": ["vhs"]})
+
+
+def test_only_books_can_be_owned(client, add_manual):
+    film = add_manual(type="film")["id"]
+    r = client.patch(f"/api/media/library/{film}", json={"owned": True})
+    assert r.status_code == 422
+    # Not owned is always fine.
+    r = client.patch(f"/api/media/library/{film}", json={"owned": False})
+    assert r.status_code == 200
+    r = client.post(
+        "/api/media/library/manual",
+        json={"type": "series", "title": "S", "owned": True},
+    )
+    assert r.status_code == 422
+    r = client.post(
+        "/api/media/library/from-search",
+        json={"source": "tmdb", "external_id": "603", "type": "film", "owned": True},
+    )
     assert r.status_code == 422
 
 
@@ -57,7 +74,6 @@ def test_manual_add_fields(add_manual):
         creators="Me",
         year=2020,
         genres=["Family", "Family"],
-        owned_formats=["dvd"],
     )
     item = e["item"]
     assert (item["source"], item["external_id"], item["has_cover"]) == (
@@ -66,7 +82,7 @@ def test_manual_add_fields(add_manual):
         False,
     )
     assert (item["creators"], item["year"], item["genres"]) == ("Me", 2020, ["Family"])
-    assert e["owned_formats"] == ["dvd"]
+    assert e["owned"] is False
 
 
 # ── sessions ----------------------------------------------------------------
@@ -156,8 +172,10 @@ def _titles(client, **params):
 
 
 def test_filters_and_sort(client, add_manual):
-    a = add_manual(title="Alpha", creators="Zed Author", year=2001, genres=["SF"])
-    b = add_manual(type="film", title="Bravo", year=1990, owned_formats=["dvd"])
+    a = add_manual(
+        title="Alpha", creators="Zed Author", year=2001, genres=["SF"], owned=True
+    )
+    b = add_manual(type="film", title="Bravo", year=1990)
     c = add_manual(type="series", title="charlie", year=2010, genres=["Drama", "SF"])
     client.patch(f"/api/media/library/{a['id']}", json={"rating": 6})
     client.patch(f"/api/media/library/{c['id']}", json={"rating": 9})
@@ -179,13 +197,19 @@ def test_filters_and_sort(client, add_manual):
 
     assert _titles(client, type="film") == ["Bravo"]
     assert _titles(client, status="in_progress") == ["Bravo"]
-    assert _titles(client, owned="true") == ["Bravo"]
-    assert _titles(client, owned="false") == ["charlie", "Alpha"]
+    assert _titles(client, owned="true") == ["Alpha"]
+    assert _titles(client, owned="false") == ["charlie", "Bravo"]
+    assert _titles(client, shelf="books") == ["Alpha"]
+    assert _titles(client, shelf="videos") == ["charlie", "Bravo"]
+    assert _titles(client, shelf="videos", type="series") == ["charlie"]
     assert _titles(client, genre="SF") == ["charlie", "Alpha"]
     assert _titles(client, q="zed") == ["Alpha"]
     assert _titles(client, q="CHAR") == ["charlie"]
 
     assert client.get("/api/media/library/genres").json() == ["Drama", "SF"]
+    genres = client.get("/api/media/library/genres", params={"shelf": "books"})
+    assert genres.json() == ["SF"]
+    assert client.get("/api/media/library", params={"shelf": "x"}).status_code == 422
 
 
 # ── search ------------------------------------------------------------------

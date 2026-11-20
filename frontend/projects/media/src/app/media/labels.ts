@@ -1,6 +1,6 @@
 import { IconName } from '@shared';
 
-import { EntryStatus, EntrySummary, MediaItem, MediaType, OwnedFormat } from './models';
+import { EntryStatus, EntrySummary, MediaItem, MediaType, Shelf } from './models';
 
 export const TYPES: MediaType[] = ['book', 'film', 'series'];
 
@@ -25,16 +25,20 @@ export function statusLabel(status: EntryStatus, type?: MediaType): string {
   return `status.${group}.${status}`;
 }
 
-export function formatLabel(format: OwnedFormat): string {
-  return `format.${format}`;
+/** The types on each shelf (Bibliothèque: books; Vidéothèque: films and series). */
+export const SHELF_TYPES: Record<Shelf, MediaType[]> = {
+  books: ['book'],
+  videos: ['film', 'series'],
+};
+
+export function shelfOf(type: MediaType): Shelf {
+  return type === 'book' ? 'books' : 'videos';
 }
 
-/** The formats offered for a type (the backend accepts any of them). */
-export const FORMATS_FOR: Record<MediaType, OwnedFormat[]> = {
-  book: ['paperback', 'hardcover', 'ebook', 'audiobook'],
-  film: ['dvd', 'bluray', 'bluray_4k', 'digital'],
-  series: ['dvd', 'bluray', 'bluray_4k', 'digital'],
-};
+/** The shelf page's URL for a type: `/books` or `/videos`. */
+export function shelfUrl(type: MediaType): string {
+  return `/${shelfOf(type)}`;
+}
 
 /** Stable hue per catalog item, for the generated cover placeholder and glows. */
 export function hue(item: Pick<MediaItem, 'id'>): number {

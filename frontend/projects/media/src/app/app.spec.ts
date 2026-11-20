@@ -17,8 +17,12 @@ describe('App', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('ab-header .title')?.textContent).toBe('Media');
     const links = [...el.querySelectorAll('ab-header .links a')];
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/library', '/add']);
-    expect(links.map((a) => a.textContent?.trim())).toEqual(['Bibliothèque', 'Ajouter']);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/books', '/videos', '/journal']);
+    expect(links.map((a) => a.textContent?.trim())).toEqual([
+      'Bibliothèque',
+      'Vidéothèque',
+      'Journal',
+    ]);
     expect(el.querySelector('footer.credit')?.textContent).toContain(
       "n'est ni approuvé ni certifié par TMDB",
     );

@@ -7,19 +7,17 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 
 from domains.media.models import EntryStatus, MediaSource, MediaType
 
-OwnedFormat = Literal[
-    "paperback",
-    "hardcover",
-    "ebook",
-    "audiobook",
-    "dvd",
-    "bluray",
-    "bluray_4k",
-    "digital",
-]
 Rating = Annotated[int, Field(ge=1, le=10)]
 NonEmpty = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 LibrarySort = Literal["added", "title", "year", "rating", "finished"]
+Shelf = Literal["books", "videos"]
+JournalEvent = Literal["started", "finished"]
+
+SHELF_TYPES: dict[str, tuple[MediaType, ...]] = {
+    "books": (MediaType.book,),
+    "videos": (MediaType.film, MediaType.series),
+}
+OWNED_BOOKS_ONLY = "Only books can be owned"
 
 
 class SearchResult(BaseModel):
@@ -39,13 +37,15 @@ class AddFromSearch(BaseModel):
     external_id: NonEmpty
     type: MediaType
     status: EntryStatus = EntryStatus.want
-    owned_formats: list[OwnedFormat] = []
+    owned: bool = False
 
     @model_validator(mode="after")
     def _source_matches_type(self):
         book = self.type == MediaType.book
         if book != (self.source == MediaSource.openlibrary):
             raise ValueError("Books come from Open Library, films and series from TMDB")
+        if self.owned and not book:
+            raise ValueError(OWNED_BOOKS_ONLY)
         return self
 
 
@@ -56,7 +56,13 @@ class AddManual(BaseModel):
     year: Annotated[int, Field(ge=0, le=9999)] | None = None
     genres: list[NonEmpty] = []
     status: EntryStatus = EntryStatus.want
-    owned_formats: list[OwnedFormat] = []
+    owned: bool = False
+
+    @model_validator(mode="after")
+    def _owned_books_only(self):
+        if self.owned and self.type != MediaType.book:
+            raise ValueError(OWNED_BOOKS_ONLY)
+        return self
 
 
 class MediaItemOut(BaseModel):
@@ -97,7 +103,7 @@ class EntrySummary(BaseModel):
     id: int
     status: EntryStatus
     rating: int | None
-    owned_formats: list[str]
+    owned: bool
     current_season: int | None
     current_episode: int | None
     added_at: datetime
@@ -120,7 +126,7 @@ class EntryUpdate(BaseModel):
 
     rating: Rating | None = None
     notes: str | None = None
-    owned_formats: list[OwnedFormat] | None = None
+    owned: bool | None = None
     current_season: Annotated[int, Field(ge=1, le=999)] | None = None
     current_episode: Annotated[int, Field(ge=0, le=9999)] | None = None
 
@@ -134,3 +140,12 @@ class SessionIn(BaseModel):
         if self.started_on and self.finished_on and self.finished_on < self.started_on:
             raise ValueError("finished_on must not be before started_on")
         return self
+
+
+class JournalEntry(BaseModel):
+    """One start or finish of a session, for the journal."""
+
+    date: date
+    event: JournalEvent
+    session_id: int
+    entry: EntrySummary

@@ -1,6 +1,7 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SearchResult } from '../../media/models';
 import { entry, flushMe, settle, setup } from '../../testing';
@@ -77,7 +78,7 @@ describe('Add', () => {
     expect(el.querySelector('.source')?.textContent?.trim()).toBe('Recherche dans TMDB.');
   });
 
-  it('adds a search result with the chosen status and formats, then opens it', async () => {
+  it('adds a search result with the chosen status, then opens it', async () => {
     await search('Film', ' matrix ');
     const items = [...el.querySelectorAll('.results li')];
     expect(items.map((li) => li.querySelector('strong')?.textContent)).toEqual([
@@ -90,8 +91,9 @@ describe('Add', () => {
     (items[0].querySelector('.result') as HTMLButtonElement).click();
     await fixture.whenStable();
     button('Vu').click();
-    button('Blu-ray').click();
     await fixture.whenStable();
+    // Films can't be owned.
+    expect(button("Je l'ai")).toBeUndefined();
     button('Ajouter à la bibliothèque').click();
 
     const req = http.expectOne({ method: 'POST', url: '/api/media/library/from-search' });
@@ -100,17 +102,17 @@ describe('Add', () => {
       external_id: '603',
       type: 'film',
       status: 'done',
-      owned_formats: ['bluray'],
+      owned: false,
     });
     req.flush(entry({ id: 9 }));
     await settle();
-    expect(navigate).toHaveBeenCalledWith(['/library', 9]);
+    expect(navigate).toHaveBeenCalledWith(['/entries', 9]);
   });
 
   it('opens the entry of a result already in the library', async () => {
     await search('Film', 'matrix');
     (el.querySelectorAll('.results .result')[1] as HTMLButtonElement).click();
-    expect(navigate).toHaveBeenCalledWith(['/library', 42]);
+    expect(navigate).toHaveBeenCalledWith(['/entries', 42]);
   });
 
   it('shows a source failure', async () => {
@@ -134,7 +136,7 @@ describe('Add', () => {
     type('input[name="creators"]', ' Moi ');
     type('input[name="year"]', '2020');
     type('input[name="genres"]', 'Essai, , Histoire');
-    button('Poche').click();
+    button("Je l'ai").click();
     await fixture.whenStable();
     (el.querySelector('form.manual button[type="submit"]') as HTMLButtonElement).click();
 
@@ -146,10 +148,23 @@ describe('Add', () => {
       year: 2020,
       genres: ['Essai', 'Histoire'],
       status: 'want',
-      owned_formats: ['paperback'],
+      owned: true,
     });
     req.flush(entry({ id: 11 }));
     await settle();
-    expect(navigate).toHaveBeenCalledWith(['/library', 11]);
+    expect(navigate).toHaveBeenCalledWith(['/entries', 11]);
+  });
+
+  it('presets the type from the URL and links back to its shelf', async () => {
+    TestBed.resetTestingModule();
+    http = setup([{ path: 'add', component: Add }]);
+    const harness = await RouterTestingHarness.create();
+    flushMe(http);
+    const page = (await harness.navigateByUrl('/add?type=series')) as unknown;
+    expect(page).toBeInstanceOf(Add);
+    await harness.fixture.whenStable();
+    const root = harness.routeNativeElement as HTMLElement;
+    expect(root.querySelector('.types .chip.on')?.textContent?.trim()).toBe('Série');
+    expect(root.querySelector('.back a')?.getAttribute('href')).toBe('/videos');
   });
 });

@@ -1,0 +1,138 @@
+<div class="journal-page">
+  <header class="head">
+    <h1 class="display">{{ 'journal.title' | translate }}</h1>
+    <div class="chips view" role="group" [attr.aria-label]="'journal.view' | translate">
+      <button type="button" class="chip" [class.on]="month() !== null" (click)="showMonth()">
+        {{ 'journal.month' | translate }}
+      </button>
+      <button type="button" class="chip" [class.on]="month() === null" (click)="showYear()">
+        {{ 'journal.year' | translate }}
+      </button>
+    </div>
+  </header>
+
+  <nav class="period">
+    <button
+      type="button"
+      class="btn ghost small"
+      (click)="step(-1)"
+      [attr.aria-label]="'journal.previous' | translate"
+    >
+      <ab-icon name="chevron-left" />
+    </button>
+    <h2 class="display">
+      @if (month() !== null) {
+        {{ periodStart() | date: 'MMMM y' : 'UTC' : lang() }}
+      } @else {
+        {{ year() }}
+      }
+    </h2>
+    <button
+      type="button"
+      class="btn ghost small"
+      (click)="step(1)"
+      [attr.aria-label]="'journal.next' | translate"
+    >
+      <ab-icon name="chevron-right" />
+    </button>
+  </nav>
+
+  <div class="filters">
+    <div class="chips types">
+      <button type="button" class="chip" [class.on]="type() === ''" (click)="setType('')">
+        {{ 'library.all' | translate }}
+      </button>
+      @for (t of types; track t) {
+        <button
+          type="button"
+          class="chip"
+          [attr.data-type]="t"
+          [class.on]="type() === t"
+          (click)="setType(t)"
+        >
+          <ab-icon [name]="icon[t]" /> {{ typePlural[t] | translate }}
+        </button>
+      }
+    </div>
+    <label>
+      <span class="label">{{ 'journal.events' | translate }}</span>
+      <select class="field" [(ngModel)]="event" (ngModelChange)="apply()">
+        <option value="">{{ 'journal.both' | translate }}</option>
+        <option value="finished">{{ 'journal.finishedOnly' | translate }}</option>
+        <option value="started">{{ 'journal.startedOnly' | translate }}</option>
+      </select>
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error()! | translate }}</p>
+  }
+
+  @if (events(); as list) {
+    @if (finished().length) {
+      <p class="summary">
+        @for (f of finished(); track f.type; let last = $last) {
+          <span [attr.data-type]="f.type"
+            ><ab-icon [name]="icon[f.type]" />
+            {{ 'journal.done.' + f.type + (f.count === 1 ? '.one' : '.many') | translate: f }}</span
+          >
+          @if (!last) {
+            <span class="dot" aria-hidden="true">·</span>
+          }
+        }
+      </p>
+    }
+    @if (list.length === 0) {
+      <p class="empty muted">{{ 'journal.nothing' | translate }}</p>
+    }
+    @for (g of groups(); track g.key) {
+      <section class="group">
+        <h3 class="section-title">
+          {{ g.key | date: (month() === null ? 'MMMM' : 'EEEE d MMMM') : 'UTC' : lang() }}
+        </h3>
+        <ul>
+          @for (e of g.events; track e.session_id + e.event) {
+            <li data-testid="event" [class]="e.event">
+              <a
+                abPoster
+                class="thumb"
+                [item]="e.entry.item"
+                [showText]="false"
+                [showType]="false"
+                [routerLink]="['/entries', e.entry.id]"
+                tabindex="-1"
+                aria-hidden="true"
+              ></a>
+              <div class="text">
+                <a class="title" [routerLink]="['/entries', e.entry.id]">{{
+                  e.entry.item | localTitle: lang()
+                }}</a>
+                <span class="muted"
+                  ><span class="pill type" [attr.data-type]="e.entry.item.type"
+                    ><ab-icon [name]="icon[e.entry.item.type]" />
+                    {{ typeLabel[e.entry.item.type] | translate }}</span
+                  >
+                  @if (month() === null) {
+                    {{ e.date | date: 'd MMM' : 'UTC' : lang() }}
+                  }
+                </span>
+              </div>
+              <span class="event">
+                {{
+                  'journal.' + e.event + '.' + (e.entry.item.type === 'book' ? 'book' : 'watch')
+                    | translate
+                }}
+                @if (e.event === 'finished' && e.entry.rating) {
+                  <span class="rating"
+                    ><ab-icon name="star" />
+                    {{ e.entry.rating / 2 | number: '1.0-1' : lang() }}</span
+                  >
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>

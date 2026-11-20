@@ -13,7 +13,7 @@ def test_new_entry_is_want_without_sessions(add_manual):
     entry = add_manual()
     assert entry["status"] == "want"
     assert entry["sessions"] == []
-    assert entry["owned_formats"] == []
+    assert entry["owned"] is False
 
 
 def test_start_opens_a_session_today(client, add_manual):

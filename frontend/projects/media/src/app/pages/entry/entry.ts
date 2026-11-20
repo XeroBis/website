@@ -8,18 +8,17 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Icon, IconName, LanguageService, httpStatus } from '@shared';
 
 import {
-  FORMATS_FOR,
   TYPE_ICON,
   TYPE_LABEL,
   episodeLabel,
-  formatLabel,
   hue,
   progressPercent,
+  shelfUrl,
   statusLabel,
 } from '../../media/labels';
 import { LocalSynopsisPipe, LocalTitlePipe, localTitle } from '../../media/local-title';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { EntryDetail, EntryUpdate, OwnedFormat, QuickAction, Session } from '../../media/models';
+import { EntryDetail, EntryUpdate, QuickAction, Session } from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { StarRating } from '../../ui/star-rating';
 
@@ -65,7 +64,7 @@ export class EntryPage {
 
   protected readonly icon = TYPE_ICON;
   protected readonly typeLabel = TYPE_LABEL;
-  protected readonly formatLabel = formatLabel;
+  protected readonly shelfUrl = shelfUrl;
   protected readonly statusLabel = statusLabel;
 
   /** The other-language and original titles, when they differ from the one shown. */
@@ -81,13 +80,6 @@ export class EntryPage {
   protected readonly hue = computed(() => {
     const e = this.entry();
     return e ? hue(e.item) : 0;
-  });
-  protected readonly formats = computed(() => {
-    const e = this.entry();
-    if (!e) return [];
-    // Keep showing formats saved from another type's list.
-    const offered = FORMATS_FOR[e.item.type];
-    return [...offered, ...e.owned_formats.filter((f) => !offered.includes(f))];
   });
   protected readonly episode = computed(() => {
     const e = this.entry();
@@ -211,13 +203,8 @@ export class EntryPage {
     }
   }
 
-  protected toggleFormat(format: OwnedFormat): void {
-    const current = this.entry()!.owned_formats;
-    this.update({
-      owned_formats: current.includes(format)
-        ? current.filter((f) => f !== format)
-        : [...current, format],
-    });
+  protected toggleOwned(): void {
+    this.update({ owned: !this.entry()!.owned });
   }
 
   protected saveProgress(season: string, episode: string): void {
@@ -283,7 +270,7 @@ export class EntryPage {
       return;
     try {
       await this.api.remove(e.id);
-      this.router.navigate(['/library']);
+      this.router.navigate([shelfUrl(e.item.type)]);
     } catch (err) {
       this.error.set(errorMessage(err));
     }

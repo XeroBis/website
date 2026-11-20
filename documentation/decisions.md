@@ -270,3 +270,10 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Login required**, like every app but the portfolio, over a public app: it stays a personal tool.
 - **Look**: "Workbench" (cool grey, cobalt, Space Grotesk / Inter / JetBrains Mono), from a mockup, so it differs from cards' red, media's oxblood, workout's rose-brown and the portfolio's lime.
 
+## Media: books and videos split, owned books only, a journal (2026-11-20)
+
+- **What**: the library splits into **Bibliothèque** (`/books`, books) and **Vidéothèque** (`/videos`, films and series), each with its own Add button into the shared `/add` (type preset by `?type=`); a new **Journal** page (`/journal`) lists what was started and finished in a month or a year. The detail page moves to `/entries/:id` (the old `/library` URLs redirect). `owned_formats` becomes a boolean `owned` (migration `0015`).
+- **One `owned` flag, books only, over formats**: only paper books are owned in practice; formats (ebook, audiobook, DVD, Blu-ray…) were never used to filter. Existing books with any format became owned; films' and series' formats were dropped.
+- **Statuses unchanged** (want / in progress / done / dropped for every type), independent of ownership: any combination is possible.
+- **One `library_entries` table and one `/add` page, over separate book and video tables**: the split is only in the pages and a `shelf` filter on the API, so sessions, rules and the catalog stay shared.
+- **Journal from the existing sessions**, over a separate log table: each session's start and finish dates are the events, so editing a session's dates updates the journal. It shows both starts and finishes.

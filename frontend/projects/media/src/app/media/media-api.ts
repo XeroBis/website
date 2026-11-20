@@ -7,13 +7,23 @@ import {
   EntryStatus,
   EntrySummary,
   EntryUpdate,
+  JournalEntry,
+  JournalQuery,
   LibraryFilters,
   MediaType,
-  OwnedFormat,
   QuickAction,
   SearchResult,
   SessionInput,
+  Shelf,
 } from './models';
+
+function params(values: object): HttpParams {
+  let p = new HttpParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== null && value !== undefined && value !== '') p = p.set(key, String(value));
+  }
+  return p;
+}
 
 /** The backend's `detail` message, or a translation key for a generic one (show it through `| translate`). */
 export function errorMessage(error: unknown): string {
@@ -46,17 +56,13 @@ export class MediaApi {
     return this.run(this.http.get<SearchResult[]>(`${API}/search`, { params }));
   }
 
-  addFromSearch(
-    result: SearchResult,
-    status: EntryStatus,
-    owned_formats: OwnedFormat[],
-  ): Promise<EntryDetail> {
+  addFromSearch(result: SearchResult, status: EntryStatus, owned: boolean): Promise<EntryDetail> {
     const body = {
       source: result.source,
       external_id: result.external_id,
       type: result.type,
       status,
-      owned_formats,
+      owned,
     };
     return this.run(this.http.post<EntryDetail>(`${API}/library/from-search`, body));
   }
@@ -68,22 +74,23 @@ export class MediaApi {
     year: number | null;
     genres: string[];
     status: EntryStatus;
-    owned_formats: OwnedFormat[];
+    owned: boolean;
   }): Promise<EntryDetail> {
     return this.run(this.http.post<EntryDetail>(`${API}/library/manual`, body));
   }
 
   library(filters: LibraryFilters): Promise<EntrySummary[]> {
-    let params = new HttpParams();
-    for (const [key, value] of Object.entries(filters)) {
-      if (value !== null && value !== undefined && value !== '')
-        params = params.set(key, String(value));
-    }
-    return this.run(this.http.get<EntrySummary[]>(`${API}/library`, { params }));
+    return this.run(this.http.get<EntrySummary[]>(`${API}/library`, { params: params(filters) }));
   }
 
-  genres(): Promise<string[]> {
-    return this.run(this.http.get<string[]>(`${API}/library/genres`));
+  genres(shelf: Shelf): Promise<string[]> {
+    return this.run(
+      this.http.get<string[]>(`${API}/library/genres`, { params: params({ shelf }) }),
+    );
+  }
+
+  journal(query: JournalQuery): Promise<JournalEntry[]> {
+    return this.run(this.http.get<JournalEntry[]>(`${API}/journal`, { params: params(query) }));
   }
 
   entry(id: number): Promise<EntryDetail> {

@@ -4,7 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 
 import { EntryDetail } from '../../media/models';
-import { SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
+import { BOOK, SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
 import { EntryPage } from './entry';
 
 describe('EntryPage', () => {
@@ -56,7 +56,9 @@ describe('EntryPage', () => {
       'Lana Wachowski, Lilly Wachowski',
       '136 min',
     ]);
-    expect(el.querySelector('.genres a')?.getAttribute('href')).toBe('/library?genre=Action');
+    expect(el.querySelector('.genres a')?.getAttribute('href')).toBe('/videos?genre=Action');
+    // Films can't be owned.
+    expect(button("Je l'ai")).toBeUndefined();
     expect(el.querySelector('.synopsis')?.textContent).toBe('Néo.');
     expect(TestBed.inject(Title).getTitle()).toBe('Matrix · Media');
     expect(buttons()).toEqual(['Commencer', 'Déjà vu', 'Pas pour moi']);
@@ -119,26 +121,32 @@ describe('EntryPage', () => {
     expect((el.querySelector('.progress input') as HTMLInputElement).value).toBe('2');
   });
 
-  it('rates, toggles a format and saves notes on blur', async () => {
-    await render();
+  it('rates, toggles owned and saves notes on blur', async () => {
+    await render(entry({ item: BOOK }));
     (el.querySelectorAll('ab-star-rating .half.right')[2] as HTMLButtonElement).click();
-    expect(await answer('PATCH', '/api/media/library/3', entry({ rating: 6 }))).toEqual({
-      rating: 6,
-    });
+    expect(await answer('PATCH', '/api/media/library/3', entry({ item: BOOK, rating: 6 }))).toEqual(
+      {
+        rating: 6,
+      },
+    );
     expect(el.querySelector('ab-star-rating .value')?.textContent?.trim()).toBe('3 / 5');
 
-    button('Blu-ray').click();
+    expect(el.textContent).toContain('Non possédé.');
+    button("Je l'ai").click();
     expect(
-      await answer('PATCH', '/api/media/library/3', entry({ owned_formats: ['bluray'] })),
+      await answer('PATCH', '/api/media/library/3', entry({ item: BOOK, owned: true })),
     ).toEqual({
-      owned_formats: ['bluray'],
+      owned: true,
     });
+    expect(el.textContent).not.toContain('Non possédé.');
 
     const notes = el.querySelector('textarea') as HTMLTextAreaElement;
     notes.value = '  Great  ';
     notes.dispatchEvent(new Event('input'));
     notes.dispatchEvent(new Event('blur'));
-    expect(await answer('PATCH', '/api/media/library/3', entry({ notes: 'Great' }))).toEqual({
+    expect(
+      await answer('PATCH', '/api/media/library/3', entry({ item: BOOK, notes: 'Great' })),
+    ).toEqual({
       notes: 'Great',
     });
     expect(el.querySelector('.panel.wide .section-title small')?.textContent).toContain(
@@ -190,7 +198,7 @@ describe('EntryPage', () => {
       .expectOne({ method: 'DELETE', url: '/api/media/library/3' })
       .flush(null, { status: 204, statusText: '' });
     await settle();
-    expect(navigate).toHaveBeenCalledWith(['/library']);
+    expect(navigate).toHaveBeenCalledWith(['/videos']);
   });
 
   it("says when the entry doesn't exist (or isn't yours)", async () => {

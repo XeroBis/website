@@ -15,6 +15,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     exists,
+    false,
     func,
     select,
     text,
@@ -136,9 +137,8 @@ class LibraryEntry(Base):
     )
     rating: Mapped[int | None] = mapped_column(SmallInteger)
     notes: Mapped[str | None] = mapped_column(Text)
-    owned_formats: Mapped[list[str]] = mapped_column(
-        ARRAY(Text), server_default=text("'{}'::text[]"), default=list
-    )
+    # Books only: a paper copy (always false for films and series).
+    owned: Mapped[bool] = mapped_column(default=False, server_default=false())
     current_season: Mapped[int | None] = mapped_column(SmallInteger)
     current_episode: Mapped[int | None] = mapped_column(SmallInteger)
     added_at: Mapped[datetime] = mapped_column(

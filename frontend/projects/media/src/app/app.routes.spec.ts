@@ -43,25 +43,29 @@ describe('routes', () => {
   }
 
   it('sends a logged-out visitor to the portfolio', async () => {
-    const { done } = go('/library');
+    const { done } = go('/books');
     flushMe(http, null);
     expect(await done).toBe(false);
     expect(assign).toHaveBeenCalledWith('http://localhost:4600/');
   });
 
   it('sends a user without media to the account page', async () => {
-    const { done } = go('/library');
+    const { done } = go('/books');
     flushMe(http, { ...USER, apps: ['cards'] });
     expect(await done).toBe(false);
     expect(assign).toHaveBeenCalledWith('http://localhost:4604/');
   });
 
-  it('redirects / and unknown paths to the library', async () => {
+  it('redirects /, unknown paths and the old library URLs', async () => {
     const { router, done } = go('/');
     flushMe(http);
     await done;
-    expect(router.url).toBe('/library');
+    expect(router.url).toBe('/books');
     await router.navigateByUrl('/nope');
-    expect(router.url).toBe('/library');
+    expect(router.url).toBe('/books');
+    await router.navigateByUrl('/library');
+    expect(router.url).toBe('/books');
+    await router.navigateByUrl('/library/5');
+    expect(router.url).toBe('/entries/5');
   });
 });

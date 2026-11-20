@@ -1,11 +1,18 @@
 {
   "nav": {
-    "library": "Library",
-    "add": "Add"
+    "books": "Library",
+    "videos": "Videos",
+    "journal": "Journal"
   },
   "pageTitle": {
-    "library": "Library",
+    "books": "Library",
+    "videos": "Videos",
+    "journal": "Journal",
     "add": "Add"
+  },
+  "shelf": {
+    "books": "Library",
+    "videos": "Videos"
   },
   "credit": "Film and series data from <a href=\"https://www.themoviedb.org\" target=\"_blank\" rel=\"noopener\">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB. Book data from <a href=\"https://openlibrary.org\" target=\"_blank\" rel=\"noopener\">Open Library</a>.",
   "type": {
@@ -38,16 +45,6 @@
       "dropped": "Dropped"
     }
   },
-  "format": {
-    "paperback": "Paperback",
-    "hardcover": "Hardcover",
-    "ebook": "Ebook",
-    "audiobook": "Audiobook",
-    "dvd": "DVD",
-    "bluray": "Blu-ray",
-    "bluray_4k": "4K Blu-ray",
-    "digital": "Digital"
-  },
   "action": {
     "start": "Start",
     "startReading": "Start reading",
@@ -62,7 +59,6 @@
     "watchAgain": "Watch again"
   },
   "library": {
-    "title": "Library",
     "search": "Search titles and creators…",
     "all": "All",
     "status": "Status",
@@ -84,7 +80,8 @@
     "countOne": "1 item",
     "countMany": "{{count}} items",
     "nothing": "Nothing matches.",
-    "addSomething": "Add something"
+    "addSomething": "Add something",
+    "add": "Add"
   },
   "add": {
     "title": "Add to your library",
@@ -96,7 +93,7 @@
     "searching": "Searching…",
     "searchingIn": "Searching {{source}}.",
     "status": "Status",
-    "ownIt": "I own it as",
+    "ownership": "Ownership",
     "noResults": "No results.",
     "inLibrary": "In library",
     "addToLibrary": "Add to library",
@@ -117,8 +114,9 @@
     "year": "Year",
     "genres": "Genres (comma-separated)",
     "cancel": "Cancel",
-    "back": "Back to the library",
-    "errorTitle": "A title is required."
+    "errorTitle": "A title is required.",
+    "backBooks": "Back to the library",
+    "backVideos": "Back to the videos"
   },
   "entry": {
     "minutes": "{{count}} min",
@@ -128,7 +126,6 @@
     "episodeOf": "of {{count}}",
     "lastEpisodeHint": "That was the last known episode. Finish it, or move to a new season below if one came out.",
     "rating": "Your rating",
-    "ownedAs": "Owned as",
     "notOwned": "Not owned.",
     "whereYouAre": "Where you are",
     "season": "Season",
@@ -152,7 +149,44 @@
     "confirmDeleteSession": "Delete this session?",
     "errorProgress": "Season must be 1 or more, episode 0 or more.",
     "errorSessionOrder": "The finish date can't be before the start date.",
-    "notFound": "Entry not found."
+    "notFound": "Entry not found.",
+    "owned": "Owned",
+    "ownIt": "I own it"
+  },
+  "journal": {
+    "title": "Journal",
+    "view": "View",
+    "month": "Month",
+    "year": "Year",
+    "previous": "Previous",
+    "next": "Next",
+    "events": "Show",
+    "both": "Started and finished",
+    "finishedOnly": "Finished",
+    "startedOnly": "Started",
+    "started": {
+      "book": "Started reading",
+      "watch": "Started"
+    },
+    "finished": {
+      "book": "Read",
+      "watch": "Watched"
+    },
+    "done": {
+      "book": {
+        "one": "1 book read",
+        "many": "{{count}} books read"
+      },
+      "film": {
+        "one": "1 film",
+        "many": "{{count}} films"
+      },
+      "series": {
+        "one": "1 series",
+        "many": "{{count}} series"
+      }
+    },
+    "nothing": "Nothing recorded for this period."
   },
   "rating": {
     "label": "Rating",

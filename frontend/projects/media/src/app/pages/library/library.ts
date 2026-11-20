@@ -7,21 +7,25 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Icon, LanguageService } from '@shared';
 
 import {
+  SHELF_TYPES,
   STATUSES,
-  TYPES,
   TYPE_ICON,
   TYPE_PLURAL,
   episodeLabel,
   statusLabel,
 } from '../../media/labels';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { EntryStatus, EntrySummary, LibrarySort, MediaType } from '../../media/models';
+import { EntryStatus, EntrySummary, LibrarySort, MediaType, Shelf } from '../../media/models';
 import { Poster } from '../../ui/poster';
 import { QuickActions } from '../../ui/quick-actions';
 
 type Owned = '' | 'true' | 'false';
 
-/** Poster grid with filters; filters live in the URL so back/forward keeps them. */
+/**
+ * A shelf: Bibliothèque (books, with ownership) or Vidéothèque (films and
+ * series), from the route's `data.shelf`. Poster grid with filters; filters
+ * live in the URL so back/forward keeps them.
+ */
 @Component({
   selector: 'ab-library',
   imports: [DecimalPipe, Icon, FormsModule, RouterLink, Poster, QuickActions, TranslatePipe],
@@ -30,6 +34,10 @@ type Owned = '' | 'true' | 'false';
 export class Library {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  protected readonly shelf: Shelf = this.route.snapshot.data['shelf'] ?? 'books';
+  protected readonly books = this.shelf === 'books';
 
   protected readonly lang = inject(LanguageService).current;
   protected readonly entries = signal<EntrySummary[] | null>(null);
@@ -43,7 +51,8 @@ export class Library {
   protected readonly q = signal('');
   protected readonly sort = signal<LibrarySort>('added');
 
-  protected readonly types = TYPES;
+  /** Type chips: only the Vidéothèque mixes types. */
+  protected readonly types = this.books ? [] : SHELF_TYPES[this.shelf];
   protected readonly statuses = STATUSES;
   protected readonly typePlural = TYPE_PLURAL;
   protected readonly icon = TYPE_ICON;
@@ -53,16 +62,17 @@ export class Library {
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
-    inject(ActivatedRoute).queryParamMap.subscribe((params) => {
-      this.type.set((params.get('type') as MediaType) ?? '');
+    this.route.queryParamMap.subscribe((params) => {
+      const type = params.get('type') as MediaType | null;
+      this.type.set(type && this.types.includes(type) ? type : '');
       this.status.set((params.get('status') as EntryStatus) ?? '');
-      this.owned.set((params.get('owned') as Owned) ?? '');
+      this.owned.set(this.books ? ((params.get('owned') as Owned) ?? '') : '');
       this.genre.set(params.get('genre') ?? '');
       this.q.set(params.get('q') ?? '');
       this.sort.set((params.get('sort') as LibrarySort) ?? 'added');
       this.load();
     });
-    this.api.genres().then(
+    this.api.genres(this.shelf).then(
       (g) => this.genres.set(g),
       () => {},
     );
@@ -72,6 +82,7 @@ export class Library {
     try {
       this.entries.set(
         await this.api.library({
+          shelf: this.shelf,
           type: this.type() || null,
           status: this.status() || null,
           owned: this.owned() === '' ? null : this.owned() === 'true',
@@ -110,6 +121,11 @@ export class Library {
   protected searchTyped(): void {
     clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => this.apply(), 300);
+  }
+
+  /** The Add page, with the type preset from the shelf (and its type chip). */
+  protected addQuery(): { type: MediaType } {
+    return { type: this.books ? 'book' : this.type() || 'film' };
   }
 
   /** A translation key, or the "S1 · E3" label (which `translate` passes through). */

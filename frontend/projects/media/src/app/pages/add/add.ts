@@ -1,21 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Icon } from '@shared';
 
-import {
-  FORMATS_FOR,
-  TYPES,
-  TYPE_ICON,
-  TYPE_LABEL,
-  formatLabel,
-  statusLabel,
-} from '../../media/labels';
+import { TYPES, TYPE_ICON, TYPE_LABEL, shelfUrl, statusLabel } from '../../media/labels';
 import { MediaApi, errorMessage } from '../../media/media-api';
-import { EntryDetail, EntryStatus, MediaType, OwnedFormat, SearchResult } from '../../media/models';
+import { EntryDetail, EntryStatus, MediaType, SearchResult } from '../../media/models';
 
 @Component({
   selector: 'ab-add',
@@ -26,7 +19,10 @@ export class Add {
   private readonly api = inject(MediaApi);
   private readonly router = inject(Router);
 
-  protected readonly type = signal<MediaType>('book');
+  /** Preset by the shelf's Add button (`?type=`). */
+  protected readonly type = signal<MediaType>(
+    initialType(inject(ActivatedRoute).snapshot.queryParamMap.get('type')),
+  );
   protected readonly query = signal('');
   protected readonly results = signal<SearchResult[] | null>(null);
   protected readonly searching = signal(false);
@@ -35,7 +31,8 @@ export class Add {
   /** The result being confirmed, with the options chosen for it. */
   protected readonly selected = signal<SearchResult | null>(null);
   protected readonly status = signal<EntryStatus>('want');
-  protected readonly formats = signal<OwnedFormat[]>([]);
+  /** Books only. */
+  protected readonly owned = signal(false);
   protected readonly saving = signal(false);
 
   protected readonly manual = signal(false);
@@ -47,8 +44,7 @@ export class Add {
   protected readonly types = TYPES;
   protected readonly typeLabel = TYPE_LABEL;
   protected readonly icon = TYPE_ICON;
-  protected readonly formatsFor = FORMATS_FOR;
-  protected readonly formatLabel = formatLabel;
+  protected readonly shelfUrl = shelfUrl;
   protected readonly statusLabel = statusLabel;
   protected readonly initialStatuses: EntryStatus[] = ['want', 'in_progress', 'done'];
 
@@ -57,7 +53,7 @@ export class Add {
     this.type.set(type);
     this.results.set(null);
     this.selected.set(null);
-    this.formats.set([]);
+    this.owned.set(false);
     if (this.query().trim()) this.search();
   }
 
@@ -79,32 +75,26 @@ export class Add {
 
   protected choose(result: SearchResult): void {
     if (result.library_entry_id !== null) {
-      this.router.navigate(['/library', result.library_entry_id]);
+      this.router.navigate(['/entries', result.library_entry_id]);
       return;
     }
     this.selected.set(this.selected() === result ? null : result);
     this.status.set('want');
-    this.formats.set([]);
-  }
-
-  protected toggleFormat(format: OwnedFormat): void {
-    this.formats.update((f) =>
-      f.includes(format) ? f.filter((x) => x !== format) : [...f, format],
-    );
+    this.owned.set(false);
   }
 
   protected openManual(): void {
     this.manual.set(true);
     this.selected.set(null);
     this.status.set('want');
-    this.formats.set([]);
+    this.owned.set(false);
     if (!this.manualTitle()) this.manualTitle.set(this.query().trim());
   }
 
   protected addSelected(): Promise<void> {
     const result = this.selected();
     if (!result) return Promise.resolve();
-    return this.save(() => this.api.addFromSearch(result, this.status(), this.formats()));
+    return this.save(() => this.api.addFromSearch(result, this.status(), this.ownedIfBook()));
   }
 
   protected addManual(): Promise<void> {
@@ -125,9 +115,13 @@ export class Add {
           .map((g) => g.trim())
           .filter(Boolean),
         status: this.status(),
-        owned_formats: this.formats(),
+        owned: this.ownedIfBook(),
       }),
     );
+  }
+
+  private ownedIfBook(): boolean {
+    return this.type() === 'book' && this.owned();
   }
 
   private async save(request: () => Promise<EntryDetail>): Promise<void> {
@@ -135,11 +129,15 @@ export class Add {
     this.error.set(null);
     try {
       const entry = await request();
-      this.router.navigate(['/library', entry.id]);
+      this.router.navigate(['/entries', entry.id]);
     } catch (e) {
       this.error.set(errorMessage(e));
     } finally {
       this.saving.set(false);
     }
   }
+}
+
+function initialType(value: string | null): MediaType {
+  return TYPES.includes(value as MediaType) ? (value as MediaType) : 'book';
 }

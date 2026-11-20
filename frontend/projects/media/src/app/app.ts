@@ -9,11 +9,14 @@ import { Header, Icon } from '@shared';
   selector: 'ab-root',
   template: `
     <ab-header title="Media">
-      <a routerLink="/library" routerLinkActive="active"
-        ><ab-icon name="library" /> {{ 'nav.library' | translate }}</a
+      <a routerLink="/books" routerLinkActive="active"
+        ><ab-icon name="book" /> {{ 'nav.books' | translate }}</a
       >
-      <a routerLink="/add" routerLinkActive="active"
-        ><ab-icon name="plus" /> {{ 'nav.add' | translate }}</a
+      <a routerLink="/videos" routerLinkActive="active"
+        ><ab-icon name="film" /> {{ 'nav.videos' | translate }}</a
+      >
+      <a routerLink="/journal" routerLinkActive="active"
+        ><ab-icon name="calendar" /> {{ 'nav.journal' | translate }}</a
       >
     </ab-header>
     <main class="page">

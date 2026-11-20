@@ -4,11 +4,11 @@ import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { EntrySummary } from '../../media/models';
-import { FILM, SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
+import { BOOK, FILM, SERIES, entry, flushMe, settle, setup, switchToEnglish } from '../../testing';
 import { Library } from './library';
 
 const ENTRIES: EntrySummary[] = [
-  entry({ id: 1, status: 'done', rating: 7, owned_formats: ['bluray'] }),
+  entry({ id: 1, status: 'done', rating: 7 }),
   entry({
     id: 2,
     item: SERIES,
@@ -24,7 +24,10 @@ describe('Library', () => {
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
-    http = setup([{ path: 'library', component: Library }]);
+    http = setup([
+      { path: 'books', component: Library, data: { shelf: 'books' } },
+      { path: 'videos', component: Library, data: { shelf: 'videos' } },
+    ]);
     harness = await RouterTestingHarness.create();
     flushMe(http);
   });
@@ -33,7 +36,7 @@ describe('Library', () => {
   const libraryRequest = (): TestRequest => http.expectOne((r) => r.url === '/api/media/library');
 
   async function open(
-    url = '/library',
+    url = '/videos',
     entries = ENTRIES,
   ): Promise<{ el: HTMLElement; params: URLSearchParams }> {
     const navigation = harness.navigateByUrl(url);
@@ -41,7 +44,9 @@ describe('Library', () => {
     const req = libraryRequest();
     const params = new URLSearchParams(req.request.params.toString());
     req.flush(entries);
-    http.expectOne('/api/media/library/genres').flush(['Action', 'Drama']);
+    const genres = http.expectOne((r) => r.url === '/api/media/library/genres');
+    expect(genres.request.params.get('shelf')).toBe(url.startsWith('/books') ? 'books' : 'videos');
+    genres.flush(['Action', 'Drama']);
     await navigation;
     await harness.fixture.whenStable();
     return { el: harness.routeNativeElement as HTMLElement, params };
@@ -52,18 +57,19 @@ describe('Library', () => {
 
   it('shows each entry with its title in the current language, status and rating', async () => {
     const { el, params } = await open();
-    expect(params.toString()).toBe('sort=added');
+    expect(params.toString()).toBe('shelf=videos&sort=added');
+    expect(el.querySelector('h1')?.textContent).toBe('Vidéothèque');
     expect(cells(el).map((c) => c.querySelector('.poster strong')?.textContent)).toEqual([
       'Matrix',
       'Severance',
     ]);
     expect(cells(el)[0].querySelector('.status')?.textContent).toBe('Vu');
     expect(cells(el)[0].querySelector('.rating')?.textContent?.trim()).toBe('3,5');
-    expect(cells(el)[0].querySelector('.owned')).not.toBeNull();
+    expect(cells(el)[0].querySelector('.owned')).toBeNull();
     expect(cells(el)[1].querySelector('.status')?.textContent).toBe('S2 · E3');
     expect(cells(el)[1].querySelector('.owned')).toBeNull();
     expect(el.querySelector('.count')?.textContent?.trim()).toBe('2 éléments');
-    expect(cells(el)[0].querySelector('a.poster')?.getAttribute('href')).toBe('/library/1');
+    expect(cells(el)[0].querySelector('a.poster')?.getAttribute('href')).toBe('/entries/1');
     expect(cells(el)[0].querySelector('a.poster img')?.getAttribute('src')).toBe(
       `/api/media/items/${FILM.id}/cover`,
     );
@@ -73,25 +79,37 @@ describe('Library', () => {
     expect(cells(el)[0].querySelector('.poster strong')?.textContent).toBe('The Matrix');
   });
 
-  it('sends the filters from the URL and offers the library genres', async () => {
+  it('shows books with ownership, no type chips and a book Add button', async () => {
     const { el, params } = await open(
-      '/library?type=book&status=done&owned=true&genre=Drama&q=dune&sort=title',
+      '/books?status=done&owned=true&genre=Drama&q=dune&sort=title',
+      [entry({ id: 4, item: BOOK, status: 'done', owned: true })],
     );
     expect(Object.fromEntries(params)).toEqual({
-      type: 'book',
+      shelf: 'books',
       status: 'done',
       owned: 'true',
       genre: 'Drama',
       q: 'dune',
       sort: 'title',
     });
-    expect(el.querySelector('.chip.on')?.textContent?.trim()).toBe('Livres');
+    expect(el.querySelector('h1')?.textContent).toBe('Bibliothèque');
+    expect(el.querySelector('.types')).toBeNull();
+    expect(cells(el)[0].querySelector('.status')?.textContent).toBe('Lu');
+    expect(cells(el)[0].querySelector('.owned')).not.toBeNull();
+    expect(el.querySelector('.head a.add')?.getAttribute('href')).toBe('/add?type=book');
     const genres = [...el.querySelectorAll('select')][2];
     expect([...genres.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
       'Tous les genres',
       'Action',
       'Drama',
     ]);
+  });
+
+  it('has no ownership filter on the Vidéothèque and ignores one in the URL', async () => {
+    const { el, params } = await open('/videos?owned=true&type=book');
+    expect(Object.fromEntries(params)).toEqual({ shelf: 'videos', sort: 'added' });
+    expect(el.querySelectorAll('select').length).toBe(3);
+    expect(el.querySelector('.head a.add')?.getAttribute('href')).toBe('/add?type=film');
   });
 
   it('puts a type chip in the URL', async () => {
@@ -104,12 +122,12 @@ describe('Library', () => {
     libraryRequest().flush([]);
     await settle();
     await harness.fixture.whenStable();
-    expect(TestBed.inject(Router).url).toBe('/library?type=film');
-    expect(el.querySelector('.empty a')?.getAttribute('href')).toBe('/add');
+    expect(TestBed.inject(Router).url).toBe('/videos?type=film');
+    expect(el.querySelector('.empty a')?.getAttribute('href')).toBe('/add?type=film');
   });
 
   it('runs a quick action and reloads', async () => {
-    const { el } = await open('/library', [entry({ id: 5 })]);
+    const { el } = await open('/videos', [entry({ id: 5 })]);
     const button = cells(el)[0].querySelector('ab-quick-actions button') as HTMLButtonElement;
     expect(button.textContent?.trim()).toBe('Commencer');
     button.click();

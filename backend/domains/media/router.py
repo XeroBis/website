@@ -4,6 +4,7 @@ Every route needs the `media` app (`require_app`), and every library route is
 scoped to the current user: anyone else's entry is a 404.
 """
 
+import calendar
 import logging
 from datetime import date
 
@@ -44,7 +45,7 @@ def _summary_fields(entry: LibraryEntry) -> dict:
         id=entry.id,
         status=entry.status,
         rating=entry.rating,
-        owned_formats=entry.owned_formats,
+        owned=entry.owned,
         current_season=entry.current_season,
         current_episode=entry.current_episode,
         added_at=entry.added_at,
@@ -103,13 +104,13 @@ def _create_entry(
     user: User,
     item: MediaItem,
     initial_status: EntryStatus,
-    owned_formats: list[str],
+    owned: bool,
 ) -> LibraryEntry:
     entry = LibraryEntry(
         user_id=user.id,
         media_item=item,
         status=EntryStatus.want,
-        owned_formats=list(dict.fromkeys(owned_formats)),
+        owned=owned,
         sessions=[],
     )
     rules.apply_initial_status(entry, initial_status, date.today())
@@ -216,7 +217,7 @@ def add_from_search(
     existing = _entries(db, user).filter(LibraryEntry.media_item_id == item.id).first()
     if existing is not None:
         return _detail(existing)
-    entry = _create_entry(db, user, item, body.status, body.owned_formats)
+    entry = _create_entry(db, user, item, body.status, body.owned)
     response.status_code = status.HTTP_201_CREATED
     return _commit_detail(db, entry)
 
@@ -242,7 +243,7 @@ def add_manual(
         created_by_user_id=user.id,
     )
     db.add(item)
-    entry = _create_entry(db, user, item, body.status, body.owned_formats)
+    entry = _create_entry(db, user, item, body.status, body.owned)
     return _commit_detail(db, entry)
 
 
@@ -251,6 +252,7 @@ def add_manual(
 
 @router.get("/library", response_model=list[schemas.EntrySummary])
 def list_library(
+    shelf: schemas.Shelf | None = None,
     type: MediaType | None = None,
     status: EntryStatus | None = None,
     owned: bool | None = None,
@@ -261,13 +263,14 @@ def list_library(
     db: Session = Depends(get_db),
 ):
     query = _entries(db, user)
+    if shelf is not None:
+        query = query.filter(MediaItem.type.in_(schemas.SHELF_TYPES[shelf]))
     if type is not None:
         query = query.filter(MediaItem.type == type)
     if status is not None:
         query = query.filter(LibraryEntry.status == status)
     if owned is not None:
-        has_formats = func.cardinality(LibraryEntry.owned_formats) > 0
-        query = query.filter(has_formats if owned else ~has_formats)
+        query = query.filter(LibraryEntry.owned.is_(owned))
     if genre:
         query = query.filter(literal(genre) == any_(MediaItem.genres))
     if q and q.strip():
@@ -305,16 +308,22 @@ def list_library(
 
 
 @router.get("/library/genres", response_model=list[str])
-def library_genres(user: User = Depends(media_user), db: Session = Depends(get_db)):
-    """Distinct genres across the user's library, for the genre filter."""
+def library_genres(
+    shelf: schemas.Shelf | None = None,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    """Distinct genres across the user's library (or one shelf), for the genre
+    filter."""
     genre = func.unnest(MediaItem.genres).label("genre")
-    rows = (
+    query = (
         db.query(genre)
         .join(LibraryEntry, LibraryEntry.media_item_id == MediaItem.id)
         .filter(LibraryEntry.user_id == user.id)
-        .distinct()
-        .all()
     )
+    if shelf is not None:
+        query = query.filter(MediaItem.type.in_(schemas.SHELF_TYPES[shelf]))
+    rows = query.distinct().all()
     return sorted((r.genre for r in rows), key=str.lower)
 
 
@@ -341,8 +350,10 @@ def update_entry(
             raise HTTPException(
                 status_code=422, detail="Season and episode are for series only"
             )
-    if "owned_formats" in changes:
-        changes["owned_formats"] = list(dict.fromkeys(changes["owned_formats"] or []))
+    if "owned" in changes:
+        changes["owned"] = bool(changes["owned"])
+        if changes["owned"] and entry.media_item.type != MediaType.book:
+            raise HTTPException(status_code=422, detail=schemas.OWNED_BOOKS_ONLY)
     if "notes" in changes:
         changes["notes"] = (changes["notes"] or "").strip() or None
     for field, value in changes.items():
@@ -481,6 +492,55 @@ def delete_session(
     entry = _get_entry(db, user, entry_id)
     entry.sessions.remove(_get_session(entry, session_id))
     return _commit_detail(db, entry)
+
+
+# ── journal ──────────────────────────────────────────────────────────────────
+
+
+@router.get("/journal", response_model=list[schemas.JournalEntry])
+def journal(
+    year: int = Query(ge=1, le=9999),
+    month: int | None = Query(default=None, ge=1, le=12),
+    type: MediaType | None = None,
+    event: schemas.JournalEvent | None = None,
+    user: User = Depends(media_user),
+    db: Session = Depends(get_db),
+):
+    """Each session's start and finish inside the month (or the whole year),
+    newest first."""
+    if month is None:
+        first, last = date(year, 1, 1), date(year, 12, 31)
+    else:
+        first = date(year, month, 1)
+        last = date(year, month, calendar.monthrange(year, month)[1])
+
+    query = _entries(db, user).filter(
+        LibraryEntry.sessions.any(
+            or_(
+                ReadingSession.started_on.between(first, last),
+                ReadingSession.finished_on.between(first, last),
+            )
+        )
+    )
+    if type is not None:
+        query = query.filter(MediaItem.type == type)
+
+    events: list[schemas.JournalEntry] = []
+    for entry in query.all():
+        summary = _summary(entry)
+        for s in entry.sessions:
+            for kind, day in (("started", s.started_on), ("finished", s.finished_on)):
+                if day and first <= day <= last and event in (None, kind):
+                    events.append(
+                        schemas.JournalEntry(
+                            date=day, event=kind, session_id=s.id, entry=summary
+                        )
+                    )
+    # Newest first; on the same day a finish before a start, then newest session.
+    events.sort(
+        key=lambda e: (e.date, e.event == "finished", e.session_id), reverse=True
+    )
+    return events
 
 
 # ── covers ───────────────────────────────────────────────────────────────────

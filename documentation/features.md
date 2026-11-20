@@ -330,7 +330,7 @@ A deck row (`DeckCardOut`) is `{id, card_id, catalog_id, variant_type, quantity_
 
 ## Media — `media.alanbignon.com`
 
-A personal tracker for books, films and series: what I own, what I've read/watched, what's next. Ported from `media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → portfolio; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
+A personal tracker for books, films and series: which books I own, what I've read/watched, what's next, and a journal of it by month or year. Ported from `media` (see decisions.md for what changed). Every page is behind `appGuard('media')` (logged out → portfolio; no media access → the auth app's account page); each user has their own library. FR/EN. Tables and rules: data-model.md `media`.
 
 ### Look
 
@@ -343,20 +343,23 @@ A personal tracker for books, films and series: what I own, what I've read/watch
 
 ### Pages
 
-- **Every page**: the shared header (title "Media", links Library and Add) and the credits footer. On phones the links are in the shared header's menu.
-- `/` → `/library`. Any other path → `/library`.
-- `/library`: poster grid, each with its status (or "S1 · E3" for a series in progress), rating, an "owned" dot and a quick action. Controls: type chips (All / Books / Films / Series); status, owned / not owned, genre (from the genres in the library) and sort selects; a text search on titles (EN and FR), original title and creators, applied as you type. Sorts: date added (default, newest first), title (A–Z in the user's language), year (newest first), rating (highest first), last finished (most recent first); unset values last. Filters live in the URL query (`?type=book&status=done`). Nothing matching: "Nothing matches" + a link to Add.
-- `/add`: pick a type (Book / Film / Series) and search. Results come from TMDB (films, series; first 10) or Open Library (books; first 20) with a thumbnail (hotlinked from their CDN), title, year and creator. Tapping a result opens a confirm panel: initial status (Want by default, Reading/Watching, Read/Watched) and owned formats (books: paperback / hardcover / ebook / audiobook; films and series: DVD / Blu-ray / 4K Blu-ray / digital), then **Add to library**, which opens the new entry. Results already in the library show "In library →" and open that entry; adding twice returns the existing entry. **Add it by hand** (pre-filled with the search text): title (required), creators, year, comma-separated genres, plus status and formats. If a source fails, the error is shown and nothing is added.
-- `/library/:id`: cover, title, other titles, year, creators, runtime / number of seasons / ISBN, genre pills (linking to the library filtered by that genre), synopsis, then:
+- **Every page**: the shared header (title "Media", links Bibliothèque / Library, Vidéothèque / Videos and Journal) and the credits footer. On phones the links are in the shared header's menu.
+- `/` → `/books`. Old links redirect: `/library` → `/books`, `/library/:id` → `/entries/:id`. Any other path → `/books`.
+- **Bibliothèque** `/books`: books only. Poster grid, each with its status, rating, an "owned" dot and a quick action. Controls: an **Add** button (opens `/add?type=book`); status, owned / not owned, genre (from the genres of the user's books) and sort selects; a text search on titles (EN and FR), original title and creators, applied as you type. Status and owned are independent: every combination (owned and to read, not owned and read…) is possible.
+- **Vidéothèque** `/videos`: films and series. Same grid and controls minus ownership (films and series can't be owned): type chips (All / Films / Series), status, genre (from the user's films and series) and sort, the search, and an **Add** button (opens `/add?type=film`, or `series` when the Series chip is on). Series in progress show "S1 · E3".
+- Both shelves: sorts are date added (default, newest first), title (A–Z in the user's language), year (newest first), rating (highest first), last finished (most recent first); unset values last. Filters live in the URL query (`/books?status=done&owned=true`). Nothing matching: "Nothing matches" + the Add link.
+- `/add?type=book|film|series`: pick a type (Book / Film / Series, preset from the query, Book by default) and search. Results come from TMDB (films, series; first 10) or Open Library (books; first 20) with a thumbnail (hotlinked from their CDN), title, year and creator. Tapping a result opens a confirm panel: initial status (Want by default, Reading/Watching, Read/Watched) and, for books only, an **I own it** toggle (off by default), then **Add to library**, which opens the new entry. Results already in the library show "In library →" and open that entry; adding twice returns the existing entry. **Add it by hand** (pre-filled with the search text): title (required), creators, year, comma-separated genres, plus status and (books) owned. If a source fails, the error is shown and nothing is added. The back link returns to the shelf of the chosen type.
+- **Journal** `/journal`: what I started and finished in a month or a year. Opens on the current month; a Month / Year toggle and ‹ › arrows to step a month or a year (`?year=2026&month=11`, no `month` = the year view). Filters: type chips (All / Books / Films / Series) and an event select (Started and finished / Finished / Started), also in the URL. Each line is a cover thumbnail, the title (linking to the entry), its type, "Started" or "Finished" and, on finished ones, the rating. A session that starts and finishes in the period shows twice. Grouped by day in the month view and by month in the year view, newest first. A summary on top counts what was finished in the period per type ("3 books read · 2 films · 1 series"). Nothing in the period: "Nothing recorded for this period".
+- `/entries/:id`: cover, title, other titles, year, creators, runtime / number of seasons / ISBN, genre pills (linking to the entry's shelf filtered by that genre), synopsis, then:
   - status buttons: Want → **Start** ("Start reading" for books), **Already read/watched**, **Not for me**; In progress → (**+1 episode** for series), **Finish**, **Drop**; Done → **Read again / Watch again**; Dropped → **Resume**, **Finish**. A refused transition shows the server's message;
   - a 0.5–5 star rating with half stars; tapping the current value or **Clear** unrates;
   - notes, saved when the field loses focus ("Saved" for 2 s);
-  - owned-format chips, saved on click;
+  - books: an **I own it** toggle, saved on click ("Not owned" when off);
   - series: current season and last episode watched, saved on change, with "of N" and a progress ring when the counts are known. On the last known episode a hint suggests finishing or moving to a new season by hand;
   - **Reads / Watches** history, open one first then newest: editable start/finish dates (saved on change), delete with confirmation, and a form to add a past one;
-  - **Remove from library** (with confirmation), then back to `/library`.
+  - **Remove from library** (with confirmation), then back to the entry's shelf.
   - Someone else's (or an unknown) id: "Entry not found".
-- **Quick actions** on library cards: Want → Start; Dropped → Resume; books and films in progress → Finish; series in progress → +1 episode (Finish after the last known episode); nothing for Done.
+- **Quick actions** on shelf cards: Want → Start; Dropped → Resume; books and films in progress → Finish; series in progress → +1 episode (Finish after the last known episode); nothing for Done.
 
 ### API (`/api/media`)
 
@@ -365,27 +368,29 @@ Every route needs a session (401) and the `media` app (403); unsafe ones also ne
 | Endpoint | Body / query → result | Errors |
 |---|---|---|
 | `GET /search?type=&q=` | → up to 10 (TMDB) / 20 (Open Library) results `{source, external_id, type, title, year, creators, thumb_url, library_entry_id}` in the user's language | 422, 502 source failed or no TMDB token |
-| `POST /library/from-search` | `{source, external_id, type, status?, owned_formats?}` → 201 new entry, or 200 the existing one | 422 (source/type mismatch), 502 |
-| `POST /library/manual` | `{type, title, creators?, year?, genres?, status?, owned_formats?}` → 201 entry | 422 |
-| `GET /library?type=&status=&owned=&genre=&q=&sort=` | → entry summaries | 422 |
-| `GET /library/genres` | → distinct genres in the user's library, sorted case-insensitively | |
+| `POST /library/from-search` | `{source, external_id, type, status?, owned?}` → 201 new entry, or 200 the existing one | 422 (source/type mismatch, owned on a film/series), 502 |
+| `POST /library/manual` | `{type, title, creators?, year?, genres?, status?, owned?}` → 201 entry | 422 |
+| `GET /library?shelf=&type=&status=&owned=&genre=&q=&sort=` | `shelf` `books` (books) or `videos` (films and series) → entry summaries | 422 |
+| `GET /library/genres?shelf=` | → distinct genres in the user's library (or that shelf), sorted case-insensitively | 422 |
 | `GET /library/{id}` | → entry detail | 404 |
-| `PATCH /library/{id}` | any of `{rating, notes, owned_formats, current_season, current_episode}` (null clears) → entry | 404, 422 (season/episode on a non-series) |
+| `PATCH /library/{id}` | any of `{rating, notes, owned, current_season, current_episode}` (null clears; `owned` true/false) → entry | 404, 422 (season/episode on a non-series, owned on a film/series) |
 | `DELETE /library/{id}` | → 204 (sessions deleted, catalog row kept) | 404 |
 | `POST /library/{id}/start\|finish\|drop\|next-episode` | → entry | 404, 409 refused transition |
 | `POST /library/{id}/sessions` | `{started_on?, finished_on?}` → 201 entry | 404, 409 second open session, 422 |
 | `PUT /library/{id}/sessions/{sid}` | same → entry | 404, 409, 422 |
 | `DELETE /library/{id}/sessions/{sid}` | → entry | 404 |
+| `GET /journal?year=&month=&type=&event=` | `month` 1–12 or absent (whole year), `event` `started`/`finished` or absent (both) → events `{date, event, session_id, entry}` (entry = summary), newest first | 422 |
 | `GET /items/{id}/cover` | → image bytes, `Cache-Control: private, max-age=31536000, immutable` | 404 no cover |
 
-An entry summary is `{id, status, rating, owned_formats, current_season, current_episode, added_at, updated_at, last_finished_on, progress: {watched, total} | null, at_last_known_episode, item}`; the detail adds `notes` and `sessions: [{id, started_on, finished_on}]`. `item` is the catalog row (see data-model.md) plus `has_cover`.
+An entry summary is `{id, status, rating, owned, current_season, current_episode, added_at, updated_at, last_finished_on, progress: {watched, total} | null, at_last_known_episode, item}`; the detail adds `notes` and `sessions: [{id, started_on, finished_on}]`. `item` is the catalog row (see data-model.md) plus `has_cover`.
 
 ### Validation
 
 - Search: `type` one of book/film/series, `q` 1–200 chars. Books only from Open Library, films and series only from TMDB.
 - Manual add: title trimmed, required; year 0–9999; genres non-empty, repeats dropped.
-- Rating 1–10; formats from the list above; season 1–999, episode 0–9999 (series only).
+- Rating 1–10; `owned` only true on books; season 1–999, episode 0–9999 (series only).
 - Sessions: `finished_on` not before `started_on` (also checked in the page so the message is translated); at most one open session.
+- Journal: `year` 1–9999, `month` 1–12.
 
 ## Tools — `tools.alanbignon.com`
 

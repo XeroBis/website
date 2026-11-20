@@ -59,12 +59,26 @@ export const SERIES: MediaItem = {
   has_cover: false,
 };
 
+export const BOOK: MediaItem = {
+  ...FILM,
+  id: 9,
+  type: 'book',
+  title: 'Dune',
+  title_fr: null,
+  creators: 'Frank Herbert',
+  runtime_minutes: null,
+  isbn: '9780441013593',
+  source: 'openlibrary',
+  external_id: 'OL893415W',
+  has_cover: false,
+};
+
 export function entry(overrides: Partial<EntryDetail> = {}): EntryDetail {
   return {
     id: 3,
     status: 'want',
     rating: null,
-    owned_formats: [],
+    owned: false,
     current_season: null,
     current_episode: null,
     added_at: '2026-10-01T10:00:00Z',

@@ -51,21 +51,22 @@
           }
         </div>
       </div>
-      <div>
-        <span class="label">{{ 'add.ownIt' | translate }}</span>
-        <div class="chips">
-          @for (f of formatsFor[type()]; track f) {
+      @if (type() === 'book') {
+        <div>
+          <span class="label">{{ 'add.ownership' | translate }}</span>
+          <div class="chips">
             <button
               type="button"
               class="chip"
-              [class.on]="formats().includes(f)"
-              (click)="toggleFormat(f)"
+              [class.on]="owned()"
+              [attr.aria-pressed]="owned()"
+              (click)="owned.set(!owned())"
             >
-              {{ formatLabel(f) | translate }}
+              {{ 'entry.ownIt' | translate }}
             </button>
-          }
+          </div>
         </div>
-      </div>
+      }
     </div>
   </ng-template>
 
@@ -164,8 +165,9 @@
   }
 
   <p class="back">
-    <a routerLink="/library" class="muted"
-      ><ab-icon name="arrow-left" /> {{ 'add.back' | translate }}</a
+    <a [routerLink]="shelfUrl(type())" class="muted"
+      ><ab-icon name="arrow-left" />
+      {{ (type() === 'book' ? 'add.backBooks' : 'add.backVideos') | translate }}</a
     >
   </p>
 </div>
