@@ -144,9 +144,10 @@ export class Library {
 
   protected async load(): Promise<void> {
     try {
-      const series = this.books ? this.api.allSeries() : Promise.resolve([]);
-      this.entries.set(
-        await this.api.library({
+      // Both at once: entries without their series would briefly show every
+      // volume as its own card before collapsing them.
+      const [entries, series] = await Promise.all([
+        this.api.library({
           shelf: this.shelf,
           type: this.type() || null,
           status: this.status() || null,
@@ -155,8 +156,10 @@ export class Library {
           q: this.q().trim() || null,
           sort: this.sort(),
         }),
-      );
-      this.allSeries.set(await series);
+        this.books ? this.api.allSeries() : Promise.resolve([]),
+      ]);
+      this.allSeries.set(series);
+      this.entries.set(entries);
       this.error.set(null);
     } catch (e) {
       this.error.set(errorMessage(e));
