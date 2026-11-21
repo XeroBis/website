@@ -277,11 +277,11 @@ export class BrowseComponent implements OnInit, OnDestroy {
   }
   /** Same resolution rule as set-detail.component.ts's variantTileImageUrl:
    * 'standard' reuses the catalog card's own thumbnail, every other variant
-   * uses its own pokecardex scan (falling back to the catalog thumbnail if
+   * uses its own scan's thumbnail (falling back to the catalog thumbnail if
    * that variant hasn't been scraped yet). */
   variantTileImageUrl(entry: CardCatalogEntry, variant: CardCatalogVariant): string {
     const path = this.variantImagePath(variant);
-    return path ? this.catalogService.variantImageUrl(path) : this.thumbnailUrl(entry);
+    return path ? this.catalogService.variantThumbnailUrl(path) : this.thumbnailUrl(entry);
   }
   private variantImagePath(variant: CardCatalogVariant): string | null {
     if (variant.variant_type === 'standard') {

@@ -369,7 +369,7 @@ def test_scrape_images_downloads_missing_scans_and_keeps_failed_ones_pending(
         result = scans.scrape_images(
             db,
             data_dir,
-            on_standard_saved=saved.append,
+            on_scan_saved=saved.append,
             on_progress=lambda done, total: progress.append((done, total)),
         )
 
@@ -387,6 +387,7 @@ def test_scrape_images_downloads_missing_scans_and_keeps_failed_ones_pending(
         None,
     )
     assert sorted(p.name for p in saved) == [
+        "1_sprigatito_reverse_EN.jpg",
         "1_sprigatito_standard_EN.jpg",
         "1_sprigatito_standard_FR.jpg",
     ]
@@ -619,7 +620,7 @@ def test_link_existing_files_fills_only_pending_or_missing_paths(source_dir, dat
 # ── thumbnails ───────────────────────────────────────────────────────────────
 
 
-def test_thumbnails_for_downloaded_standard_scans_only(data_dir, monkeypatch):
+def test_thumbnails_for_every_downloaded_scan(data_dir, monkeypatch):
     connections = []
     make = thumbnails.make_thumbnail
 
@@ -634,15 +635,25 @@ def test_thumbnails_for_downloaded_standard_scans_only(data_dir, monkeypatch):
     add_catalog_card(image_path=f"{SV}/SVI/cards/1_a_standard_EN.jpg")
     add_catalog_card(card_number="2", image_path="__pending__/SVI/2_2")
     add_catalog_card(card_number="3", image_path=f"{SV}/SVI/cards/missing.jpg")
+    reverse = scan.with_name("1_a_reverse_FR.jpg")
+    reverse.write_bytes(jpeg(600, 840))
+    with database.SessionLocal() as db:
+        row = db.scalars(
+            select(m.CardCatalogVariant)
+            .where(m.CardCatalogVariant.variant_type == "reverse")
+            .order_by(m.CardCatalogVariant.id)
+        ).first()
+        row.image_path_fr = f"{SV}/SVI/cards/1_a_reverse_FR.jpg"
+        db.commit()
 
     with database.SessionLocal() as db:
         assert thumbnails.generate_thumbnails(db, data_dir) == {
-            "thumbnails_generated": 1
+            "thumbnails_generated": 2
         }
-    assert connections == [0]  # none held while resizing
-    thumb = data_dir / SV / "SVI" / "thumbnails" / "1_a_standard_EN.jpg"
-    with Image.open(thumb) as img:
-        assert img.size == (300, 420)
+    assert connections == [0, 0]  # none held while resizing
+    for name in ("1_a_standard_EN.jpg", "1_a_reverse_FR.jpg"):
+        with Image.open(data_dir / SV / "SVI" / "thumbnails" / name) as img:
+            assert img.size == (300, 420)
     with database.SessionLocal() as db:
         assert thumbnails.generate_thumbnails(db, data_dir) == {
             "thumbnails_generated": 0

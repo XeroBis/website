@@ -346,3 +346,9 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 
 - **What**: `scrape_images` fetches every recorded URL whose scan isn't saved, French and English alike. Before, a card's French standard scan was only fetched along with its pending English one, and a print with either scan saved was skipped, so a French URL that appeared later (FST's cards 232–284, missing from the first French page) was never downloaded.
 - **`no_scan` on the `standard` print too, over retrying every run**: a French standard scan the CDN redirects is skipped from then on, like other prints; a pending English standard scan is still always asked for (the card needs it, or the French fallback). Cleared by the import when a URL appears or changes, and by deleting the scans.
+
+## Cards: thumbnails for every print, not only standard scans (2026-11-21)
+
+- **What**: the thumbnail step and scan downloads make the 300 px thumbnail of every downloaded scan (reverse, balls, stamps, holos), with the same `thumbnails/` path rule as standard scans. Deck rows, drafts, combats and the Browse, Collection and shared-set print tiles load them; the card detail's large image and the set page's tiles keep the full scan.
+- **Why**: decks now show each print's own scan, so a deck with many reverses loaded dozens of full scans where it used to load thumbnails.
+- **Missing thumbnail → its full scan, `no-cache`, over a broken image or a client-side fallback**: on `/images/` and the share route, so nothing breaks between a download and its thumbnail (or before an existing catalog's first run of `generate_thumbnails`), and the browser picks up the thumbnail once it exists instead of caching the scan for a year.

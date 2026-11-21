@@ -329,7 +329,7 @@ export class CollectionComponent implements OnInit, OnDestroy {
     const preferred =
       this.translate.currentLang() === 'fr' ? variant.image_path_fr : variant.image_path_us;
     const path = preferred ?? variant.image_path_fr ?? variant.image_path_us;
-    return path ? this.catalogService.variantImageUrl(path) : this.thumbnailUrl(card);
+    return path ? this.catalogService.variantThumbnailUrl(path) : this.thumbnailUrl(card);
   }
   /** When the Variante filter is active, swaps in the matched variant's own
    * scan instead of always the standard print -- see features.md's "Search &
@@ -378,7 +378,7 @@ export class CollectionComponent implements OnInit, OnDestroy {
   thumbnailUrl(card: Card): string {
     const path = this.filterMatchedVariantImagePath(card);
     return path
-      ? this.catalogService.variantImageUrl(path)
+      ? this.catalogService.variantThumbnailUrl(path)
       : this.catalogService.thumbnailUrl(card.image_path);
   }
   addToList(card: Card, variant?: CardVariant): void {

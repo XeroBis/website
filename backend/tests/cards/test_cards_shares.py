@@ -185,6 +185,12 @@ def test_serves_the_sets_scans_thumbnails_and_variant_scans(
         assert response.content == path.encode()
         assert response.headers["cache-control"] == "private, max-age=300"
     assert connections_while_streaming == [0] * 4
+    # The reverse's thumbnail isn't made yet: its scan, uncached.
+    response = anon.get(
+        f"{base}/Scarlet & Violet/SVI/thumbnails/1_sprigatito_reverse_EN.jpg"
+    )
+    assert response.content == b"Scarlet & Violet/SVI/cards/1_sprigatito_reverse_EN.jpg"
+    assert response.headers["cache-control"] == "no-cache"
 
 
 def test_refuses_files_of_other_sets_and_escapes(anon, cards, link, data_dir):

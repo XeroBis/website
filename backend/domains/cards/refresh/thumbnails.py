@@ -1,6 +1,6 @@
-"""Refresh step `generate_thumbnails`: a 300px JPEG of each standard scan, at
-the same name in the set's `thumbnails/` folder (no column: the path is the
-scan's with `/thumbnails/` instead of `/cards/`). Other prints have none."""
+"""Refresh step `generate_thumbnails`: a 300px JPEG of each scan, standard or
+another print's, at the same name in the set's `thumbnails/` folder (no
+column: the path is the scan's with `/thumbnails/` instead of `/cards/`)."""
 
 import logging
 from collections.abc import Callable
@@ -45,13 +45,16 @@ def make_thumbnail(scan: Path) -> bool:
 def generate_thumbnails(
     db: Session, data_dir: Path, on_progress: Callable[[int, int], None] | None = None
 ) -> dict:
-    """Thumbnails for every downloaded standard scan (EN and FR) lacking one."""
+    """Thumbnails for every downloaded scan (every print, EN and FR) lacking
+    one."""
+    standard = db.execute(select(m.CardCatalog.image_path, m.CardCatalog.image_path_fr))
+    prints = db.execute(
+        select(m.CardCatalogVariant.image_path_us, m.CardCatalogVariant.image_path_fr)
+    )
     paths = sorted(
         {
             path
-            for pair in db.execute(
-                select(m.CardCatalog.image_path, m.CardCatalog.image_path_fr)
-            )
+            for pair in [*standard, *prints]
             for path in pair
             if path and not is_pending(path)
         }

@@ -36,3 +36,23 @@ def test_paths_cannot_escape_the_data_folder(client, data_dir):
     (data_dir.parent / "secret.txt").write_text("no")
     assert client.get(f"{URL}/images/..%2Fsecret.txt").status_code == 404
     assert client.get(f"{URL}/images/%2E%2E/secret.txt").status_code == 404
+
+
+def test_a_missing_thumbnail_falls_back_to_its_scan_uncached(client, data_dir):
+    cards = data_dir / "Scarlet & Violet" / "SVI" / "cards"
+    cards.mkdir(parents=True)
+    (cards / "1_a_reverse_EN.jpg").write_bytes(b"scan")
+    thumbnail = f"{URL}/images/Scarlet & Violet/SVI/thumbnails/1_a_reverse_EN.jpg"
+    response = client.get(thumbnail)
+    assert response.status_code == 200
+    assert response.content == b"scan"
+    assert response.headers["cache-control"] == "no-cache"
+
+    (cards.parent / "thumbnails").mkdir()
+    (cards.parent / "thumbnails" / "1_a_reverse_EN.jpg").write_bytes(b"thumb")
+    response = client.get(thumbnail)
+    assert response.content == b"thumb"
+    assert response.headers["cache-control"] == "private, max-age=31536000, immutable"
+    # Neither there: still 404.
+    missing = f"{URL}/images/Scarlet & Violet/SVI/thumbnails/2_b_standard_EN.jpg"
+    assert client.get(missing).status_code == 404

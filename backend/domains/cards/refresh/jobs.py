@@ -233,7 +233,7 @@ def run_step(key: str) -> None:
 
 
 def _scans_and_thumbnails() -> tuple[dict, dict, Exception | None]:
-    """Downloads scans while a second thread thumbnails each new standard scan,
+    """Downloads scans while a second thread thumbnails each new scan,
     then catches up on older ones. Either can fail without stopping the
     other."""
     saved: queue.Queue[Path | None] = queue.Queue()
@@ -247,7 +247,7 @@ def _scans_and_thumbnails() -> tuple[dict, dict, Exception | None]:
                 results["scrape_images"] = scans.scrape_images(
                     db,
                     data_dir,
-                    on_standard_saved=saved.put,
+                    on_scan_saved=saved.put,
                     on_progress=_reporter("scrape_images"),
                 )
         except Exception as exc:

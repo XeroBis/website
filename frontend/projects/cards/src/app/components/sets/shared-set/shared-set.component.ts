@@ -124,7 +124,12 @@ export class SharedSetComponent implements OnInit {
         this.set.set(set);
         const defaults = defaultSetRarities(set.series);
         this.selectedRarities.set(new Set(defaults));
-        if (lacksDefaultRarities(set.cards.map((card) => card.rarity), defaults)) {
+        if (
+          lacksDefaultRarities(
+            set.cards.map((card) => card.rarity),
+            defaults,
+          )
+        ) {
           this.selectedRarities.set(new Set());
           this.selectedVariants.set([]);
           this.variantDisplayMode.set(printSelectionMode([]));
@@ -207,7 +212,7 @@ export class SharedSetComponent implements OnInit {
     }
     const path = variant.image_path_fr ?? variant.image_path_us;
     return path
-      ? this.publicSharesService.variantImageUrl(this.token, path)
+      ? this.publicSharesService.thumbnailUrl(this.token, path)
       : this.thumbnailUrl(entry);
   }
   displayedVariants(entry: SharedSetCard): CardCatalogVariant[] {

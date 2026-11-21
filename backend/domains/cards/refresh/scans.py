@@ -81,10 +81,6 @@ class _Download:
     # is set when every URL tried for it redirects.
     variant: m.CardCatalogVariant | None
 
-    @property
-    def is_standard(self) -> bool:
-        return self.target is self.row
-
 
 def _missing(row: m.CardCatalog) -> Iterator[_Download]:
     """Every scan of the card still to download: each recorded URL, EN and FR
@@ -172,7 +168,7 @@ def _fetch_all(client: httpx2.Client, downloads: list[_Download]):
 def scrape_images(
     db: Session,
     data_dir: Path,
-    on_standard_saved: Callable[[Path], None] | None = None,
+    on_scan_saved: Callable[[Path], None] | None = None,
     on_progress: Progress | None = None,
 ) -> dict:
     """Downloads the missing scans of every set in the source, committing set
@@ -230,15 +226,14 @@ def scrape_images(
                     path = data_dir / download.path
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_bytes(content)
-                    if download.is_standard:
-                        # A scan downloaded again (its URL changed) gets a
-                        # new thumbnail; see thumbnails.thumbnail_for.
-                        thumbnail = path.parent.parent / "thumbnails" / path.name
-                        thumbnail.unlink(missing_ok=True)
+                    # A scan downloaded again (its URL changed) gets a new
+                    # thumbnail; see thumbnails.thumbnail_for.
+                    thumbnail = path.parent.parent / "thumbnails" / path.name
+                    thumbnail.unlink(missing_ok=True)
                     setattr(download.target, download.field, download.path)
                     downloaded.add(download.row.id)
-                    if download.is_standard and on_standard_saved:
-                        on_standard_saved(path)
+                    if on_scan_saved:
+                        on_scan_saved(path)
                 for variant, redirected in all_redirected.values():
                     if redirected:
                         variant.no_scan = True

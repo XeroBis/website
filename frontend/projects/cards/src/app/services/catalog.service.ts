@@ -324,12 +324,18 @@ export class CatalogService {
     return this.imageUrl(imagePath);
   }
 
-  /** A deck/draft/combat row's picture: its print's own scan when it has
-   * one (`variant_image_path`), else the standard thumbnail -- the only
-   * case that also shows the print badge. */
+  /** A print scan's 300px thumbnail, made like the standard ones (the server
+   * sends the full scan until it exists). For grid tiles and rows. */
+  variantThumbnailUrl(imagePath: string): string {
+    return this.thumbnailUrl(imagePath);
+  }
+
+  /** A deck/draft/combat row's picture: its print's own thumbnail when it
+   * has a scan (`variant_image_path`), else the standard thumbnail -- the
+   * only case that also shows the print badge. */
   printImageUrl(card: { image_path: string; variant_image_path?: string | null }): string {
     return card.variant_image_path
-      ? this.variantImageUrl(card.variant_image_path)
+      ? this.variantThumbnailUrl(card.variant_image_path)
       : this.thumbnailUrl(card.image_path);
   }
 }

@@ -22,7 +22,7 @@ from domains.cards import deck_rules, display, search
 from domains.cards import models as m
 from domains.cards import schemas as s
 from domains.cards.access import cards_user, not_found, owned
-from domains.cards.routers.images import data_file
+from domains.cards.routers.images import data_file, image_file
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +225,7 @@ def get_shared_image(token: str, relative_path: str, db: Session = file_db):
     )
     if not in_set:
         raise not_found("Image")
-    return FileResponse(data_file(relative_path), headers=SHORT_CACHE)
+    return image_file(relative_path, SHORT_CACHE["Cache-Control"])
 
 
 def _set_asset(db: Session, share: m.SetShare) -> dict[str, str | None]:

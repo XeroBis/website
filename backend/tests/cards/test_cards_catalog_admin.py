@@ -166,7 +166,7 @@ def test_full_refresh_runs_every_step(admin, source_dir, data_dir, web):
         "failed": 0,
         "french_missing": 0,
         "images_downloaded": 1,
-        "thumbnails_generated": 2,
+        "thumbnails_generated": 4,
         "set_logos_updated": 1,
         "variant_icons_downloaded": 1,
         "variant_icons_unavailable": [],
@@ -176,6 +176,8 @@ def test_full_refresh_runs_every_step(admin, source_dir, data_dir, web):
         assert step_state["status"] == "done", step
     thumbnails = data_dir / SV / "SVI" / "thumbnails"
     assert sorted(p.name for p in thumbnails.iterdir()) == [
+        "1_sprigatito_reverse_EN.jpg",
+        "1_sprigatito_reverse_FR.jpg",
         "1_sprigatito_standard_EN.jpg",
         "1_sprigatito_standard_FR.jpg",
     ]
@@ -481,16 +483,17 @@ def test_images_delete_removes_the_selection_and_scans_download_again(
     svi = data_dir / SV / "SVI"
     kept = svi / "cards" / "1_sprigatito_standard_EN.jpg"
 
-    # French only, SVI only: both prints' FR scans, the FR thumbnail and logo.
+    # French only, SVI only: both prints' FR scans and thumbnails, the FR logo.
     response = admin.post(
         f"{CATALOG}/delete/images?english=false&symbols=false&set_code=SVI"
     )
     assert response.status_code == 200
-    assert response.json() == {"files_deleted": 4, "scans_reset": 2}
+    assert response.json() == {"files_deleted": 5, "scans_reset": 2}
     assert admin.get(f"{CATALOG}/delete/images").status_code == 405
     assert kept.is_file()
     assert not (svi / "cards" / "1_sprigatito_standard_FR.jpg").exists()
     assert not (svi / "thumbnails" / "1_sprigatito_standard_FR.jpg").exists()
+    assert not (svi / "thumbnails" / "1_sprigatito_reverse_FR.jpg").exists()
     assert not (svi / "SVI_logo_FR.png").exists()
     assert (svi / "SVI_symbol.png").is_file()
     assert (data_dir / SV / "MEW" / "cards" / "1_mew_standard_FR.jpg").is_file()
@@ -506,6 +509,7 @@ def test_images_delete_removes_the_selection_and_scans_download_again(
         admin.post(f"{CATALOG}/refresh/steps/{step}")
     assert (svi / "cards" / "1_sprigatito_standard_FR.jpg").is_file()
     assert (svi / "thumbnails" / "1_sprigatito_standard_FR.jpg").is_file()
+    assert (svi / "thumbnails" / "1_sprigatito_reverse_FR.jpg").is_file()
     assert (svi / "SVI_logo_FR.png").is_file()
     with database.SessionLocal() as db:
         row = db.scalar(select(m.CardCatalog).where(m.CardCatalog.set_code == "SVI"))

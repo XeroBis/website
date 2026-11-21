@@ -4,7 +4,7 @@ token-scoped routes."""
 
 from pathlib import Path
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -30,6 +30,20 @@ def data_file(relative_path: str) -> Path:
     return path
 
 
+def image_file(relative_path: str, cache_control: str) -> FileResponse:
+    """The file, with `cache_control`. A thumbnail not made yet (the step runs
+    after downloads) falls back to its full scan, uncached so the browser
+    picks up the thumbnail once it exists."""
+    try:
+        path = data_file(relative_path)
+    except HTTPException:
+        if "/thumbnails/" not in relative_path:
+            raise
+        scan = relative_path.replace("/thumbnails/", "/cards/", 1)
+        return FileResponse(data_file(scan), headers={"Cache-Control": "no-cache"})
+    return FileResponse(path, headers={"Cache-Control": cache_control})
+
+
 @router.get("/images/{relative_path:path}")
 def get_image(
     relative_path: str, _: User = Depends(cards_user), db: Session = Depends(get_db)
@@ -37,6 +51,4 @@ def get_image(
     # The session checking the user (the same one, dependencies are cached)
     # would otherwise keep its pooled connection while the file streams.
     db.close()
-    return FileResponse(
-        data_file(relative_path), headers={"Cache-Control": CACHE_CONTROL}
-    )
+    return image_file(relative_path, CACHE_CONTROL)

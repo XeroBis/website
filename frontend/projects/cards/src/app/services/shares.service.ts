@@ -55,17 +55,11 @@ export class PublicSharesService {
     return this.http.get<SharedSet>(`${this.baseUrl}/${token}`);
   }
 
-  /** A card's thumbnail sits in a sibling `thumbnails/` folder next to its
-   * `cards/` folder, same filename -- the same derivation
+  /** A scan's thumbnail (any print) sits in a sibling `thumbnails/` folder
+   * next to its `cards/` folder, same filename -- the same derivation
    * CatalogService.thumbnailUrl() does for the authenticated side. */
   thumbnailUrl(token: string, imagePath: string): string {
     return this.imageUrl(token, imagePath.replace('/cards/', '/thumbnails/'));
-  }
-
-  /** Ball-pattern/reverse variant scans live in the same
-   * <series>/<set_code>/cards/ tree as card_catalog.image_path. */
-  variantImageUrl(token: string, imagePath: string): string {
-    return this.imageUrl(token, imagePath);
   }
 
   private imageUrl(token: string, relativePath: string): string {
