@@ -559,6 +559,11 @@
     "countDeckCards": "Count cards in decks as owned",
     "missingOnly": "Show only missing cards",
     "sale": {
+      "extras": "Put all shown up for sale",
+      "extrasHint": "Every sellable copy of the shown cards (outside decks and sale lists)",
+      "extrasBody": "Add {{count}} copies ({{prints}} prints) to \"{{name}}\"? Every shown print's copies go on sale, except those in decks or already on sale.",
+      "extrasConfirm": "Add {{count}} copies",
+      "noExtras": "No copy to sell among the shown cards.",
       "trayCount": "{{count}} cards",
       "close": "Close",
       "toggle": "Put up for sale",

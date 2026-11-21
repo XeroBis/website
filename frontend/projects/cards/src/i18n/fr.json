@@ -559,6 +559,11 @@
     "countDeckCards": "Compter les cartes dans les decks comme possédées",
     "missingOnly": "Afficher uniquement les cartes manquantes",
     "sale": {
+      "extras": "Tout mettre en vente",
+      "extrasHint": "Tous les exemplaires vendables des cartes affichées (hors decks et listes de vente)",
+      "extrasBody": "Ajouter {{count}} exemplaires ({{prints}} variantes) à « {{name}} » ? Tous les exemplaires des variantes affichées sont mis en vente, sauf ceux en deck ou déjà en vente.",
+      "extrasConfirm": "Ajouter {{count}} exemplaires",
+      "noExtras": "Aucun exemplaire à vendre parmi les cartes affichées.",
       "trayCount": "{{count}} cartes",
       "close": "Fermer",
       "toggle": "À mettre en vente",

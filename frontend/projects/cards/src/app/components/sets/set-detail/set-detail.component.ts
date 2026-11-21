@@ -172,6 +172,10 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   newSaleListName = signal<string | null>(null);
   saleBusy = signal(false);
   saleExitConfirmOpen = signal(false);
+  /** The "sell the extras" confirmation, with what it would add. */
+  extrasConfirm = signal<{ catalog_id: number; variant_type: VariantType; quantity: number }[] | null>(
+    null,
+  );
   /** Phones: the panel is a bottom bar, opened by its header. */
   salePanelExpanded = signal(false);
   shareDurationOptions = signal(SHARE_DURATION_OPTIONS);
@@ -854,6 +858,78 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   removeTrayLine(line: SaleTrayLine): void {
     this.saleTray.update((tray) => tray.filter((other) => other !== line));
   }
+  /** Every shown print's sellable copies (outside decks and sale lists),
+   * minus those already in the tray. What is shown follows the page's
+   * filters (owned +0/+1/+2, rarity, print, search). The standard grid only
+   * covers the standard print, like its tiles. */
+  private extraCopies(): { catalog_id: number; variant_type: VariantType; quantity: number }[] {
+    const items: { catalog_id: number; variant_type: VariantType; quantity: number }[] = [];
+    for (const entry of this.filteredCards()) {
+      const prints = this.countsVariants
+        ? this.displayedVariants(entry).map((variant) => variant.variant_type)
+        : (['standard'] as VariantType[]);
+      for (const print of prints) {
+        const quantity = this.sellable(entry, print) - this.trayQuantity(entry, print);
+        if (quantity > 0) {
+          items.push({ catalog_id: entry.id, variant_type: print, quantity });
+        }
+      }
+    }
+    return items;
+  }
+  openExtrasConfirm(): void {
+    const items = this.extraCopies();
+    if (items.length === 0) {
+      this.toastService.show(this.translate.instant('sets.sale.noExtras'));
+      return;
+    }
+    this.extrasConfirm.set(items);
+  }
+  extrasCopies(): number {
+    return (this.extrasConfirm() ?? []).reduce((sum, item) => sum + item.quantity, 0);
+  }
+  saleListName(): string {
+    return this.saleLists().find((list) => list.id === this.saleListId())?.name ?? '';
+  }
+  submitExtras(): void {
+    const items = this.extrasConfirm();
+    const listId = this.saleListId();
+    if (!items || listId === null || this.saleBusy()) {
+      return;
+    }
+    const count = this.extrasCopies();
+    const name = this.saleListName();
+    this.saleBusy.set(true);
+    this.saleListsService.addCards(listId, items).subscribe({
+      next: () => {
+        this.saleBusy.set(false);
+        this.extrasConfirm.set(null);
+        this.addToOnSale(items);
+        this.toastService.show(this.translate.instant('sets.sale.added', { count, name }));
+      },
+      error: (err) => {
+        this.saleBusy.set(false);
+        this.extrasConfirm.set(null);
+        this.toastService.show(
+          err?.error?.detail ?? this.translate.instant('sets.sale.addFailed'),
+          'error',
+        );
+      },
+    });
+  }
+  private addToOnSale(
+    items: { catalog_id: number; variant_type: VariantType; quantity: number }[],
+  ): void {
+    this.onSale.update((value) => {
+      const next = new Map(value);
+      for (const item of items) {
+        const prints = new Map(next.get(item.catalog_id) ?? []);
+        prints.set(item.variant_type, (prints.get(item.variant_type) ?? 0) + item.quantity);
+        next.set(item.catalog_id, prints);
+      }
+      return next;
+    });
+  }
   submitSale(): void {
     const listId = this.saleListId();
     const tray = this.saleTray();
@@ -861,7 +937,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const count = this.saleTrayCopies();
-    const listName = this.saleLists().find((list) => list.id === listId)?.name ?? '';
+    const listName = this.saleListName();
     this.saleBusy.set(true);
     this.saleListsService
       .addCards(
@@ -875,15 +951,13 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.saleBusy.set(false);
-          this.onSale.update((value) => {
-            const next = new Map(value);
-            for (const line of tray) {
-              const prints = new Map(next.get(line.entry.id) ?? []);
-              prints.set(line.variant, (prints.get(line.variant) ?? 0) + line.quantity);
-              next.set(line.entry.id, prints);
-            }
-            return next;
-          });
+          this.addToOnSale(
+            tray.map((line) => ({
+              catalog_id: line.entry.id,
+              variant_type: line.variant,
+              quantity: line.quantity,
+            })),
+          );
           this.saleTray.set([]);
           this.toastService.show(
             this.translate.instant('sets.sale.added', { count, name: listName }),

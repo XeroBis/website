@@ -438,6 +438,15 @@
           </div>
         </form>
       }
+      <button
+        type="button"
+        class="btn btn-secondary"
+        [disabled]="saleListId() === null || saleBusy()"
+        [title]="'sets.sale.extrasHint' | translate"
+        (click)="openExtrasConfirm()"
+      >
+        {{ 'sets.sale.extras' | translate }}
+      </button>
       <div class="sale-actions">
         <button type="button" class="btn btn-secondary" (click)="toggleSaleMode()">
           {{ 'sets.sale.close' | translate }}
@@ -462,6 +471,25 @@
       [imageUrl]="detailImageUrl()"
       [initialVariantType]="detailVariant()?.variant_type ?? null"
     />
+  </app-modal>
+}
+
+@if (extrasConfirm()) {
+  <app-modal [title]="'sets.sale.extras' | translate" (closed)="extrasConfirm.set(null)">
+    <p>
+      {{
+        'sets.sale.extrasBody'
+          | translate: { count: extrasCopies(), prints: extrasConfirm()!.length, name: saleListName() }
+      }}
+    </p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="extrasConfirm.set(null)">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="saleBusy()" (click)="submitExtras()">
+        {{ 'sets.sale.extrasConfirm' | translate: { count: extrasCopies() } }}
+      </button>
+    </div>
   </app-modal>
 }
 
