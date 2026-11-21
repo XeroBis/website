@@ -820,7 +820,8 @@
       "allSets": "Toutes les extensions",
       "viewGrid": "Grille",
       "viewList": "Liste (modifiable)",
-      "viewSets": "Par extension"
+      "viewSets": "Par extension",
+      "filteredCount": "Filtrées : {{unique}} unique(s) / {{total}} au total"
     }
   },
   "saleLists": {
@@ -890,7 +891,8 @@
       "allSets": "Toutes les extensions",
       "viewGrid": "Grille",
       "viewList": "Liste (modifiable)",
-      "viewSets": "Par extension"
+      "viewSets": "Par extension",
+      "filteredCount": "Filtrées : {{unique}} unique(s) / {{total}} au total"
     }
   }
 }

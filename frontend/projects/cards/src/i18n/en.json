@@ -820,7 +820,8 @@
       "allSets": "All sets",
       "viewGrid": "Grid",
       "viewList": "List (editable)",
-      "viewSets": "By set"
+      "viewSets": "By set",
+      "filteredCount": "Filtered: {{unique}} unique / {{total}} total"
     }
   },
   "saleLists": {
@@ -890,7 +891,8 @@
       "allSets": "All sets",
       "viewGrid": "Grid",
       "viewList": "List (editable)",
-      "viewSets": "By set"
+      "viewSets": "By set",
+      "filteredCount": "Filtered: {{unique}} unique / {{total}} total"
     }
   }
 }

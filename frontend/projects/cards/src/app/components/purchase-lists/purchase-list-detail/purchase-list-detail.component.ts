@@ -193,6 +193,21 @@ export class PurchaseListDetailComponent implements OnInit, OnDestroy {
       )
       .sort((a, b) => (rank.get(a.id) ?? rank.size) - (rank.get(b.id) ?? rank.size));
   });
+  /** Lines and copies left by the filters, shown beside the list's totals
+   * while a filter is on. */
+  filteredTotals = computed(() => {
+    const active =
+      this.search().trim().length > 0 ||
+      this.setFilter().size > 0 ||
+      this.printFilter().length > 0 ||
+      this.rarityFilter().size > 0;
+    if (!active) return null;
+    const cards = this.filteredCards();
+    return {
+      unique: cards.length,
+      total: cards.reduce((sum, card) => sum + card.quantity, 0),
+    };
+  });
   /** filteredCards grouped by card (a card bought as standard and reverse is
    * one tile), in the chosen order. */
   tiles = computed(() => {

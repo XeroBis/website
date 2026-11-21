@@ -19,6 +19,11 @@
           | translate: { unique: list.total_cards, total: list.total_quantity }
       }}
     </span>
+    @if (filteredTotals(); as shown) {
+      <span class="count-badge filtered-count">
+        {{ 'saleLists.detail.filteredCount' | translate: shown }}
+      </span>
+    }
     @if (editable()) {
       <button type="button" class="btn btn-secondary" (click)="openAdd()">
         <ab-icon name="plus" /> {{ 'saleLists.detail.addCard' | translate }}

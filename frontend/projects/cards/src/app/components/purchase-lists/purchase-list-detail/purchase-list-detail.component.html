@@ -22,6 +22,11 @@
         · {{ list.price | number: '1.2-2' }} €
       }
     </span>
+    @if (filteredTotals(); as shown) {
+      <span class="count-badge filtered-count">
+        {{ 'purchaseLists.detail.filteredCount' | translate: shown }}
+      </span>
+    }
     @if (editable()) {
       <button type="button" class="btn btn-secondary" (click)="openAdd()">
         <ab-icon name="plus" /> {{ 'purchaseLists.detail.addCard' | translate }}
