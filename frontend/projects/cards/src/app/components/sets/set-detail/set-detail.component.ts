@@ -34,6 +34,7 @@ import { rarityCategory, sortRarityCategories } from '../../../util/rarity-categ
 import { rarityIconUrl } from '../../../util/rarity-icons.util';
 import {
   DEFAULT_SET_RARITIES,
+  defaultSetRarities,
   DEFAULT_SET_VARIANTS,
   lacksDefaultRarities,
 } from '../../../util/set-filter-defaults.util';
@@ -215,7 +216,9 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       incoming: this.purchaseListsService.incoming(this.setCode()),
     }).subscribe(({ cards, owned, incoming }) => {
       this.cards.set(cards);
-      if (lacksDefaultRarities(cards.map((card) => card.rarity))) {
+      const defaults = defaultSetRarities(cards[0]?.series);
+      this.selectedRarities.set(new Set(defaults));
+      if (lacksDefaultRarities(cards.map((card) => card.rarity), defaults)) {
         this.selectedRarities.set(new Set());
         this.selectedVariants.set([]);
         this.variantDisplayMode.set(printSelectionMode([]));

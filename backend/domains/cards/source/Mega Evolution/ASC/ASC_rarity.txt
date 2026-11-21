@@ -194,7 +194,7 @@ id,rarity,supertype
 193,Common,Trainer
 194,Uncommon,Trainer
 195,Uncommon,Trainer
-196,Common,Pokémon
+196,Common,Trainer
 197,Uncommon,Trainer
 198,Common,Trainer
 199,Uncommon,Trainer

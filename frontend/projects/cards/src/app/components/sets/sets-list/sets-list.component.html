@@ -163,6 +163,7 @@
               class="card-tile set-tile"
               [routerLink]="['/sets', set.set_code]"
               [title]="set.set_name"
+              (click)="rememberScroll()"
             >
               <img
                 class="set-symbol-badge"

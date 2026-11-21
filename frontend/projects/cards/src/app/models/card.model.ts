@@ -724,6 +724,7 @@ export interface SharedSetCard {
 export interface SharedSet {
   set_code: string;
   set_name: string;
+  series: string | null;
   card_count: number | null;
   release_date: string | null;
   expires_at: string;

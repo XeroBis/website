@@ -1,7 +1,15 @@
 import { Icon } from '@shared';
 import { signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  Injector,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -27,6 +35,9 @@ interface SetsListFilters {
   search: string;
 }
 const FILTERS_STORAGE_KEY = 'pokemon-cards:sets-filters';
+/** Where the page was scrolled when a set was opened, restored (once) when
+ * the page comes back. Kept in memory: a reload starts at the top. */
+let scrollOnOpenSet: number | null = null;
 /** The DATA folder names are stable grouping keys, not necessarily the
  * viewer-facing French labels. Keep this small fallback here so the Series
  * headings react immediately when the account locale finishes loading,
@@ -99,6 +110,7 @@ export class SetsListComponent implements OnInit {
     private readonly translate: TranslateService,
     readonly countIncoming: CountIncomingService,
     readonly countDeckCards: CountDeckCardsService,
+    private readonly injector: Injector,
     @Inject(PLATFORM_ID)
     platformId: object,
   ) {
@@ -151,7 +163,20 @@ export class SetsListComponent implements OnInit {
         }
         this.sets.set(sets);
         this.loading.set(false);
+        this.restoreScroll();
       });
+  }
+  /** Called when a set tile is clicked. */
+  rememberScroll(): void {
+    scrollOnOpenSet = window.scrollY;
+  }
+  private restoreScroll(): void {
+    const top = scrollOnOpenSet;
+    if (top === null || !this.isBrowser) {
+      return;
+    }
+    scrollOnOpenSet = null;
+    afterNextRender(() => window.scrollTo({ top }), { injector: this.injector });
   }
   /** "Count incoming as owned" (shared with the set page, the missing
    * exports and /missing): recomputes every set's completion. */

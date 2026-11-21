@@ -2,7 +2,7 @@
  * Cards: the old app's grey and Poké Ball red, modernised. White cards with
  * soft shadows, pill buttons, inputs and navigation, Fredoka headings over
  * Figtree, card numbers in JetBrains Mono, a neutral dark mode following the
- * shared theme switch. Card tiles get a random holo foil on hover. The `--ab-*`
+ * shared theme switch. The `--ab-*`
  * tokens at the end are read by @shared's header.
  */
 
@@ -474,13 +474,9 @@ input[type='checkbox'] {
   color: var(--color-text-muted);
 }
 
-// A white card with a soft shadow; on hover it lifts and a holo foil sweeps
-// across the scan (colour-dodge). Each hover gets its own
-// foil (`data-foil`), angle, hue and direction: `shuffleFoil` (util/foil.util.ts)
-// sets them; the defaults are only a fallback.
+// A white card with a soft shadow. No hover effect.
 .card-tile {
   position: relative;
-  isolation: isolate;
   background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
@@ -490,118 +486,6 @@ input[type='checkbox'] {
   align-items: center;
   text-align: center;
   cursor: pointer;
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
-
-  // Over the scan only: same inset as the tile's padding, card-shaped.
-  &::after {
-    content: '';
-    position: absolute;
-    z-index: 1;
-    pointer-events: none;
-    inset: var(--space-2) var(--space-2) auto;
-    aspect-ratio: 5 / 7;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(
-        var(--foil-angle, 115deg),
-        transparent 18%,
-        rgb(255 60 170 / 35%) 32%,
-        rgb(255 226 70 / 35%) 44%,
-        rgb(60 240 200 / 35%) 56%,
-        rgb(90 130 255 / 35%) 68%,
-        transparent 82%
-      )
-      var(--foil-to, 0 0) / 250% 250%;
-    filter: hue-rotate(var(--foil-hue, 0deg));
-    mix-blend-mode: color-dodge;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  // The other foils (the band above is `band`), all swept the same way.
-  &[data-foil='glare']::after {
-    background: radial-gradient(
-        circle,
-        rgb(255 255 255 / 45%),
-        rgb(255 190 240 / 22%) 16%,
-        rgb(140 200 255 / 12%) 28%,
-        transparent 42%
-      )
-      var(--foil-to, 0 0) / 250% 250%;
-  }
-
-  &[data-foil='stripes']::after {
-    background: repeating-linear-gradient(
-        var(--foil-angle, 115deg),
-        rgb(255 60 170 / 30%) 0 4%,
-        rgb(255 226 70 / 30%) 8%,
-        rgb(60 240 200 / 30%) 12%,
-        rgb(90 130 255 / 30%) 16%,
-        rgb(255 60 170 / 30%) 20%
-      )
-      var(--foil-to, 0 0) / 250% 250%;
-  }
-
-  &[data-foil='prism']::after {
-    background: conic-gradient(
-        from var(--foil-angle, 115deg),
-        rgb(255 60 170 / 32%),
-        rgb(255 226 70 / 32%),
-        rgb(60 240 200 / 32%),
-        rgb(90 130 255 / 32%),
-        rgb(255 60 170 / 32%)
-      )
-      var(--foil-to, 0 0) / 250% 250%;
-  }
-
-  &[data-foil='glitter']::after {
-    background:
-      radial-gradient(circle, rgb(255 255 255 / 85%) 0 0.5px, transparent 1.5px)
-        var(--foil-to, 0 0) / 13px 13px,
-      radial-gradient(circle, rgb(255 240 200 / 70%) 0 0.5px, transparent 1.5px)
-        var(--foil-to, 0 0) / 19px 17px,
-      linear-gradient(
-          var(--foil-angle, 115deg),
-          transparent 25%,
-          rgb(255 60 170 / 22%) 40%,
-          rgb(60 240 200 / 22%) 60%,
-          transparent 75%
-        )
-        var(--foil-to, 0 0) / 250% 250%;
-  }
-
-  &:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-3px);
-
-    &:not(.set-tile)::after {
-      opacity: 1;
-      // An animation, not a transition, so it starts from this hover's values.
-      animation: foil-sweep 0.7s ease-out both;
-    }
-  }
-
-  // Badges and controls sit above the foil.
-  .owned-badge,
-  .number-badge,
-  .reverse-badge,
-  .qty-controls-group,
-  .set-symbol-badge {
-    z-index: 2;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
-    &:hover {
-      transform: none;
-
-      &::after {
-        animation: none;
-      }
-    }
-  }
 
   img {
     width: 100%;
@@ -633,15 +517,6 @@ input[type='checkbox'] {
       width: 100%;
       margin-top: auto;
     }
-  }
-}
-
-@keyframes foil-sweep {
-  from {
-    background-position: var(--foil-from, 100% 100%);
-  }
-  to {
-    background-position: var(--foil-to, 0 0);
   }
 }
 

@@ -251,8 +251,7 @@
 // not CSS-anchored to the trigger, since that would get clipped by
 // .table-wrap's forced vertical overflow (overflow-x: auto forces
 // overflow-y to auto too, per spec, regardless of what it's set to) in the
-// table view, and would need to fight the app's fixed header's stacking
-// context (started by the grid tile's hover transform) in the grid view.
+// table view.
 .allocation-tooltip-float {
   position: fixed;
   transform: translate(-50%, calc(-100% - 0.4rem));

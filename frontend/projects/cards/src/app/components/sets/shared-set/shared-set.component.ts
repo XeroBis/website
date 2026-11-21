@@ -21,6 +21,7 @@ import { SetFiltersComponent } from '../set-filters/set-filters.component';
 import { rarityCategory, sortRarityCategories } from '../../../util/rarity-category.util';
 import {
   DEFAULT_SET_RARITIES,
+  defaultSetRarities,
   DEFAULT_SET_VARIANTS,
   lacksDefaultRarities,
 } from '../../../util/set-filter-defaults.util';
@@ -121,7 +122,9 @@ export class SharedSetComponent implements OnInit {
     this.publicSharesService.get(this.token).subscribe({
       next: (set) => {
         this.set.set(set);
-        if (lacksDefaultRarities(set.cards.map((card) => card.rarity))) {
+        const defaults = defaultSetRarities(set.series);
+        this.selectedRarities.set(new Set(defaults));
+        if (lacksDefaultRarities(set.cards.map((card) => card.rarity), defaults)) {
           this.selectedRarities.set(new Set());
           this.selectedVariants.set([]);
           this.variantDisplayMode.set(printSelectionMode([]));

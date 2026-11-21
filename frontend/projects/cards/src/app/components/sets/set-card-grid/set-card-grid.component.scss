@@ -217,7 +217,7 @@
   gap: var(--space-2);
 }
 
-/* Tighter tiles inside a group: less padding (the foil follows it) and a
+/* Tighter tiles inside a group: less padding and a
  * one-line variant label. */
 :host ::ng-deep .variant-group-tiles .card-tile {
   padding: var(--space-1);
