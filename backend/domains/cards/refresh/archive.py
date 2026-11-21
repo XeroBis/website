@@ -145,6 +145,9 @@ def delete_selected(db: Session, data_dir: Path, selection: Selection) -> dict:
                 )
             row.image_path_fr = None
             reset += 1
+            for variant in row.variants:
+                if variant.variant_type == "standard":
+                    variant.no_scan = False
         for variant in row.variants:
             if variant.variant_type != "standard" and (
                 variant.image_path_us in deleted or variant.image_path_fr in deleted

@@ -392,12 +392,17 @@ def test_scrape_images_downloads_missing_scans_and_keeps_failed_ones_pending(
     ]
     assert mime.image_path == "__pending__/SVI/2_2"
 
-    # A rerun only asks for what is still missing (the reverse has a scan).
+    # A rerun only asks for what is still missing, the reverse's French scan
+    # included although its English one is there.
     web.requests.clear()
     with database.SessionLocal() as db:
         scans.scrape_images(db, data_dir)
     assert sorted(web.requests) == sorted(
-        [scan_url("SVI", "US", "2"), scan_url("SVI", "FR", "2")]
+        [
+            scan_url("SVI", "US", "2"),
+            scan_url("SVI", "FR", "2"),
+            scan_url("SVI", "FR", "1", 2),
+        ]
     )
 
 
@@ -494,6 +499,51 @@ def test_a_print_the_cdn_redirects_is_not_asked_again(source_dir, data_dir, web)
         page.write_text(page.read_text().replace("/2/1.jpg?class=hd", "/2/1.jpg"))
     run_import()
     assert not by_number(catalog(), "1").variants[1].no_scan
+
+
+def test_a_french_url_is_downloaded_even_when_the_english_scan_is_there(
+    source_dir, data_dir, web
+):
+    """Cards saved before the French page listed them get their French scans
+    once it does; one the CDN redirects isn't asked for again."""
+    cards = [card("Sprigatito", "1", versions=(2,)), card("Fuecoco", "4")]
+    write_set(source_dir, SV, "SVI", [{**c, "fr": False} for c in cards])
+    run_import()
+    for number, version in (("1", None), ("1", 2), ("4", None)):
+        web.add(scan_url("SVI", "US", number, version))
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+    sprigatito, fuecoco = catalog()
+    assert sprigatito.image_path_fr is None and fuecoco.image_path_fr is None
+
+    write_set(source_dir, SV, "SVI", cards)
+    run_import()
+    web.requests.clear()
+    web.add(scan_url("SVI", "FR", "1"), b"fr")
+    web.add(scan_url("SVI", "FR", "1", 2), b"fr reverse")
+    web.redirect(scan_url("SVI", "FR", "4"), scan_url("SVI", "US", "4"))
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+
+    assert sorted(web.requests) == sorted(
+        [
+            scan_url("SVI", "FR", "1"),
+            scan_url("SVI", "FR", "1", 2),
+            scan_url("SVI", "FR", "4"),
+        ]
+    )
+    sprigatito, fuecoco = catalog()
+    assert (data_dir / sprigatito.image_path_fr).read_bytes() == b"fr"
+    reverse = sprigatito.variants[1]
+    assert (data_dir / reverse.image_path_fr).read_bytes() == b"fr reverse"
+    assert reverse.image_path_us is not None
+    assert fuecoco.image_path_fr is None
+    assert fuecoco.variants[0].no_scan
+
+    web.requests.clear()
+    with database.SessionLocal() as db:
+        scans.scrape_images(db, data_dir)
+    assert web.requests == []
 
 
 def test_a_world_championship_card_without_english_scan_takes_the_french_one(

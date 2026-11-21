@@ -44,7 +44,7 @@ def _redownload(
         row.image_path_fr = None
     else:
         variant.image_path_us = variant.image_path_fr = None
-        variant.no_scan = False
+    variant.no_scan = False
 
 
 def _remove_prints(db: Session, prints: list[tuple[int, str]]) -> None:

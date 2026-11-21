@@ -77,6 +77,9 @@ class _Download:
     row: m.CardCatalog
     target: object  # the row or variant whose `field` gets `path`
     field: str
+    # The print's row (`standard` for the card's own scans), whose `no_scan`
+    # is set when every URL tried for it redirects.
+    variant: m.CardCatalogVariant | None
 
     @property
     def is_standard(self) -> bool:
@@ -84,36 +87,45 @@ class _Download:
 
 
 def _missing(row: m.CardCatalog) -> Iterator[_Download]:
-    """Every scan of the card still to download."""
-    if is_pending(row.image_path):
-        url_en, url_fr = standard_urls(row)
-        for url, language, field in (
-            (url_en, "en", "image_path"),
-            (url_fr, "fr", "image_path_fr"),
-        ):
-            if url:
-                yield _Download(
-                    url, image_path_for(row, url, "standard", language), row, row, field
-                )
+    """Every scan of the card still to download: each recorded URL, EN and FR
+    alike, whose scan isn't saved yet. A print marked `no_scan` is skipped,
+    except a pending English standard scan, which the card can't do without
+    (it is asked for until it comes, or the French fallback takes its place)."""
+    standard = next((v for v in row.variants if v.variant_type == "standard"), None)
+    url_en, url_fr = standard_urls(row)
+    if url_en and is_pending(row.image_path):
+        yield _Download(
+            url_en,
+            image_path_for(row, url_en, "standard", "en"),
+            row,
+            row,
+            "image_path",
+            standard,
+        )
+    if url_fr and row.image_path_fr is None and not (standard and standard.no_scan):
+        yield _Download(
+            url_fr,
+            image_path_for(row, url_fr, "standard", "fr"),
+            row,
+            row,
+            "image_path_fr",
+            standard,
+        )
     for variant in row.variants:
-        if (
-            variant.variant_type == "standard"
-            or variant.no_scan
-            or variant.image_path_us
-            or variant.image_path_fr
-        ):
+        if variant.variant_type == "standard" or variant.no_scan:
             continue
         for url, language, field in (
             (variant.source_url_en, "en", "image_path_us"),
             (variant.source_url_fr, "fr", "image_path_fr"),
         ):
-            if url:
+            if url and getattr(variant, field) is None:
                 yield _Download(
                     url,
                     image_path_for(row, url, variant.variant_type, language),
                     row,
                     variant,
                     field,
+                    variant,
                 )
 
 
@@ -199,17 +211,17 @@ def scrape_images(
                     set_code,
                     len(downloads),
                 )
-                # Per print other than standard: did every URL redirect?
-                all_redirected: dict[int, tuple[object, bool]] = {}
+                # Per print: did every URL tried redirect?
+                all_redirected: dict[int, tuple[m.CardCatalogVariant, bool]] = {}
                 for download, fetched in _fetch_all(client, downloads):
                     done += 1
                     if on_progress:
                         on_progress(done, total)
-                    if not download.is_standard:
-                        key = id(download.target)
-                        before = all_redirected.get(key, (download.target, True))[1]
+                    if download.variant is not None:
+                        key = id(download.variant)
+                        before = all_redirected.get(key, (download.variant, True))[1]
                         all_redirected[key] = (
-                            download.target,
+                            download.variant,
                             before and fetched.redirected,
                         )
                     content = fetched.content

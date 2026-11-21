@@ -341,3 +341,8 @@ Fixed by serving a safety worker at `/ngsw-worker.js` on those two hosts, as Ang
 - **Why**: a French page saved with cards 1–53 missing paired each English card with the French one 53 further on, and the union of both pages' prints gave cards prints of other cards (reverses on V cards, Durant with EUIC/NAIC stamps). Re-importing the corrected page fixed names and scans but kept those prints, since the import only ever added.
 - **Deleted even when used, over keeping used ones or refusing the import**: such a print doesn't exist, so a copy or line on it is wrong data anyway; the user chose a clean catalog over reviewing those cases by hand.
 - **Image cache unchanged**: `/images/` stays `immutable` for a year. A scan re-downloaded under the same path still shows the old one in a browser that cached it until that browser's cache is cleared; `no-cache` was tried and dropped.
+
+## Cards: scan downloads fetch each missing scan on its own (2026-11-21)
+
+- **What**: `scrape_images` fetches every recorded URL whose scan isn't saved, French and English alike. Before, a card's French standard scan was only fetched along with its pending English one, and a print with either scan saved was skipped, so a French URL that appeared later (FST's cards 232–284, missing from the first French page) was never downloaded.
+- **`no_scan` on the `standard` print too, over retrying every run**: a French standard scan the CDN redirects is skipped from then on, like other prints; a pending English standard scan is still always asked for (the card needs it, or the French fallback). Cleared by the import when a URL appears or changes, and by deleting the scans.
