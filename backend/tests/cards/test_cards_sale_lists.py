@@ -227,3 +227,53 @@ def test_bulk_add_is_all_or_nothing(client, pika, rai):
         (pika, "reverse"): 1,
         (rai, "standard"): 1,
     }
+
+
+def test_merge_moves_the_lines_and_deletes_the_source(client, other_client, pika, rai):
+    own(client.user_id, pika, standard=3, reverse=1)
+    own(client.user_id, rai, standard=1)
+    source, target = create(client), create(client, "Batch 2")
+    add(client, source["id"], pika, 2)
+    add(client, source["id"], rai, 1)
+    add(client, target["id"], pika, 1)
+    add(client, target["id"], pika, 1, "reverse")
+    url = f"{LISTS}/{source['id']}/merge"
+    assert client.post(url, json={"into": source["id"]}).status_code == 422
+    assert client.post(url, json={"into": 999999}).status_code == 404
+    assert other_client.post(url, json={"into": target["id"]}).status_code == 404
+    response = client.post(url, json={"into": target["id"]})
+    assert response.status_code == 200, response.text
+    merged = response.json()
+    assert merged["id"] == target["id"]
+    assert lines(merged) == {
+        (pika, "standard"): 3,
+        (pika, "reverse"): 1,
+        (rai, "standard"): 1,
+    }
+    assert client.get(f"{LISTS}/{source['id']}").status_code == 404
+    # Still the same copies on sale: none left to add.
+    assert add(client, target["id"], pika, 1).status_code == 409
+
+
+def test_merge_refuses_sold_lists(client, pika, rai):
+    own(client.user_id, pika, standard=1)
+    own(client.user_id, rai, standard=1)
+    sold, open_list = create(client), create(client, "Batch 2")
+    add(client, sold["id"], pika, 1)
+    add(client, open_list["id"], rai, 1)
+    client.post(f"{LISTS}/{sold['id']}/sell")
+    assert (
+        client.post(
+            f"{LISTS}/{open_list['id']}/merge", json={"into": sold["id"]}
+        ).status_code
+        == 409
+    )
+    assert (
+        client.post(
+            f"{LISTS}/{sold['id']}/merge", json={"into": open_list["id"]}
+        ).status_code
+        == 409
+    )
+    assert lines(client.get(f"{LISTS}/{open_list['id']}").json()) == {
+        (rai, "standard"): 1
+    }

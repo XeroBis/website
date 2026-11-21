@@ -23,6 +23,9 @@
       <button type="button" class="btn btn-secondary" (click)="openAdd()">
         <ab-icon name="plus" /> {{ 'saleLists.detail.addCard' | translate }}
       </button>
+      <button type="button" class="btn btn-secondary" (click)="openMerge()">
+        <ab-icon name="merge" /> {{ 'saleLists.detail.merge' | translate }}
+      </button>
       <button
         type="button"
         class="btn btn-primary"
@@ -494,6 +497,45 @@
           (click)="confirmSell()"
         >
           {{ 'saleLists.detail.markSold' | translate }}
+        </button>
+      </div>
+    </app-modal>
+  }
+
+  @if (mergeOpen()) {
+    <app-modal [title]="'saleLists.detail.mergeTitle' | translate" (closed)="closeMerge()">
+      @if (mergeTargets(); as targets) {
+        @if (targets.length === 0) {
+          <p>{{ 'saleLists.detail.mergeNone' | translate }}</p>
+        } @else {
+          <p>
+            {{ 'saleLists.detail.mergeBody' | translate: { cards: list.total_quantity } }}
+          </p>
+          <label class="merge-field">
+            {{ 'saleLists.detail.mergeInto' | translate }}
+            <select class="select" [ngModel]="mergeInto()" (ngModelChange)="mergeInto.set($event)">
+              @for (target of targets; track target.id) {
+                <option [ngValue]="target.id">
+                  {{ target.name }} ({{ target.total_quantity }})
+                </option>
+              }
+            </select>
+          </label>
+        }
+      } @else {
+        <p>{{ 'common.loading' | translate }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeMerge()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="merging() || mergeInto() === null"
+          (click)="confirmMerge()"
+        >
+          {{ 'saleLists.detail.mergeConfirm' | translate }}
         </button>
       </div>
     </app-modal>

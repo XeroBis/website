@@ -36,6 +36,11 @@ export class SaleListsService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  /** This list's cards onto `into` (both on sale); this list is deleted. */
+  merge(id: number, into: number): Observable<SaleListDetail> {
+    return this.http.post<SaleListDetail>(`${this.baseUrl}/${id}/merge`, { into });
+  }
+
   sell(id: number): Observable<SaleListDetail> {
     return this.http.post<SaleListDetail>(`${this.baseUrl}/${id}/sell`, {});
   }

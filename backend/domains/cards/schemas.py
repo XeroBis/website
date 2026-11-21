@@ -1010,6 +1010,12 @@ class SaleListRename(BaseModel):
     name: Name
 
 
+class SaleListMerge(BaseModel):
+    """The list that takes this one's cards."""
+
+    into: int
+
+
 class SaleListCardAdd(BaseModel):
     catalog_id: int
     variant_type: str = "standard"

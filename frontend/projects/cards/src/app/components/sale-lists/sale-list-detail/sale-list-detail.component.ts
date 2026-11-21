@@ -14,7 +14,7 @@ import {
   VARIANT_LABELS,
   VariantType,
 } from '../../../models/card.model';
-import { SaleListCard, SaleListDetail } from '../../../models/sale-list.model';
+import { SaleList, SaleListCard, SaleListDetail } from '../../../models/sale-list.model';
 import { CardsService } from '../../../services/cards.service';
 import { CatalogService } from '../../../services/catalog.service';
 import { SaleListsService } from '../../../services/sale-lists.service';
@@ -255,6 +255,11 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
 
   sellOpen = signal(false);
   selling = signal(false);
+  mergeOpen = signal(false);
+  merging = signal(false);
+  /** The user's other lists on sale, read when the merge modal opens. */
+  mergeTargets = signal<SaleList[] | null>(null);
+  mergeInto = signal<number | null>(null);
   removeTarget = signal<SaleListCard | null>(null);
   removing = signal(false);
 
@@ -742,9 +747,7 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
       if (twin) {
         updated.quantity += twin.quantity;
       }
-      return tray
-        .filter((l) => l !== twin)
-        .map((l) => (l.key === key ? updated : l));
+      return tray.filter((l) => l !== twin).map((l) => (l.key === key ? updated : l));
     });
   }
 
@@ -807,6 +810,55 @@ export class SaleListDetailComponent implements OnInit, OnDestroy {
         this.selling.set(false);
         this.toastService.show(
           err?.error?.detail ?? this.translate.instant('saleLists.detail.sellFailed'),
+          'error',
+        );
+      },
+    });
+  }
+
+  // ── merge ──────────────────────────────────────────────────────────────────
+
+  openMerge(): void {
+    this.mergeTargets.set(null);
+    this.mergeInto.set(null);
+    this.mergeOpen.set(true);
+    this.saleListsService.list().subscribe((lists) => {
+      const targets = lists.filter((list) => !list.sold_at && list.id !== this.listId);
+      this.mergeTargets.set(targets);
+      this.mergeInto.set(targets[0]?.id ?? null);
+    });
+  }
+
+  closeMerge(): void {
+    if (!this.merging()) {
+      this.mergeOpen.set(false);
+    }
+  }
+
+  /** This list's cards go onto the picked one, which then shows. */
+  confirmMerge(): void {
+    const into = this.mergeInto();
+    if (into === null) {
+      return;
+    }
+    this.merging.set(true);
+    this.saleListsService.merge(this.listId, into).subscribe({
+      next: (detail) => {
+        this.merging.set(false);
+        this.mergeOpen.set(false);
+        this.toastService.show(
+          this.translate.instant('saleLists.detail.mergedToast', { name: detail.name }),
+        );
+        // The same component shows the target (the route is reused); this
+        // list's URL is replaced, since it no longer exists.
+        this.listId = detail.id;
+        this.saleList.set(detail);
+        this.router.navigate(['/sale-lists', detail.id], { replaceUrl: true });
+      },
+      error: (err) => {
+        this.merging.set(false);
+        this.toastService.show(
+          err?.error?.detail ?? this.translate.instant('saleLists.detail.mergeFailed'),
           'error',
         );
       },

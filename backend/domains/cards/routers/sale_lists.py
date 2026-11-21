@@ -271,6 +271,29 @@ def sell_sale_list(
     return detail_out(db, list_id, user)
 
 
+@router.post("/{list_id}/merge", response_model=s.SaleListDetailOut)
+def merge_sale_list(
+    list_id: int,
+    body: s.SaleListMerge,
+    user: User = Depends(cards_user),
+    db: Session = Depends(get_db),
+):
+    """This list's lines onto `into` (same print: one line), then this list
+    deleted. Both unsold; the copies stay on sale, so no cap check."""
+    if body.into == list_id:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "A list can't be merged into itself"
+        )
+    source = _open_list(db, list_id, user.id)
+    target = _open_list(db, body.into, user.id)
+    for row in source.cards:
+        _add(target, row.catalog_id, row.variant_type, row.quantity)
+    _touch(target)
+    db.delete(source)
+    db.commit()
+    return detail_out(db, target.id, user)
+
+
 # ── cards ────────────────────────────────────────────────────────────────────
 
 

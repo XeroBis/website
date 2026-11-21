@@ -390,6 +390,14 @@
   }
 }
 
+// Sale list detail: the merge modal's target picker.
+.merge-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
