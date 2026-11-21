@@ -999,6 +999,15 @@ class CatalogImportResult(BaseModel):
     updated: int
 
 
+class ImageCount(BaseModel):
+    files: int
+
+
+class ImagesDeleteResult(BaseModel):
+    files_deleted: int
+    scans_reset: int
+
+
 # ── sale lists ───────────────────────────────────────────────────────────────
 
 

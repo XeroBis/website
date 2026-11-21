@@ -136,6 +136,13 @@ export const REFRESH_STEPS = [
               (change)="importImages($event)"
               hidden
           /></label>
+          <button
+            class="btn btn-danger"
+            [disabled]="busy() || !validSelection()"
+            (click)="deleteImages()"
+          >
+            <ab-icon name="trash" /> {{ 'admin.deleteImages' | translate }}
+          </button>
         </div>
       </header>
       @if (!validSelection()) {
@@ -712,6 +719,27 @@ export class CatalogManagementComponent {
       const result = await firstValueFrom(this.api.importCatalog(await readJson(file)));
       this.message.set(this.translate.instant('admin.importResult', result));
       await this.load();
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    } finally {
+      this.pending.set(false);
+    }
+  }
+
+  async deleteImages() {
+    this.error.set('');
+    this.message.set('');
+    this.pending.set(true);
+    try {
+      const selection = { ...this.selection, setCodes: [...this.selection.setCodes] };
+      const { files } = await firstValueFrom(this.api.countImages(selection));
+      if (!files) {
+        this.message.set(this.translate.instant('admin.deleteImagesNone'));
+        return;
+      }
+      if (!confirm(this.translate.instant('admin.deleteImagesConfirm', { count: files }))) return;
+      const result = await firstValueFrom(this.api.deleteImages(selection));
+      this.message.set(this.translate.instant('admin.deleteImagesResult', result));
     } catch (error) {
       this.error.set(errorMessage(error));
     } finally {

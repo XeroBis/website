@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 ALL = "__all__"
 IMPORT_METADATA = "import_metadata"
 IMPORT_IMAGES = "import_images"
+DELETE_IMAGES = "delete_images"
 
 Progress = Callable[[int, int], None]
 

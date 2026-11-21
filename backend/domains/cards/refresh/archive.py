@@ -1,11 +1,13 @@
-"""The images export/import: a zip of CARDS_DATA_DIR's scans, thumbnails, set
+"""The images export/import and delete: a zip of CARDS_DATA_DIR's scans, thumbnails, set
 logos and symbols (relative paths kept, so it restores the same layout and
 the catalog's paths keep matching), filtered by language, kind and set.
 
 The export is streamed as it is written (the full archive is ~2 GB). The
 import receives the zip as the raw request body into a temporary file inside
 CARDS_DATA_DIR, then a background job restores the selected entries straight
-into place (existing files kept) and links pending catalog paths.
+into place (existing files kept) and links pending catalog paths. The delete
+removes the selected files and marks the catalog scans among them to download
+again.
 """
 
 import logging
@@ -15,8 +17,12 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
+
 from core import database
-from domains.cards.refresh import jobs, scans
+from domains.cards import models as m
+from domains.cards.refresh import jobs, scans, source
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +119,42 @@ def stream_zip(files: list[tuple[Path, str]]) -> Iterator[bytes]:
             if len(sink.buffer) >= CHUNK:
                 yield sink.take()
     yield sink.take()
+
+
+# ── delete ───────────────────────────────────────────────────────────────────
+
+
+def delete_selected(db: Session, data_dir: Path, selection: Selection) -> dict:
+    """Remove the selected files, then mark every print whose scan (EN or FR)
+    was among them to download again, as a changed scan URL does
+    (data-model.md `cards`): the next scan downloads fetch both again and
+    regenerate thumbnails; logos and symbols come back with their own step."""
+    deleted: set[str] = set()
+    for path, name in selected_files(data_dir, selection):
+        path.unlink(missing_ok=True)
+        deleted.add(name)
+    query = select(m.CardCatalog).options(selectinload(m.CardCatalog.variants))
+    if selection.set_codes is not None:
+        query = query.where(m.CardCatalog.set_code.in_(selection.set_codes))
+    reset = 0
+    for row in db.scalars(query):
+        if row.image_path in deleted or row.image_path_fr in deleted:
+            if not scans.is_pending(row.image_path):
+                row.image_path = source.pending_image_path(
+                    row.set_code, row.card_number, scans.standard_urls(row)[0]
+                )
+            row.image_path_fr = None
+            reset += 1
+        for variant in row.variants:
+            if variant.variant_type != "standard" and (
+                variant.image_path_us in deleted or variant.image_path_fr in deleted
+            ):
+                variant.image_path_us = variant.image_path_fr = None
+                variant.no_scan = False
+                reset += 1
+    db.commit()
+    logger.info("Images delete: %d file(s), %d print(s) reset", len(deleted), reset)
+    return {"files_deleted": len(deleted), "scans_reset": reset}
 
 
 # ── import ───────────────────────────────────────────────────────────────────

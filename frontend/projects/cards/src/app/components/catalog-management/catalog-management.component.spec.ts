@@ -47,6 +47,8 @@ function setup(initial: 'idle' | 'running' = 'idle', runningRefresh = false) {
     startRefresh: vi.fn(() => of({ status: 'started' })),
     startRefreshStep: vi.fn(() => of({ status: 'started' })),
     importCatalog: vi.fn(() => of({ created: 1, updated: 0 })),
+    countImages: vi.fn((_selection: unknown) => of({ files: 3 })),
+    deleteImages: vi.fn((_selection: unknown) => of({ files_deleted: 3, scans_reset: 2 })),
   };
   TestBed.configureTestingModule({
     providers: [
@@ -179,5 +181,32 @@ describe('Catalog job lifecycle', () => {
     } as unknown as Event);
     expect(page.message()).toBe('1 created · 0 updated');
     fixture.destroy();
+  });
+
+  it('deletes the selected images after confirming their count', async () => {
+    const { fixture, page, api } = setup();
+    await fixture.whenStable();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
+    await page.deleteImages();
+    expect(confirm.mock.calls[0][0]).toContain('3 files');
+    expect(api.deleteImages).not.toHaveBeenCalled();
+
+    confirm.mockReturnValueOnce(true);
+    await page.deleteImages();
+    expect(api.countImages.mock.calls[1][0]).toMatchObject({ setCodes: ['BS'] });
+    expect(api.deleteImages).toHaveBeenCalledOnce();
+    expect(page.message()).toBe('3 files deleted · 2 scans to download again');
+    confirm.mockRestore();
+  });
+
+  it('does not ask to delete when nothing matches', async () => {
+    const { fixture, page, api } = setup();
+    await fixture.whenStable();
+    api.countImages.mockReturnValueOnce(of({ files: 0 }));
+    const confirm = vi.spyOn(window, 'confirm');
+    await page.deleteImages();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(page.message()).toBe('No file matches the selection.');
+    confirm.mockRestore();
   });
 });

@@ -1,6 +1,6 @@
 """Catalog management, admins only: stats, the refresh pipeline (all steps or
 one, in the background, polled), the catalog metadata export/import and the
-images export/import. Plus the public variant badges."""
+images export/import/delete. Plus the public variant badges."""
 
 import secrets
 from pathlib import Path
@@ -176,6 +176,35 @@ def export_images(
         media_type="application/zip",
         headers={"Content-Disposition": 'attachment; filename="card_images.zip"'},
     )
+
+
+@router.get("/images/count", response_model=s.ImageCount)
+def count_images(
+    selection: archive.Selection = Depends(_selection),
+    _: User = Depends(require_admin),
+):
+    """How many files the selection covers (the delete's confirmation)."""
+    return s.ImageCount(files=len(archive.selected_files(_data_dir(), selection)))
+
+
+@router.post("/delete/images", response_model=s.ImagesDeleteResult)
+def delete_images(
+    selection: archive.Selection = Depends(_selection),
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Delete the selected files; the catalog scans among them go back to
+    pending, so the next scan downloads fetch them again. Refused while
+    another job runs."""
+    if not jobs.try_start(jobs.DELETE_IMAGES):
+        raise _busy()
+    try:
+        result = archive.delete_selected(db, _data_dir(), selection)
+    except Exception:
+        jobs.fail(jobs.DELETE_IMAGES, "Images delete failed")
+        raise
+    jobs.finish(jobs.DELETE_IMAGES, **result)
+    return result
 
 
 @router.post(

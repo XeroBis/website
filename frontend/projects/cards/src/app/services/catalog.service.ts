@@ -278,6 +278,25 @@ export class CatalogService {
     return this.http.get(`${this.baseUrl}/export`, { responseType: 'blob' });
   }
 
+  /** How many files the selection covers (the delete's confirmation). */
+  countImages(selection: ImageArchiveSelection): Observable<{ files: number }> {
+    return this.http.get<{ files: number }>(`${this.baseUrl}/images/count`, {
+      params: imageArchiveParams(selection),
+    });
+  }
+
+  /** Deletes the selected files; their catalog scans go back to pending, so the
+   * next scan downloads fetch them again. */
+  deleteImages(
+    selection: ImageArchiveSelection,
+  ): Observable<{ files_deleted: number; scans_reset: number }> {
+    return this.http.post<{ files_deleted: number; scans_reset: number }>(
+      `${this.baseUrl}/delete/images`,
+      null,
+      { params: imageArchiveParams(selection) },
+    );
+  }
+
   exportImagesUrl(selection: ImageArchiveSelection): string {
     return `${this.baseUrl}/export/images?${imageArchiveParams(selection).toString()}`;
   }

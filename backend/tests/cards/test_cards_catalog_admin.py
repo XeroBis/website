@@ -56,6 +56,8 @@ def write(data_dir, relative: str, content: bytes = b"x"):
         ("get", "/export/images"),
         ("post", "/import/images"),
         ("get", "/import/images/status"),
+        ("get", "/images/count"),
+        ("post", "/delete/images"),
     ],
 )
 def test_management_needs_an_admin(client, anon, method, path):
@@ -445,6 +447,83 @@ def test_images_import_needs_csrf(admin):
     del admin.headers["x-csrf-token"]
     assert post_zip(admin, make_zip({"a": b"b"})).status_code == 403
     assert jobs.running() is None
+
+
+# ── images delete ────────────────────────────────────────────────────────────
+
+
+def test_images_count_follows_the_selection(admin, image_tree):
+    assert admin.get(f"{CATALOG}/images/count").json() == {"files": 8}
+    query = "?french=false&variants=false&logos=false&symbols=false&set_code=SVI"
+    assert admin.get(f"{CATALOG}/images/count{query}").json() == {"files": 2}
+
+
+def test_images_delete_removes_the_selection_and_scans_download_again(
+    admin, source_dir, data_dir, web
+):
+    write_set(source_dir, SV, "SVI", [card("Sprigatito", "1", versions=(2,))])
+    write_set(source_dir, SV, "MEW", [card("Mew", "1")])
+    for code in ("SVI", "MEW"):
+        for language in ("US", "FR"):
+            web.add(scan_url(code, language, "1"), jpeg())
+            web.add(logo_url(code, language), b"logo")
+        web.add(symbol_url(code), b"symbol")
+    web.add(scan_url("SVI", "US", "1", 2), jpeg())
+    web.add(scan_url("SVI", "FR", "1", 2), jpeg())
+    for step in ("import_html", "scrape_images", "generate_thumbnails"):
+        admin.post(f"{CATALOG}/refresh/steps/{step}")
+    admin.post(f"{CATALOG}/refresh/steps/scrape_logos_symbols")
+    svi = data_dir / SV / "SVI"
+    kept = svi / "cards" / "1_sprigatito_standard_EN.jpg"
+
+    # French only, SVI only: both prints' FR scans, the FR thumbnail and logo.
+    response = admin.post(
+        f"{CATALOG}/delete/images?english=false&symbols=false&set_code=SVI"
+    )
+    assert response.status_code == 200
+    assert response.json() == {"files_deleted": 4, "scans_reset": 2}
+    assert admin.get(f"{CATALOG}/delete/images").status_code == 405
+    assert kept.is_file()
+    assert not (svi / "cards" / "1_sprigatito_standard_FR.jpg").exists()
+    assert not (svi / "thumbnails" / "1_sprigatito_standard_FR.jpg").exists()
+    assert not (svi / "SVI_logo_FR.png").exists()
+    assert (svi / "SVI_symbol.png").is_file()
+    assert (data_dir / SV / "MEW" / "cards" / "1_mew_standard_FR.jpg").is_file()
+    with database.SessionLocal() as db:
+        rows = {r.set_code: r for r in db.scalars(select(m.CardCatalog))}
+        assert rows["SVI"].image_path.startswith("__pending__/SVI/")
+        assert rows["SVI"].image_path_fr is None
+        variant = next(v for v in rows["SVI"].variants if v.variant_type != "standard")
+        assert variant.image_path_us is None and variant.image_path_fr is None
+        assert rows["MEW"].image_path == f"{SV}/MEW/cards/1_mew_standard_EN.jpg"
+
+    for step in ("scrape_images", "generate_thumbnails", "scrape_logos_symbols"):
+        admin.post(f"{CATALOG}/refresh/steps/{step}")
+    assert (svi / "cards" / "1_sprigatito_standard_FR.jpg").is_file()
+    assert (svi / "thumbnails" / "1_sprigatito_standard_FR.jpg").is_file()
+    assert (svi / "SVI_logo_FR.png").is_file()
+    with database.SessionLocal() as db:
+        row = db.scalar(select(m.CardCatalog).where(m.CardCatalog.set_code == "SVI"))
+        assert row.image_path == str(kept.relative_to(data_dir))
+        assert row.image_path_fr == f"{SV}/SVI/cards/1_sprigatito_standard_FR.jpg"
+        assert all(
+            v.image_path_fr for v in row.variants if v.variant_type != "standard"
+        )
+
+
+def test_images_delete_is_refused_while_a_job_runs(admin, image_tree):
+    assert jobs.try_start(jobs.IMPORT_IMAGES)
+    try:
+        assert admin.post(f"{CATALOG}/delete/images").status_code == 409
+    finally:
+        jobs.finish(jobs.IMPORT_IMAGES)
+    assert (image_tree / f"{SV}/SVI/SVI_symbol.png").is_file()
+
+
+def test_images_delete_needs_csrf(admin, image_tree):
+    del admin.headers["x-csrf-token"]
+    assert admin.post(f"{CATALOG}/delete/images").status_code == 403
+    assert (image_tree / f"{SV}/SVI/SVI_symbol.png").is_file()
 
 
 # ── public variant badges ────────────────────────────────────────────────────
