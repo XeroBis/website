@@ -98,7 +98,11 @@ def test_one_step_runs_in_the_background_and_reports_its_result(admin, source_di
     state = admin.get(f"{CATALOG}/refresh/steps/import_html/status").json()
     assert state["status"] == "done"
     assert state["percent"] == 100
-    assert state["result"] == {"sets_processed": 1, "cards_upserted": 1}
+    assert state["result"] == {
+        "sets_processed": 1,
+        "cards_upserted": 1,
+        "prints_removed": 0,
+    }
     assert state["last_run_result"] == state["result"]
     assert state["last_run_at"]
     assert jobs.running() is None
@@ -155,6 +159,7 @@ def test_full_refresh_runs_every_step(admin, source_dir, data_dir, web):
     assert state["result"] == {
         "sets_processed": 1,
         "cards_upserted": 1,
+        "prints_removed": 0,
         "matched": 0,
         "unmatched": 1,
         "skipped": 0,

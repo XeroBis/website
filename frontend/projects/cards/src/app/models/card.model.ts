@@ -648,6 +648,7 @@ export interface RefreshStepResult {
   french_missing?: number;
   sets_processed?: number;
   cards_upserted?: number;
+  prints_removed?: number;
   images_downloaded?: number;
   thumbnails_generated?: number;
   variants_added?: number;

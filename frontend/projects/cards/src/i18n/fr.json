@@ -724,6 +724,7 @@
     "result": {
       "sets_processed": "Séries traitées",
       "cards_upserted": "Cartes enregistrées",
+      "prints_removed": "Versions supprimées",
       "matched": "Trouvées",
       "unmatched": "Non trouvées",
       "skipped": "Ignorées",

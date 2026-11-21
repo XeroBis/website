@@ -4,9 +4,10 @@ CARDS_SOURCE_DIR (local parsing only; scans are downloaded by scans.py)."""
 import logging
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import delete, exists, select, tuple_
 from sqlalchemy.orm import Session, selectinload
 
+from core.config import settings
 from domains.cards import display
 from domains.cards import models as m
 from domains.cards.names import canonical_energy_name
@@ -46,12 +47,64 @@ def _redownload(
         variant.no_scan = False
 
 
+def _remove_prints(db: Session, prints: list[tuple[int, str]]) -> None:
+    """Delete these (catalog card, print) pairs and every use of them: owned
+    copies (a card left without any is deleted, its deck lines with it), deck
+    and draft lines, purchase and sale list lines, collection history."""
+    owned = [
+        tuple(pair)
+        for pair in db.execute(
+            select(m.CardVariantQuantity.card_id, m.CardVariantQuantity.variant_type)
+            .join(m.Card)
+            .where(
+                tuple_(m.Card.catalog_id, m.CardVariantQuantity.variant_type).in_(
+                    prints
+                )
+            )
+        )
+    ]
+    if owned:
+        db.execute(
+            delete(m.CardVariantQuantity).where(
+                tuple_(
+                    m.CardVariantQuantity.card_id, m.CardVariantQuantity.variant_type
+                ).in_(owned)
+            )
+        )
+        db.execute(
+            delete(m.DeckCard).where(
+                tuple_(m.DeckCard.card_id, m.DeckCard.variant_type).in_(owned)
+            )
+        )
+        # Left without any print: gone, like everywhere else.
+        db.execute(
+            delete(m.Card).where(
+                m.Card.id.in_({card_id for card_id, _ in owned}),
+                ~exists().where(m.CardVariantQuantity.card_id == m.Card.id),
+            )
+        )
+    for model in (
+        m.DeckCard,
+        m.DeckUpgradeDraftCard,
+        m.PurchaseListCard,
+        m.SaleListCard,
+        m.CollectionHistory,
+    ):
+        db.execute(
+            delete(model).where(
+                tuple_(model.catalog_id, model.variant_type).in_(prints)
+            )
+        )
+
+
 def import_html(db: Session, root: Path | None = None) -> dict:
     """One catalog row per card slot, matched first by its English standard
     scan URL (so a corrected number updates the row in place, keeping its
     scans and every link to it), then by (set_code, card_number); one variant
-    row per print the grids show, with its scan URLs. Rows and prints no
-    longer in the source are kept."""
+    row per print the grids show, with its scan URLs. A matched card's prints
+    the grids no longer show are deleted with every use of them and their
+    scan files (a page saved wrong may have given it another card's prints).
+    Cards no longer in the source are kept."""
     rows = db.scalars(
         select(m.CardCatalog).options(selectinload(m.CardCatalog.variants))
     ).all()
@@ -61,6 +114,7 @@ def import_html(db: Session, root: Path | None = None) -> dict:
     }
 
     sets_processed = cards_upserted = redownloads = 0
+    stale: list[m.CardCatalogVariant] = []
     for series, set_code, set_dir in source.iter_sets(root):
         try:
             header = source.parse_set_header(set_dir, set_code)
@@ -158,19 +212,47 @@ def import_html(db: Session, root: Path | None = None) -> dict:
                     variant.no_scan = False
                 variant.source_url_en = urls["en"]
                 variant.source_url_fr = urls["fr"]
+            stale.extend(
+                v
+                for v in row.variants
+                if v.variant_type != "standard" and v.variant_type not in slot.variants
+            )
             cards_upserted += 1
 
         sets_processed += 1
         db.flush()
 
+    stale_files = [
+        path for v in stale for path in (v.image_path_us, v.image_path_fr) if path
+    ]
+    if stale:
+        for v in stale:
+            logger.info(
+                "import_html: %s %s %s no longer in the source, deleted",
+                v.catalog_card.set_code,
+                v.catalog_card.card_number,
+                v.variant_type,
+            )
+        _remove_prints(db, [(v.card_catalog_id, v.variant_type) for v in stale])
+        for v in stale:
+            v.catalog_card.variants.remove(v)
     db.commit()
+    # After the commit, so a failed import keeps them.
+    data_dir = Path(settings.cards_data_dir)
+    for path in stale_files:
+        (data_dir / path).unlink(missing_ok=True)
     # name.txt may have changed with the source.
     display._series_names_fr.cache_clear()
     logger.info(
         "import_html: %d set(s), %d card(s) upserted, %d print(s) to download "
-        "again (scan URL changed)",
+        "again (scan URL changed), %d print(s) removed",
         sets_processed,
         cards_upserted,
         redownloads,
+        len(stale),
     )
-    return {"sets_processed": sets_processed, "cards_upserted": cards_upserted}
+    return {
+        "sets_processed": sets_processed,
+        "cards_upserted": cards_upserted,
+        "prints_removed": len(stale),
+    }

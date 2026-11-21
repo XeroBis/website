@@ -724,6 +724,7 @@
     "result": {
       "sets_processed": "Sets processed",
       "cards_upserted": "Cards upserted",
+      "prints_removed": "Prints removed",
       "matched": "Matched",
       "unmatched": "Unmatched",
       "skipped": "Skipped",

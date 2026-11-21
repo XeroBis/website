@@ -21,7 +21,7 @@ from domains.cards.refresh import (
     variant_icons,
 )
 from domains.cards.variant_order import ALL_VARIANT_TYPES
-from tests.cards.conftest import add_catalog_card
+from tests.cards.conftest import add_catalog_card, make_deck, own, put_in_deck
 from tests.cards.source_files import (
     card,
     jpeg,
@@ -31,6 +31,7 @@ from tests.cards.source_files import (
     write_series_name,
     write_set,
 )
+from tests.conftest import make_user
 
 REAL_SOURCE = Path(__file__).parents[2] / "domains" / "cards" / "source"
 SV = "Scarlet & Violet"
@@ -99,7 +100,11 @@ def test_import_creates_cards_with_prints_set_facts_and_placeholders(source_dir)
             card("Nest Ball", "181", supertype="Trainer", rarity="Uncommon"),
         ],
     )
-    assert run_import() == {"sets_processed": 1, "cards_upserted": 2}
+    assert run_import() == {
+        "sets_processed": 1,
+        "cards_upserted": 2,
+        "prints_removed": 0,
+    }
 
     sprigatito, nest_ball = catalog()
     assert (sprigatito.name, sprigatito.display_name) == ("Sprigatito", "Poussacha")
@@ -152,6 +157,111 @@ def test_reimport_updates_in_place_and_follows_a_corrected_number(source_dir):
     assert [v.variant_type for v in fuecoco.variants] == ["standard", "reverse"]
     assert len([r for r in rows if r.set_code == "SVI"]) == 2
     assert any(r.id == gone for r in rows)
+
+
+def test_a_print_the_source_no_longer_shows_is_deleted_with_its_uses(
+    source_dir, data_dir
+):
+    """A French page saved with cards missing shifted another card's prints
+    onto this one: the corrected source deletes them, every use of them and
+    their scans, and nothing else."""
+    write_set(
+        source_dir,
+        SV,
+        "SVI",
+        [card("Sprigatito", "1", versions=(2,)), card("Fuecoco", "4", versions=(2,))],
+    )
+    run_import()
+    sprigatito, fuecoco = catalog()
+    uid = make_user(apps=("cards",)).id
+    only_reverse = own(uid, sprigatito.id, reverse=1)
+    other_uid = make_user(email="other@example.com", pseudo="Other", apps=("cards",)).id
+    both = own(other_uid, sprigatito.id, standard=1, reverse=2)
+    deck = make_deck(other_uid)
+    put_in_deck(deck, both, 1, "reverse")
+    put_in_deck(deck, both, 1)
+    phantom = make_deck(uid, "Phantom", "phantom")
+    scan = data_dir / SV / "SVI" / "cards" / "1_sprigatito_reverse_EN.jpg"
+    scan.parent.mkdir(parents=True)
+    scan.write_bytes(b"wrong card")
+    with database.SessionLocal() as db:
+        db.get(m.CardCatalogVariant, sprigatito.variants[1].id).image_path_us = str(
+            scan.relative_to(data_dir)
+        )
+        draft = m.DeckUpgradeDraft(deck_id=deck, name="Draft")
+        draft.entries = [
+            m.DeckUpgradeDraftCard(
+                catalog_id=sprigatito.id, variant_type="reverse", quantity_delta=1
+            ),
+            m.DeckUpgradeDraftCard(
+                catalog_id=fuecoco.id, variant_type="reverse", quantity_delta=1
+            ),
+        ]
+        db.add_all(
+            [
+                draft,
+                m.DeckCard(
+                    deck_id=phantom, catalog_id=sprigatito.id, variant_type="reverse"
+                ),
+                m.PurchaseList(
+                    user_id=uid,
+                    name="Order",
+                    cards=[
+                        m.PurchaseListCard(
+                            catalog_id=sprigatito.id,
+                            variant_type="reverse",
+                            quantity=1,
+                        )
+                    ],
+                ),
+                m.SaleList(
+                    user_id=other_uid,
+                    name="Sale",
+                    cards=[
+                        m.SaleListCard(
+                            catalog_id=sprigatito.id,
+                            variant_type="reverse",
+                            quantity=1,
+                        )
+                    ],
+                ),
+                m.CollectionHistory(
+                    user_id=uid,
+                    catalog_id=sprigatito.id,
+                    variant_type="reverse",
+                    action="added",
+                    source="manual",
+                    new_quantity=1,
+                ),
+            ]
+        )
+        db.commit()
+
+    write_set(
+        source_dir,
+        SV,
+        "SVI",
+        [card("Sprigatito", "1"), card("Fuecoco", "4", versions=(2,))],
+    )
+    assert run_import()["prints_removed"] == 1
+
+    sprigatito, fuecoco = catalog()
+    assert [v.variant_type for v in sprigatito.variants] == ["standard"]
+    assert [v.variant_type for v in fuecoco.variants] == ["standard", "reverse"]
+    assert not scan.exists()
+    with database.SessionLocal() as db:
+        assert db.get(m.Card, only_reverse) is None
+        kept = db.get(m.Card, both)
+        assert [(q.variant_type, q.quantity) for q in kept.variant_quantities] == [
+            ("standard", 1)
+        ]
+        assert [d.variant_type for d in kept.deck_cards] == ["standard"]
+        assert db.scalars(select(m.DeckCard.deck_id)).all() == [deck]
+        assert [e.catalog_id for e in db.scalars(select(m.DeckUpgradeDraftCard))] == [
+            fuecoco.id
+        ]
+        for model in (m.PurchaseListCard, m.SaleListCard, m.CollectionHistory):
+            assert db.scalars(select(model)).all() == []
 
 
 def test_a_stale_number_never_takes_over_another_cards_row(source_dir):
@@ -218,7 +328,11 @@ def test_alt_number_is_ignored_for_the_card_number(source_dir):
 def test_a_set_without_header_is_skipped(source_dir):
     folder = write_set(source_dir, SV, "SVI", [card("Sprigatito", "1")])
     (folder / "SVI_fr_header.html").unlink()
-    assert run_import() == {"sets_processed": 0, "cards_upserted": 0}
+    assert run_import() == {
+        "sets_processed": 0,
+        "cards_upserted": 0,
+        "prints_removed": 0,
+    }
 
 
 def test_import_clears_the_series_label_cache(source_dir):
