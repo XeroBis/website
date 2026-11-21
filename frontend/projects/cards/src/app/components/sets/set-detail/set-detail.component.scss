@@ -252,3 +252,225 @@
     color: var(--color-text);
   }
 }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+// Sale mode: a panel fixed on the right, like Browse's "Add to collection".
+$sale-panel-width: 300px;
+
+.set-detail-page.with-sale-panel {
+  margin-right: calc(#{$sale-panel-width} + var(--space-4));
+}
+
+.sale-panel {
+  position: fixed;
+  top: 5.5rem;
+  right: var(--space-4);
+  width: $sale-panel-width;
+  max-height: calc(100vh - 7rem);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  box-shadow: var(--shadow-lg);
+  z-index: 5;
+}
+
+.sale-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  margin-bottom: var(--space-3);
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: default;
+
+  .card-count {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+}
+
+.sale-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.tray-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.tray-line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .card-thumb {
+    width: 40px;
+    flex-shrink: 0;
+  }
+
+  .card-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-set {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .tray-print {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .quantity {
+    font-weight: 600;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+}
+
+.sale-panel-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+
+  select,
+  input {
+    width: 100%;
+  }
+}
+
+.sale-bar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sale-new-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sale-actions {
+  display: flex;
+  gap: var(--space-2);
+
+  .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .set-detail-page.with-sale-panel {
+    margin-right: 0;
+    padding-bottom: 5rem;
+  }
+
+  .sale-panel {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+
+    .sale-hint,
+    .tray-lines,
+    .sale-panel-footer {
+      display: none;
+    }
+
+    &.expanded {
+      max-height: 70vh;
+      overflow-y: auto;
+
+      .sale-hint {
+        display: block;
+      }
+
+      .tray-lines,
+      .sale-panel-footer {
+        display: flex;
+      }
+    }
+  }
+
+  .sale-panel-header {
+    margin-bottom: 0;
+    cursor: pointer;
+
+    &::after {
+      content: '▲';
+      font-size: 0.7rem;
+      transition: transform 0.15s ease;
+    }
+  }
+
+  .sale-panel.expanded .sale-panel-header {
+    margin-bottom: var(--space-3);
+
+    &::after {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// Sale mode's checklist: the count itself adds a copy.
+.sale-add {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}

@@ -52,17 +52,25 @@ export function printSelectionMode(selected: string[]): VariantDisplayMode {
   return selected.length === 1 && selected[0] === 'standard' ? 'standard' : 'both';
 }
 
-/** Shared personal/public filtering, including exact-print duplicate quantities. */
+/** The owned filter: 0 (off), or the copies of a print it must have. */
+export type MinOwned = 0 | 1 | 2;
+
+/** The owned filter button's cycle: off → +1 → +2 → off. */
+export function nextMinOwned(current: MinOwned): MinOwned {
+  return current === 2 ? 0 : ((current + 1) as MinOwned);
+}
+
+/** Shared personal/public filtering, including the exact-print owned filter. */
 export function selectDisplayedPrints<T extends VariantLike>(
   variants: T[],
   selected: string[],
-  duplicatesOnly: boolean,
+  minOwned: MinOwned,
   quantity: (variant: T) => number,
 ): T[] {
   return variants.filter(
     (variant) =>
       (selected.length === 0 || selected.includes(variant.variant_type)) &&
-      (!duplicatesOnly || quantity(variant) >= 2),
+      (minOwned === 0 || quantity(variant) >= minOwned),
   );
 }
 

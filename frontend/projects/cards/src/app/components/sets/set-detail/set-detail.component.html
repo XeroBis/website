@@ -1,4 +1,4 @@
-<div class="set-detail-page">
+<div class="set-detail-page" [class.with-sale-panel]="saleMode()">
   <a routerLink="/sets" class="back-link">&larr; {{ 'sets.backToSets' | translate }}</a>
 
   @if (loading()) {
@@ -46,13 +46,12 @@
         <button
           type="button"
           class="btn btn-secondary btn-icon"
-          [class.active]="duplicatesOnly()"
-          [attr.aria-label]="'sets.duplicatesOnly' | translate"
-          [title]="'sets.duplicatesOnly' | translate"
-          [attr.aria-pressed]="duplicatesOnly()"
-          (click)="toggleDuplicatesOnly()"
+          [class.active]="minOwned() > 0"
+          [attr.aria-label]="'sets.ownedFilter.' + minOwned() | translate"
+          [title]="'sets.ownedFilter.' + minOwned() | translate"
+          (click)="cycleMinOwned()"
         >
-          <span aria-hidden="true">2+</span>
+          <span aria-hidden="true">+{{ minOwned() }}</span>
         </button>
         <button
           type="button"
@@ -85,6 +84,17 @@
           (click)="toggleCountDeckCards()"
         >
           <ab-icon name="deck-box" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-icon"
+          [class.active]="saleMode()"
+          [attr.aria-label]="'sets.sale.toggle' | translate"
+          [title]="'sets.sale.toggle' | translate"
+          [attr.aria-pressed]="saleMode()"
+          (click)="toggleSaleMode()"
+        >
+          <ab-icon name="tag" />
         </button>
         <div class="view-toggle">
           <button
@@ -151,6 +161,7 @@
       </div>
     </div>
 
+
     <app-set-card-grid
       [cards]="filteredCards()"
       [adapter]="gridAdapter"
@@ -161,7 +172,58 @@
       [controls]="gridControls"
       [checklistControls]="checklistControls"
     />
+    <ng-template #saleControls let-card let-variant="variant">
+      @if (trayQuantity(card, variant) > 0) {
+        <div class="qty-controls sale-controls">
+          <button
+            type="button"
+            class="qty-controls-btn"
+            (click)="stepSale(card, variant, -1, $event)"
+            [attr.aria-label]="'sets.sale.decrease' | translate"
+          >
+            −
+          </button>
+          <span class="qty-controls-value">{{ trayQuantity(card, variant) }}</span>
+        </div>
+      }
+    </ng-template>
+    <ng-template #checklistSaleControls let-card let-variant="variant">
+      <div class="checklist-stepper" [class.owned]="trayQuantity(card, variant) > 0">
+        @if (trayQuantity(card, variant) > 0) {
+          <button
+            type="button"
+            class="qty-controls-btn"
+            (click)="stepSale(card, variant, -1, $event)"
+            [attr.aria-label]="'sets.sale.decrease' | translate"
+          >
+            −
+          </button>
+        }
+        <button
+          type="button"
+          class="qty-controls-value sale-add"
+          [disabled]="trayQuantity(card, variant) >= sellable(card, variant)"
+          [attr.aria-label]="'sets.sale.increase' | translate"
+          [title]="
+            trayQuantity(card, variant) >= sellable(card, variant)
+              ? ('sets.sale.noneSellable' | translate)
+              : ('sets.sale.increase' | translate)
+          "
+          (click)="stepSale(card, variant, 1, $event)"
+        >
+          {{ trayQuantity(card, variant) }}
+        </button>
+      </div>
+    </ng-template>
     <ng-template #checklistControls let-card let-variant="variant">
+      @if (saleMode()) {
+        <ng-container
+          *ngTemplateOutlet="
+            checklistSaleControls;
+            context: { $implicit: card, variant: variant.variant_type }
+          "
+        />
+      } @else {
       <div class="checklist-stepper" [class.owned]="variantTileCountsAsOwned(card, variant)">
         @if (variantTileOwnedQuantity(card, variant) > 0) {
           <button
@@ -185,9 +247,17 @@
           +
         </button>
       </div>
+      }
     </ng-template>
     <ng-template #gridControls let-card let-variant="variant">
-      @if (variant) {
+      @if (saleMode()) {
+        <ng-container
+          *ngTemplateOutlet="
+            saleControls;
+            context: { $implicit: card, variant: variant?.variant_type ?? 'standard' }
+          "
+        />
+      } @else if (variant) {
         <div class="qty-controls">
           @if (variantTileOwnedQuantity(card, variant) > 0) {
             <button
@@ -260,6 +330,131 @@
   }
 </div>
 
+@if (saleMode()) {
+  <aside
+    class="sale-panel surface"
+    [class.expanded]="salePanelExpanded()"
+    [attr.aria-label]="'sets.sale.toggle' | translate"
+  >
+    <button type="button" class="sale-panel-header" (click)="salePanelExpanded.set(!salePanelExpanded())">
+      <span>{{ 'sets.sale.toggle' | translate }}</span>
+      <span class="card-count">{{ 'sets.sale.trayCount' | translate: { count: saleTrayCopies() } }}</span>
+    </button>
+
+    @if (saleTray().length === 0) {
+      <p class="sale-hint">{{ 'sets.sale.hint' | translate }}</p>
+    } @else {
+      <ul class="tray-lines">
+        @for (line of saleTray(); track line.entry.id + ':' + line.variant) {
+          <li class="tray-line">
+            <img [src]="thumbnailUrl(line.entry)" [alt]="line.entry.name" class="card-thumb" />
+            <div class="card-info">
+              <div class="card-name">{{ line.entry.name | cardDisplayName }}</div>
+              <div class="card-set">
+                <img
+                  class="tray-print"
+                  [src]="variantIcon(line.variant)"
+                  [alt]="variantLabels[line.variant]"
+                  [title]="variantLabels[line.variant]"
+                />
+                {{ cardNumberLabel(line.entry) }} ·
+                {{ 'sets.sale.sellable' | translate: { count: sellable(line.entry, line.variant) } }}
+              </div>
+              <div class="stepper">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  [attr.aria-label]="'sets.decreaseQuantity' | translate"
+                  (click)="stepSale(line.entry, line.variant, -1)"
+                >
+                  −
+                </button>
+                <span class="quantity">{{ line.quantity }}</span>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  [attr.aria-label]="'sets.increaseQuantity' | translate"
+                  [disabled]="line.quantity >= sellable(line.entry, line.variant)"
+                  (click)="stepSale(line.entry, line.variant, 1)"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-icon"
+              [attr.aria-label]="'sets.sale.remove' | translate"
+              [title]="'sets.sale.remove' | translate"
+              (click)="removeTrayLine(line)"
+            >
+              <ab-icon name="x" />
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="sale-panel-footer">
+      <label class="sale-bar-label" for="sale-list-select">{{ 'sets.sale.target' | translate }}</label>
+      @if (newSaleListName() === null) {
+        <select
+          id="sale-list-select"
+          class="input"
+          [ngModel]="saleListId() === null ? '' : '' + saleListId()"
+          (ngModelChange)="selectSaleList($event)"
+        >
+          @if (saleListId() === null) {
+            <option value="" disabled>{{ 'sets.sale.noList' | translate }}</option>
+          }
+          @for (list of saleLists(); track list.id) {
+            <option [value]="'' + list.id">{{ list.name }}</option>
+          }
+          <option value="new">{{ 'sets.sale.newList' | translate }}</option>
+        </select>
+      } @else {
+        <form class="sale-new-list" (ngSubmit)="createSaleList()">
+          <input
+            id="sale-list-select"
+            type="text"
+            class="input"
+            name="newSaleListName"
+            maxlength="100"
+            [placeholder]="'sets.sale.newListName' | translate"
+            [ngModel]="newSaleListName()"
+            (ngModelChange)="newSaleListName.set($event)"
+          />
+          <div class="sale-actions">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="cancelNewSaleList()">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary btn-sm"
+              [disabled]="!newSaleListName()?.trim() || saleBusy()"
+            >
+              {{ 'sets.sale.create' | translate }}
+            </button>
+          </div>
+        </form>
+      }
+      <div class="sale-actions">
+        <button type="button" class="btn btn-secondary" (click)="toggleSaleMode()">
+          {{ 'sets.sale.close' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saleTray().length === 0 || saleListId() === null || saleBusy()"
+          (click)="submitSale()"
+        >
+          {{ 'sets.sale.addMany' | translate: { count: saleTrayCopies() } }}
+        </button>
+      </div>
+    </div>
+  </aside>
+}
+
 @if (detailCard()!) {
   <app-modal [title]="detailCard()!.name | cardDisplayName" [wide]="true" (closed)="closeDetail()">
     <app-card-detail
@@ -267,6 +462,20 @@
       [imageUrl]="detailImageUrl()"
       [initialVariantType]="detailVariant()?.variant_type ?? null"
     />
+  </app-modal>
+}
+
+@if (saleExitConfirmOpen()) {
+  <app-modal [title]="'sets.sale.exitTitle' | translate" (closed)="saleExitConfirmOpen.set(false)">
+    <p>{{ 'sets.sale.exitBody' | translate: { count: saleTrayCopies() } }}</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="saleExitConfirmOpen.set(false)">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary" (click)="exitSaleMode()">
+        {{ 'sets.sale.exitConfirm' | translate }}
+      </button>
+    </div>
   </app-modal>
 }
 

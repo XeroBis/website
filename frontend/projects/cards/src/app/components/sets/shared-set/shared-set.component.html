@@ -47,13 +47,12 @@
         <button
           type="button"
           class="btn btn-secondary btn-icon"
-          [class.active]="duplicatesOnly()"
-          [attr.aria-label]="'sets.duplicatesOnly' | translate"
-          [title]="'sets.duplicatesOnly' | translate"
-          [attr.aria-pressed]="duplicatesOnly()"
-          (click)="duplicatesOnly.set(!duplicatesOnly())"
+          [class.active]="minOwned() > 0"
+          [attr.aria-label]="'sets.ownedFilter.' + minOwned() | translate"
+          [title]="'sets.ownedFilter.' + minOwned() | translate"
+          (click)="cycleMinOwned()"
         >
-          <span aria-hidden="true">2+</span>
+          <span aria-hidden="true">+{{ minOwned() }}</span>
         </button>
         <button
           type="button"
@@ -62,7 +61,7 @@
           [attr.aria-label]="'sets.missingOnly' | translate"
           [title]="'sets.missingOnly' | translate"
           [attr.aria-pressed]="missingOnly()"
-          (click)="missingOnly.set(!missingOnly())"
+          (click)="toggleMissingOnly()"
         >
           <ab-icon name="layers" />
         </button>

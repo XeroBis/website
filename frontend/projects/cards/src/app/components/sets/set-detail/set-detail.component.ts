@@ -1,5 +1,5 @@
 import { Icon } from '@shared';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { SetFiltersComponent } from '../set-filters/set-filters.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
@@ -15,12 +15,16 @@ import {
   CardSet,
   SHARE_DURATION_OPTIONS,
   Share,
+  VARIANT_LABELS,
   VariantType,
 } from '../../../models/card.model';
+import { SaleList } from '../../../models/sale-list.model';
 import { CardsService } from '../../../services/cards.service';
 import { CountIncomingService } from '../../../services/count-incoming.service';
 import { CountDeckCardsService } from '../../../services/count-deck-cards.service';
 import { PurchaseListsService } from '../../../services/purchase-lists.service';
+import { SaleListsService } from '../../../services/sale-lists.service';
+import { variantIconUrl } from '../../../util/variant-icons.util';
 import { CatalogService } from '../../../services/catalog.service';
 import { SharesService } from '../../../services/shares.service';
 import { ToastService } from '../../../services/toast.service';
@@ -54,9 +58,26 @@ import {
   VariantDisplayMode,
   printSelectionMode,
   selectDisplayedPrints,
+  MinOwned,
+  nextMinOwned,
 } from '../../../util/variant-display.util';
 const VIEW_STORAGE_KEY = 'setDetailView';
 const ORDER_STORAGE_KEY = 'setDetailOrder';
+const SALE_LIST_STORAGE_KEY = 'setDetailSaleList';
+/** Copies of one print waiting in sale mode's tray. */
+interface SaleTrayLine {
+  entry: CardCatalogEntry;
+  variant: VariantType;
+  quantity: number;
+}
+function readStoredSaleList(): number | null {
+  try {
+    const id = Number(localStorage.getItem(SALE_LIST_STORAGE_KEY));
+    return Number.isInteger(id) && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
 function readStoredView(): SetView {
   try {
     const view = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -116,7 +137,8 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   search = signal('');
   selectedRarities = signal(new Set(DEFAULT_SET_RARITIES));
   missingOnly = signal(false);
-  duplicatesOnly = signal(false);
+  /** Owned filter (+0 = off, +1, +2), per print, over the copies the tile shows. */
+  minOwned = signal<MinOwned>(0);
   /** Selected print controls the grid layout. */
   variantDisplayMode = signal<VariantDisplayMode>(printSelectionMode(this.selectedVariants()));
   /** Grid, checklist, or nine- or twelve-pocket binder. Remembered per browser. */
@@ -135,6 +157,23 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   private readonly filterChange$ = new Subject<void>();
   private filterChangeSubscription?: Subscription;
   shareModalOpen = signal(false);
+  readonly variantLabels = VARIANT_LABELS;
+  readonly variantIcon = variantIconUrl;
+  /** "Put up for sale": the tiles' − and + fill the tray instead of the collection. */
+  saleMode = signal(false);
+  /** The user's lists still on sale, newest first. */
+  saleLists = signal<SaleList[]>([]);
+  saleListId = signal<number | null>(null);
+  /** Copies on unsold sale lists, by catalog id then print. */
+  onSale = signal(new Map<number, Map<VariantType, number>>());
+  saleTray = signal<SaleTrayLine[]>([]);
+  saleTrayCopies = computed(() => this.saleTray().reduce((sum, line) => sum + line.quantity, 0));
+  /** The inline "New list…" name, null while hidden. */
+  newSaleListName = signal<string | null>(null);
+  saleBusy = signal(false);
+  saleExitConfirmOpen = signal(false);
+  /** Phones: the panel is a bottom bar, opened by its header. */
+  salePanelExpanded = signal(false);
   shareDurationOptions = signal(SHARE_DURATION_OPTIONS);
   shareDurationDays = signal(7);
   creatingShare = signal(false);
@@ -150,7 +189,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     reverse: (card) => this.reverseQuantity(card),
     incoming: (card, variant) => this.incomingQuantity(card, variant?.variant_type ?? 'standard'),
     countIncoming: () => this.countIncoming.enabled(),
-    open: (card, variant) => this.openDetail(card, variant),
+    open: (card, variant) => this.onCardClick(card, variant),
   };
   constructor(
     private readonly route: ActivatedRoute,
@@ -158,6 +197,7 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     private readonly cardsService: CardsService,
     private readonly sharesService: SharesService,
     private readonly purchaseListsService: PurchaseListsService,
+    private readonly saleListsService: SaleListsService,
     readonly countIncoming: CountIncomingService,
     readonly countDeckCards: CountDeckCardsService,
     private readonly toastService: ToastService,
@@ -216,8 +256,11 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     this.countDeckCards.toggle();
     this.recomputeFilteredCards();
   }
-  toggleDuplicatesOnly(): void {
-    this.duplicatesOnly.set(!this.duplicatesOnly());
+  cycleMinOwned(): void {
+    this.minOwned.set(nextMinOwned(this.minOwned()));
+    if (this.minOwned() > 0) {
+      this.missingOnly.set(false);
+    }
     this.recomputeFilteredCards();
   }
   /** Copies of one print on incoming purchase lists. */
@@ -230,6 +273,9 @@ export class SetDetailComponent implements OnInit, OnDestroy {
   }
   toggleMissingOnly(): void {
     this.missingOnly.set(!this.missingOnly());
+    if (this.missingOnly()) {
+      this.minOwned.set(0);
+    }
     this.recomputeFilteredCards();
   }
   setOrder(order: CardOrder): void {
@@ -326,8 +372,8 @@ export class SetDetailComponent implements OnInit, OnDestroy {
     return selectDisplayedPrints(
       entry.variants,
       this.selectedVariants(),
-      this.duplicatesOnly(),
-      (variant) => this.ownedVariantQuantity(entry, variant),
+      this.minOwned(),
+      (variant) => this.variantTileOwnedQuantity(entry, variant),
     ).filter((variant) => {
       if (!this.missingOnly()) {
         return true;
@@ -348,10 +394,6 @@ export class SetDetailComponent implements OnInit, OnDestroy {
       ? this.allocatedVariantQuantity(card, variant.variant_type)
       : 0;
     return Math.max(0, this.variantQuantity(card, variant.variant_type) - allocated);
-  }
-  private ownedVariantQuantity(entry: CardCatalogEntry, variant: CardCatalogVariant): number {
-    const card = this.ownedCards().get(entry.id);
-    return card ? this.variantQuantity(card, variant.variant_type) : 0;
   }
   /** Adjusts this specific variant's owned quantity, mirroring stepQuantity
    * but generalized to any variant_type -- used by the grouped per-variant
@@ -665,6 +707,192 @@ export class SetDetailComponent implements OnInit, OnDestroy {
           });
           this.toastService.show(
             err?.error?.detail ?? this.translate.instant('sets.updateQuantityFailed'),
+            'error',
+          );
+        },
+      });
+  }
+  /** In sale mode a click on a card's scan puts one copy of that print in
+   * the tray; the checklist's names and the group headers still open the
+   * details. Otherwise every click opens them. */
+  private onCardClick(entry: CardCatalogEntry, variant?: CardCatalogVariant): void {
+    const onScan = this.view() !== 'checklist' && (!!variant || this.variantDisplayMode() === 'standard');
+    if (!this.saleMode() || !onScan) {
+      this.openDetail(entry, variant);
+      return;
+    }
+    const print = variant?.variant_type ?? 'standard';
+    if (this.trayQuantity(entry, print) >= this.sellable(entry, print)) {
+      this.toastService.show(this.translate.instant('sets.sale.noneSellable'), 'error');
+      return;
+    }
+    this.stepSale(entry, print, 1);
+  }
+  toggleSaleMode(): void {
+    if (!this.saleMode()) {
+      this.saleMode.set(true);
+      this.loadSaleData();
+      return;
+    }
+    if (this.saleTray().length > 0) {
+      this.saleExitConfirmOpen.set(true);
+      return;
+    }
+    this.exitSaleMode();
+  }
+  exitSaleMode(): void {
+    this.saleExitConfirmOpen.set(false);
+    this.saleTray.set([]);
+    this.newSaleListName.set(null);
+    this.salePanelExpanded.set(false);
+    this.saleMode.set(false);
+  }
+  private loadSaleData(): void {
+    forkJoin({
+      lists: this.saleListsService.list(),
+      onSale: this.saleListsService.onSale(),
+    }).subscribe({
+      next: ({ lists, onSale }) => {
+        const open = lists.filter((list) => !list.sold_at);
+        this.saleLists.set(open);
+        const stored = readStoredSaleList();
+        const current = this.saleListId();
+        const keep = [current, stored].find((id) => open.some((list) => list.id === id));
+        this.saleListId.set(keep ?? open[0]?.id ?? null);
+        const byCard = new Map<number, Map<VariantType, number>>();
+        for (const line of onSale) {
+          const prints = byCard.get(line.catalog_id) ?? new Map<VariantType, number>();
+          prints.set(line.variant_type, line.quantity);
+          byCard.set(line.catalog_id, prints);
+        }
+        this.onSale.set(byCard);
+      },
+      error: () =>
+        this.toastService.show(this.translate.instant('sets.sale.loadFailed'), 'error'),
+    });
+  }
+  selectSaleList(value: string): void {
+    if (value === 'new') {
+      this.newSaleListName.set('');
+      return;
+    }
+    const id = Number(value);
+    this.saleListId.set(id);
+    this.newSaleListName.set(null);
+    try {
+      localStorage.setItem(SALE_LIST_STORAGE_KEY, String(id));
+    } catch {
+      // Storage unavailable -- the choice just won't persist.
+    }
+  }
+  cancelNewSaleList(): void {
+    this.newSaleListName.set(null);
+  }
+  createSaleList(): void {
+    const name = this.newSaleListName()?.trim();
+    if (!name || this.saleBusy()) {
+      return;
+    }
+    this.saleBusy.set(true);
+    this.saleListsService.create(name).subscribe({
+      next: (created) => {
+        this.saleBusy.set(false);
+        this.saleLists.update((lists) => [created, ...lists]);
+        this.newSaleListName.set(null);
+        this.selectSaleList(String(created.id));
+      },
+      error: (err) => {
+        this.saleBusy.set(false);
+        this.toastService.show(
+          err?.error?.detail ?? this.translate.instant('sets.sale.createFailed'),
+          'error',
+        );
+      },
+    });
+  }
+  /** Copies of a print that can still go on sale: owned − in normal decks −
+   * on unsold sale lists (the tray not counted). */
+  sellable(entry: CardCatalogEntry, variant: VariantType): number {
+    const card = this.ownedCards().get(entry.id);
+    if (!card) {
+      return 0;
+    }
+    const onSale = this.onSale().get(entry.id)?.get(variant) ?? 0;
+    return Math.max(
+      0,
+      this.variantQuantity(card, variant) - this.allocatedVariantQuantity(card, variant) - onSale,
+    );
+  }
+  trayQuantity(entry: CardCatalogEntry, variant: VariantType): number {
+    return (
+      this.saleTray().find((line) => line.entry.id === entry.id && line.variant === variant)
+        ?.quantity ?? 0
+    );
+  }
+  /** One copy more or less of that print in the tray, within its sellable copies. */
+  stepSale(entry: CardCatalogEntry, variant: VariantType, delta: number, event?: Event): void {
+    event?.stopPropagation();
+    const next = this.trayQuantity(entry, variant) + delta;
+    if (next < 0 || next > this.sellable(entry, variant)) {
+      return;
+    }
+    this.saleTray.update((tray) => {
+      const others = tray.filter((line) => !(line.entry.id === entry.id && line.variant === variant));
+      if (next === 0) {
+        return others;
+      }
+      const index = tray.findIndex((line) => line.entry.id === entry.id && line.variant === variant);
+      const line = { entry, variant, quantity: next };
+      if (index < 0) {
+        return [...tray, line];
+      }
+      const updated = [...tray];
+      updated[index] = line;
+      return updated;
+    });
+  }
+  removeTrayLine(line: SaleTrayLine): void {
+    this.saleTray.update((tray) => tray.filter((other) => other !== line));
+  }
+  submitSale(): void {
+    const listId = this.saleListId();
+    const tray = this.saleTray();
+    if (listId === null || tray.length === 0 || this.saleBusy()) {
+      return;
+    }
+    const count = this.saleTrayCopies();
+    const listName = this.saleLists().find((list) => list.id === listId)?.name ?? '';
+    this.saleBusy.set(true);
+    this.saleListsService
+      .addCards(
+        listId,
+        tray.map((line) => ({
+          catalog_id: line.entry.id,
+          variant_type: line.variant,
+          quantity: line.quantity,
+        })),
+      )
+      .subscribe({
+        next: () => {
+          this.saleBusy.set(false);
+          this.onSale.update((value) => {
+            const next = new Map(value);
+            for (const line of tray) {
+              const prints = new Map(next.get(line.entry.id) ?? []);
+              prints.set(line.variant, (prints.get(line.variant) ?? 0) + line.quantity);
+              next.set(line.entry.id, prints);
+            }
+            return next;
+          });
+          this.saleTray.set([]);
+          this.toastService.show(
+            this.translate.instant('sets.sale.added', { count, name: listName }),
+          );
+        },
+        error: (err) => {
+          this.saleBusy.set(false);
+          this.toastService.show(
+            err?.error?.detail ?? this.translate.instant('sets.sale.addFailed'),
             'error',
           );
         },

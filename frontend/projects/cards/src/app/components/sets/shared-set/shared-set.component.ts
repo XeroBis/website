@@ -31,6 +31,8 @@ import {
   VariantDisplayMode,
   printSelectionMode,
   selectDisplayedPrints,
+  MinOwned,
+  nextMinOwned,
 } from '../../../util/variant-display.util';
 /** Public, unauthenticated read-only view of one set's completion status,
  * reached via a share link -- see documentation/features.md's "Share a
@@ -62,7 +64,20 @@ export class SharedSetComponent implements OnInit {
   private token = '';
   search = signal('');
   missingOnly = signal(false);
-  duplicatesOnly = signal(false);
+  /** Owned filter (+0 = off, +1, +2), per print. */
+  minOwned = signal<MinOwned>(0);
+  cycleMinOwned(): void {
+    this.minOwned.set(nextMinOwned(this.minOwned()));
+    if (this.minOwned() > 0) {
+      this.missingOnly.set(false);
+    }
+  }
+  toggleMissingOnly(): void {
+    this.missingOnly.set(!this.missingOnly());
+    if (this.missingOnly()) {
+      this.minOwned.set(0);
+    }
+  }
   view = signal<SetView>('grid');
   get countsVariants(): boolean {
     return this.view() === 'checklist' || this.variantDisplayMode() !== 'standard';
@@ -196,7 +211,7 @@ export class SharedSetComponent implements OnInit {
     return selectDisplayedPrints(
       entry.print_variants,
       this.selectedVariants(),
-      this.duplicatesOnly(),
+      this.minOwned(),
       (variant) => this.variantTileOwnedQuantity(entry, variant),
     ).filter(
       (variant) => !this.missingOnly() || this.variantTileOwnedQuantity(entry, variant) <= 0,
