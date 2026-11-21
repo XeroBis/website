@@ -286,8 +286,9 @@ export class DeckActionsComponent {
     this.renameOpen.set(false);
     this.posterPickerSlot.set(null);
   }
-  thumbnailUrl(imagePath: string): string {
-    return this.catalogService.thumbnailUrl(imagePath);
+  /** A poster card's print scan, else the standard thumbnail. */
+  cardImageUrl(dc: DeckCard): string {
+    return this.catalogService.printImageUrl(dc);
   }
   /** Every deck card not already occupying a different poster slot -- so
    * the same card can't be picked twice, but re-opening the picker on an

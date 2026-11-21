@@ -17,6 +17,15 @@ def image_path(card, language: str | None) -> str:
     return card.image_path
 
 
+def variant_image_path(variant, language: str | None) -> str | None:
+    """A print's own scan in the viewer's language, else the other one's
+    (None for `standard`, whose scans are the card's, or a print with none)."""
+    if variant is None:
+        return None
+    preferred = variant.image_path_fr if language == "fr" else variant.image_path_us
+    return preferred or variant.image_path_fr or variant.image_path_us
+
+
 def card_name(card, language: str | None) -> str:
     # display_name already falls back to the English name.
     if language == "fr" and card.display_name:

@@ -107,6 +107,9 @@ def deck_cards_out(
         | {card.id for card in wanted.values()},
     )
     holders = _holding_decks(db, [card.id for card in wanted.values()])
+    scans = deck_rules.print_scans(
+        db, {(catalog_card_of(row).id, row.variant_type) for row in rows}, language
+    )
     result = []
     for row in rows:
         variant = row.variant_type
@@ -139,6 +142,7 @@ def deck_cards_out(
                 set_code=catalog.set_code,
                 card_number=catalog.card_number,
                 image_path=display.image_path(catalog, language),
+                variant_image_path=scans.get((catalog.id, variant)),
                 supertype=catalog.supertype,
                 available=available,
                 owned=owned_count,

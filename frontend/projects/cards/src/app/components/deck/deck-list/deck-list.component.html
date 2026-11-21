@@ -90,7 +90,7 @@
           @for (dc of posterSlots(deck); track $index) {
             @if (dc) {
               <img
-                [src]="imageUrl(dc.image_path)"
+                [src]="imageUrl(dc)"
                 [alt]="dc.name | cardDisplayName"
                 class="hand-fan-card"
                 [title]="dc.name | cardDisplayName"

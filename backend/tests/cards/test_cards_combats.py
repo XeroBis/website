@@ -13,6 +13,7 @@ from tests.cards.conftest import (
     own,
     put_in_deck,
     set_language,
+    set_print_scans,
 )
 
 COMBATS = f"{URL}/combats"
@@ -443,3 +444,15 @@ def test_deleting_an_account_deletes_its_combats(client, other_client, combat):
         session.delete(session.get(m.User, other_client.user_id))
         session.commit()
     assert client.get(COMBATS).json() == []
+
+
+def test_snapshot_cards_carry_their_prints_scan_unstored(client, other_client, pika):
+    set_print_scans(pika, "reverse", us="r_US.jpg")
+    volt = make_deck(client.user_id, "Volt")
+    put_in_deck(volt, own(client.user_id, pika, reverse=1), 1, "reverse")
+    response = log(client, volt, volt, client.user_id, other_client.user_id)
+    assert response.status_code == 201, response.text
+    [card] = response.json()["deck_a_snapshot"]
+    assert card["variant_image_path"] == "r_US.jpg"
+    exported = client.get(f"{COMBATS}/export").json()["combats"][0]
+    assert "variant_image_path" not in exported["deck_a_snapshot"][0]

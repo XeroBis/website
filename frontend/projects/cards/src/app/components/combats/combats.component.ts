@@ -96,7 +96,9 @@ export class CombatsComponent implements OnInit {
   supertypeKey(value: string | null | undefined): string {
     return supertypeKeyFor(value);
   }
+  /** Only when the print has no scan of its own (see imageUrl). */
   variantBadge(card: CombatSnapshotCard): string {
+    if (card.variant_image_path) return '';
     return VARIANT_BADGES[card.variant_type as VariantType] ?? '';
   }
   private readonly auth = inject(AuthService);
@@ -257,8 +259,9 @@ export class CombatsComponent implements OnInit {
   setSnapshotView(view: 'grid' | 'table'): void {
     this.snapshotView.set(view);
   }
-  imageUrl(imagePath: string): string {
-    return this.catalogService.thumbnailUrl(imagePath);
+  /** A snapshot card's print scan, else the standard thumbnail. */
+  imageUrl(card: CombatSnapshotCard): string {
+    return this.catalogService.printImageUrl(card);
   }
   openEdit(combat: Combat): void {
     this.editCombat.set(combat);

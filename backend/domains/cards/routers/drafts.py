@@ -96,8 +96,13 @@ def _draft_detail(
         db, user.id, {(e.catalog_id, e.variant_type) for e in entries}
     )
 
-    def shown(card: m.CardCatalog) -> dict:
+    deltas = {(e.catalog_id, e.variant_type): e.quantity_delta for e in entries}
+    scans = deck_rules.print_scans(db, [*baseline, *deltas], language)
+
+    def shown(card: m.CardCatalog, variant: str) -> dict:
         return {
+            "variant_type": variant,
+            "variant_image_path": scans.get((card.id, variant)),
             "catalog_id": card.id,
             "name": display.card_name(card, language),
             "set_name": display.set_name(card.set_name, card.set_name_fr, language),
@@ -111,8 +116,7 @@ def _draft_detail(
         owned_count, available = counts[key]
         entry_outs.append(
             s.DraftEntryOut(
-                **shown(entry.catalog_card),
-                variant_type=entry.variant_type,
+                **shown(entry.catalog_card, entry.variant_type),
                 baseline_quantity=baseline.get(key, 0),
                 quantity_delta=entry.quantity_delta,
                 result_quantity=baseline.get(key, 0) + entry.quantity_delta,
@@ -121,7 +125,6 @@ def _draft_detail(
             )
         )
 
-    deltas = {(e.catalog_id, e.variant_type): e.quantity_delta for e in entries}
     cards = {row.card.catalog_id: row.card.catalog_card for row in rows}
     cards |= {e.catalog_id: e.catalog_card for e in entries}
     result_cards = []
@@ -130,8 +133,7 @@ def _draft_detail(
         if quantity > 0:
             result_cards.append(
                 s.DraftResultCard(
-                    **shown(cards[key[0]]),
-                    variant_type=key[1],
+                    **shown(cards[key[0]], key[1]),
                     quantity_in_deck=quantity,
                 )
             )

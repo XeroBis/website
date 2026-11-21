@@ -61,6 +61,8 @@ export class DeckDetailComponent implements OnInit {
   startHandOpen = signal(false);
   startHand = signal<DeckCard[]>([]);
   detailCard = signal<CardCatalogEntry | null>(null);
+  /** The print of the row the detail was opened from, preselected there. */
+  detailVariant = signal<VariantType>('standard');
   detailLoading = signal(false);
   /** The phantom want-list row whose "allocated elsewhere" tooltip is
    * currently shown, and where to render it. `position: fixed`, positioned
@@ -147,8 +149,10 @@ export class DeckDetailComponent implements OnInit {
   maxQuantity(cardName: string): number | null {
     return this.isPhantom || isBasicEnergy(cardName) ? null : 4;
   }
+  /** Only shown when the print has no scan of its own (the row then shows
+   * the standard image) -- otherwise the scan itself tells the print. */
   variantBadge(dc: DeckCard): string {
-    return VARIANT_BADGES[dc.variant_type as VariantType] ?? '';
+    return dc.variant_image_path ? '' : (VARIANT_BADGES[dc.variant_type as VariantType] ?? '');
   }
   /** Sum of quantity_in_deck across every variant row this card holds in the
    * deck -- the 4-copy cap is a card-level rule, not per-variant (see
@@ -164,8 +168,9 @@ export class DeckDetailComponent implements OnInit {
   setView(view: DeckView): void {
     this.view.set(view);
   }
-  thumbnailUrl(imagePath: string): string {
-    return this.catalogService.thumbnailUrl(imagePath);
+  /** The row's print scan, else the standard thumbnail. */
+  cardImageUrl(dc: DeckCard): string {
+    return this.catalogService.printImageUrl(dc);
   }
   /** Full-res image -- used for the card detail modal only, see
    * CatalogService.thumbnailUrl's docstring. */
@@ -214,6 +219,7 @@ export class DeckDetailComponent implements OnInit {
       return;
     }
     this.detailLoading.set(true);
+    this.detailVariant.set(dc.variant_type);
     this.catalogService.getById(dc.catalog_id).subscribe({
       next: (entry) => {
         this.detailLoading.set(false);

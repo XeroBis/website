@@ -216,8 +216,14 @@
         <ul class="deck-usage-list">
           @for (d of deckUsage()!.allocated_decks; track d.deck_id) {
             <li>
-              <span>{{ d.deck_name }}</span>
-              <span class="badge">×{{ d.quantity_in_deck }}</span>
+              <span class="deck-usage-name">{{ d.deck_name }}</span>
+              <span class="deck-usage-prints">
+                @for (v of d.variants; track v.variant_type) {
+                  <span class="badge deck-usage-print">
+                    {{ variantLabel(v.variant_type) }} ×{{ v.quantity_in_deck }}
+                  </span>
+                }
+              </span>
             </li>
           }
         </ul>
@@ -230,8 +236,14 @@
         <ul class="deck-usage-list">
           @for (d of deckUsage()!.phantom_decks; track d.deck_id) {
             <li>
-              <span>{{ d.deck_name }}</span>
-              <span class="badge">×{{ d.quantity_in_deck }}</span>
+              <span class="deck-usage-name">{{ d.deck_name }}</span>
+              <span class="deck-usage-prints">
+                @for (v of d.variants; track v.variant_type) {
+                  <span class="badge deck-usage-print">
+                    {{ variantLabel(v.variant_type) }} ×{{ v.quantity_in_deck }}
+                  </span>
+                }
+              </span>
             </li>
           }
         </ul>

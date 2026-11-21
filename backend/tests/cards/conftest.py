@@ -6,6 +6,7 @@ import httpx2
 import pytest
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 import app
 from core import database
@@ -219,4 +220,17 @@ def put_in_deck(deck_id: int, card_id: int, copies: int, variant: str = "standar
                 quantity_in_deck=copies,
             )
         )
+        session.commit()
+
+
+def set_print_scans(catalog_id: int, variant: str, fr=None, us=None) -> None:
+    """Give one of a catalog card's prints its own scans."""
+    with database.SessionLocal() as session:
+        row = session.scalars(
+            select(m.CardCatalogVariant).where(
+                m.CardCatalogVariant.card_catalog_id == catalog_id,
+                m.CardCatalogVariant.variant_type == variant,
+            )
+        ).one()
+        row.image_path_fr, row.image_path_us = fr, us
         session.commit()

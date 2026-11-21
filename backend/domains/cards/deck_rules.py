@@ -11,6 +11,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from domains.cards import display
 from domains.cards import models as m
 from domains.cards.names import is_basic_energy
 
@@ -288,3 +289,26 @@ def recompute_has_wdc_cards(db: Session, deck: m.Deck) -> None:
         .where(m.DeckCard.deck_id == deck.id, m.CardCatalog.series == WDC_SERIES)
     )
     deck.has_wdc_cards = db.scalar(select(wdc_rows.exists()))
+
+
+def print_scans(
+    db: Session, keys, language: str | None
+) -> dict[tuple[int, str], str | None]:
+    """(catalog id, print) → that print's own scan (display.variant_image_path),
+    in one query; `standard` and unknown prints are left out."""
+    keys = {
+        (catalog_id, variant) for catalog_id, variant in keys if variant != "standard"
+    }
+    if not keys:
+        return {}
+    variants = db.scalars(
+        select(m.CardCatalogVariant).where(
+            m.CardCatalogVariant.card_catalog_id.in_({key[0] for key in keys}),
+            m.CardCatalogVariant.variant_type.in_({key[1] for key in keys}),
+        )
+    )
+    return {
+        (v.card_catalog_id, v.variant_type): display.variant_image_path(v, language)
+        for v in variants
+        if (v.card_catalog_id, v.variant_type) in keys
+    }

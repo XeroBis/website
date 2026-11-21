@@ -274,10 +274,27 @@
 
   li {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
+    gap: var(--space-2);
     font-size: 0.85rem;
   }
+}
+
+.deck-usage-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.deck-usage-prints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.deck-usage-print {
+  white-space: nowrap;
 }
 
 .card-detail-text {

@@ -123,12 +123,23 @@ class DeckUsage(BaseModel):
     quantity_in_deck: int
 
 
+class DeckPrintUsage(BaseModel):
+    variant_type: str
+    quantity_in_deck: int
+
+
+class CatalogDeckUsageEntry(DeckUsage):
+    """`quantity_in_deck` sums the prints, `variants` splits it per print."""
+
+    variants: list[DeckPrintUsage] = []
+
+
 class CatalogDeckUsage(BaseModel):
     """The current user's normal decks holding owned copies, and phantom
     decks wanting the card (owned or not)."""
 
-    allocated_decks: list[DeckUsage] = []
-    phantom_decks: list[DeckUsage] = []
+    allocated_decks: list[CatalogDeckUsageEntry] = []
+    phantom_decks: list[CatalogDeckUsageEntry] = []
 
 
 # ── collection ───────────────────────────────────────────────────────────────
@@ -318,6 +329,8 @@ class DeckCardOut(BaseModel):
     set_code: str
     card_number: str
     image_path: str
+    # The print's own scan; null for `standard` or a print without one.
+    variant_image_path: str | None = None
     supertype: str | None
     available: int
     owned: int | None = None
@@ -502,6 +515,7 @@ class DraftEntryOut(BaseModel):
     name: str
     set_name: str
     image_path: str
+    variant_image_path: str | None = None
     supertype: str | None
     baseline_quantity: int
     quantity_delta: int
@@ -516,6 +530,7 @@ class DraftResultCard(BaseModel):
     name: str
     set_name: str
     image_path: str
+    variant_image_path: str | None = None
     supertype: str | None
     quantity_in_deck: int
 
@@ -629,6 +644,13 @@ class CombatSnapshotCard(BaseModel):
     supertype: str | None = None
 
 
+class CombatSnapshotCardOut(CombatSnapshotCard):
+    """A snapshot card as listed: plus its print's own scan, looked up at read
+    time (never stored or exported)."""
+
+    variant_image_path: str | None = None
+
+
 class CombatCreate(BaseModel):
     deck_a_id: int
     player_a_id: int
@@ -670,8 +692,8 @@ class CombatOut(BaseModel):
     loser_score: int
     played_at: datetime
     created_at: datetime
-    deck_a_snapshot: list[CombatSnapshotCard]
-    deck_b_snapshot: list[CombatSnapshotCard]
+    deck_a_snapshot: list[CombatSnapshotCardOut]
+    deck_b_snapshot: list[CombatSnapshotCardOut]
 
 
 class CombatFileEntry(BaseModel):

@@ -82,7 +82,7 @@
                   (click)="openPosterPicker($index)"
                   [title]="card.name | cardDisplayName"
                 >
-                  <img [src]="thumbnailUrl(card.image_path)" [alt]="card.name | cardDisplayName" />
+                  <img [src]="cardImageUrl(card)" [alt]="card.name | cardDisplayName" />
                 </button>
                 <button
                   type="button"
@@ -116,10 +116,7 @@
                     (click)="choosePosterCard(posterPickerSlot()!, card)"
                     [title]="card.name | cardDisplayName"
                   >
-                    <img
-                      [src]="thumbnailUrl(card.image_path)"
-                      [alt]="card.name | cardDisplayName"
-                    />
+                    <img [src]="cardImageUrl(card)" [alt]="card.name | cardDisplayName" />
                   </button>
                 }
               </div>

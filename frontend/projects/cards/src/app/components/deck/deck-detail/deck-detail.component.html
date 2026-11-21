@@ -15,7 +15,7 @@
         @for (dc of posterSlots; track $index) {
           @if (dc) {
             <img
-              [src]="thumbnailUrl(dc.image_path)"
+              [src]="cardImageUrl(dc)"
               [alt]="dc.name | cardDisplayName"
               class="hand-fan-card"
               [title]="dc.name | cardDisplayName"
@@ -148,11 +148,7 @@
     <div class="card-grid">
       @for (dc of sortedCards; track dc.id) {
         <div class="card-tile" (click)="openDetail(dc)">
-          <img
-            [src]="thumbnailUrl(dc.image_path)"
-            [alt]="dc.name | cardDisplayName"
-            loading="lazy"
-          />
+          <img [src]="cardImageUrl(dc)" [alt]="dc.name | cardDisplayName" loading="lazy" />
           <div class="card-info">
             <strong>{{ dc.name | cardDisplayName }}</strong>
             @if (variantBadge(dc); as badge) {
@@ -250,7 +246,7 @@
             <tr>
               <td>
                 <img
-                  [src]="thumbnailUrl(dc.image_path)"
+                  [src]="cardImageUrl(dc)"
                   [alt]="dc.name | cardDisplayName"
                   loading="lazy"
                   (click)="openDetail(dc)"
@@ -361,7 +357,7 @@
         <div class="start-hand-grid">
           @for (dc of startHand(); track $index) {
             <img
-              [src]="thumbnailUrl(dc.image_path)"
+              [src]="cardImageUrl(dc)"
               [alt]="dc.name | cardDisplayName"
               loading="lazy"
               [title]="dc.name | cardDisplayName"
@@ -390,6 +386,7 @@
       <app-card-detail
         [card]="detailCard()!"
         [imageUrl]="imageUrl(detailCard()!.image_path)"
+        [initialVariantType]="detailVariant()"
         editMode="none"
       />
     </app-modal>

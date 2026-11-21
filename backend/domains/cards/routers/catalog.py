@@ -703,32 +703,44 @@ def get_catalog_card_variants(
 def get_catalog_card_deck_usage(
     catalog_id: int, user: User = Depends(cards_user), db: Session = Depends(get_db)
 ):
-    """The user's normal decks holding owned copies of this card (summed over
-    prints), and their phantom decks wanting it."""
+    """The user's normal decks holding owned copies of this card and their
+    phantom decks wanting it, each with its copies per print."""
     _catalog_card_or_404(db, catalog_id)
-    quantity = func.sum(m.DeckCard.quantity_in_deck)
-    usage = select(m.Deck.id, m.Deck.name, quantity).join(m.Deck.deck_cards)
+    usage = select(
+        m.Deck.id,
+        m.Deck.name,
+        m.DeckCard.variant_type,
+        func.sum(m.DeckCard.quantity_in_deck),
+    ).join(m.Deck.deck_cards)
     allocated = db.execute(
         usage.join(m.Card, m.Card.id == m.DeckCard.card_id)
         .where(m.Card.catalog_id == catalog_id, m.Card.user_id == user.id)
-        .group_by(m.Deck.id)
-        .order_by(m.Deck.name)
+        .group_by(m.Deck.id, m.DeckCard.variant_type)
     ).all()
     phantom = db.execute(
         usage.where(
             m.DeckCard.catalog_id == catalog_id,
             m.Deck.deck_type == "phantom",
             m.Deck.user_id == user.id,
-        )
-        .group_by(m.Deck.id)
-        .order_by(m.Deck.name)
+        ).group_by(m.Deck.id, m.DeckCard.variant_type)
     ).all()
 
-    def out(rows) -> list[s.DeckUsage]:
-        return [
-            s.DeckUsage(deck_id=row[0], deck_name=row[1], quantity_in_deck=row[2])
-            for row in rows
-        ]
+    def out(rows) -> list[s.CatalogDeckUsageEntry]:
+        decks: dict[int, s.CatalogDeckUsageEntry] = {}
+        for deck_id, deck_name, variant, copies in rows:
+            deck = decks.setdefault(
+                deck_id,
+                s.CatalogDeckUsageEntry(
+                    deck_id=deck_id, deck_name=deck_name, quantity_in_deck=0
+                ),
+            )
+            deck.quantity_in_deck += copies
+            deck.variants.append(
+                s.DeckPrintUsage(variant_type=variant, quantity_in_deck=copies)
+            )
+        for deck in decks.values():
+            deck.variants.sort(key=lambda v: variant_sort_key(v.variant_type))
+        return sorted(decks.values(), key=lambda deck: deck.deck_name)
 
     return s.CatalogDeckUsage(
         allocated_decks=out(allocated), phantom_decks=out(phantom)

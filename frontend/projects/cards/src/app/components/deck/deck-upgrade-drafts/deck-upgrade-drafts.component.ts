@@ -46,6 +46,7 @@ interface DraftUnifiedCard {
   name: string;
   set_name: string;
   image_path: string;
+  variant_image_path?: string | null;
   supertype: string | null;
   baseline_quantity: number;
   quantity_delta: number;
@@ -179,6 +180,10 @@ export class DeckUpgradeDraftsComponent {
   thumbnailUrl(imagePath: string): string {
     return this.catalogService.thumbnailUrl(imagePath);
   }
+  /** A draft line's print scan, else the standard thumbnail. */
+  printImageUrl(card: DraftUnifiedCard): string {
+    return this.catalogService.printImageUrl(card);
+  }
   openAddPanel(): void {
     this.addPanelOpen.set(true);
     this.searchFiltersOpen.set(window.innerWidth > 900);
@@ -224,6 +229,7 @@ export class DeckUpgradeDraftsComponent {
         name: c.name,
         set_name: c.set_name,
         image_path: c.image_path,
+        variant_image_path: c.variant_image_path,
         supertype: c.supertype,
         baseline_quantity: entry?.baseline_quantity ?? c.quantity_in_deck,
         quantity_delta: entry?.quantity_delta ?? 0,
@@ -243,6 +249,7 @@ export class DeckUpgradeDraftsComponent {
         name: e.name,
         set_name: e.set_name,
         image_path: e.image_path,
+        variant_image_path: e.variant_image_path,
         supertype: e.supertype,
         baseline_quantity: e.baseline_quantity,
         quantity_delta: e.quantity_delta,

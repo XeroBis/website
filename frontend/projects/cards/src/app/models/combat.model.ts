@@ -9,6 +9,9 @@ export interface CombatSnapshotCard {
   name: string;
   set_name: string;
   image_path: string;
+  /** The print's own scan (viewer's language first); null for `standard`
+   * or a print with no scan, which show `image_path` and the print badge. */
+  variant_image_path?: string | null;
   supertype: string | null;
 }
 

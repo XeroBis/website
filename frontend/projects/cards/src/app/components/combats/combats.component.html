@@ -442,11 +442,7 @@
         <div class="card-grid snapshot-grid">
           @for (card of sortedSnapshotCards; track card.card_id + ':' + card.variant_type) {
             <div class="card-tile">
-              <img
-                [src]="imageUrl(card.image_path)"
-                [alt]="card.name | cardDisplayName"
-                loading="lazy"
-              />
+              <img [src]="imageUrl(card)" [alt]="card.name | cardDisplayName" loading="lazy" />
               <div class="card-info">
                 <strong>{{ card.name | cardDisplayName }}</strong>
                 @if (variantBadge(card); as badge) {
@@ -476,7 +472,7 @@
                 <tr>
                   <td>
                     <img
-                      [src]="imageUrl(card.image_path)"
+                      [src]="imageUrl(card)"
                       [alt]="card.name | cardDisplayName"
                       loading="lazy"
                     />

@@ -8,7 +8,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin, of, Subject } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { DecklistConvertEntry } from '../../../models/card.model';
-import { Deck, DeckType } from '../../../models/deck.model';
+import { Deck, DeckCard, DeckType } from '../../../models/deck.model';
 import { CatalogService } from '../../../services/catalog.service';
 import { ConvertService } from '../../../services/convert.service';
 import { DecksService } from '../../../services/decks.service';
@@ -128,8 +128,9 @@ export class DeckListComponent implements OnInit {
   visualsFor(deckId: number): DeckVisuals {
     return this.deckVisuals()[deckId] ?? { energyBadges: [] };
   }
-  imageUrl(imagePath: string): string {
-    return this.catalogService.thumbnailUrl(imagePath);
+  /** A poster card's print scan, else the standard thumbnail. */
+  imageUrl(dc: DeckCard): string {
+    return this.catalogService.printImageUrl(dc);
   }
   posterSlots(deck: Deck) {
     return posterSlots(deck.poster_cards);

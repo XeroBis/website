@@ -7,7 +7,14 @@ from sqlalchemy import select
 
 from core import database
 from domains.cards import models as m
-from tests.cards.conftest import URL, add_catalog_card, make_deck, own, put_in_deck
+from tests.cards.conftest import (
+    URL,
+    add_catalog_card,
+    make_deck,
+    own,
+    put_in_deck,
+    set_print_scans,
+)
 
 DECKS = f"{URL}/decks"
 
@@ -289,3 +296,14 @@ def test_combined_drafts_pool_their_demand(client, other_client, deck, pika):
     assert export([first, other_draft], "full").status_code == 404
     assert export([], "full").status_code == 422
     assert export([first], "everything").status_code == 422
+
+
+def test_lines_carry_their_prints_scan(client, deck, pika):
+    set_print_scans(pika, "reverse", us="r_US.jpg")
+    draft = new_draft(client, deck)
+    detail = set_entry(client, deck, draft["id"], pika, 1, "reverse").json()
+    [entry] = detail["entries"]
+    assert entry["variant_image_path"] == "r_US.jpg"
+    results = {(c["catalog_id"], c["variant_type"]): c for c in detail["result_cards"]}
+    assert results[(pika, "reverse")]["variant_image_path"] == "r_US.jpg"
+    assert results[(pika, "standard")]["variant_image_path"] is None

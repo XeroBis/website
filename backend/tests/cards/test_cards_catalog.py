@@ -434,10 +434,23 @@ def test_deck_usage(client, other_client, catalog):
     usage = client.get(f"{CATALOG}/{catalog['pika']}/deck-usage").json()
     assert usage == {
         "allocated_decks": [
-            {"deck_id": normal_id, "deck_name": "Electric", "quantity_in_deck": 3}
+            {
+                "deck_id": normal_id,
+                "deck_name": "Electric",
+                "quantity_in_deck": 3,
+                "variants": [
+                    {"variant_type": "standard", "quantity_in_deck": 2},
+                    {"variant_type": "reverse", "quantity_in_deck": 1},
+                ],
+            }
         ],
         "phantom_decks": [
-            {"deck_id": phantom_id, "deck_name": "Wishlist", "quantity_in_deck": 4}
+            {
+                "deck_id": phantom_id,
+                "deck_name": "Wishlist",
+                "quantity_in_deck": 4,
+                "variants": [{"variant_type": "standard", "quantity_in_deck": 4}],
+            }
         ],
     }
     # Unowned, wanted by no one of mine: both empty.

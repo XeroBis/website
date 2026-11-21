@@ -99,8 +99,14 @@ export interface CardDeckUsage {
  * modal's "used in decks" section from any page, including ones (Browse, Set
  * detail) that only have a CardCatalogEntry rather than an owned Card. */
 export interface CardCatalogDeckUsage {
-  allocated_decks: CardDeckUsage[];
-  phantom_decks: CardDeckUsage[];
+  allocated_decks: CardCatalogDeckUsageEntry[];
+  phantom_decks: CardCatalogDeckUsageEntry[];
+}
+
+/** One deck of the card detail's usage lists: `quantity_in_deck` sums the
+ * prints, `variants` splits it per print (display order). */
+export interface CardCatalogDeckUsageEntry extends CardDeckUsage {
+  variants: { variant_type: VariantType; quantity_in_deck: number }[];
 }
 
 /** All known print-variant type values -- see documentation/data-model.md's

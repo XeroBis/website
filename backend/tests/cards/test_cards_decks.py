@@ -15,6 +15,7 @@ from tests.cards.conftest import (
     own,
     put_in_deck,
     set_language,
+    set_print_scans,
 )
 
 DECKS = f"{URL}/decks"
@@ -793,3 +794,30 @@ def test_deck_text_export(client, pika, energy):
         "2x Pikachu (Scarlet & Violet)\n10x Lightning Energy (Scarlet & Violet)"
     )
     assert client.get(url, params={"format": "pdf"}).status_code == 422
+
+
+def test_rows_carry_their_prints_scan(client):
+    pika = add_catalog_card(
+        card_number="25",
+        name="Pikachu",
+        variants=("standard", "reverse", "holo_cosmos"),
+    )
+    set_print_scans(pika, "reverse", fr="r_FR.jpg", us="r_US.jpg")
+    set_print_scans(pika, "holo_cosmos", fr="hc_FR.jpg")  # no English scan
+    deck_id = make_deck(client.user_id)
+    card_id = own(client.user_id, pika, standard=1, reverse=1, holo_cosmos=1)
+    for variant in ("standard", "reverse", "holo_cosmos"):
+        put_in_deck(deck_id, card_id, 1, variant)
+
+    def scans():
+        cards = client.get(f"{DECKS}/{deck_id}").json()["cards"]
+        return {c["variant_type"]: c["variant_image_path"] for c in cards}
+
+    set_language(client.user_id, "en")
+    assert scans() == {
+        "standard": None,
+        "reverse": "r_US.jpg",
+        "holo_cosmos": "hc_FR.jpg",
+    }
+    set_language(client.user_id, "fr")
+    assert scans()["reverse"] == "r_FR.jpg"

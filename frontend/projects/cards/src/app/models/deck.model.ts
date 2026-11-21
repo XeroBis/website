@@ -89,6 +89,9 @@ export interface DeckCard {
   name: string;
   set_name: string;
   image_path: string;
+  /** The print's own scan (viewer's language first); null for `standard`
+   * or a print with no scan, which show `image_path` and the print badge. */
+  variant_image_path?: string | null;
   available: number | null;
   owned: number | null;
   allocated_decks: DeckCardAllocation[];
@@ -202,6 +205,9 @@ export interface DeckUpgradeDraftEntry {
   name: string;
   set_name: string;
   image_path: string;
+  /** The print's own scan (viewer's language first); null for `standard`
+   * or a print with no scan, which show `image_path` and the print badge. */
+  variant_image_path?: string | null;
   supertype: string | null;
   baseline_quantity: number;
   quantity_delta: number;
@@ -218,6 +224,9 @@ export interface DeckUpgradeDraftResultCard {
   name: string;
   set_name: string;
   image_path: string;
+  /** The print's own scan (viewer's language first); null for `standard`
+   * or a print with no scan, which show `image_path` and the print badge. */
+  variant_image_path?: string | null;
   supertype: string | null;
   quantity_in_deck: number;
 }

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from core.database import get_db
 from core.models import User
-from domains.cards import display
+from domains.cards import deck_rules, display
 from domains.cards import models as m
 from domains.cards import schemas as s
 from domains.cards.access import cards_user, is_cards_user, not_found
@@ -175,29 +175,40 @@ def _player(db: Session, user_id: int) -> User:
 def combats_out(
     db: Session, combats: list[m.Combat], language: str | None
 ) -> list[s.CombatOut]:
-    """Snapshot cards are stored in English; French viewers get the catalog
-    card's French values, matched by `image_path` (one query)."""
+    """Snapshot cards are stored in English; they're matched to the catalog by
+    `image_path` (one query), for the French values and each print's scan
+    (one more)."""
+    stored_cards = [
+        card
+        for combat in combats
+        for card in combat.deck_a_snapshot + combat.deck_b_snapshot
+    ]
     current: dict[str, m.CardCatalog] = {}
-    if language == "fr":
-        paths = {
-            card["image_path"]
-            for combat in combats
-            for card in combat.deck_a_snapshot + combat.deck_b_snapshot
+    if paths := {card["image_path"] for card in stored_cards}:
+        current = {
+            card.image_path: card
+            for card in db.scalars(
+                select(m.CardCatalog).where(m.CardCatalog.image_path.in_(paths))
+            )
         }
-        if paths:
-            current = {
-                card.image_path: card
-                for card in db.scalars(
-                    select(m.CardCatalog).where(m.CardCatalog.image_path.in_(paths))
-                )
-            }
+    scans = deck_rules.print_scans(
+        db,
+        {
+            (current[card["image_path"]].id, card.get("variant_type", "standard"))
+            for card in stored_cards
+            if card["image_path"] in current
+        },
+        language,
+    )
 
-    def side(snapshot: list[dict]) -> list[s.CombatSnapshotCard]:
+    def side(snapshot: list[dict]) -> list[s.CombatSnapshotCardOut]:
         cards = []
         for stored in snapshot:
-            card = s.CombatSnapshotCard.model_validate(stored)
+            card = s.CombatSnapshotCardOut.model_validate(stored)
             catalog = current.get(card.image_path)
             if catalog is not None:
+                card.variant_image_path = scans.get((catalog.id, card.variant_type))
+            if catalog is not None and language == "fr":
                 card.name = display.card_name(catalog, language)
                 card.set_name = display.set_name(
                     catalog.set_name, catalog.set_name_fr, language

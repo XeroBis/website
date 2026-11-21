@@ -100,15 +100,11 @@
           <div class="card-grid draft-card-grid">
             @for (c of unifiedCards; track c.catalog_id + ':' + c.variant_type) {
               <div class="card-tile draft-card-tile">
-                <img
-                  [src]="thumbnailUrl(c.image_path)"
-                  [alt]="c.name | cardDisplayName"
-                  loading="lazy"
-                />
+                <img [src]="printImageUrl(c)" [alt]="c.name | cardDisplayName" loading="lazy" />
                 <div class="card-info">
                   <strong>{{ c.name | cardDisplayName }}</strong>
                   @if (variantLabel(c.variant_type); as label) {
-                    @if (c.variant_type !== 'standard') {
+                    @if (c.variant_type !== 'standard' && !c.variant_image_path) {
                       <span class="variant-badge">{{ label }}</span>
                     }
                   }
